@@ -1,0 +1,37 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.10'
+
+    - name: Set up Conda
+      uses: conda-incubator/setup-miniconda@v2
+      with:
+        miniconda-version: 'latest'
+        environment-file: environment.yml
+        python-version: '3.10'
+
+    - name: Install dependencies from environment.yml
+      run: conda env update --file environment.yml --prune
+
+    - name: Run pytest
+      run: |
+        conda activate cadet-equations
+        pytest test/config_test.py
