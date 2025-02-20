@@ -12,27 +12,6 @@ from typing import List
 from typing import Literal
 
 
-# TODO make this tool usable for getting equations in the paper: use nComp, add textblocks etc.. Could also add assumptions.
-
-# TODO features:
-# dont use actual numbers for nComp and nPar. Theres a number of particle types for every unique parType. and a number of bound states per component of which a number is kinetic and so on
-# configuration file
-# export pdf and .tex files
-# full model formulation: alle textbausteine und definitionen, auch der concentrationen c:\mapsto undso damit es ein komplettes Modell ist
-# add mode in which we dont explicitly have nComp, nPar .. this would require nPar^sphere etc
-
- # TODO equations:
- # arbitrary no. of bound states. Hide this behind a single input field first
- # we get separate boundary conditions when surface diffusion is considered combined with a kinetic binding model, while the other cases yield similar boundary conditions
- # binding modes
- # CSTR
-
-# TODO latex incompatibilities:
-# we need to add j -> what to do with standalone particle models?
-# \mleft( and \mright)
-# subequations and labels
-# \vec results in overhead arrow, not fat print as in the document
-
 #%% Get the equations
 exec(open("equations.py").read())
 
