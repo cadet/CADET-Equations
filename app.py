@@ -67,7 +67,7 @@ class Column:
     particle_models: List[Particle] = None
     par_type_counts: Counter[Particle] = field(default_factory=Counter) # counts per unique particle type (geometry, hasCore, resolution)
     par_unique_intV_contribution_counts: Counter[Particle] = field(default_factory=Counter) # puts particle types together that have a similar contribution to the interstitial volume equation and counts them
-    include_surfDiff: bool = False
+    has_surfDiff: bool = False
     has_binding: bool = True # and thus solid phase
     has_mult_bnd_states: bool = False
     # nCompReq: int
@@ -90,20 +90,20 @@ class Column:
              self.has_angular_dispersion = True # TODO make corresponding BC optional
         
         if self.has_axial_coordinate:
-            self.has_axial_dispersion = st.selectbox("Add axial Dispersion", ["No", "Yes"]) == "Yes"
+            self.has_axial_dispersion = st.selectbox("Add axial Dispersion", ["No", "Yes"], key="has_axial_dispersion") == "Yes"
 
         if self.dev_mode:
              if self.has_radial_coordinate:
-                self.has_radial_dispersion = st.selectbox("Add radial Dispersion", ["Yes", "No"]) == "Yes"
+                self.has_radial_dispersion = st.selectbox("Add radial Dispersion", ["Yes", "No"], key="has_radial_dispersion") == "Yes"
              if self.has_angular_coordinate:
-                self.has_angular_dispersion = st.selectbox("Add angular Dispersion", ["Yes", "No"]) == "Yes"
+                self.has_angular_dispersion = st.selectbox("Add angular Dispersion", ["Yes", "No"], key="has_angular_dispersion") == "Yes"
 
         if self.N_p > 0:
 
-            self.nonlimiting_filmDiff = st.selectbox("Non-limiting film diffusion", ["No", "Yes"]) == "Yes"
+            self.nonlimiting_filmDiff = st.selectbox("Non-limiting film diffusion", ["No", "Yes"], key="nonlimiting_filmDiff") == "Yes"
 
             self.has_binding = st.selectbox("Add binding", ["Yes", "No"]) == "Yes"
-            self.has_mult_bnd_states = st.selectbox("Add multiple bound states", ["No", "Yes"]) == "Yes" if advanced_mode_ else False
+            self.has_mult_bnd_states = st.selectbox("Add multiple bound states", ["No", "Yes"], key="has_mult_bnd_states") == "Yes" if advanced_mode_ else False
 
             self.particle_models = []
 
@@ -111,16 +111,16 @@ class Column:
 
                 self.particle_models.append(
                     Particle(
-                        geometry=st.selectbox(f"Select geometry of particle type {j + 1}", ["Sphere", "Cylinder", "Slab"]) if self.dev_mode else "Sphere",
-                        resolution=re.search(r'\dD', st.selectbox(f"Select spatial resolution of particle type {j + 1}", ["1D (radial coordinate)", "0D (homogeneous)"])).group() if self.dev_mode else re.search(r'\dD', st.selectbox(f"Select spatial resolution of particles", ["1D (radial coordinate)", "0D (homogeneous)"])).group(),
-                        hasCore=st.selectbox(f"Choose if particle type {j + 1} is a core-shell particle (i.e." + r"$R_\mathrm{pc} > 0$)", ["No core-shell", "Has core-shell"]) == "Has core-shell" if self.dev_mode else False
+                        geometry=st.selectbox(f"Select geometry of particle type {j + 1}", ["Sphere", "Cylinder", "Slab"], key=f"parType_{j+1}__geometry") if self.dev_mode else "Sphere",
+                        resolution=re.search(r'\dD', st.selectbox(f"Select spatial resolution of particle type {j + 1}", ["1D (radial coordinate)", "0D (homogeneous)"], key=f"parType_{j+1}_resolution")).group() if self.dev_mode else re.search(r'\dD', st.selectbox(f"Select spatial resolution of particles", ["1D (radial coordinate)", "0D (homogeneous)"], key="particle_resolution")).group(),
+                        hasCore=st.selectbox(f"Choose if particle type {j + 1} is a core-shell particle (i.e." + r"$R_\mathrm{pc} > 0$)", ["No core-shell", "Has core-shell"], key=f"parType_{j+1}_hasCore") == "Has core-shell" if self.dev_mode else False
                         )
                 )
 
             if any(particle.resolution == "1D" for particle in self.particle_models):
-                self.include_surfDiff = st.selectbox("Add surface diffusion", ["No", "Yes"]) == "Yes"
+                self.has_surfDiff = st.selectbox("Add surface diffusion", ["No", "Yes"], key="has_surfDiff") == "Yes"
             else:
-                self.include_surfDiff = False
+                self.has_surfDiff = False
             
             # We need to count and thus sort particle_models:
             #  Particle types need individual particle equations, which is why we count them
@@ -168,31 +168,31 @@ class Column:
 
         for par_type in self.par_type_counts.keys():
 
-            equations[par_type] = particle_transport(par_type, singleParticle=self.N_p == 1, nonlimiting_filmDiff=self.nonlimiting_filmDiff, include_surfDiff=self.include_surfDiff, has_binding=self.has_binding, has_mult_bnd_states=self.has_mult_bnd_states)
+            equations[par_type] = particle_transport(par_type, singleParticle=self.N_p == 1, nonlimiting_filmDiff=self.nonlimiting_filmDiff, has_surfDiff=self.has_surfDiff, has_binding=self.has_binding, has_mult_bnd_states=self.has_mult_bnd_states)
             equations[par_type] = rerender_variables(equations[par_type])
 
-            boundary_conditions[par_type] = particle_boundary(par_type, singleParticle=self.N_p == 1, nonlimiting_filmDiff=self.nonlimiting_filmDiff, include_surfDiff=self.include_surfDiff, has_binding=self.has_binding, has_mult_bnd_states=self.has_mult_bnd_states)
+            boundary_conditions[par_type] = particle_boundary(par_type, singleParticle=self.N_p == 1, nonlimiting_filmDiff=self.nonlimiting_filmDiff, has_surfDiff=self.has_surfDiff, has_binding=self.has_binding, has_mult_bnd_states=self.has_mult_bnd_states)
             boundary_conditions[par_type] = rerender_variables(boundary_conditions[par_type])
 
         return equations, boundary_conditions
     
 
 #%% Streamlit UI
-st.title("CADET-Equations: Packed-Bed Chromatography Equation Generator")
+st.title("CADET-Equations: Packed-Bed Chromatography Model Equation Generator")
 st.write("Configure a chromatography model to get the corresponding governing equations.")
 
 # User configuration of the model
 
 # Do not change the label of the dev mode, otherwise it will be included in the CI
-dev_mode_=st.selectbox("Developer setup options (not tested! Enables e.g. multiple particle types)", ["Off", "On"]) == "On"
+dev_mode_=st.selectbox("Developer setup options (not tested! Enables e.g. multiple particle types)", ["Off", "On"], key="dev_mode") == "On"
 
-advanced_mode_=st.selectbox("Advanced setup options (enables e.g. multiple bound states)", ["Off", "On"]) == "On"
+advanced_mode_=st.selectbox("Advanced setup options (enables e.g. multiple bound states)", ["Off", "On"], key="advanced_mode") == "On"
 
 column_model = Column(
     dev_mode=dev_mode_, advanced_mode=advanced_mode_,
-    resolution=re.search(r'\dD', st.selectbox("Column resolution", ["1D (axial coordinate)", "2D (axial and radial coordinate)", "3D (axial, radial and angular coordinate)"])).group(),
-    N_c = st.number_input("Number of components", min_value=1, step=1),
-    N_p = st.number_input("Number of particle types", min_value=0, step=1) if dev_mode_ else int(st.selectbox("Add particles", ["No", "Yes"]) == "Yes")
+    resolution=re.search(r'\dD', st.selectbox("Column resolution", ["1D (axial coordinate)", "2D (axial and radial coordinate)", "3D (axial, radial and angular coordinate)"], key="column_resolution")).group(),
+    N_c = st.number_input("Number of components", key="N_c", min_value=1, step=1),
+    N_p = st.number_input("Number of particle types", key="N_p", min_value=0, step=1) if dev_mode_ else int(st.selectbox("Add particles", ["No", "Yes"], key="add_particles") == "Yes")
     )
 
 
