@@ -272,8 +272,21 @@ with tempfile.TemporaryDirectory() as temp_dir:
     with open(tex_path, "w") as f:
         f.write(latex_string)
 
-    # Run pdflatex to generate the PDF
-    subprocess.run(["pdflatex", "-output-directory", temp_dir, tex_path], capture_output=True)
+    result = subprocess.run(
+        ["pdflatex", "-output-directory", temp_dir, tex_path],
+        capture_output=True,
+        text=True,
+        cwd=temp_dir
+    )
+
+    # Print LaTeX output for debugging
+    print(result.stdout)
+    print(result.stderr)
+
+    # Check if pdflatex was successful
+    if result.returncode != 0:
+        print("LaTeX compilation failed.")
+        print("Error output:", result.stderr)
 
     # Read and provide the PDF for download
     with open(pdf_path, "rb") as pdf_file:
