@@ -207,6 +207,7 @@ st.write("MODEL NAME BASED ON INPUT")
 
 file_content = []
 
+# The following function is used to both print the output and collect it to later generate and export output files
 def write_and_save(output:str, as_latex:bool=False):
 
     file_content.append(output)
@@ -264,30 +265,31 @@ latex_string = "\n".join(latex_string)
 
 st.download_button("Download .tex", latex_string, "output.tex", "text/plain")
 
-with tempfile.TemporaryDirectory() as temp_dir:
-    tex_path = f"{temp_dir}/output.tex"
-    pdf_path = f"{temp_dir}/output.pdf"
+if st.button("Generate PDF"):
+    with tempfile.TemporaryDirectory() as temp_dir:
+        tex_path = f"{temp_dir}/output.tex"
+        pdf_path = f"{temp_dir}/output.pdf"
 
-    # Write LaTeX content to a temp file
-    with open(tex_path, "w") as f:
-        f.write(latex_string)
+        # Write LaTeX content to a temp file
+        with open(tex_path, "w") as f:
+            f.write(latex_string)
 
-    result = subprocess.run(
-        ["pdflatex", "-output-directory", temp_dir, tex_path],
-        capture_output=True,
-        text=True,
-        cwd=temp_dir
-    )
+        result = subprocess.run(
+            ["pdflatex", "-output-directory", temp_dir, tex_path],
+            capture_output=True,
+            text=True,
+            cwd=temp_dir
+        )
 
-    # Print LaTeX output for debugging
-    print(result.stdout)
-    print(result.stderr)
+        # Print LaTeX output for debugging
+        print(result.stdout)
+        print(result.stderr)
 
-    # Check if pdflatex was successful
-    if result.returncode != 0:
-        print("LaTeX compilation failed.")
-        print("Error output:", result.stderr)
+        # Check if pdflatex was successful
+        if result.returncode != 0:
+            print("LaTeX compilation failed.")
+            print("Error output:", result.stderr)
 
-    # Read and provide the PDF for download
-    with open(pdf_path, "rb") as pdf_file:
-        st.download_button("Download PDF", pdf_file, "output.pdf", "application/pdf")
+        # Read and provide the PDF for download
+        with open(pdf_path, "rb") as pdf_file:
+            st.download_button("Download PDF", pdf_file, "output.pdf", "application/pdf")
