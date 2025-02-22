@@ -4,7 +4,6 @@
 """
 
 import re
-import streamlit as st
 
 def rerender_variables(input_str:str):
      input_str = re.sub(r"\\l(?![a-zA-Z])", r"\\mathrm{\\ell}", input_str)
