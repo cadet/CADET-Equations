@@ -8,6 +8,9 @@ import re
 from collections import Counter
 from dataclasses import dataclass, field
 
+import subprocess
+import tempfile
+
 from typing import List
 from typing import Literal
 
@@ -202,10 +205,22 @@ nPar_list = ', '.join(str(j) for j in range(1, column_model.N_p + 1))
 
 st.write("MODEL NAME BASED ON INPUT")
 
-st.write(r"In the interstitial volume, mass transfer is governed by the following convection-diffusion-reaction equations in " + int_vol_domain[column_model.resolution] + r" and for all components $i\in\{" + str(nComp_list) + r"\}$")
-st.latex(interstitial_volume_eq)
-st.write("with boundary conditions")
-st.latex(column_model.interstitial_volume_bc())
+file_content = []
+
+def write_and_save(output:str, as_latex:bool=False):
+
+    file_content.append(output)
+
+    if as_latex:
+        st.latex(output)
+    else:
+        st.write(output)
+
+
+write_and_save(r"In the interstitial volume, mass transfer is governed by the following convection-diffusion-reaction equations in " + int_vol_domain[column_model.resolution] + r" and for all components $i\in\{" + str(nComp_list) + r"\}$")
+write_and_save(interstitial_volume_eq, as_latex=True)
+write_and_save("with boundary conditions")
+write_and_save(column_model.interstitial_volume_bc(), as_latex=True)
 if column_model.N_p >0:
      tmp = r"and particle types $j\in\{" + str(nPar_list) + r"\}$"
 else:
@@ -215,7 +230,7 @@ if column_model.N_p > 0:
 
     particle_eq, particle_bc = column_model.particle_equations()
 
-    st.write(r"In the particle models, mass transfer is governed by the following diffusion-reaction equations,")
+    write_and_save(r"In the particle models, mass transfer is governed by the following diffusion-reaction equations,")
 
     tmp = 0
     for par_type in column_model.par_type_counts.keys():
@@ -228,12 +243,38 @@ if column_model.N_p > 0:
         else:
             tmp_textblock += r"components $i\in\{" + str(nComp_list) + r"\}$"
 
-        st.write(tmp_textblock)
-        st.latex(particle_eq[par_type])
+        write_and_save(tmp_textblock)
+        write_and_save(particle_eq[par_type], as_latex=True)
         tmp += column_model.par_type_counts[par_type]
 
         if not particle_bc[par_type] == "":
-            st.write("The boundary conditions are given by")
-            st.latex(particle_bc[par_type])
+            write_and_save("The boundary conditions are given by")
+            write_and_save(particle_bc[par_type], as_latex=True)
 
-st.write("Initial values for all solution variables (concentrations) are defined at $t = 0$.")
+write_and_save("Initial values for all solution variables (concentrations) are defined at $t = 0$.")
+
+latex_string = [
+    r"\documentclass{article}",
+    r"\usepackage{amsmath}",
+    r"\begin{document}",
+    r"\section*{Chromatography Model}"
+    ]
+latex_string.extend(file_content + [r"\end{document}"])
+latex_string = "\n".join(latex_string)
+
+st.download_button("Download .tex", latex_string, "output.tex", "text/plain")
+
+with tempfile.TemporaryDirectory() as temp_dir:
+    tex_path = f"{temp_dir}/output.tex"
+    pdf_path = f"{temp_dir}/output.pdf"
+
+    # Write LaTeX content to a temp file
+    with open(tex_path, "w") as f:
+        f.write(latex_string)
+
+    # Run pdflatex to generate the PDF
+    subprocess.run(["pdflatex", "-output-directory", temp_dir, tex_path], capture_output=True)
+
+    # Read and provide the PDF for download
+    with open(pdf_path, "rb") as pdf_file:
+        st.download_button("Download PDF", pdf_file, "output.pdf", "application/pdf")
