@@ -48,41 +48,49 @@ def int_filmDiff_term(particle, numIdxBegin, numIdxEnd, singleParticle=False, no
 
 def int_vol_BC(resolution:str, hasAxialDispersion:bool):
 
-     if resolution == "1D":
+     # handle domain the BC is defined on
+     ax_bc_domain = r"(0, T_{\mathrm{end}})"
+     rad_bc_domain = ""
+     ang_bc_domain = ""
 
-          if hasAxialDispersion:
-               return r"""
-               \begin{alignat}{2}
-                    u c_{\mathrm{in},i} &= \left.\left( u c^{\l}_i - D_{\mathrm{ax},i} \frac{\partial c^{\l}_i}{\partial z} \right)\right|_{z=0} & &\qquad\text{on } (0, T_{\mathrm{end}}), \\
-                    0 &= - D_{\mathrm{ax},i} \left. \frac{\partial c^{\l}_i}{\partial z} \right|_{z=L} & &\qquad\text{on } (0, T_{\mathrm{end}}).
-               \end{alignat}
-               """
-          else:
-               return r"""
-               \begin{alignat}{2}
-                    u c_{\mathrm{in},i} &= \left. u c^{\l}_i \right|_{z=0} & &\qquad\text{on } (0, T_{\mathrm{end}}). \\
-               \end{alignat}
-               """
-          
      if resolution == "2D":
-          return r"""
-          \begin{alignat}{2}
-               u c_{\mathrm{in},i} &= \left.\left( u c^{\l}_i - D_{\mathrm{ax},i} \frac{\partial c^{\l}_i}{\partial z} \right)\right|_{z=0} & &\qquad\text{on } (0, T_{\mathrm{end}}) \times (0, R_{\mathrm{c}}),\\
-               0 &= - \left(D_{\mathrm{ax},i} \left. \frac{\partial c^{\l}_i}{\partial z} \right) \right|_{z=L} & &\qquad\text{on } (0, T_{\mathrm{end}}) \times (0, R_{\mathrm{c}}), \\
-               0 &= - \left(D_{\mathrm{rad},i} \left. \frac{\partial c^{\l}_i}{\partial \rho} \right) \right|_{\rho=R_{\mathrm{c}}} & &\qquad\text{on } (0, T_{\mathrm{end}}) \times (0, L), \\
-               0 &= - \left(D_{\mathrm{rad},i} \left. \frac{\partial c^{\l}_i}{\partial \rho} \right) \right|_{\rho=0} & &\qquad\text{on } (0, T_{\mathrm{end}}) \times (0, L).
-          \end{alignat}
-          """
+          ax_bc_domain += r"\times (0, R_{\mathrm{c}})"
+          rad_bc_domain = r"(0, T_{\mathrm{end}}) \times (0, L)"
+
+     elif resolution == "3D":
+          ax_bc_domain += r"\times (0, R_{\mathrm{c}}) \times [0,2\pi)"
+          rad_bc_domain = r"(0, T_{\mathrm{end}}) \times (0, L) \times [0,2\pi)"
+          ang_bc_domain = r"(0, T_{\mathrm{end}}) \times (0, L) \times (0, R_{\mathrm{c}})"
+
+     # define single equations
+     inflow_bc = r"u c_{\mathrm{in},i} &= \left.\left( u c^{\l}_i - D_{\mathrm{ax},i} \frac{\partial c^{\l}_i}{\partial z} \right)\right|_{z=0} & &\qquad\text{on }" + ax_bc_domain
+     outflow_bc = r"0 &= - D_{\mathrm{ax},i} \left. \frac{\partial c^{\l}_i}{\partial z} \right|_{z=L} & &\qquad\text{on }" +  ax_bc_domain
+
+     rad_wall_bc = r"0 &= - \left(D_{\mathrm{rad},i} \left. \frac{\partial c^{\l}_i}{\partial \rho} \right) \right|_{\rho=R_{\mathrm{c}}} & &\qquad\text{on }" + rad_bc_domain
+     rad_inner_bc = r"0 &= - \left(D_{\mathrm{rad},i} \left. \frac{\partial c^{\l}_i}{\partial \rho} \right) \right|_{\rho=0} & &\qquad\text{on }" + rad_bc_domain
+
+     ang_periodic_bc = r"0 &= D_{\mathrm{ang},i} \, c^{\l}_i \Big|_{\varphi=0} - D_{\mathrm{ang},i} \, c^{\l}_i \Big|_{\varphi=2\pi} & &\quad \text{on }" + ang_bc_domain
+
+     # collect the required equations for full BC
+     boundary_conditions = inflow_bc
+     
+     if hasAxialDispersion:
+          boundary_conditions += r""",\\
+               """ + outflow_bc
+     
+     if resolution in ["2D", "3D"]:
+          boundary_conditions += r""",\\
+""" + rad_wall_bc + r""",\\
+""" + rad_inner_bc
+     
      if resolution == "3D":
-          return r"""
-          \begin{alignat}{2}
-          u c_{\mathrm{in},i} &= \left( u c^{\l}_i - D_{\mathrm{ax},i} \frac{\partial c^{\l}_i}{\partial z} \right) \Big|_{z=0} & \quad \text{on } (0, T_{\mathrm{end}}) \times (0, R_{\mathrm{c}}) \times [0,2\pi), \\
-          0 &= - \left(D_{\mathrm{ax},i} \frac{\partial c^{\l}_i}{\partial z} \right) \Big|_{z=L} & \quad \text{on } (0, T_{\mathrm{end}}) \times (0, R_{\mathrm{c}}) \times [0,2\pi), \\
-          0 &= - \left(D_{\mathrm{rad},i} \frac{\partial c^{\l}_i}{\partial \rho} \right) \Big|_{\rho=R_{\mathrm{c}}} & \quad \text{on } (0, T_{\mathrm{end}}) \times (0, L) \times [0,2\pi), \\
-          0 &= - \left(D_{\mathrm{rad},i} \frac{\partial c^{\l}_i}{\partial \rho} \right) \Big|_{\rho=0} & \quad \text{on } (0, T_{\mathrm{end}}) \times (0, L) \times [0,2\pi), \\
-          0 &= D_{\mathrm{ang},i} \, c^{\l}_i \Big|_{\varphi=0} - D_{\mathrm{ang},i} \, c^{\l}_i \Big|_{\varphi=2\pi} & \quad \text{on } (0, T_{\mathrm{end}}) \times (0, L) \times (0, R_{\mathrm{c}}).
-          \begin{alignat}
-          """
+          boundary_conditions += r""",\\
+""" + ang_periodic_bc
+          
+     return r"""
+\begin{alignat}{2}
+""" + boundary_conditions + r""".
+\end{alignat}"""
 
 def int_vol_initial(resolution:str, includeParLiquid:bool):
      
@@ -123,7 +131,7 @@ int_vol_domain = {
 }
 
 # Particle transport terms
-def particle_transport(particle, singleParticle:bool, nonlimiting_filmDiff:bool, include_surfDiff:bool, has_binding:bool, has_mult_bnd_states:bool):
+def particle_transport(particle, singleParticle:bool, nonlimiting_filmDiff:bool, has_surfDiff:bool, has_binding:bool, has_mult_bnd_states:bool):
      
      ret_term = ""          
 
@@ -135,7 +143,7 @@ def particle_transport(particle, singleParticle:bool, nonlimiting_filmDiff:bool,
           else:
                ret_term = particle_transport_homogeneous(has_mult_bnd_states)
      else:
-          ret_term = particle_transport_radial(particle.geometry, include_surfDiff, has_binding, has_mult_bnd_states)
+          ret_term = particle_transport_radial(particle.geometry, has_surfDiff, has_binding, has_mult_bnd_states)
 
      if singleParticle:
           ret_term = re.sub(",j", "", ret_term)
@@ -170,13 +178,13 @@ def particle_transport_homogeneous(has_mult_bnd_states:bool):
 	\end{align}
      """
 
-def particle_transport_radial(geometry:str, include_surfDiff:bool, has_binding:bool, has_mult_bnd_states:bool):
+def particle_transport_radial(geometry:str, has_surfDiff:bool, has_binding:bool, has_mult_bnd_states:bool):
      
      surfDiffTerm = ""
 
      if geometry == "Sphere": 
 
-          if include_surfDiff:
+          if has_surfDiff:
                surfDiffTerm = r"\left( 1 - \varepsilon_{\mathrm{p},j} \right) \frac{1}{r^2} \frac{\partial }{\partial r} \left( r^2 D_{i,j}^{\s} \frac{\partial c^{\s}_{i,j}}{\partial r} \right) +"
           
           particle_solid = r"\left( 1 - \varepsilon_{\mathrm{p},j} \right) \frac{\partial c^{\s}_{i,j}}{\partial t} &= " + surfDiffTerm + r" \left( 1 - \varepsilon_{\mathrm{p},j} \right) f_{\mathrm{bind},i,j}\left( \vec{c}^{\p}, \vec{c}^{\s} \right)"
@@ -206,7 +214,7 @@ def particle_transport_radial(geometry:str, include_surfDiff:bool, has_binding:b
           
      if geometry == "Cylinder": 
 
-          if include_surfDiff:
+          if has_surfDiff:
                surfDiffTerm = r"\left( 1 - \varepsilon_{\mathrm{p},j} \right) \frac{1}{r} \frac{\partial }{\partial r} \left( r D_{i,j}^{\s} \frac{\partial c^{\s}_{i,j}}{\partial r} \right) + "
      
           return r"""
@@ -221,7 +229,7 @@ def particle_transport_radial(geometry:str, include_surfDiff:bool, has_binding:b
                """
      if geometry == "Slab":
 
-          if include_surfDiff:
+          if has_surfDiff:
                surfDiffTerm = r"\left( 1 - \varepsilon_{\mathrm{p},j} \right) \frac{\partial }{\partial r} \left( D_{i,j}^{\s} \frac{\partial c^{\s}_{i,j}}{\partial r} \right) + "
 
           return r"""
@@ -235,7 +243,7 @@ def particle_transport_radial(geometry:str, include_surfDiff:bool, has_binding:b
                \end{align}
                """
 
-def particle_boundary(particle, singleParticle:bool, nonlimiting_filmDiff:bool, include_surfDiff:bool, has_binding:bool, has_mult_bnd_states:bool):
+def particle_boundary(particle, singleParticle:bool, nonlimiting_filmDiff:bool, has_surfDiff:bool, has_binding:bool, has_mult_bnd_states:bool):
 
      if particle.resolution == "0D":
           return ""
@@ -253,7 +261,7 @@ def particle_boundary(particle, singleParticle:bool, nonlimiting_filmDiff:bool, 
           &= 0, \\
           """ + outerLiquidBC
      
-     if include_surfDiff and has_binding:
+     if has_surfDiff and has_binding:
 
           particleSolidBC = r""",\\
           -\left( 1 - \varepsilon_{\mathrm{p},j} \right) \left( \left. D^{\s}_{i,j} \frac{\partial c^{\s}_{i,j}}{\partial r} \right) \right|_{r=""" + inner_boundary + r"""}
