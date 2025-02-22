@@ -41,6 +41,7 @@ jobs:
         mamba install "setuptools>=69" "pip>=24"
         mamba install python=3.10  # Ensure the Python version matches
         mamba env update -n cadet-equations -f environment.yml
+        mamba install -c conda-forge texlive-core
       if: steps.cache.outputs.cache-hit != 'true'
 
     - name: Run pytest
