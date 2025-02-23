@@ -25,7 +25,6 @@ class Particle:
     geometry: Literal["Sphere", "Cylinder", "Slab"]
     hasCore: bool
     resolution: Literal["1D", "0D"]
-    hasSurfDiff: bool = False
     surface_volume_ratio: float = None
     # volume fraction ?
     # binding -> is_kinetic, nBound
@@ -102,7 +101,7 @@ class Column:
 
             self.nonlimiting_filmDiff = st.selectbox("Non-limiting film diffusion", ["No", "Yes"], key="nonlimiting_filmDiff") == "Yes"
 
-            self.has_binding = st.selectbox("Add binding", ["Yes", "No"]) == "Yes"
+            self.has_binding = st.selectbox("Add binding", ["Yes", "No"], key="has_binding") == "Yes"
             self.has_mult_bnd_states = st.selectbox("Add multiple bound states", ["No", "Yes"], key="has_mult_bnd_states") == "Yes" if advanced_mode_ else False
 
             self.particle_models = []
@@ -117,7 +116,7 @@ class Column:
                         )
                 )
 
-            if any(particle.resolution == "1D" for particle in self.particle_models):
+            if any(particle.resolution == "1D" for particle in self.particle_models) and self.has_binding:
                 self.has_surfDiff = st.selectbox("Add surface diffusion", ["No", "Yes"], key="has_surfDiff") == "Yes"
             else:
                 self.has_surfDiff = False

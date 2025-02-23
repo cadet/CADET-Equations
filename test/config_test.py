@@ -6,6 +6,13 @@
 from streamlit.testing.v1 import AppTest
 
 
+untested_variables = ["dev_mode", "advanced_mode"] # dev_mode is not tested, TODO: test the advanced_mode
+
+# Some boxes are conditional, e.g. film_diffusion can only be configured when particles are present.
+# We thus first identify the boxes that change the number of boxes and thus combinations (critical_variables).
+# We then start the recursion for every combination of the aforementioned critical keys.
+critical_variables = untested_variables + ["add_particles", "has_binding", "particle_resolution"]
+
 def test_streamlit_app():
     
     at = AppTest.from_file("../app.py")
@@ -15,81 +22,55 @@ def test_streamlit_app():
 
     assert at.selectbox(key="column_resolution").value == "1D (axial coordinate)"
 
-    # We test every configuration by recursively iteration through all combinations
-    def config_recursion(boxies, counter):
+    # We test every configuration by recursively iteratiing through all combinations
+    def config_recursion(boxies, counter, firstCall:bool=True):
 
-        boxy = at.selectbox(key=boxies.pop(0)) # TODO allow other boxes. if number input define min max options
+        if boxies[0] in at.session_state:
 
-        for opt in boxy.options:
+            boxy = at.selectbox(key=boxies.pop(0)) # TODO allow other boxes. if number input define min max options
 
-            boxy.set_value(opt).run()
-            counter += 1
+            for opt in [opti for opti in boxy.options]: # Note: some values will be run repeatedly since the current value of that box is applied again. Excluding this value here would make the recursion incomplete though
 
-            assert not at.exception
+                boxy.set_value(opt).run()
+                counter += 1
+                assert not at.exception
 
-            if len(boxies) > 0:
-                counter = config_recursion(boxies, counter)
+                for box in at.selectbox:
+                    if box.key not in untested_variables and box.key not in critical_variables:
+                        print("box: ", box.key, ", value: ", box.value)
+
+                if len(boxies) > 0:
+                    counter = config_recursion(boxies, counter, firstCall=False)
+
+            boxies.append(boxy.key)
 
         return counter
-    
-    # Some boxes are conditional, e.g. film_diffusion can only be configured when particles are present.
-    # We thus first identify the boxes that change the number of boxes and thus combinations.
-    # Their keys are: dev_mode, advanced_mode, add_particles
-    # dev_mode is not tested, TODO: advanced_mode
-    critical_variables = ["dev_mode", "advanced_mode",
-                          "add_particles"]
 
-
-    ########## 1st iteration: add_particles = False
-    # check for the critical variables
+    # check if the untested variables are set correctly
     assert at.selectbox(key="dev_mode").value == "Off"
     assert at.selectbox(key="advanced_mode").value == "Off"
+
+    # 1) test all configs with add_particles = "No" -> no has_binding and no particle_resolution
     assert at.selectbox(key="add_particles").value == "No"
-
     config_keys = [box.key for box in at.selectbox if box.key not in critical_variables]
-
-    # check if variables were added or removed
-    assert len(config_keys) == 2
-    assert len(at.get("number_input")) == 1
-    assert len(at.get("selectbox") + at.get("number_input")) == 6
-
-    # test all configs with add_particles = "No"
     num_configs = config_recursion(config_keys, 0)
-    assert num_configs == 5
+    assert num_configs == 6 + 3 # Note: three repetitive configs due to the setup of the recursion
 
-    # ########## 2nd iteration: add_particles = True # TODO : noBinding aber fragt trotzdem nach surfDIff
-    # at.selectbox(key="add_particles").set_value("Yes").run()
-    # # check for the critical variables
-    # assert at.selectbox(key="dev_mode").value == "Off"
-    # assert at.selectbox(key="advanced_mode").value == "Off"
-    # assert at.selectbox(key="add_particles").value == "Yes"
+    # 2) test all configs with add_particles = "Yes", "particle_resolution" = "1D (radial coordinate)", "has_binding" = "Yes"
+    at.selectbox(key="add_particles").set_value("Yes").run()
+    config_keys = [box.key for box in at.selectbox if box.key not in critical_variables]
+    num_configs = config_recursion(config_keys, 0)
+    assert num_configs == 45 # Note: some repetitive configs due to the setup of the recursion
 
-    # config_keys = [box.key for box in at.selectbox if box.key not in critical_variables]
-    # assert len(config_keys) == 6
-    # assert len(at.get("number_input")) == 1
-    # assert len(at.get("selectbox") + at.get("number_input")) == 10
+    # 3) test all configs with add_particles = "Yes", "particle_resolution" = "0D (homogeneous)", "has_binding" = "Yes"
+    at.selectbox(key="particle_resolution").set_value("0D (homogeneous)").run()
+    config_keys = [box.key for box in at.selectbox if box.key not in critical_variables]
+    num_configs = config_recursion(config_keys, 0)
+    assert num_configs == 12 + 9 # Note: nine repetitive configs due to the setup of the recursion
 
-    # # test all configs with add_particles = "Yes"
-    # num_configs = config_recursion(config_keys, 0)
-    # assert num_configs == 0
-
-
-
-
-
-
-
-
-
-
-    # selectboxes = at.selectbox
-
-    # for box in selectboxes:
-
-    #     # for option in at.selectbox(key="column_resolution").options:
-    #     for option in box.options:
-
-    #         # at.selectbox(key="column_resolution").set_value(option).run()
-    #         # boxy.set_value(option).run() # fails, proving that its doing the loops
-    #         box.set_value(option).run()
+    # 4) + 5) test all configs with add_particles = "Yes", "has_binding" = "No" -> no particle_resolution
+    at.selectbox(key="has_binding").set_value("No").run()
+    config_keys = [box.key for box in at.selectbox if box.key not in critical_variables]
+    num_configs = config_recursion(config_keys, 0)
+    assert num_configs == 12 + 9 # Note: nine repetitive configs due to the setup of the recursion
 
