@@ -7,7 +7,7 @@ import streamlit as st
 import re
 from collections import Counter
 from dataclasses import dataclass, field
-
+import json
 import subprocess
 import tempfile
 
@@ -180,6 +180,19 @@ class Column:
 st.title("CADET-Equations: Packed-Bed Chromatography Model Equation Generator")
 st.write("Configure a chromatography model to get the corresponding governing equations.")
 
+# File uploader for JSON file
+uploaded_file = st.file_uploader("Define the model configuration below or upload configuration file", type="json")
+
+if uploaded_file is not None:
+    # Load JSON data
+    config = json.load(uploaded_file)
+
+    # Update Streamlit session state
+    for key, value in config.items():
+        st.session_state[key] = value
+
+    st.success("Configuration applied from JSON file!")
+
 # User configuration of the model
 
 # Do not change the label of the dev mode, otherwise it will be included in the CI
@@ -292,3 +305,26 @@ if st.button("Generate PDF"):
         # Read and provide the PDF for download
         with open(pdf_path, "rb") as pdf_file:
             st.download_button("Download PDF", pdf_file, "output.pdf", "application/pdf")
+
+
+if st.button("Generate configuration file"):
+
+    # Create a temporary directory
+    with tempfile.TemporaryDirectory() as temp_dir:
+        json_path = f"{temp_dir}/output.tex"
+
+        config = {key: st.session_state[key] for key in st.session_state}
+
+        config_json = json.dumps(config, indent=4)
+
+        st.write("Current configuration:\n", config_json)
+
+        with open(json_path, "w") as json_file:
+            json_file.write(config_json)
+
+        st.download_button(
+            "Download Configuration (as json)",
+            config_json,
+            "config.json",
+            "application/json"
+        )
