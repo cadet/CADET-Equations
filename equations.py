@@ -11,6 +11,72 @@ def rerender_variables(input_str:str):
      input_str = re.sub(r"\\s(?![a-zA-Z])", r"\\mathrm{s}", input_str)
      return input_str
 
+#%% Model assumptions
+
+def HRM_asmpt():
+
+     return [
+    r"the fluid is incompressible;",
+    r"the fluid flow is laminar;",
+    r"the fluid density and viscosity are constant;",
+    r"the fluid in the particles is stagnant (i.e., there is no convective flow);",
+    r"the process is isothermal (i.e., there are no thermal effects);",
+    r"the binding model parameters do not depend on pressure and are constant along the column;",
+    r"the porous particles are spherical, homogeneous, rigid, of uniform porosity, and do not move;",
+    r"diffusion does not depend on the concentration of the components, viscosity of the fluid, or pressure;",
+    r"the partial molar volumes are the same in mobile and stationary phase;",
+    r"the solvent is not adsorbed;",
+    r"the column is operated under constant conditions (e.g., temperature, flow rate);"
+     ]
+
+def int_vol_3DContinuum_asmpt():
+
+     return [
+		r"the particles form a continuum inside the column (i.e., there is interstitial and particle volume at every point in the column);",
+		r"there is a small number $N_{\mathrm{p}}$ of (representative) particle radii $R_{\mathrm{p},j}$, $j \in \{ 1, \dots, N_{\mathrm{p}} \}$;",
+		r"the fluid only flows in the axial direction of the column (i.e., there is no flow in the radial and angular direction);"
+     ]
+
+def int_vol_2DContinuum_asmpt():
+
+     return int_vol_3DContinuum_asmpt() + [
+		"the column is radially symmetric (i.e., concentration profiles and parameters only depend on axial and radial position);"
+     ]
+
+def int_vol_1DContinuum_asmpt():
+
+     return int_vol_2DContinuum_asmpt() + [
+		r"the column is radially homogeneous (i.e., the radial position inside the interstitial volume does not matter);"
+     ]
+
+def int_vol_continuum_asmpt(resolution:str):
+
+     if resolution == "3D":
+          return int_vol_3DContinuum_asmpt()
+     elif resolution == "2D":
+          return int_vol_2DContinuum_asmpt()
+     elif resolution == "1D":
+          return int_vol_1DContinuum_asmpt()
+
+def particle_1D_asmpt():
+
+     return [
+          r"the interstitial liquid phase concentration $c^\l_i$ is spatially constant on the particle surface;"
+     ]
+
+def particle_0D_asmpt():
+
+     return particle_1D_asmpt() + [
+          r"the pore and surface diffusion are infinitely fast. That is, we assume $D_{i}^{\p} = D_{i}^{\s} = \infty$;"
+     ]
+
+def particle_asmpt(resolution:str):
+
+     if resolution == "0D":
+          return particle_0D_asmpt()
+     elif resolution == "1D":
+          return particle_1D_asmpt()
+
 #%% Equation definitions
 
 

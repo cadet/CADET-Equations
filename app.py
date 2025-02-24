@@ -153,7 +153,9 @@ class Column:
 
                 par_added += self.par_unique_intV_contribution_counts[par_uniq]
 
-        equation = r"\begin{align}" + equation + r",\end{align}"
+        equation = r"""\begin{align}
+""" + equation + r""",
+\end{align}"""
 
         return rerender_variables(equation)
     
@@ -174,6 +176,20 @@ class Column:
             boundary_conditions[par_type] = rerender_variables(boundary_conditions[par_type])
 
         return equations, boundary_conditions
+    
+    def model_name(self):
+
+        return "MODEL NAME BASED ON INPUT\n" # TODO
+
+    def model_assumptions(self):
+
+        asmpts = {
+            "General model assumptions": HRM_asmpt(),
+            "Specific model assumptions": int_vol_continuum_asmpt(self.resolution) +
+            (particle_asmpt(self.particle_models[0].resolution) if self.N_p > 0 else [])# TODO + filmDiff, delete particles, adsorption if not present, etc
+            }
+
+        return asmpts
     
 
 #%% Streamlit UI
@@ -210,14 +226,29 @@ column_model = Column(
 
 #%% Display equations
 
+file_content = [] # used to export model to files
+
+if st.toggle("Show Model Assumptions", key="model_assumptions"):
+
+    asmpts = column_model.model_assumptions()
+
+    for key in asmpts.keys():
+
+        st.write(key + ":\n" + "\n".join(f"- {item}" for item in asmpts[key]))
+
+        file_content.append(
+            key + r""":
+\begin{itemize}
+""" + "\n".join(f"\\item {item}" for item in asmpts[key]) + r"""
+\end{itemize}
+
+"""
+)
+
 interstitial_volume_eq = column_model.interstitial_volume_equation()
 
 nComp_list = r"$i\in\{" + ", ".join(str(i) for i in range(1, column_model.N_c + 1)) + r"\}$" if column_model.N_c > 0 else r"$i\in\{1, \dots, N_c\}$"
 nPar_list = ', '.join(str(j) for j in range(1, column_model.N_p + 1))
-
-st.write("MODEL NAME BASED ON INPUT")
-
-file_content = []
 
 # The following function is used to both print the output and collect it to later generate and export output files
 def write_and_save(output:str, as_latex:bool=False):
@@ -229,6 +260,7 @@ def write_and_save(output:str, as_latex:bool=False):
     else:
         st.write(output)
 
+write_and_save(column_model.model_name())
 
 write_and_save(r"In the interstitial volume, mass transfer is governed by the following convection-diffusion-reaction equations in " + int_vol_domain[column_model.resolution] + r" and for all components " + nComp_list)
 write_and_save(interstitial_volume_eq, as_latex=True)
@@ -267,10 +299,14 @@ if column_model.N_p > 0:
 write_and_save("Initial values for all solution variables (concentrations) are defined at $t = 0$.")
 
 latex_string = [
-    r"\documentclass{article}",
-    r"\usepackage{amsmath}",
-    r"\begin{document}",
-    r"\section*{Chromatography Model}"
+    r"""\documentclass{article}
+""",
+    r"""\usepackage{amsmath}
+""",
+    r"""\begin{document}
+""",
+    r"""\section*{Chromatography Model}
+""",
     ]
 latex_string.extend(file_content + [r"\end{document}"])
 latex_string = "\n".join(latex_string)
