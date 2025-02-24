@@ -203,7 +203,7 @@ advanced_mode_=st.selectbox("Advanced setup options (enables e.g. multiple bound
 column_model = Column(
     dev_mode=dev_mode_, advanced_mode=advanced_mode_,
     resolution=re.search(r'\dD', st.selectbox("Column resolution", ["1D (axial coordinate)", "2D (axial and radial coordinate)", "3D (axial, radial and angular coordinate)"], key="column_resolution")).group(),
-    N_c = st.number_input("Number of components", key="N_c", min_value=1, step=1),
+    N_c = st.number_input("Number of components", key="N_c", min_value=1, step=1) if advanced_mode_ else -1,
     N_p = st.number_input("Number of particle types", key="N_p", min_value=0, step=1) if dev_mode_ else int(st.selectbox("Add particles", ["No", "Yes"], key="add_particles") == "Yes")
     )
 
@@ -212,7 +212,7 @@ column_model = Column(
 
 interstitial_volume_eq = column_model.interstitial_volume_equation()
 
-nComp_list = ', '.join(str(i) for i in range(1, column_model.N_c + 1))
+nComp_list = r"$i\in\{" + ", ".join(str(i) for i in range(1, column_model.N_c + 1)) + r"\}$" if column_model.N_c > 0 else r"$i\in\{1, \dots, N_c\}$"
 nPar_list = ', '.join(str(j) for j in range(1, column_model.N_p + 1))
 
 st.write("MODEL NAME BASED ON INPUT")
@@ -230,7 +230,7 @@ def write_and_save(output:str, as_latex:bool=False):
         st.write(output)
 
 
-write_and_save(r"In the interstitial volume, mass transfer is governed by the following convection-diffusion-reaction equations in " + int_vol_domain[column_model.resolution] + r" and for all components $i\in\{" + str(nComp_list) + r"\}$")
+write_and_save(r"In the interstitial volume, mass transfer is governed by the following convection-diffusion-reaction equations in " + int_vol_domain[column_model.resolution] + r" and for all components " + nComp_list)
 write_and_save(interstitial_volume_eq, as_latex=True)
 write_and_save("with boundary conditions")
 write_and_save(column_model.interstitial_volume_bc(), as_latex=True)
@@ -252,9 +252,9 @@ if column_model.N_p > 0:
 
         if column_model.N_p > 1:
             
-            tmp_textblock += r"particle types $j\in\{" + nPar_list + r"\}$ and components $i\in\{" + str(nComp_list) + r"\}$"
+            tmp_textblock += r"particle types $j\in\{" + nPar_list + r"\}$ and components " + nComp_list
         else:
-            tmp_textblock += r"components $i\in\{" + str(nComp_list) + r"\}$"
+            tmp_textblock += r"components " + nComp_list
 
         write_and_save(tmp_textblock)
         write_and_save(particle_eq[par_type], as_latex=True)
