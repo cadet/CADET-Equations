@@ -143,6 +143,9 @@ class Column:
         if self.has_angular_dispersion:
             equation += " + " + angular_dispersion_eps
 
+        if self.N_p == 0: # remove occurencies of porosity, which is just constant one in this case
+            equation = re.sub(r"\\varepsilon_{\\mathrm{c}}", "", re.sub( r"\\left\( \\varepsilon_{\\mathrm{c}} c^{\\l}_i \\right\)", r"c^{\\l}_i", equation))
+
         # if self.nonlimiting_filmDiff and 1Dparticle # entscheidende faktoren sind particle resolution und filmDiffMode. the following loop has thus to change
         par_added = 0
         for par_uniq in self.par_unique_intV_contribution_counts.keys():
@@ -296,12 +299,12 @@ elif column_model.resolution == "3D":
     diff_string = r", " + diff_vars + r"are the lumped diffusion coefficients in axial, radial and angular direction"
 
 # if column_model.N_p == 0:
-sol_vars_int_vol_eq = r"c^{\l}_i \colon " + re.sub("\$", "", int_vol_domain[column_model.resolution]) + r" \to \Reals" 
+sol_vars_int_vol_eq = r"c^{\l}_i \colon " + re.sub(r"\$", "", int_vol_domain[column_model.resolution]) + r" \to \Reals" 
 # else:# todo req bnd mit 0D par
-if column_model.particle_models[0].resolution == "0D":
-    sol_vars_int_vol_eq = r"c^{\l}_i, c^{\p}_i \colon " + re.sub("\$", "", int_vol_domain[column_model.resolution]) + r" \to \Reals"
+if column_model.particle_models is None or column_model.particle_models[0].resolution == "0D":
+    sol_vars_int_vol_eq = r"c^{\l}_i, c^{\p}_i \colon " + re.sub(r"\$", "", int_vol_domain[column_model.resolution]) + r" \to \Reals"
 else:
-    sol_vars_int_vol_eq += r", c^{\p}_i \colon " + re.sub("\$", "", particle_domain(column_model.resolution, column_model.particle_models[0].resolution, column_model.particle_models[0].hasCore, with_par_index=column_model.N_p, with_time_domain=True)) + r" \to \Reals"
+    sol_vars_int_vol_eq += r", c^{\p}_i \colon " + re.sub(r"\$", "", particle_domain(column_model.resolution, column_model.particle_models[0].resolution, column_model.particle_models[0].hasCore, with_par_index=column_model.N_p, with_time_domain=True)) + r" \to \Reals"
 
 sol_vars_int_vol_eq = rerender_variables(sol_vars_int_vol_eq)
 sol_vars_int_vol_eq_names = "is the liquid concentration" if column_model.N_p == 0 else "are the bulk (interstitial volume) and particle liquid concentrations"
@@ -310,11 +313,14 @@ sol_vars_int_vol_eq_names = "is the liquid concentration" if column_model.N_p ==
 
 filmDiff_str = rerender_variables(r", $k_{\mathrm{f},i}\geq 0$ is the film diffusion coefficient" if column_model.N_p > 0 else "")
 
-write_and_save(
-    rerender_variables(
-        r"Here, $" + sol_vars_int_vol_eq + r"$, " + sol_vars_int_vol_eq_names + " of component $i \in \{1, \dots, N_{\mathrm{c}}\}$, $T_{\mathrm{end}} > 0$ is the simulation end time, $u>0$ is the interstitial velocity" + diff_string + filmDiff_str + r", $c_{\mathrm{in},i}\colon " + int_vol_inlet_domain[column_model.resolution] + r" \to \Reals$ is a given inlet concentration profile."
-        )
-)
+porosity_str = rerender_variables(r", $\varepsilon_c \colon " + re.sub(r"\(0, T_\\mathrm\{end\}\) \\times", "", re.sub(r"\$", "", int_vol_domain[column_model.resolution])) + r" \mapsto (0, 1)$ is the column porosity") if column_model.N_p > 0 else ""
+
+if column_model.N_p > 0:
+    write_and_save(
+        rerender_variables(
+            r"Here, $" + sol_vars_int_vol_eq + r"$, " + sol_vars_int_vol_eq_names + r" of component $i \in \{1, \dots, N_{\mathrm{c}}\}$, $T_{\mathrm{end}} > 0$ is the simulation end time, $u>0$ is the interstitial velocity" + diff_string + filmDiff_str + porosity_str + r", $c_{\mathrm{in},i}\colon " + int_vol_inlet_domain[column_model.resolution] + r" \to \Reals$ is a given inlet concentration profile."
+            )
+    )
 
 
 if column_model.N_p >0:
@@ -352,7 +358,7 @@ if column_model.N_p > 0:
 
             write_and_save(
                 rerender_variables(
-                    r"Here, $c^{\s}_i \colon " + re.sub("\$", "", particle_domain(column_model.resolution, column_model.particle_models[0].resolution, column_model.particle_models[0].hasCore, with_par_index=column_model.N_p, with_time_domain=True)) + r" \to \Reals$ is the solid phase concentration" + diffusion_description
+                    r"Here, $c^{\s}_i \colon " + re.sub(r"\$", "", particle_domain(column_model.resolution, column_model.particle_models[0].resolution, column_model.particle_models[0].hasCore, with_par_index=column_model.N_p, with_time_domain=True)) + r" \to \Reals$ is the solid phase concentration" + diffusion_description
                     )
                 )
 

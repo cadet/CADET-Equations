@@ -270,9 +270,9 @@ def particle_transport_radial(geometry:str, has_surfDiff:bool, has_binding:bool,
      if geometry == "Sphere": 
 
           if has_surfDiff:
-               surfDiffTerm = r"\left( 1 - \varepsilon_{\mathrm{p},j} \right) \frac{1}{r^2} \frac{\partial }{\partial r} \left( r^2 D_{i,j}^{\s} \frac{\partial c^{\s}_{i,j}}{\partial r} \right) +"
+               surfDiffTerm = r" \frac{1}{r^2} \frac{\partial }{\partial r} \left( r^2 D_{i,j}^{\s} \frac{\partial c^{\s}_{i,j}}{\partial r} \right) +"
           
-          particle_solid = r"\left( 1 - \varepsilon_{\mathrm{p},j} \right) \frac{\partial c^{\s}_{i,j}}{\partial t} &= " + surfDiffTerm + r" \left( 1 - \varepsilon_{\mathrm{p},j} \right) f_{\mathrm{bind},i,j}\left( \vec{c}^{\p}, \vec{c}^{\s} \right)"
+          particle_solid = r" \frac{\partial c^{\s}_{i,j}}{\partial t} &= " + surfDiffTerm + r" \frac{1 - \varepsilon_{\mathrm{p},j}}{\varepsilon_{\mathrm{p},j}} f_{\mathrm{bind},i,j}\left( \vec{c}^{\p}, \vec{c}^{\s} \right)"
 
           binding_term = r"f_{\mathrm{bind},i,j}\left( \vec{c}^{\p}, \vec{c}^{\s} \right)"
 
@@ -281,7 +281,7 @@ def particle_transport_radial(geometry:str, has_surfDiff:bool, has_binding:bool,
                binding_term = re.sub("i,j", "i,j,k", binding_term)
                binding_term = r"\sum_{k=1}^{N_{\mathrm{b},i}} " + binding_term
 
-          particle_liquid = r"\varepsilon_{\mathrm{p},j} \frac{\partial c^{\p}_{i,j}}{\partial t} &= \varepsilon_{\mathrm{p},j} \frac{1}{r^2} \frac{\partial }{\partial r} \left( r^2 D_{i,j}^{\p} \frac{\partial c^{\p}_{i,j}}{\partial r} \right) - \left( 1 - \varepsilon_{\mathrm{p},j} \right)" + binding_term
+          particle_liquid = r"\frac{\partial c^{\p}_{i,j}}{\partial t} &= \frac{1}{r^2} \frac{\partial }{\partial r} \left( r^2 D_{i,j}^{\p} \frac{\partial c^{\p}_{i,j}}{\partial r} \right) - \frac{1 - \varepsilon_{\mathrm{p},j}}{\varepsilon_{\mathrm{p},j}}" + binding_term
 
           if has_binding:
                return r"""
@@ -336,22 +336,22 @@ def particle_boundary(particle, singleParticle:bool, nonlimiting_filmDiff:bool, 
      if nonlimiting_filmDiff:
           outerLiquidBC = r"\left. c^{\p}_{i,j} \right|_{r = R_{\mathrm{p},j}} &= c^{\l}_i"
      else:
-          outerLiquidBC = r"""\varepsilon_{\mathrm{p},j} \left(D^{\p}_{i,j} \left. \frac{\partial c^{\p}_{i,j}}{\partial r} \right)\right|_{r = R_{\mathrm{p},j}}
+          outerLiquidBC = r""" \left(D^{\p}_{i,j} \left. \frac{\partial c^{\p}_{i,j}}{\partial r} \right)\right|_{r = R_{\mathrm{p},j}}
           &= k_{\mathrm{f},i,j} \left( c^{\l}_i - \left. c^{\p}_{i,j} \right|_{r = R_{\mathrm{p},j}} \right)"""
 
      inner_boundary = r"R_{\mathrm{pc},j}" if particle.hasCore else r"0"
 
      particleLiquidBC =  r"""
-          -\varepsilon_{\mathrm{p},j} \left( \left. D^{\p}_{i,j} \frac{\partial c^{\p}_{i,j}}{\partial r} \right) \right|_{r=""" + inner_boundary + r"""}
+          - \left( \left. D^{\p}_{i,j} \frac{\partial c^{\p}_{i,j}}{\partial r} \right) \right|_{r=""" + inner_boundary + r"""}
           &= 0, \\
           """ + outerLiquidBC
      
      if has_surfDiff and has_binding:
 
           particleSolidBC = r""",\\
-          -\left( 1 - \varepsilon_{\mathrm{p},j} \right) \left( \left. D^{\s}_{i,j} \frac{\partial c^{\s}_{i,j}}{\partial r} \right) \right|_{r=""" + inner_boundary + r"""}
+          -\left( \left. D^{\s}_{i,j} \frac{\partial c^{\s}_{i,j}}{\partial r} \right) \right|_{r=""" + inner_boundary + r"""}
           &= 0, \\
-          \left(1 - \varepsilon_{\mathrm{p},j} \right) \left( \left. D^{\s}_{i,j} \frac{\partial c^{\s}_{i,j}}{\partial r} \right) \right|_{r = R_{\mathrm{p},j}}
+          \left( \left. D^{\s}_{i,j} \frac{\partial c^{\s}_{i,j}}{\partial r} \right) \right|_{r = R_{\mathrm{p},j}}
           &= 0.
           """
           if has_mult_bnd_states:
