@@ -184,9 +184,9 @@ class Column:
     def model_assumptions(self):
 
         asmpts = {
-            "General model assumptions": HRM_asmpt(),
-            "Specific model assumptions": int_vol_continuum_asmpt(self.resolution) +
-            (particle_asmpt(self.particle_models[0].resolution) if self.N_p > 0 else [])# TODO + filmDiff, delete particles, adsorption if not present, etc
+            "General model assumptions": HRM_asmpt(self.N_p, self.nonlimiting_filmDiff, self.has_binding, self.has_surfDiff),
+            "Specific model assumptions": int_vol_continuum_asmpt(self.resolution, self.N_p, self.nonlimiting_filmDiff, self.has_binding, self.has_surfDiff) +
+            (particle_asmpt(self.particle_models[0].resolution, self.has_surfDiff) if self.N_p > 0 else [])# TODO + filmDiff, delete particles, adsorption if not present, etc
             }
 
         return asmpts
@@ -262,10 +262,61 @@ def write_and_save(output:str, as_latex:bool=False):
 
 write_and_save(column_model.model_name())
 
+if column_model.N_p == 0:
+    write_and_save(r"Consider a cylindrical column filled with liquid phase.")
+elif column_model.N_p == 1:
+    write_and_save(r"Consider a cylindrical column packed with spherical particles.") # TODO particle geometries?
+else:
+    write_and_save(r"""Consider a cylindrical column packed with $N_{\mathrm{p}}\geq 0$ different particle types indexed by $j \in \{1, \dots, N_{\mathrm{p}}\}$ and distributed according to the volume fractions $d_j \colon (0, R_{\mathrm{c}}) \times (0,L) \to [0, 1]$.
+	For all $(\rho,z,\varphi) \in (0, R_{\mathrm{c}}) \times (0,L) \times [0,2\pi)$ the volume fractions satisfy
+	\begin{equation*}
+		\sum_{j=1}^{N_{\mathrm{p}}} d_j(\rho, z, \varphi) = 1.
+	\end{equation*}
+
+""")
+
+
 write_and_save(r"In the interstitial volume, mass transfer is governed by the following convection-diffusion-reaction equations in " + int_vol_domain[column_model.resolution] + r" and for all components " + nComp_list)
 write_and_save(interstitial_volume_eq, as_latex=True)
 write_and_save("with boundary conditions")
 write_and_save(column_model.interstitial_volume_bc(), as_latex=True)
+
+
+# add a variable and parameter description for the interstitial volume equation
+diff_vars = r"D_{\mathrm{ax},i}" if column_model.has_axial_dispersion else ""
+diff_vars += r"D_{\mathrm{rad},i}" if column_model.has_radial_dispersion else ""
+diff_vars += r"D_{\mathrm{ang},i}" if column_model.has_angular_dispersion else ""
+
+if column_model.resolution == "1D":
+    diff_string = r", $D_{\mathrm{ax},i} \geq 0$ is the lumped axial diffusion coefficient" if column_model.has_axial_dispersion else ""
+elif column_model.resolution == "2D":
+    tmp_str = "are the lumped diffusion coefficients in axial and radial direction" if column_model.has_axial_dispersion else "is the lumped radial diffusion coefficient"
+    diff_string = r", " + diff_vars + tmp_str
+elif column_model.resolution == "3D":
+    diff_string = r", " + diff_vars + r"are the lumped diffusion coefficients in axial, radial and angular direction"
+
+# if column_model.N_p == 0:
+sol_vars_int_vol_eq = r"c^{\l}_i \colon " + re.sub("\$", "", int_vol_domain[column_model.resolution]) + r" \to \Reals" 
+# else:# todo req bnd mit 0D par
+if column_model.particle_models[0].resolution == "0D":
+    sol_vars_int_vol_eq = r"c^{\l}_i, c^{\p}_i \colon " + re.sub("\$", "", int_vol_domain[column_model.resolution]) + r" \to \Reals"
+else:
+    sol_vars_int_vol_eq += r", c^{\p}_i \colon " + re.sub("\$", "", particle_domain(column_model.resolution, column_model.particle_models[0].resolution, column_model.particle_models[0].hasCore, with_par_index=column_model.N_p, with_time_domain=True)) + r" \to \Reals"
+
+sol_vars_int_vol_eq = rerender_variables(sol_vars_int_vol_eq)
+sol_vars_int_vol_eq_names = "is the liquid concentration" if column_model.N_p == 0 else "are the bulk (interstitial volume) and particle liquid concentrations"
+# if column_model.N_p > 0 and column_model.particle_models[0].resolution == "0D" and column_model.has_req_binding: # TODO add for req. binding
+#     sol_vars_int_vol_eq_names = "are the liquid and solid concentrations"
+
+filmDiff_str = rerender_variables(r", $k_{\mathrm{f},i}\geq 0$ is the film diffusion coefficient" if column_model.N_p > 0 else "")
+
+write_and_save(
+    rerender_variables(
+        r"Here, $" + sol_vars_int_vol_eq + r"$, " + sol_vars_int_vol_eq_names + " of component $i \in \{1, \dots, N_{\mathrm{c}}\}$, $T_{\mathrm{end}} > 0$ is the simulation end time, $u>0$ is the interstitial velocity" + diff_string + filmDiff_str + r", $c_{\mathrm{in},i}\colon " + int_vol_inlet_domain[column_model.resolution] + r" \to \Reals$ is a given inlet concentration profile."
+        )
+)
+
+
 if column_model.N_p >0:
      tmp = r"and particle types $j\in\{" + str(nPar_list) + r"\}$"
 else:
@@ -291,6 +342,19 @@ if column_model.N_p > 0:
         write_and_save(tmp_textblock)
         write_and_save(particle_eq[par_type], as_latex=True)
         tmp += column_model.par_type_counts[par_type]
+
+        if column_model.has_binding:
+
+            if par_type.resolution == "0D":
+                diffusion_description = "."
+            else:
+                diffusion_description = r", $D_i^{\p}$ is the particle diffusion coefficient for component $i$" if column_model.has_surfDiff else r", $D_i^{\p}, D_i^{\s}\geq 0$ are the pore and surface diffusion coefficients for component $i$."
+
+            write_and_save(
+                rerender_variables(
+                    r"Here, $c^{\s}_i \colon " + re.sub("\$", "", particle_domain(column_model.resolution, column_model.particle_models[0].resolution, column_model.particle_models[0].hasCore, with_par_index=column_model.N_p, with_time_domain=True)) + r" \to \Reals$ is the solid phase concentration" + diffusion_description
+                    )
+                )
 
         if not particle_bc[par_type] == "":
             write_and_save("The boundary conditions are given by")

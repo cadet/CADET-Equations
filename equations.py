@@ -13,56 +13,65 @@ def rerender_variables(input_str:str):
 
 #%% Model assumptions
 
-def HRM_asmpt():
+def HRM_asmpt(N_p:int, nonlimiting_filmDiff:bool, has_binding:bool, has_surfDiff:bool):
 
-     return [
+     asmpts= [
     r"the fluid is incompressible;",
     r"the fluid flow is laminar;",
     r"the fluid density and viscosity are constant;",
-    r"the fluid in the particles is stagnant (i.e., there is no convective flow);",
+    r"the fluid in the particles is stagnant (i.e., there is no convective flow);" if N_p > 0 else "there is no solid phase in the column (and thus no adsorption);",
+    r"the porous particles are spherical, homogeneous, rigid, of uniform porosity, and do not move;" if N_p > 0 else "",
     r"the process is isothermal (i.e., there are no thermal effects);",
+    r"the partial molar volumes are the same in mobile and stationary phase;" if has_binding else "",
+    r"the solvent is not adsorbed;" if has_binding else "both the solvent and the solutes are not adsorbed (i.e. there is no adsorption);",
     r"the binding model parameters do not depend on pressure and are constant along the column;",
-    r"the porous particles are spherical, homogeneous, rigid, of uniform porosity, and do not move;",
     r"diffusion does not depend on the concentration of the components, viscosity of the fluid, or pressure;",
-    r"the partial molar volumes are the same in mobile and stationary phase;",
-    r"the solvent is not adsorbed;",
     r"the column is operated under constant conditions (e.g., temperature, flow rate);"
      ]
 
-def int_vol_3DContinuum_asmpt():
+     return [asmpt for asmpt in asmpts if not asmpt == ""]
 
-     return [
-		r"the particles form a continuum inside the column (i.e., there is interstitial and particle volume at every point in the column);",
-		r"there is a small number $N_{\mathrm{p}}$ of (representative) particle radii $R_{\mathrm{p},j}$, $j \in \{ 1, \dots, N_{\mathrm{p}} \}$;",
+def int_vol_3DContinuum_asmpt(N_p:int, nonlimiting_filmDiff:bool, has_binding:bool, has_surfDiff:bool):
+
+     asmpts = [
+		r"the particles form a continuum inside the column (i.e., there is interstitial and particle volume at every point in the column);" if N_p > 0 else "",
+		r"there is a small number $N_{\mathrm{p}}\geq 1$ of (representative) particle radii $R_{\mathrm{p},j}$, $j \in \{ 1, \dots, N_{\mathrm{p}} \}$;"if N_p > 0 else "",
 		r"the fluid only flows in the axial direction of the column (i.e., there is no flow in the radial and angular direction);"
      ]
 
-def int_vol_2DContinuum_asmpt():
+     return [asmpt for asmpt in asmpts if not asmpt == ""]
 
-     return int_vol_3DContinuum_asmpt() + [
+def int_vol_2DContinuum_asmpt(N_p:int, nonlimiting_filmDiff:bool, has_binding:bool, has_surfDiff:bool):
+
+     return int_vol_3DContinuum_asmpt(N_p, nonlimiting_filmDiff, has_binding, has_surfDiff) + [
 		"the column is radially symmetric (i.e., concentration profiles and parameters only depend on axial and radial position);"
      ]
 
-def int_vol_1DContinuum_asmpt():
+def int_vol_1DContinuum_asmpt(N_p:int, nonlimiting_filmDiff:bool, has_binding:bool, has_surfDiff:bool):
 
-     return int_vol_2DContinuum_asmpt() + [
+     return int_vol_2DContinuum_asmpt(N_p, nonlimiting_filmDiff, has_binding, has_surfDiff) + [
 		r"the column is radially homogeneous (i.e., the radial position inside the interstitial volume does not matter);"
      ]
 
-def int_vol_continuum_asmpt(resolution:str):
+def int_vol_continuum_asmpt(resolution:str, N_p:int, nonlimiting_filmDiff:bool, has_binding:bool, has_surfDiff:bool):
 
      if resolution == "3D":
-          return int_vol_3DContinuum_asmpt()
+          return int_vol_3DContinuum_asmpt(N_p, nonlimiting_filmDiff, has_binding, has_surfDiff)
      elif resolution == "2D":
-          return int_vol_2DContinuum_asmpt()
+          return int_vol_2DContinuum_asmpt(N_p, nonlimiting_filmDiff, has_binding, has_surfDiff)
      elif resolution == "1D":
-          return int_vol_1DContinuum_asmpt()
+          return int_vol_1DContinuum_asmpt(N_p, nonlimiting_filmDiff, has_binding, has_surfDiff)
 
-def particle_1D_asmpt():
+def particle_1D_asmpt(has_surfDiff:bool):
 
-     return [
-          r"the interstitial liquid phase concentration $c^\l_i$ is spatially constant on the particle surface;"
+     asmpts = [
+          r"the interstitial liquid phase concentration is spatially constant on the particle surface;"
      ]
+
+     if has_surfDiff:
+          asmpts.append(r"there is no surface diffusion (i.e. adsorbed molecules are spatially constant)")
+
+     return asmpts
 
 def particle_0D_asmpt():
 
@@ -70,12 +79,12 @@ def particle_0D_asmpt():
           r"the pore and surface diffusion are infinitely fast. That is, we assume $D_{i}^{\p} = D_{i}^{\s} = \infty$;"
      ]
 
-def particle_asmpt(resolution:str):
+def particle_asmpt(resolution:str, has_surfDiff:bool):
 
      if resolution == "0D":
           return particle_0D_asmpt()
      elif resolution == "1D":
-          return particle_1D_asmpt()
+          return particle_1D_asmpt(has_surfDiff)
 
 #%% Equation definitions
 
@@ -128,7 +137,8 @@ def int_vol_BC(resolution:str, hasAxialDispersion:bool):
           ang_bc_domain = r"(0, T_{\mathrm{end}}) \times (0, L) \times (0, R_{\mathrm{c}})"
 
      # define single equations
-     inflow_bc = r"u c_{\mathrm{in},i} &= \left.\left( u c^{\l}_i - D_{\mathrm{ax},i} \frac{\partial c^{\l}_i}{\partial z} \right)\right|_{z=0} & &\qquad\text{on }" + ax_bc_domain
+     ax_diff_term = r"- D_{\mathrm{ax},i} \frac{\partial c^{\l}_i}{\partial z}" if hasAxialDispersion else ""
+     inflow_bc = r"u c_{\mathrm{in},i} &= \left.\left( u c^{\l}_i " + ax_diff_term + r"\right)\right|_{z=0} & &\qquad\text{on }" + ax_bc_domain
      outflow_bc = r"0 &= - D_{\mathrm{ax},i} \left. \frac{\partial c^{\l}_i}{\partial z} \right|_{z=L} & &\qquad\text{on }" +  ax_bc_domain
 
      rad_wall_bc = r"0 &= - \left(D_{\mathrm{rad},i} \left. \frac{\partial c^{\l}_i}{\partial \rho} \right) \right|_{\rho=R_{\mathrm{c}}} & &\qquad\text{on }" + rad_bc_domain
@@ -193,6 +203,16 @@ int_vol_domain = {
      "1D": r"$(0, T_\mathrm{end}) \times (0, L)$",
      "2D": r"$(0, T_\mathrm{end}) \times (0, L) \times (0, R_\mathrm{c})$",
      "3D": r"$(0, T_\mathrm{end}) \times (0, L) \times (0, R_\mathrm{c}) \times (0, 2\pi)$"
+}
+int_vol_inlet_domain = {
+     "1D": r"(0, T_{\mathrm{end}})",
+     "2D": r"(0, T_{\mathrm{end}}) \times (0, R_\mathrm{c})",
+     "3D": r"(0, T_{\mathrm{end}}) \times (0, R_\mathrm{c}) \times (0, 2\pi)"
+}
+int_vol_vars = {
+     "1D": r"z",
+     "2D": r"z, \rho",
+     "3D": r"z, \rho, \varphi"
 }
 
 # Particle transport terms
