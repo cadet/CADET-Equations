@@ -257,11 +257,11 @@ def particle_transport_homogeneous_solid(has_mult_bnd_states:bool):
 
 def particle_transport_homogeneous(has_mult_bnd_states:bool):
      return r"""
-	\begin{align}
-     """ + particle_transport_homogeneous_liquid(has_mult_bnd_states) + r""",
-          \\""" + particle_transport_homogeneous_solid(has_mult_bnd_states) + r""".
-	\end{align}
-     """
+\begin{align}
+""" + particle_transport_homogeneous_liquid(has_mult_bnd_states) + r""",\\
+""" + particle_transport_homogeneous_solid(has_mult_bnd_states) + r""".
+\end{align}
+"""
 
 def particle_transport_radial(geometry:str, has_surfDiff:bool, has_binding:bool, has_mult_bnd_states:bool):
      
@@ -285,17 +285,17 @@ def particle_transport_radial(geometry:str, has_surfDiff:bool, has_binding:bool,
 
           if has_binding:
                return r"""
-               \begin{align}
-               """ + particle_liquid + r""", \\
-               """ + particle_solid + r""".
-               \end{align}
-               """
+\begin{align}
+""" + particle_liquid + r""", \\
+""" + particle_solid + r""".
+\end{align}
+"""
           else:
                return r"""
-               \begin{align}
-               """ + particle_liquid + r""".
-               \end{align}
-               """
+\begin{align}
+""" + particle_liquid + r""".
+\end{align}
+"""
           
      if geometry == "Cylinder": 
 
@@ -303,30 +303,30 @@ def particle_transport_radial(geometry:str, has_surfDiff:bool, has_binding:bool,
                surfDiffTerm = r"\left( 1 - \varepsilon_{\mathrm{p},j} \right) \frac{1}{r} \frac{\partial }{\partial r} \left( r D_{i,j}^{\s} \frac{\partial c^{\s}_{i,j}}{\partial r} \right) + "
      
           return r"""
-               \begin{align}    
-               \varepsilon_{\mathrm{p},j} \frac{\partial c^{\p}_{i,j}}{\partial t}
-               &=
-               \varepsilon_{\mathrm{p},j} \frac{1}{r} \frac{\partial }{\partial r} \left( r D_{i,j}^{\p} \frac{\partial c^{\p}_{i,j}}{\partial r} \right) - \left( 1 - \varepsilon_{\mathrm{p},j} \right) f_{\mathrm{bind},i,j}\left( \vec{c}^{\p}, \vec{c}^{\s} \right), \\
-                    \left( 1 - \varepsilon_{\mathrm{p},j} \right) \frac{\partial c^{\s}_{i,j}}{\partial t}
-               &=
-               """ + surfDiffTerm + r"""\left( 1 - \varepsilon_{\mathrm{p},j} \right) f_{\mathrm{bind},i,j}\left( \vec{c}^{\p}, \vec{c}^{\s} \right).
-               \end{align}
-               """
+\begin{align}    
+\varepsilon_{\mathrm{p},j} \frac{\partial c^{\p}_{i,j}}{\partial t}
+&=
+\varepsilon_{\mathrm{p},j} \frac{1}{r} \frac{\partial }{\partial r} \left( r D_{i,j}^{\p} \frac{\partial c^{\p}_{i,j}}{\partial r} \right) - \left( 1 - \varepsilon_{\mathrm{p},j} \right) f_{\mathrm{bind},i,j}\left( \vec{c}^{\p}, \vec{c}^{\s} \right), \\
+     \left( 1 - \varepsilon_{\mathrm{p},j} \right) \frac{\partial c^{\s}_{i,j}}{\partial t}
+&=
+""" + surfDiffTerm + r"""\left( 1 - \varepsilon_{\mathrm{p},j} \right) f_{\mathrm{bind},i,j}\left( \vec{c}^{\p}, \vec{c}^{\s} \right).
+\end{align}
+"""
      if geometry == "Slab":
 
           if has_surfDiff:
                surfDiffTerm = r"\left( 1 - \varepsilon_{\mathrm{p},j} \right) \frac{\partial }{\partial r} \left( D_{i,j}^{\s} \frac{\partial c^{\s}_{i,j}}{\partial r} \right) + "
 
           return r"""
-               \begin{align}    
-               \varepsilon_{\mathrm{p},j} \frac{\partial c^{\p}_{i,j}}{\partial t}
-               &=
-               \varepsilon_{\mathrm{p},j} \frac{\partial }{\partial r} \left( D_{i,j}^{\p} \frac{\partial c^{\p}_{i,j}}{\partial r} \right) - \left( 1 - \varepsilon_{\mathrm{p},j} \right) f_{\mathrm{bind},i,j}\left( \vec{c}^{\p}, \vec{c}^{\s} \right), \\
-                    \left( 1 - \varepsilon_{\mathrm{p},j} \right) \frac{\partial c^{\s}_{i,j}}{\partial t}
-               &=
-               """ + surfDiffTerm + r"""\left( 1 - \varepsilon_{\mathrm{p},j} \right) f_{\mathrm{bind},i,j}\left( \vec{c}^{\p}, \vec{c}^{\s} \right).
-               \end{align}
-               """
+\begin{align}    
+\varepsilon_{\mathrm{p},j} \frac{\partial c^{\p}_{i,j}}{\partial t}
+&=
+\varepsilon_{\mathrm{p},j} \frac{\partial }{\partial r} \left( D_{i,j}^{\p} \frac{\partial c^{\p}_{i,j}}{\partial r} \right) - \left( 1 - \varepsilon_{\mathrm{p},j} \right) f_{\mathrm{bind},i,j}\left( \vec{c}^{\p}, \vec{c}^{\s} \right), \\
+     \left( 1 - \varepsilon_{\mathrm{p},j} \right) \frac{\partial c^{\s}_{i,j}}{\partial t}
+&=
+""" + surfDiffTerm + r"""\left( 1 - \varepsilon_{\mathrm{p},j} \right) f_{\mathrm{bind},i,j}\left( \vec{c}^{\p}, \vec{c}^{\s} \right).
+\end{align}
+"""
 
 def particle_boundary(particle, singleParticle:bool, nonlimiting_filmDiff:bool, has_surfDiff:bool, has_binding:bool, has_mult_bnd_states:bool):
 
@@ -342,18 +342,18 @@ def particle_boundary(particle, singleParticle:bool, nonlimiting_filmDiff:bool, 
      inner_boundary = r"R_{\mathrm{pc},j}" if particle.hasCore else r"0"
 
      particleLiquidBC =  r"""
-          - \left( \left. D^{\p}_{i,j} \frac{\partial c^{\p}_{i,j}}{\partial r} \right) \right|_{r=""" + inner_boundary + r"""}
-          &= 0, \\
-          """ + outerLiquidBC
+- \left( \left. D^{\p}_{i,j} \frac{\partial c^{\p}_{i,j}}{\partial r} \right) \right|_{r=""" + inner_boundary + r"""}
+&= 0, \\
+""" + outerLiquidBC
      
      if has_surfDiff and has_binding:
 
           particleSolidBC = r""",\\
-          -\left( \left. D^{\s}_{i,j} \frac{\partial c^{\s}_{i,j}}{\partial r} \right) \right|_{r=""" + inner_boundary + r"""}
-          &= 0, \\
-          \left( \left. D^{\s}_{i,j} \frac{\partial c^{\s}_{i,j}}{\partial r} \right) \right|_{r = R_{\mathrm{p},j}}
-          &= 0.
-          """
+-\left( \left. D^{\s}_{i,j} \frac{\partial c^{\s}_{i,j}}{\partial r} \right) \right|_{r=""" + inner_boundary + r"""}
+&= 0, \\
+\left( \left. D^{\s}_{i,j} \frac{\partial c^{\s}_{i,j}}{\partial r} \right) \right|_{r = R_{\mathrm{p},j}}
+&= 0.
+"""
           if has_mult_bnd_states:
                particleSolidBC = re.sub("i,j", "i,j,k", particleSolidBC)
 
@@ -372,17 +372,17 @@ def particle_initial(domain:str, singleParticle:bool, includeParLiquid:bool):
      
      if includeParLiquid:
           initial_condition = r"""
-          \begin{alignat}{2}
-          \left. c^{\p}_{i,j} \right|_{t = 0} &= c^{\p}_{\mathrm{init},i,j} & & \qquad\text{in }""" + re.sub("\\$", "", domain) + r""",\\
-          \left. c^{\s}_{i,j} \right|_{t = 0} &= c^{\s}_{\mathrm{init},i,j} & & \qquad\text{in }""" + re.sub("\\$", "", domain) + r""".
-          \end{alignat}
-          """
+\begin{alignat}{2}
+\left. c^{\p}_{i,j} \right|_{t = 0} &= c^{\p}_{\mathrm{init},i,j} & & \qquad\text{in }""" + re.sub("\\$", "", domain) + r""",\\
+\left. c^{\s}_{i,j} \right|_{t = 0} &= c^{\s}_{\mathrm{init},i,j} & & \qquad\text{in }""" + re.sub("\\$", "", domain) + r""".
+\end{alignat}
+"""
      else:
           initial_condition = r"""
-          \begin{alignat}{2}
-          \left. c^{\s}_{i,j} \right|_{t = 0} &= c^{\s}_{\mathrm{init},i,j} & & \qquad\text{in }""" + re.sub("\\$", "", domain) + r""".
-          \end{alignat}
-          """
+\begin{alignat}{2}
+\left. c^{\s}_{i,j} \right|_{t = 0} &= c^{\s}_{\mathrm{init},i,j} & & \qquad\text{in }""" + re.sub("\\$", "", domain) + r""".
+\end{alignat}
+"""
 
      if singleParticle:
           initial_condition = re.sub(",j", "", initial_condition)

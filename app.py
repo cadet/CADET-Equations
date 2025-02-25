@@ -299,12 +299,12 @@ elif column_model.resolution == "3D":
     diff_string = r", " + diff_vars + r"are the lumped diffusion coefficients in axial, radial and angular direction"
 
 # if column_model.N_p == 0:
-sol_vars_int_vol_eq = r"c^{\l}_i \colon " + re.sub(r"\$", "", int_vol_domain[column_model.resolution]) + r" \to \Reals" 
+sol_vars_int_vol_eq = r"c^{\l}_i \colon " + re.sub(r"\$", "", int_vol_domain[column_model.resolution]) + r" \to \mathbb{R}" 
 # else:# todo req bnd mit 0D par
 if column_model.particle_models is None or column_model.particle_models[0].resolution == "0D":
-    sol_vars_int_vol_eq = r"c^{\l}_i, c^{\p}_i \colon " + re.sub(r"\$", "", int_vol_domain[column_model.resolution]) + r" \to \Reals"
+    sol_vars_int_vol_eq = r"c^{\l}_i, c^{\p}_i \colon " + re.sub(r"\$", "", int_vol_domain[column_model.resolution]) + r" \to \mathbb{R}"
 else:
-    sol_vars_int_vol_eq += r", c^{\p}_i \colon " + re.sub(r"\$", "", particle_domain(column_model.resolution, column_model.particle_models[0].resolution, column_model.particle_models[0].hasCore, with_par_index=column_model.N_p, with_time_domain=True)) + r" \to \Reals"
+    sol_vars_int_vol_eq += r", c^{\p}_i \colon " + re.sub(r"\$", "", particle_domain(column_model.resolution, column_model.particle_models[0].resolution, column_model.particle_models[0].hasCore, with_par_index=column_model.N_p, with_time_domain=True)) + r" \to \mathbb{R}"
 
 sol_vars_int_vol_eq = rerender_variables(sol_vars_int_vol_eq)
 sol_vars_int_vol_eq_names = "is the liquid concentration" if column_model.N_p == 0 else "are the bulk (interstitial volume) and particle liquid concentrations"
@@ -318,7 +318,7 @@ porosity_str = rerender_variables(r", $\varepsilon_c \colon " + re.sub(r"\(0, T_
 if column_model.N_p > 0:
     write_and_save(
         rerender_variables(
-            r"Here, $" + sol_vars_int_vol_eq + r"$, " + sol_vars_int_vol_eq_names + r" of component $i \in \{1, \dots, N_{\mathrm{c}}\}$, $T_{\mathrm{end}} > 0$ is the simulation end time, $u>0$ is the interstitial velocity" + diff_string + filmDiff_str + porosity_str + r", $c_{\mathrm{in},i}\colon " + int_vol_inlet_domain[column_model.resolution] + r" \to \Reals$ is a given inlet concentration profile."
+            r"Here, $" + sol_vars_int_vol_eq + r"$, " + sol_vars_int_vol_eq_names + r" of component $i \in \{1, \dots, N_{\mathrm{c}}\}$, $T_{\mathrm{end}} > 0$ is the simulation end time, $u>0$ is the interstitial velocity" + diff_string + filmDiff_str + porosity_str + r", $c_{\mathrm{in},i}\colon " + int_vol_inlet_domain[column_model.resolution] + r" \to \mathbb{R}$ is a given inlet concentration profile."
             )
     )
 
@@ -358,7 +358,7 @@ if column_model.N_p > 0:
 
             write_and_save(
                 rerender_variables(
-                    r"Here, $c^{\s}_i \colon " + re.sub(r"\$", "", particle_domain(column_model.resolution, column_model.particle_models[0].resolution, column_model.particle_models[0].hasCore, with_par_index=column_model.N_p, with_time_domain=True)) + r" \to \Reals$ is the solid phase concentration" + diffusion_description
+                    r"Here, $c^{\s}_i \colon " + re.sub(r"\$", "", particle_domain(column_model.resolution, column_model.particle_models[0].resolution, column_model.particle_models[0].hasCore, with_par_index=column_model.N_p, with_time_domain=True)) + r" \to \mathbb{R}$ is the solid phase concentration" + diffusion_description
                     )
                 )
 
@@ -371,7 +371,7 @@ write_and_save("Initial values for all solution variables (concentrations) are d
 latex_string = [
     r"""\documentclass{article}
 """,
-    r"""\usepackage{amsmath}
+    r"""\usepackage{amssymb,amsmath,mleftright}
 """,
     r"""\begin{document}
 """,
