@@ -182,7 +182,42 @@ class Column:
     
     def model_name(self):
 
-        return "MODEL NAME BASED ON INPUT\n" # TODO
+        if self.has_angular_coordinate:
+            model_name = "3D"
+        elif self.has_radial_coordinate:
+            model_name = "2D"
+        # elif self.has_axial_coordinate: # default case, no name prefix !
+        else:
+            model_name = ""
+
+        if self.N_p > 0:
+
+            if self.N_p > 1:
+                if not any(par.geometry != "Sphere" for par in self.particle_models):
+                    model_name += " PSD" # particle-size distribution
+                else:
+                    model_name += " PTD" # particle-type distribution # TODO use when different kinds of geometry or binding
+
+            if self.particle_models[0].resolution == "1D":
+                model_name += " General Rate Model"
+
+                if self.nonlimiting_filmDiff:
+                    model_name += " without film diffusion"
+
+                if self.has_surfDiff:
+                    model_name += "  with surface diffusion"
+                    
+            else:
+                model_name += " Lumped Rate Model"
+
+                if self.nonlimiting_filmDiff:
+                    model_name += "without Pores"
+        else:
+            if self.has_axial_dispersion or self.has_radial_dispersion or self.has_angular_dispersion:
+                model_name += " Dispersive"
+            model_name += " Plug Flow" # Reactor if we have reactions
+
+        return model_name
 
     def model_assumptions(self):
 
@@ -263,7 +298,8 @@ def write_and_save(output:str, as_latex:bool=False):
     else:
         st.write(output)
 
-write_and_save(column_model.model_name())
+st.write("###" + column_model.model_name())
+file_content.append(r"\section*{" + column_model.model_name() + r"}")
 
 if column_model.N_p == 0:
     write_and_save(r"Consider a cylindrical column filled with liquid phase.")
@@ -374,9 +410,7 @@ latex_string = [
     r"""\usepackage{amssymb,amsmath,mleftright}
 """,
     r"""\begin{document}
-""",
-    r"""\section*{Chromatography Model}
-""",
+"""
     ]
 latex_string.extend(file_content + [r"\end{document}"])
 latex_string = "\n".join(latex_string)
