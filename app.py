@@ -68,6 +68,7 @@ class Column:
     par_unique_intV_contribution_counts: Counter[Particle] = field(default_factory=Counter) # puts particle types together that have a similar contribution to the interstitial volume equation and counts them
     has_surfDiff: bool = False
     has_binding: bool = True # and thus solid phase
+    req_binding: bool = False
     has_mult_bnd_states: bool = False
     # nCompReq: int
     # nCompKin: int
@@ -102,7 +103,9 @@ class Column:
             self.nonlimiting_filmDiff = st.selectbox("Non-limiting film diffusion", ["No", "Yes"], key="nonlimiting_filmDiff") == "Yes"
 
             self.has_binding = st.selectbox("Add binding", ["Yes", "No"], key="has_binding") == "Yes"
-            self.has_mult_bnd_states = st.selectbox("Add multiple bound states", ["No", "Yes"], key="has_mult_bnd_states") == "Yes" if advanced_mode_ else False
+            if self.has_binding:
+                self.req_binding = st.selectbox("Binding kinetics mode", ["Kinetic", "Rapid-equilibrium"], key="req_binding") == "Rapid-equilibrium"
+                self.has_mult_bnd_states = st.selectbox("Add multiple bound states", ["No", "Yes"], key="has_mult_bnd_states") == "Yes" if advanced_mode_ else False
 
             self.particle_models = []
 
@@ -172,10 +175,10 @@ class Column:
 
         for par_type in self.par_type_counts.keys():
 
-            equations[par_type] = particle_transport(par_type, singleParticle=self.N_p == 1, nonlimiting_filmDiff=self.nonlimiting_filmDiff, has_surfDiff=self.has_surfDiff, has_binding=self.has_binding, has_mult_bnd_states=self.has_mult_bnd_states)
+            equations[par_type] = particle_transport(par_type, singleParticle=self.N_p == 1, nonlimiting_filmDiff=self.nonlimiting_filmDiff, has_surfDiff=self.has_surfDiff, has_binding=self.has_binding, req_binding=self.req_binding, has_mult_bnd_states=self.has_mult_bnd_states)
             equations[par_type] = rerender_variables(equations[par_type])
 
-            boundary_conditions[par_type] = particle_boundary(par_type, singleParticle=self.N_p == 1, nonlimiting_filmDiff=self.nonlimiting_filmDiff, has_surfDiff=self.has_surfDiff, has_binding=self.has_binding, has_mult_bnd_states=self.has_mult_bnd_states)
+            boundary_conditions[par_type] = particle_boundary(par_type, singleParticle=self.N_p == 1, nonlimiting_filmDiff=self.nonlimiting_filmDiff, has_surfDiff=self.has_surfDiff, has_binding=self.has_binding, req_binding=self.req_binding, has_mult_bnd_states=self.has_mult_bnd_states)
             boundary_conditions[par_type] = rerender_variables(boundary_conditions[par_type])
 
         return equations, boundary_conditions
@@ -211,7 +214,7 @@ class Column:
                 model_name += " Lumped Rate Model"
 
                 if self.nonlimiting_filmDiff:
-                    model_name += "without Pores"
+                    model_name += " without Pores"
         else:
             if self.has_axial_dispersion or self.has_radial_dispersion or self.has_angular_dispersion:
                 model_name += " Dispersive"
@@ -224,8 +227,13 @@ class Column:
         asmpts = {
             "General model assumptions": HRM_asmpt(self.N_p, self.nonlimiting_filmDiff, self.has_binding, self.has_surfDiff),
             "Specific model assumptions": int_vol_continuum_asmpt(self.resolution, self.N_p, self.nonlimiting_filmDiff, self.has_binding, self.has_surfDiff) +
-            (particle_asmpt(self.particle_models[0].resolution, self.has_surfDiff) if self.N_p > 0 else [])# TODO + filmDiff, delete particles, adsorption if not present, etc
+            (particle_asmpt(self.particle_models[0].resolution, self.has_surfDiff) if self.N_p > 0 else [])
             }
+        
+        if self.nonlimiting_filmDiff:
+            asmpts["Specific model assumptions"].append(r"the film around the particles does not limit mass transfer (i.e. $k_{\mathrm{f},i} \to \infty$)")
+        if self.req_binding:
+            asmpts["Specific model assumptions"].append(r"adsorption and desorption happen on a much faster time scale than the other mass transfer processes (e.g., convection, diffusion). Hence, we consider them to be equilibrated instantly, that is, to always be in (local) equilibrium")
 
         return asmpts
     
