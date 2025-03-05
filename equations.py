@@ -91,7 +91,7 @@ def particle_asmpt(resolution:str, has_surfDiff:bool):
 
 # Interstitial volume transport terms including spatially variable porosity (epsilon)
 bulk_time_derivative_eps = r"\varepsilon_{\mathrm{c}} \frac{\partial c^{\l}_i}{\partial t}"
-solid_time_derivative_eps = r"\left( 1 - \varepsilon_{\mathrm{c}} \right) \frac{\partial c^{\l}_i}{\partial t}"
+solid_time_derivative_eps = r"\left( 1 - \varepsilon_{\mathrm{c}} \right) \frac{\partial c^{\s}_i}{\partial t}"
 axial_convection_eps = r"- u \frac{\partial \left( \varepsilon_{\mathrm{c}} c^{\l}_i \right)}{\partial z}"
 axial_dispersion_eps = r"\frac{\partial}{\partial z} \left( \varepsilon_{\mathrm{c}} D_{\mathrm{ax},i} \frac{\partial c^{\l}_i}{\partial z} \right)"
 radial_dispersion_eps = r"\frac{1}{\rho} \frac{\partial}{\partial \rho} \left( \rho \varepsilon_{\mathrm{c}} D_{\mathrm{rad},i}  \frac{\partial c^{\l}_i}{\partial \rho} \right)"

@@ -164,6 +164,9 @@ class Column:
 
                 par_added += self.par_unique_intV_contribution_counts[par_uniq]
 
+        if self.nonlimiting_filmDiff and self.has_binding and self.particle_models[0].resolution == "0D" and self.req_binding:
+            equation = re.sub(r"\\varepsilon_{\\mathrm{c}}", r"\\varepsilon_{\\mathrm{t}}", equation)
+
         equation = r"""\begin{align}
 """ + equation + r""",
 \end{align}"""
@@ -362,7 +365,11 @@ sol_vars_int_vol_eq_names = "is the liquid concentration" if column_model.N_p ==
 
 filmDiff_str = rerender_variables(r", $k_{\mathrm{f},i}\geq 0$ is the film diffusion coefficient" if column_model.N_p > 0 else "")
 
-porosity_str = rerender_variables(r", $\varepsilon_c \colon " + re.sub(r"\(0, T_\\mathrm\{end\}\) \\times", "", re.sub(r"\$", "", int_vol_domain[column_model.resolution])) + r" \mapsto (0, 1)$ is the column porosity") if column_model.N_p > 0 else ""
+porosity_str = rerender_variables(r", $\varepsilon_{\mathrm{c}} \colon " + re.sub(r"\(0, T_\\mathrm\{end\}\) \\times", "", re.sub(r"\$", "", int_vol_domain[column_model.resolution])) + r" \mapsto (0, 1)$ is the interstitial column porosity") if column_model.N_p > 0 else ""
+if column_model.nonlimiting_filmDiff and column_model.has_binding and column_model.particle_models[0].resolution == "0D" and column_model.req_binding:
+    porosity_str = re.sub(r"\\varepsilon_{\\mathrm{c}}", r"\\varepsilon_{\\mathrm{t}}", porosity_str)
+    porosity_str = re.sub("interstitial column porosity", "total porosity", porosity_str)
+
 
 if column_model.N_p > 0:
     write_and_save(
