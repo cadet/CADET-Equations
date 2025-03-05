@@ -50,7 +50,7 @@ class Column:
 
     dev_mode: bool # dev mode including untested, unstable and wip features
     advanced_mode: bool # Ask for detailed parameter inputs
-    resolution: Literal["1D", "2D", "3D"]
+    resolution: Literal["0D", "1D", "2D", "3D"]
     N_c: int
     N_p: int
 
@@ -75,7 +75,7 @@ class Column:
     # noPoresButReqBinding: bool
 
     def __post_init__(self):
-        valid_resolutions = {"3D", "2D", "1D"}
+        valid_resolutions = {"3D", "2D", "1D", "0D"}
 
         if self.resolution not in valid_resolutions:
             raise ValueError(f"Invalid resolution: {self.resolution}. Must be one of {valid_resolutions}.")
@@ -84,10 +84,10 @@ class Column:
              self.has_axial_dispersion = True
         if int(re.search("\\d", self.resolution).group()) > 1:
              self.has_radial_coordinate = True
-             self.has_radial_dispersion = True # TODO make corresponding BC optional
+             self.has_radial_dispersion = True
         if int(re.search("\\d", self.resolution).group()) > 2:
              self.has_angular_coordinate = True
-             self.has_angular_dispersion = True # TODO make corresponding BC optional
+             self.has_angular_dispersion = True
         
         if self.has_axial_coordinate:
             self.has_axial_dispersion = st.selectbox("Add axial Dispersion", ["No", "Yes"], key="has_axial_dispersion") == "Yes"
@@ -138,6 +138,19 @@ class Column:
 
     def interstitial_volume_equation(self):
 
+        if self.resolution == "0D":
+            equation = r"""
+\begin{align}
+    \frac{\mathrm{d}}{\mathrm{d} t} \left( V^\l c^\l_i \right)
+    &=
+    Q_{\mathrm{in}} c^\l_{\mathrm{in},i} - Q_{\mathrm{out}} c^\l_i
+    - V^s \sum_{j=1}^{N_p} \frac{3 d_j}{R_{\mathrm{c}}} k_{\mathrm{f},j,i} \left(c^{\l}_i - \left. c^{\p}_{j,i} \right|_{r = R_{\mathrm{p},j}} \right),
+    \\
+    \frac{\mathrm{d}V^\l}{\mathrm{d}t} &= Q_{\mathrm{in}} - Q_{\mathrm{out}} - Q_{\mathrm{filter}}
+\end{align}
+"""
+            return rerender_variables(equation)
+
         equation = bulk_time_derivative_eps
         if self.nonlimiting_filmDiff and self.has_binding and self.particle_models[0].resolution == "0D" and self.req_binding:
             equation += r" + " + solid_time_derivative_eps
@@ -174,7 +187,10 @@ class Column:
         return rerender_variables(equation)
     
     def interstitial_volume_bc(self):
-        return rerender_variables(int_vol_BC(self.resolution, self.has_axial_dispersion))
+        if not self.resolution == "0D":
+            return rerender_variables(int_vol_BC(self.resolution, self.has_axial_dispersion))
+        else:
+            return None
     
     def particle_equations(self):
 
@@ -192,6 +208,9 @@ class Column:
         return equations, boundary_conditions
     
     def model_name(self):
+
+        if self.resolution == "0D":
+            return " Continuously Stirred Tank Reactor" if self.has_binding else " Continuously Stirred Tank"
 
         if self.has_angular_coordinate:
             model_name = "3D"
@@ -211,9 +230,6 @@ class Column:
 
             if self.particle_models[0].resolution == "1D":
                 model_name += " General Rate Model"
-
-                if self.nonlimiting_filmDiff:
-                    model_name += " without film diffusion"
 
                 if self.has_surfDiff:
                     model_name += "  with surface diffusion"
@@ -272,7 +288,7 @@ advanced_mode_=st.selectbox("Advanced setup options (enables e.g. multiple bound
 
 column_model = Column(
     dev_mode=dev_mode_, advanced_mode=advanced_mode_,
-    resolution=re.search(r'\dD', st.selectbox("Column resolution", ["1D (axial coordinate)", "2D (axial and radial coordinate)", "3D (axial, radial and angular coordinate)"], key="column_resolution")).group(),
+    resolution=re.search(r'\dD', st.selectbox("Column resolution", ["0D (Homogeneous)", "1D (axial coordinate)", "2D (axial and radial coordinate)", "3D (axial, radial and angular coordinate)"], key="column_resolution")).group(),
     N_c = st.number_input("Number of components", key="N_c", min_value=1, step=1) if advanced_mode_ else -1,
     N_p = st.number_input("Number of particle types", key="N_p", min_value=0, step=1) if dev_mode_ else int(st.selectbox("Add particles", ["No", "Yes"], key="add_particles") == "Yes")
     )
@@ -307,22 +323,29 @@ nPar_list = ', '.join(str(j) for j in range(1, column_model.N_p + 1))
 # The following function is used to both print the output and collect it to later generate and export output files
 def write_and_save(output:str, as_latex:bool=False):
 
-    file_content.append(output)
+    if output is not None:
 
-    if as_latex:
-        st.latex(output)
-    else:
-        st.write(output)
+        file_content.append(output)
+
+        if as_latex:
+            st.latex(output)
+        else:
+            st.write(output)
 
 st.write("###" + column_model.model_name())
 file_content.append(r"\section*{" + column_model.model_name() + r"}")
 
-if column_model.N_p == 0:
-    write_and_save(r"Consider a cylindrical column filled with liquid phase.")
-elif column_model.N_p == 1:
-    write_and_save(r"Consider a cylindrical column packed with spherical particles.") # TODO particle geometries?
+if column_model.resolution == "0D":
+    intro_str = r"Consider a continuously stirred tank "
 else:
-    write_and_save(r"""Consider a cylindrical column packed with $N_{\mathrm{p}}\geq 0$ different particle types indexed by $j \in \{1, \dots, N_{\mathrm{p}}\}$ and distributed according to the volume fractions $d_j \colon (0, R_{\mathrm{c}}) \times (0,L) \to [0, 1]$.
+    intro_str = r"Consider a cylindrical column "
+
+if column_model.N_p == 0:
+    write_and_save(intro_str + r"filled with liquid phase.")
+elif column_model.N_p == 1:
+    write_and_save(intro_str + r"packed with spherical particles.") # TODO particle geometries?
+else:
+    write_and_save(intro_str + r"""packed with $N_{\mathrm{p}}\geq 0$ different particle types indexed by $j \in \{1, \dots, N_{\mathrm{p}}\}$ and distributed according to the volume fractions $d_j \colon (0, R_{\mathrm{c}}) \times (0,L) \to [0, 1]$.
 	For all $(\rho,z,\varphi) \in (0, R_{\mathrm{c}}) \times (0,L) \times [0,2\pi)$ the volume fractions satisfy
 	\begin{equation*}
 		\sum_{j=1}^{N_{\mathrm{p}}} d_j(\rho, z, \varphi) = 1.
@@ -331,10 +354,14 @@ else:
 """)
 
 
-write_and_save(r"In the interstitial volume, mass transfer is governed by the following convection-diffusion-reaction equations in " + int_vol_domain[column_model.resolution] + r" and for all components " + nComp_list)
-write_and_save(interstitial_volume_eq, as_latex=True)
-write_and_save("with boundary conditions")
-write_and_save(column_model.interstitial_volume_bc(), as_latex=True)
+if column_model.resolution == "0D":
+    write_and_save(r"The evolution of the liquid volume $V^l$ and the concentrations $c_i\colon (0, T_{\mathrm{end}}) \to \Reals$ of the components in the tank is governed by")
+    write_and_save(interstitial_volume_eq, as_latex=True)
+else:
+    write_and_save(r"In the interstitial volume, mass transfer is governed by the following convection-diffusion-reaction equations in " + int_vol_domain[column_model.resolution] + r" and for all components " + nComp_list)
+    write_and_save(interstitial_volume_eq, as_latex=True)
+    write_and_save("with boundary conditions")
+    write_and_save(column_model.interstitial_volume_bc(), as_latex=True)
 
 
 # add a variable and parameter description for the interstitial volume equation
@@ -349,6 +376,8 @@ elif column_model.resolution == "2D":
     diff_string = r", " + diff_vars + tmp_str
 elif column_model.resolution == "3D":
     diff_string = r", " + diff_vars + r"are the lumped diffusion coefficients in axial, radial and angular direction"
+elif column_model.resolution == "0D":
+    diff_string = ""
 
 # if column_model.N_p == 0:
 sol_vars_int_vol_eq = r"c^{\l}_i \colon " + re.sub(r"\$", "", int_vol_domain[column_model.resolution]) + r" \to \mathbb{R}" 
@@ -370,11 +399,11 @@ if column_model.nonlimiting_filmDiff and column_model.has_binding and column_mod
     porosity_str = re.sub(r"\\varepsilon_{\\mathrm{c}}", r"\\varepsilon_{\\mathrm{t}}", porosity_str)
     porosity_str = re.sub("interstitial column porosity", "total porosity", porosity_str)
 
-
+u_string = r"$u>0$ is the interstitial velocity" if not column_model.resolution == "0D" else ""
 if column_model.N_p > 0:
     write_and_save(
         rerender_variables(
-            r"Here, $" + sol_vars_int_vol_eq + r"$, " + sol_vars_int_vol_eq_names + r" of component $i \in \{1, \dots, N_{\mathrm{c}}\}$, $T_{\mathrm{end}} > 0$ is the simulation end time, $u>0$ is the interstitial velocity" + diff_string + filmDiff_str + porosity_str + r", $c_{\mathrm{in},i}\colon " + int_vol_inlet_domain[column_model.resolution] + r" \to \mathbb{R}$ is a given inlet concentration profile."
+            r"Here, $" + sol_vars_int_vol_eq + r"$, " + sol_vars_int_vol_eq_names + r" of component $i \in \{1, \dots, N_{\mathrm{c}}\}$, $T_{\mathrm{end}} > 0$ is the simulation end time, " + u_string + diff_string + filmDiff_str + porosity_str + r", $c_{\mathrm{in},i}\colon " + int_vol_inlet_domain[column_model.resolution] + r" \to \mathbb{R}$ is a given inlet concentration profile."
             )
     )
 

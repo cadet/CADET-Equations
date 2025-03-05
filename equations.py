@@ -61,6 +61,8 @@ def int_vol_continuum_asmpt(resolution:str, N_p:int, nonlimiting_filmDiff:bool, 
           return int_vol_2DContinuum_asmpt(N_p, nonlimiting_filmDiff, has_binding, has_surfDiff)
      elif resolution == "1D":
           return int_vol_1DContinuum_asmpt(N_p, nonlimiting_filmDiff, has_binding, has_surfDiff)
+     elif resolution == "0D":
+          return ["Add assumptions"]
 
 def particle_1D_asmpt(has_surfDiff:bool):
 
@@ -201,11 +203,13 @@ def int_vol_initial(resolution:str, includeParLiquid:bool):
 
 
 int_vol_domain = {
+     "0D": r"$(0, T_\mathrm{end})$",
      "1D": r"$(0, T_\mathrm{end}) \times (0, L)$",
      "2D": r"$(0, T_\mathrm{end}) \times (0, L) \times (0, R_\mathrm{c})$",
      "3D": r"$(0, T_\mathrm{end}) \times (0, L) \times (0, R_\mathrm{c}) \times (0, 2\pi)$"
 }
 int_vol_inlet_domain = {
+     "0D": r"(0, T_{\mathrm{end}})",
      "1D": r"(0, T_{\mathrm{end}})",
      "2D": r"(0, T_{\mathrm{end}}) \times (0, R_\mathrm{c})",
      "3D": r"(0, T_{\mathrm{end}}) \times (0, R_\mathrm{c}) \times (0, 2\pi)"
