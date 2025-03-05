@@ -454,7 +454,10 @@ def particle_initial(domain:str, singleParticle:bool, includeParLiquid:bool):
 
 def particle_domain(column_resolution:str, particle_resolution:str, hasCore:bool, with_par_index=False, with_time_domain=True):
     
-    domain = r"$ (0, T_\mathrm{end}) \times (0, L)" if with_time_domain else r"$ \times (0, L)"
+    if not column_resolution == "0D":
+          domain = r"$ (0, T_\mathrm{end}) \times (0, L)" if with_time_domain else r"$ \times (0, L)"
+    else:
+          domain = r"$ (0, T_\mathrm{end})" if with_time_domain else r"$ "
 
     if column_resolution in ["2D", "3D"]:
         domain += r"\times (0, R_\mathrm{c})"

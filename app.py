@@ -140,32 +140,36 @@ class Column:
 
         if self.resolution == "0D":
             equation = r"""
-\begin{align}
-    \frac{\mathrm{d}}{\mathrm{d} t} \left( V^\l c^\l_i \right)
-    &=
-    Q_{\mathrm{in}} c^\l_{\mathrm{in},i} - Q_{\mathrm{out}} c^\l_i
-    - V^s \sum_{j=1}^{N_p} \frac{3 d_j}{R_{\mathrm{c}}} k_{\mathrm{f},j,i} \left(c^{\l}_i - \left. c^{\p}_{j,i} \right|_{r = R_{\mathrm{p},j}} \right),
+    \frac{\mathrm{d}V^\l}{\mathrm{d}t} &= Q_{\mathrm{in}} - Q_{\mathrm{out}} - Q_{\mathrm{filter}},
     \\
-    \frac{\mathrm{d}V^\l}{\mathrm{d}t} &= Q_{\mathrm{in}} - Q_{\mathrm{out}} - Q_{\mathrm{filter}}
-\end{align}
-"""
-            return rerender_variables(equation)
+    \frac{\mathrm{d}}{\mathrm{d} t} \left( V^\l c^\l_i \right)"""
+            
+            if self.nonlimiting_filmDiff and self.has_binding and self.particle_models[0].resolution == "0D":
+                equation += r" + V^\p \varepsilon_\mathrm{p} \frac{\partial c^\l_i}{\partial t}"
+                if self.req_binding:
+                    equation += r" + V^\p \left( 1 - \varepsilon_\mathrm{p} \right) \frac{\partial c^\s_i}{\partial t}"
 
-        equation = bulk_time_derivative_eps
-        if self.nonlimiting_filmDiff and self.has_binding and self.particle_models[0].resolution == "0D" and self.req_binding:
-            equation += r" + " + solid_time_derivative_eps
+            equation += r"&= Q_{\mathrm{in}} c^\l_{\mathrm{in},i} - Q_{\mathrm{out}} c^\l_i"
+            
+            if self.nonlimiting_filmDiff and self.has_binding and self.particle_models[0].resolution == "0D" and not self.req_binding:
+                equation += r" - V^\p \left( 1 - \varepsilon_\mathrm{p} \right) \frac{\partial c^\s_i}{\partial t}"
 
-        equation += " = " + axial_convection_eps
+        else:
+            equation = bulk_time_derivative_eps
+            if self.nonlimiting_filmDiff and self.has_binding and self.particle_models[0].resolution == "0D" and self.req_binding:
+                equation += r" + " + solid_time_derivative_eps
 
-        if self.has_axial_dispersion:
-            equation += " + " + axial_dispersion_eps
-        if self.has_radial_dispersion:
-            equation += " + " + radial_dispersion_eps
-        if self.has_angular_dispersion:
-            equation += " + " + angular_dispersion_eps
+            equation += " = " + axial_convection_eps
 
-        if self.N_p == 0: # remove occurencies of porosity, which is just constant one in this case
-            equation = re.sub(r"\\varepsilon_{\\mathrm{c}}", "", re.sub( r"\\left\( \\varepsilon_{\\mathrm{c}} c^{\\l}_i \\right\)", r"c^{\\l}_i", equation))
+            if self.has_axial_dispersion:
+                equation += " + " + axial_dispersion_eps
+            if self.has_radial_dispersion:
+                equation += " + " + radial_dispersion_eps
+            if self.has_angular_dispersion:
+                equation += " + " + angular_dispersion_eps
+
+            if self.N_p == 0: # remove occurencies of porosity, which is just constant one in this case
+                equation = re.sub(r"\\varepsilon_{\\mathrm{c}}", "", re.sub( r"\\left\( \\varepsilon_{\\mathrm{c}} c^{\\l}_i \\right\)", r"c^{\\l}_i", equation))
 
         # if self.nonlimiting_filmDiff and 1Dparticle # entscheidende faktoren sind particle resolution und filmDiffMode. the following loop has thus to change
         par_added = 0
@@ -176,6 +180,9 @@ class Column:
                     equation += int_filmDiff_term(Particle(par_uniq, False, "0D"), 1 + par_added, par_added + self.par_unique_intV_contribution_counts[par_uniq], self.N_p == 1, self.nonlimiting_filmDiff)
 
                 par_added += self.par_unique_intV_contribution_counts[par_uniq]
+
+        if self.resolution == "0D":
+            equation = re.sub(r"\\left\(1 - \\varepsilon_{\\mathrm{c}} \\right\)", r"V^s", equation)
 
         if self.nonlimiting_filmDiff and self.has_binding and self.particle_models[0].resolution == "0D" and self.req_binding:
             equation = re.sub(r"\\varepsilon_{\\mathrm{c}}", r"\\varepsilon_{\\mathrm{t}}", equation)
@@ -210,7 +217,7 @@ class Column:
     def model_name(self):
 
         if self.resolution == "0D":
-            return " Continuously Stirred Tank Reactor" if self.has_binding else " Continuously Stirred Tank"
+            return " Finite Bath" if self.N_p > 0 else " Continuously Stirred Tank"
 
         if self.has_angular_coordinate:
             model_name = "3D"
@@ -288,7 +295,7 @@ advanced_mode_=st.selectbox("Advanced setup options (enables e.g. multiple bound
 
 column_model = Column(
     dev_mode=dev_mode_, advanced_mode=advanced_mode_,
-    resolution=re.search(r'\dD', st.selectbox("Column resolution", ["0D (Homogeneous)", "1D (axial coordinate)", "2D (axial and radial coordinate)", "3D (axial, radial and angular coordinate)"], key="column_resolution")).group(),
+    resolution=re.search(r'\dD', st.selectbox("Column resolution", ["1D (axial coordinate)", "0D (Homogeneous Tank)", "2D (axial and radial coordinate)", "3D (axial, radial and angular coordinate)"], key="column_resolution")).group(),
     N_c = st.number_input("Number of components", key="N_c", min_value=1, step=1) if advanced_mode_ else -1,
     N_p = st.number_input("Number of particle types", key="N_p", min_value=0, step=1) if dev_mode_ else int(st.selectbox("Add particles", ["No", "Yes"], key="add_particles") == "Yes")
     )
@@ -346,16 +353,17 @@ elif column_model.N_p == 1:
     write_and_save(intro_str + r"packed with spherical particles.") # TODO particle geometries?
 else:
     write_and_save(intro_str + r"""packed with $N_{\mathrm{p}}\geq 0$ different particle types indexed by $j \in \{1, \dots, N_{\mathrm{p}}\}$ and distributed according to the volume fractions $d_j \colon (0, R_{\mathrm{c}}) \times (0,L) \to [0, 1]$.
-	For all $(\rho,z,\varphi) \in (0, R_{\mathrm{c}}) \times (0,L) \times [0,2\pi)$ the volume fractions satisfy
+	For all $(\rho,z,\varphi) \in (0, R_{\mathrm{c}}) \times (0,L) \times [0,2\pi)$ the volume fractions satisfy""")
+    write_and_save(r"""
 	\begin{equation*}
 		\sum_{j=1}^{N_{\mathrm{p}}} d_j(\rho, z, \varphi) = 1.
 	\end{equation*}
 
-""")
+""", as_latex=True)
 
 
 if column_model.resolution == "0D":
-    write_and_save(r"The evolution of the liquid volume $V^l$ and the concentrations $c_i\colon (0, T_{\mathrm{end}}) \to \Reals$ of the components in the tank is governed by")
+    write_and_save(r"The evolution of the liquid volume $V^l\colon (0, T_{\mathrm{end}}) \to \Reals$ and the concentrations $c_i\colon (0, T_{\mathrm{end}}) \to \Reals$ of the components in the tank is governed by")
     write_and_save(interstitial_volume_eq, as_latex=True)
 else:
     write_and_save(r"In the interstitial volume, mass transfer is governed by the following convection-diffusion-reaction equations in " + int_vol_domain[column_model.resolution] + r" and for all components " + nComp_list)
