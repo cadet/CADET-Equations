@@ -138,7 +138,12 @@ class Column:
 
     def interstitial_volume_equation(self):
 
-        equation = bulk_time_derivative_eps + " = " + axial_convection_eps
+        equation = bulk_time_derivative_eps
+        if self.nonlimiting_filmDiff and self.has_binding and self.particle_models[0].resolution == "0D" and self.req_binding:
+            equation += r" + " + solid_time_derivative_eps
+
+        equation += " = " + axial_convection_eps
+
         if self.has_axial_dispersion:
             equation += " + " + axial_dispersion_eps
         if self.has_radial_dispersion:
@@ -366,7 +371,6 @@ if column_model.N_p > 0:
             )
     )
 
-
 if column_model.N_p >0:
      tmp = r"and particle types $j\in\{" + str(nPar_list) + r"\}$"
 else:
@@ -376,10 +380,14 @@ if column_model.N_p > 0:
 
     particle_eq, particle_bc = column_model.particle_equations()
 
-    write_and_save(r"In the particle models, mass transfer is governed by the following diffusion-reaction equations,")
+    if not (not column_model.has_binding and column_model.nonlimiting_filmDiff and column_model.particle_models[0].resolution == "0D"): # in this case, we dont have a particle model. this configuration is still allowed for educational purpose.
+        write_and_save(r"In the particle models, mass transfer is governed by the following diffusion-reaction equations,")
 
     tmp = 0
     for par_type in column_model.par_type_counts.keys():
+
+        if not column_model.has_binding and column_model.nonlimiting_filmDiff and par_type.resolution == "0D": # in this case, we dont have a particle model. this configuration is still allowed for educational purpose.
+            break
 
         tmp_textblock = "in " + particle_domain(column_model.resolution, par_type.resolution, par_type.hasCore, with_par_index=True, with_time_domain=True) + " for "
 
