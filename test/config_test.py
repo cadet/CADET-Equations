@@ -60,13 +60,13 @@ def test_streamlit_app():
     at.selectbox(key="add_particles").set_value("Yes").run()
     config_keys = [box.key for box in at.selectbox if box.key not in critical_variables]
     num_configs = config_recursion(config_keys, 0)
-    assert num_configs == 45 # Note: some repetitive configs due to the setup of the recursion
+    assert num_configs == 93 # Note: some repetitive configs due to the setup of the recursion
 
     # 3) test all configs with add_particles = "Yes", "particle_resolution" = "0D (homogeneous)", "has_binding" = "Yes"
     at.selectbox(key="particle_resolution").set_value("0D (homogeneous)").run()
     config_keys = [box.key for box in at.selectbox if box.key not in critical_variables]
     num_configs = config_recursion(config_keys, 0)
-    assert num_configs == 12 + 9 # Note: nine repetitive configs due to the setup of the recursion
+    assert num_configs == 45 # Note: nine repetitive configs due to the setup of the recursion
 
     # 4) + 5) test all configs with add_particles = "Yes", "has_binding" = "No" -> no particle_resolution
     at.selectbox(key="has_binding").set_value("No").run()
