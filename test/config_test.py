@@ -14,6 +14,67 @@ untested_variables = ["dev_mode", "advanced_mode"] # dev_mode is not tested, TOD
 # Sometimes, only specific options can be critical (e.g. 0D tank). Such options can be added here and handled independently later
 critical_variables = untested_variables + ["add_particles", "has_binding", "particle_resolution", "0D (Homogeneous Tank)"]
 
+# We test every configuration by recursively iteratiing through all combinations
+def config_recursion(at, widgies, counter):
+
+    if widgies[0] in at.session_state:
+
+        widgyKey = widgies.pop(0)
+        if any(key == widgyKey for key in [box.key for box in at.selectbox]):
+            widgyKind = "selectbox"
+            widgy = at.selectbox(key=widgyKey)
+        elif any(key == widgyKey for key in [box.key for box in at.toggle]):
+            widgyKind = "toggle"
+            widgy = at.toggle(key=widgyKey)
+        else:
+            raise ValueError(f"Error: {widgyKey} is neither a toggle nor a dropdown")
+
+        options = [opti for opti in widgy.options if opti not in critical_variables] if widgyKind == "selectbox" else [True, False]
+
+        for opt in options: # Note: some values will be run repeatedly since the current value of that widget is applied again. Excluding this value here would make the recursion incomplete though
+
+            widgy.set_value(opt).run()
+            counter += 1
+            assert not at.exception
+
+            for box in at.selectbox:
+                if box.key not in untested_variables and box.key not in critical_variables:
+                    print("box: ", box.key, ", value: ", box.value)
+
+            if len(widgies) > 0:
+                counter = config_recursion(at, widgies, counter)
+
+        widgies.append(widgy.key)
+
+    return counter
+
+
+def run_configs(at, toBeFixed:dict, configKeys:list, numConfigsToBeChecked:int):
+
+    # Check if we have the correct initial configuration
+    for fixKey in toBeFixed.keys():
+
+        if any(key == fixKey for key in [box.key for box in at.selectbox]):
+            widgyKind = "selectbox"
+            widgy = at.selectbox(key=fixKey)
+        elif any(key == fixKey for key in [box.key for box in at.toggle]):
+            widgyKind = "toggle"
+            widgy = at.toggle(key=fixKey)
+        else:
+            raise ValueError(f"Error: {fixKey} is neither a toggle nor a dropdown")
+
+        if widgy.value != toBeFixed[fixKey]:
+            widgy.set_value(toBeFixed[fixKey]).run()
+
+    numConfigs = config_recursion(at, configKeys, 0)
+    assert numConfigs == numConfigsToBeChecked # Note: repetitive configs due to the setup of the recursion
+
+
+def getInputToBeTested(at):
+
+    return [box.key for box in at.selectbox if box.key not in critical_variables] + [box.key for box in at.toggle if box.key not in critical_variables]
+
+
 def test_streamlit_app():
     
     at = AppTest.from_file("../app.py")
@@ -23,30 +84,6 @@ def test_streamlit_app():
 
     assert at.selectbox(key="column_resolution").value == "1D (axial coordinate)"
 
-    # We test every configuration by recursively iteratiing through all combinations
-    def config_recursion(boxies, counter):
-
-        if boxies[0] in at.session_state:
-
-            boxy = at.selectbox(key=boxies.pop(0)) # TODO allow other boxes. if number input define min max options
-
-            for opt in [opti for opti in boxy.options if opti not in critical_variables]: # Note: some values will be run repeatedly since the current value of that box is applied again. Excluding this value here would make the recursion incomplete though
-
-                boxy.set_value(opt).run()
-                counter += 1
-                assert not at.exception
-
-                for box in at.selectbox:
-                    if box.key not in untested_variables and box.key not in critical_variables:
-                        print("box: ", box.key, ", value: ", box.value)
-
-                if len(boxies) > 0:
-                    counter = config_recursion(boxies, counter)
-
-            boxies.append(boxy.key)
-
-        return counter
-
     # check if we are in the mode we support
     assert at.selectbox(key="advanced_mode").value == "Off"
     at.selectbox(key="advanced_mode").set_value("On").run()
@@ -54,35 +91,29 @@ def test_streamlit_app():
 
     # 1) test all configs with add_particles = "No" -> no has_binding and no particle_resolution
     assert at.selectbox(key="add_particles").value == "No"
-    config_keys = [box.key for box in at.selectbox if box.key not in critical_variables]
-    num_configs = config_recursion(config_keys, 0)
-    assert num_configs == 6 + 3 # Note: three repetitive configs due to the setup of the recursion
+    run_configs(at, {"add_particles" : "No"}, getInputToBeTested(at), 6 * 2 + 9) # Note: 3 * 2 + 3 repetitive configs due to the setup of the recursion
 
-    # 2) test all configs with add_particles = "Yes", "particle_resolution" = "1D (radial coordinate)", "has_binding" = "No"
+    # 2) test all configs with "add_particles": "Yes", "particle_resolution": "1D (radial coordinate)", "has_binding": "No"
+    preSet = {"add_particles": "Yes", "particle_resolution": "1D (radial coordinate)", "has_binding": "No"}
     at.selectbox(key="add_particles").set_value("Yes").run()
     assert at.selectbox(key="particle_resolution").value == "1D (radial coordinate)"
     assert at.selectbox(key="has_binding").value == "No"
-    config_keys = [box.key for box in at.selectbox if box.key not in critical_variables]
-    num_configs = config_recursion(config_keys, 0)
-    assert num_configs == 45 # Note: some repetitive configs due to the setup of the recursion
+    run_configs(at, preSet, getInputToBeTested(at), 45 * 2 + 3) # Note: some repetitive configs due to the setup of the recursion
 
     # 3) test all configs with add_particles = "Yes", "particle_resolution" = "0D (homogeneous)", "has_binding" = "No"
+    preSet = {"add_particles": "Yes", "particle_resolution": "0D (homogeneous)", "has_binding": "No"}
     at.selectbox(key="particle_resolution").set_value("0D (homogeneous)").run()
-    config_keys = [box.key for box in at.selectbox if box.key not in critical_variables]
-    num_configs = config_recursion(config_keys, 0)
-    assert num_configs == 12 + 9 # Note: nine repetitive configs due to the setup of the recursion
+    run_configs(at, preSet, getInputToBeTested(at), 21 * 2 + 3) # Note: nine repetitive configs due to the setup of the recursion
 
     # 4) test all configs with add_particles = "Yes", "particle_resolution" = "0D (homogeneous)", "has_binding" = "Yes"
+    preSet = {"add_particles": "Yes", "particle_resolution": "0D (homogeneous)", "has_binding": "Yes"}
     at.selectbox(key="has_binding").set_value("Yes").run()
-    config_keys = [box.key for box in at.selectbox if box.key not in critical_variables]
-    num_configs = config_recursion(config_keys, 0)
-    assert num_configs == 45 # Note: repetitive configs due to the setup of the recursion
+    run_configs(at, preSet, getInputToBeTested(at), 45 * 2 + 3) # Note: some repetitive configs due to the setup of the recursion
 
-    # 4) test all configs with add_particles = "Yes", "particle_resolution" = "1D (radial coordinate)", "has_binding" = "Yes"
+    # 5) test all configs with add_particles = "Yes", "particle_resolution" = "1D (radial coordinate)", "has_binding" = "Yes"
+    preSet = {"add_particles": "Yes", "particle_resolution": "1D (radial coordinate)", "has_binding": "Yes"}
     at.selectbox(key="particle_resolution").set_value("1D (radial coordinate)").run()
-    config_keys = [box.key for box in at.selectbox if box.key not in critical_variables]
-    num_configs = config_recursion(config_keys, 0)
-    assert num_configs == 93 # Note: repetitive configs due to the setup of the recursion
+    run_configs(at, preSet, getInputToBeTested(at), 93 * 2 + 3) # Note: some repetitive configs due to the setup of the recursion
 
     # 6) test all configs for the tank
     # enable the tank and remove column resolution from the test set
@@ -94,27 +125,22 @@ def test_streamlit_app():
     at.selectbox(key="add_particles").set_value("No").run()
 
     # 6a) test all configs with add_particles = "Yes", "particle_resolution" = "1D (radial coordinate)", "has_binding" = "No"
+    preSet = {"add_particles": "Yes", "particle_resolution": "1D (radial coordinate)", "has_binding": "No"}
     at.selectbox(key="add_particles").set_value("Yes").run()
-    config_keys = [box.key for box in at.selectbox if box.key not in critical_variables]
-    print(config_keys)
-    num_configs = config_recursion(config_keys, 0)
-    assert num_configs == 6 # Note: repetitive configs due to the setup of the recursion
+    run_configs(at, preSet, getInputToBeTested(at), 12 + 2) # Note: some repetitive configs due to the setup of the recursion
 
     # 6b) test all configs with add_particles = "Yes", "particle_resolution" = "0D (homogeneous)", "has_binding" = "No"
+    preSet = {"add_particles": "Yes", "particle_resolution": "0D (homogeneous)", "has_binding": "No"}
     at.selectbox(key="particle_resolution").set_value("0D (homogeneous)").run()
-    config_keys = [box.key for box in at.selectbox if box.key not in critical_variables]
-    num_configs = config_recursion(config_keys, 0)
-    assert num_configs == 2 # Note: repetitive configs due to the setup of the recursion
+    run_configs(at, preSet, getInputToBeTested(at), 4 + 2) # Note: some repetitive configs due to the setup of the recursion
 
-    # 6c) test all configs with add_particles = "Yes", "particle_resolution" = "0D (homogeneous)", "has_binding" = "No"
+    # 6c) test all configs with add_particles = "Yes", "particle_resolution" = "0D (homogeneous)", "has_binding" = "Yes"
+    preSet = {"add_particles": "Yes", "particle_resolution": "0D (homogeneous)", "has_binding": "Yes"}
     at.selectbox(key="has_binding").set_value("Yes").run()
-    config_keys = [box.key for box in at.selectbox if box.key not in critical_variables]
-    num_configs = config_recursion(config_keys, 0)
-    assert num_configs == 6 # Note: repetitive configs due to the setup of the recursion
+    run_configs(at, preSet, getInputToBeTested(at), 12 + 2) # Note: some repetitive configs due to the setup of the recursion
 
     # 6d) test all configs with add_particles = "Yes", "particle_resolution" = "1D (radial coordinate)", "has_binding" = "Yes"
+    preSet = {"add_particles": "Yes", "particle_resolution": "1D (radial coordinate)", "has_binding": "Yes"}
     at.selectbox(key="particle_resolution").set_value("1D (radial coordinate)").run()
-    config_keys = [box.key for box in at.selectbox if box.key not in critical_variables]
-    num_configs = config_recursion(config_keys, 0)
-    assert num_configs == 14 # Note: repetitive configs due to the setup of the recursion
+    run_configs(at, preSet, getInputToBeTested(at), 28 + 2) # Note: some repetitive configs due to the setup of the recursion
     
