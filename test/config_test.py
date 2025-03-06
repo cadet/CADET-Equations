@@ -47,9 +47,10 @@ def test_streamlit_app():
 
         return counter
 
-    # check if the untested variables are set correctly
-    assert at.selectbox(key="dev_mode").value == "Off"
+    # check if we are in the mode we support
     assert at.selectbox(key="advanced_mode").value == "Off"
+    at.selectbox(key="advanced_mode").set_value("On").run()
+    assert at.selectbox(key="dev_mode").value == "Off"
 
     # 1) test all configs with add_particles = "No" -> no has_binding and no particle_resolution
     assert at.selectbox(key="add_particles").value == "No"
@@ -57,23 +58,31 @@ def test_streamlit_app():
     num_configs = config_recursion(config_keys, 0)
     assert num_configs == 6 + 3 # Note: three repetitive configs due to the setup of the recursion
 
-    # 2) test all configs with add_particles = "Yes", "particle_resolution" = "1D (radial coordinate)", "has_binding" = "Yes"
+    # 2) test all configs with add_particles = "Yes", "particle_resolution" = "1D (radial coordinate)", "has_binding" = "No"
     at.selectbox(key="add_particles").set_value("Yes").run()
+    assert at.selectbox(key="particle_resolution").value == "1D (radial coordinate)"
+    assert at.selectbox(key="has_binding").value == "No"
     config_keys = [box.key for box in at.selectbox if box.key not in critical_variables]
     num_configs = config_recursion(config_keys, 0)
-    assert num_configs == 93 # Note: some repetitive configs due to the setup of the recursion
+    assert num_configs == 45 # Note: some repetitive configs due to the setup of the recursion
 
-    # 3) test all configs with add_particles = "Yes", "particle_resolution" = "0D (homogeneous)", "has_binding" = "Yes"
+    # 3) test all configs with add_particles = "Yes", "particle_resolution" = "0D (homogeneous)", "has_binding" = "No"
     at.selectbox(key="particle_resolution").set_value("0D (homogeneous)").run()
+    config_keys = [box.key for box in at.selectbox if box.key not in critical_variables]
+    num_configs = config_recursion(config_keys, 0)
+    assert num_configs == 12 + 9 # Note: nine repetitive configs due to the setup of the recursion
+
+    # 4) test all configs with add_particles = "Yes", "particle_resolution" = "0D (homogeneous)", "has_binding" = "Yes"
+    at.selectbox(key="has_binding").set_value("Yes").run()
     config_keys = [box.key for box in at.selectbox if box.key not in critical_variables]
     num_configs = config_recursion(config_keys, 0)
     assert num_configs == 45 # Note: repetitive configs due to the setup of the recursion
 
-    # 4) + 5) test all configs with add_particles = "Yes", "has_binding" = "No" -> no particle_resolution
-    at.selectbox(key="has_binding").set_value("No").run()
+    # 4) test all configs with add_particles = "Yes", "particle_resolution" = "1D (radial coordinate)", "has_binding" = "Yes"
+    at.selectbox(key="particle_resolution").set_value("1D (radial coordinate)").run()
     config_keys = [box.key for box in at.selectbox if box.key not in critical_variables]
     num_configs = config_recursion(config_keys, 0)
-    assert num_configs == 12 + 9 # Note: nine repetitive configs due to the setup of the recursion
+    assert num_configs == 93 # Note: repetitive configs due to the setup of the recursion
 
     # 6) test all configs for the tank
     # enable the tank and remove column resolution from the test set
@@ -84,22 +93,28 @@ def test_streamlit_app():
     # reset variables
     at.selectbox(key="add_particles").set_value("No").run()
 
-    # 6a) test all configs with add_particles = "Yes", "particle_resolution" = "1D (radial coordinate)", "has_binding" = "Yes"
+    # 6a) test all configs with add_particles = "Yes", "particle_resolution" = "1D (radial coordinate)", "has_binding" = "No"
     at.selectbox(key="add_particles").set_value("Yes").run()
     config_keys = [box.key for box in at.selectbox if box.key not in critical_variables]
     print(config_keys)
     num_configs = config_recursion(config_keys, 0)
-    assert num_configs == 14 # Note: repetitive configs due to the setup of the recursion
+    assert num_configs == 6 # Note: repetitive configs due to the setup of the recursion
 
-    # 6b) test all configs with add_particles = "Yes", "particle_resolution" = "0D (homogeneous)", "has_binding" = "Yes"
+    # 6b) test all configs with add_particles = "Yes", "particle_resolution" = "0D (homogeneous)", "has_binding" = "No"
     at.selectbox(key="particle_resolution").set_value("0D (homogeneous)").run()
+    config_keys = [box.key for box in at.selectbox if box.key not in critical_variables]
+    num_configs = config_recursion(config_keys, 0)
+    assert num_configs == 2 # Note: repetitive configs due to the setup of the recursion
+
+    # 6c) test all configs with add_particles = "Yes", "particle_resolution" = "0D (homogeneous)", "has_binding" = "No"
+    at.selectbox(key="has_binding").set_value("Yes").run()
     config_keys = [box.key for box in at.selectbox if box.key not in critical_variables]
     num_configs = config_recursion(config_keys, 0)
     assert num_configs == 6 # Note: repetitive configs due to the setup of the recursion
 
-    # 6c) + 6d) test all configs with add_particles = "Yes", "has_binding" = "No" -> no particle_resolution
-    at.selectbox(key="has_binding").set_value("No").run()
+    # 6d) test all configs with add_particles = "Yes", "particle_resolution" = "1D (radial coordinate)", "has_binding" = "Yes"
+    at.selectbox(key="particle_resolution").set_value("1D (radial coordinate)").run()
     config_keys = [box.key for box in at.selectbox if box.key not in critical_variables]
     num_configs = config_recursion(config_keys, 0)
-    assert num_configs == 2 # Note: repetitive configs due to the setup of the recursion
+    assert num_configs == 14 # Note: repetitive configs due to the setup of the recursion
     

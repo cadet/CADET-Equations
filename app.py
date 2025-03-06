@@ -50,9 +50,9 @@ class Column:
 
     dev_mode: bool # dev mode including untested, unstable and wip features
     advanced_mode: bool # Ask for detailed parameter inputs
-    resolution: Literal["0D", "1D", "2D", "3D"]
-    N_c: int
-    N_p: int
+    resolution: Literal = ""
+    N_c: int = -1
+    N_p: int = -1
 
     has_axial_coordinate: bool = False
     has_radial_coordinate: bool = False
@@ -75,6 +75,14 @@ class Column:
     # noPoresButReqBinding: bool
 
     def __post_init__(self):
+
+        ### Configure interstitial column transport
+        st.write("Configure interstitial volume model")
+        col1, col2 = st.columns(2)
+
+        with col1:
+            self.resolution=re.search(r'\dD', st.selectbox("Column resolution", ["1D (axial coordinate)", "0D (Homogeneous Tank)", "2D (axial and radial coordinate)", "3D (axial, radial and angular coordinate)"], key="column_resolution")).group()
+
         valid_resolutions = {"3D", "2D", "1D", "0D"}
 
         if self.resolution not in valid_resolutions:
@@ -89,8 +97,11 @@ class Column:
              self.has_angular_coordinate = True
              self.has_angular_dispersion = True
         
+        self.N_c = st.number_input("Number of components", key="N_c", min_value=1, step=1) if advanced_mode_ else -1
+
         if self.has_axial_coordinate:
-            self.has_axial_dispersion = st.selectbox("Add axial Dispersion", ["No", "Yes"], key="has_axial_dispersion") == "Yes"
+            with col2:
+                self.has_axial_dispersion = st.selectbox("Add axial Dispersion", ["No", "Yes"], key="has_axial_dispersion") == "Yes"
 
         if self.dev_mode:
              if self.has_radial_coordinate:
@@ -98,31 +109,41 @@ class Column:
              if self.has_angular_coordinate:
                 self.has_angular_dispersion = st.selectbox("Add angular Dispersion", ["Yes", "No"], key="has_angular_dispersion") == "Yes"
 
+        ### Configure particle model
+        st.write("Configure particle model")
+
+        self.N_p = st.number_input("Number of particle types", key="N_p", min_value=0, step=1) if dev_mode_ else int(st.selectbox("Add particles", ["No", "Yes"], key="add_particles") == "Yes")
+
         if self.N_p > 0:
-
-            self.nonlimiting_filmDiff = st.selectbox("Non-limiting film diffusion", ["No", "Yes"], key="nonlimiting_filmDiff") == "Yes"
-
-            self.has_binding = st.selectbox("Add binding", ["Yes", "No"], key="has_binding") == "Yes"
-            if self.has_binding:
-                self.req_binding = st.selectbox("Binding kinetics mode", ["Kinetic", "Rapid-equilibrium"], key="req_binding") == "Rapid-equilibrium"
-                self.has_mult_bnd_states = st.selectbox("Add multiple bound states", ["No", "Yes"], key="has_mult_bnd_states") == "Yes" if advanced_mode_ else False
 
             self.particle_models = []
 
             for j in range(self.N_p):
 
+                col1, col2 = st.columns(2)
+
+                with col1:
+
+                    if dev_mode_: # multiple particle types
+                        resolution = re.search(r'\dD', st.selectbox(f"Select spatial resolution of particle type {j + 1}", ["1D (radial coordinate)", "0D (homogeneous)"], key=f"parType_{j+1}_resolution")).group()
+                        hasCore = st.selectbox(f"Choose if particle type {j + 1} is a core-shell particle (i.e. " + r"$R_\mathrm{pc} > 0$)", ["No core-shell", "Has core-shell"], key=f"parType_{j+1}_hasCore") == "Has core-shell"
+                        geometry = st.selectbox(f"Select geometry of particle type {j + 1}", ["Sphere", "Cylinder", "Slab"], key=f"parType_{j+1}__geometry")
+                    else:
+                        resolution = re.search(r'\dD', st.selectbox(f"Select spatial resolution of particles", ["1D (radial coordinate)", "0D (homogeneous)"], key="particle_resolution")).group()
+                        hasCore = st.selectbox(f"Add impenetrable core-shell (i.e. " + r"$R_\mathrm{pc} > 0$)", ["No", "Yes"], key=f"parType_{j+1}_hasCore") == "Yes" if (resolution == "1D" and advanced_mode_) else False
+                        geometry = "Sphere"
+                    
+                with col2:
+                    self.nonlimiting_filmDiff = st.selectbox("Non-limiting film diffusion", ["No", "Yes"], key="nonlimiting_filmDiff") == "Yes"
+                    self.has_surfDiff = st.selectbox("Add surface diffusion", ["No", "Yes"], key="has_surfDiff") == "Yes" if resolution == "1D" else False
+
                 self.particle_models.append(
                     Particle(
-                        geometry=st.selectbox(f"Select geometry of particle type {j + 1}", ["Sphere", "Cylinder", "Slab"], key=f"parType_{j+1}__geometry") if self.dev_mode else "Sphere",
-                        resolution=re.search(r'\dD', st.selectbox(f"Select spatial resolution of particle type {j + 1}", ["1D (radial coordinate)", "0D (homogeneous)"], key=f"parType_{j+1}_resolution")).group() if self.dev_mode else re.search(r'\dD', st.selectbox(f"Select spatial resolution of particles", ["1D (radial coordinate)", "0D (homogeneous)"], key="particle_resolution")).group(),
-                        hasCore=st.selectbox(f"Choose if particle type {j + 1} is a core-shell particle (i.e." + r"$R_\mathrm{pc} > 0$)", ["No core-shell", "Has core-shell"], key=f"parType_{j+1}_hasCore") == "Has core-shell" if self.dev_mode else False
+                        geometry=geometry,
+                        resolution=resolution,
+                        hasCore=hasCore
                         )
                 )
-
-            if any(particle.resolution == "1D" for particle in self.particle_models) and self.has_binding:
-                self.has_surfDiff = st.selectbox("Add surface diffusion", ["No", "Yes"], key="has_surfDiff") == "Yes"
-            else:
-                self.has_surfDiff = False
             
             # We need to count and thus sort particle_models:
             #  Particle types need individual particle equations, which is why we count them
@@ -135,6 +156,19 @@ class Column:
             else:
                 self.par_unique_intV_contribution_counts = Counter(particle.geometry for particle in self.particle_models)
 
+            # Configure binding model
+            st.write("Configure binding model")
+
+            self.has_binding = st.selectbox("Add binding", ["No", "Yes"], key="has_binding") == "Yes"
+
+            if self.has_binding:
+
+                col1, col2 = st.columns(2)
+
+                with col1:
+                    self.req_binding = st.selectbox("Binding kinetics mode", ["Kinetic", "Rapid-equilibrium"], key="req_binding") == "Rapid-equilibrium"
+                with col2:
+                    self.has_mult_bnd_states = st.selectbox("Add multiple bound states", ["No", "Yes"], key="has_mult_bnd_states") == "Yes" if advanced_mode_ else False
 
     def interstitial_volume_equation(self):
 
@@ -288,18 +322,14 @@ if uploaded_file is not None:
 
 # User configuration of the model
 
-# Do not change the label of the dev mode, otherwise it will be included in the CI
-dev_mode_=st.selectbox("Developer setup options (not tested! Enables e.g. multiple particle types)", ["Off", "On"], key="dev_mode") == "On"
-
 advanced_mode_=st.selectbox("Advanced setup options (enables e.g. multiple bound states)", ["Off", "On"], key="advanced_mode") == "On"
+if advanced_mode_:
+    dev_mode_=st.selectbox("Developer setup options (not tested! Enables e.g. multiple particle types)", ["Off", "On"], key="dev_mode") == "On"
+    advanced_mode_ = True if dev_mode_ else False
+else:
+    dev_mode_ = False
 
-column_model = Column(
-    dev_mode=dev_mode_, advanced_mode=advanced_mode_,
-    resolution=re.search(r'\dD', st.selectbox("Column resolution", ["1D (axial coordinate)", "0D (Homogeneous Tank)", "2D (axial and radial coordinate)", "3D (axial, radial and angular coordinate)"], key="column_resolution")).group(),
-    N_c = st.number_input("Number of components", key="N_c", min_value=1, step=1) if advanced_mode_ else -1,
-    N_p = st.number_input("Number of particle types", key="N_p", min_value=0, step=1) if dev_mode_ else int(st.selectbox("Add particles", ["No", "Yes"], key="add_particles") == "Yes")
-    )
-
+column_model = Column(dev_mode=dev_mode_, advanced_mode=advanced_mode_)
 
 #%% Display equations
 
