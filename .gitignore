@@ -3,6 +3,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# visual studio cache
+*.vs
+
 # C extensions
 *.so
 
