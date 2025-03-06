@@ -137,9 +137,8 @@ class Column:
                         geometry = "Sphere"
                     
                 with col2:
-                    if "nonlimiting_filmDiff" not in st.session_state:
+                    if j == 0: # todo make this configurable for every particle type
                         self.nonlimiting_filmDiff = st.selectbox("Non-limiting film diffusion", ["No", "Yes"], key="nonlimiting_filmDiff") == "Yes"
-                    if "has_surfDiff" not in st.session_state:
                         self.has_surfDiff = st.selectbox("Add surface diffusion", ["No", "Yes"], key="has_surfDiff") == "Yes" if resolution == "1D" else False
 
                 self.particle_models.append(
