@@ -120,6 +120,9 @@ class Column:
 
             for j in range(self.N_p):
 
+                if self.N_p > 1:
+                    st.write(f"Configure particle type {j + 1}")
+
                 col1, col2 = st.columns(2)
 
                 with col1:
@@ -134,8 +137,10 @@ class Column:
                         geometry = "Sphere"
                     
                 with col2:
-                    self.nonlimiting_filmDiff = st.selectbox("Non-limiting film diffusion", ["No", "Yes"], key="nonlimiting_filmDiff") == "Yes"
-                    self.has_surfDiff = st.selectbox("Add surface diffusion", ["No", "Yes"], key="has_surfDiff") == "Yes" if resolution == "1D" else False
+                    if "nonlimiting_filmDiff" not in st.session_state:
+                        self.nonlimiting_filmDiff = st.selectbox("Non-limiting film diffusion", ["No", "Yes"], key="nonlimiting_filmDiff") == "Yes"
+                    if "has_surfDiff" not in st.session_state:
+                        self.has_surfDiff = st.selectbox("Add surface diffusion", ["No", "Yes"], key="has_surfDiff") == "Yes" if resolution == "1D" else False
 
                 self.particle_models.append(
                     Particle(
