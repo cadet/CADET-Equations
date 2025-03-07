@@ -139,7 +139,22 @@ class Column:
                 with col2:
                     if j == 0: # todo make this configurable for every particle type
                         self.nonlimiting_filmDiff = st.selectbox("Non-limiting film diffusion", ["No", "Yes"], key="nonlimiting_filmDiff") == "Yes"
-                        self.has_surfDiff = st.selectbox("Add surface diffusion", ["No", "Yes"], key="has_surfDiff") == "Yes" if resolution == "1D" else False
+
+                if j == 0: # todo make this configurable for every particle type
+                    # Configure binding model
+                    st.write("Configure binding model")
+
+                    self.has_binding = st.selectbox("Add binding", ["No", "Yes"], key="has_binding") == "Yes"
+
+                    if self.has_binding:
+
+                        col1, col2 = st.columns(2)
+
+                        with col1:
+                            self.req_binding = st.selectbox("Binding kinetics mode", ["Kinetic", "Rapid-equilibrium"], key="req_binding") == "Rapid-equilibrium"
+                            self.has_mult_bnd_states = st.selectbox("Add multiple bound states", ["No", "Yes"], key="has_mult_bnd_states") == "Yes" if advanced_mode_ else False
+                        with col2:
+                            self.has_surfDiff = st.selectbox("Add surface diffusion", ["No", "Yes"], key="has_surfDiff") == "Yes" if resolution == "1D" else False
 
                 self.particle_models.append(
                     Particle(
@@ -160,19 +175,6 @@ class Column:
             else:
                 self.par_unique_intV_contribution_counts = Counter(particle.geometry for particle in self.particle_models)
 
-            # Configure binding model
-            st.write("Configure binding model")
-
-            self.has_binding = st.selectbox("Add binding", ["No", "Yes"], key="has_binding") == "Yes"
-
-            if self.has_binding:
-
-                col1, col2 = st.columns(2)
-
-                with col1:
-                    self.req_binding = st.selectbox("Binding kinetics mode", ["Kinetic", "Rapid-equilibrium"], key="req_binding") == "Rapid-equilibrium"
-                with col2:
-                    self.has_mult_bnd_states = st.selectbox("Add multiple bound states", ["No", "Yes"], key="has_mult_bnd_states") == "Yes" if advanced_mode_ else False
 
     def interstitial_volume_equation(self):
 
