@@ -511,43 +511,35 @@ latex_string = [
 latex_string.extend(file_content + [r"\end{document}"])
 latex_string = "\n".join(latex_string)
 
-st.download_button("Download .tex", latex_string, "output.tex", "text/plain")
+st.download_button("Download .tex", latex_string, "model.tex", "text/plain")
 
 if st.button("Generate PDF"):
     with tempfile.TemporaryDirectory() as temp_dir:
-        tex_path = f"{temp_dir}/output.tex"
-        pdf_path = f"{temp_dir}/output.pdf"
+        tex_path = f"{temp_dir}/model.tex"
+        pdf_path = f"{temp_dir}/model.pdf"
 
-        # Write LaTeX content to a temp file
+        # Write LaTeX content to a temporary file
         with open(tex_path, "w") as f:
             f.write(latex_string)
 
         result = subprocess.run(
-            ["pdflatex", "-output-directory", temp_dir, tex_path],
-            capture_output=True,
-            text=True,
-            cwd=temp_dir
+        ["pdflatex", "-output-directory", temp_dir, tex_path],
+        capture_output=True,
+        text=True,
+        cwd=temp_dir
         )
-
-        # Print LaTeX output for debugging
-        print(result.stdout)
-        print(result.stderr)
-
-        # Check if pdflatex was successful
+        
         if result.returncode != 0:
-            print("LaTeX compilation failed.")
-            print("Error output:", result.stderr)
-
-        # Read and provide the PDF for download
-        with open(pdf_path, "rb") as pdf_file:
-            st.download_button("Download PDF", pdf_file, "output.pdf", "application/pdf")
-
+            st.error("PDF generation failed. Please check the LaTeX compilation output:\n" + result.stderr)
+        else:
+            with open(pdf_path, "rb") as pdf_file:
+                st.download_button("Download PDF", pdf_file, "model.pdf", "application/pdf")
 
 if st.button("Generate configuration file"):
 
     # Create a temporary directory
     with tempfile.TemporaryDirectory() as temp_dir:
-        json_path = f"{temp_dir}/output.tex"
+        json_path = f"{temp_dir}/model.tex"
 
         config = {key: st.session_state[key] for key in st.session_state}
 
