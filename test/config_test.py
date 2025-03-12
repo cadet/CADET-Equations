@@ -6,7 +6,7 @@
 from streamlit.testing.v1 import AppTest
 
 
-untested_variables = ["dev_mode", "advanced_mode"] # dev_mode is not tested, TODO: test the advanced_mode
+untested_variables = ["dev_mode", "advanced_mode", "var_format"] # dev_mode is not tested, TODO: test the advanced_mode
 
 # Some boxes are conditional, e.g. film_diffusion can only be configured when particles are present.
 # We thus first identify the boxes that change the number of boxes and thus combinations (critical_variables).

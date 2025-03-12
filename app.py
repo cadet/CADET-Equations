@@ -18,7 +18,27 @@ from typing import Literal
 #%% Get the equations
 exec(open("equations.py").read())
 
-#%% helper functionality
+#%%
+format_map_ = {"CADET": 0, "Historical": 1}
+
+def rerender_variables(input_str:str, format:int):
+    if format_map_[format] == 0:
+         input_str = re.sub(r"\\l(?![a-zA-Z])", r"\\mathrm{\\ell}", input_str)
+         input_str = re.sub(r"\\b(?![a-zA-Z])", r"\\mathrm{b}", input_str)
+         input_str = re.sub(r"\\p(?![a-zA-Z])", r"\\mathrm{p}", input_str)
+         input_str = re.sub(r"\\s(?![a-zA-Z])", r"\\mathrm{s}", input_str)
+    elif format_map_[format] == 1:
+         input_str = re.sub(r"\\l(?![a-zA-Z])", r"\\mathrm{\\ell}", input_str)
+         input_str = re.sub(r"\\b(?![a-zA-Z])", r"\\mathrm{\\ell}", input_str)
+         input_str = re.sub(r"\\p(?![a-zA-Z])", r"\\mathrm{p}", input_str)
+         input_str = re.sub(r"c\^\\s(?![a-zA-Z])", r"q", input_str)
+         input_str = re.sub(r"c\}\^\{\\s\}(?![a-zA-Z])", r"q}", input_str)
+    else:
+        raise ValueError(f"Only formats in {format_map_} are supported.")
+    
+    return input_str
+
+#%% src
 
 @dataclass(frozen=True)  # immutable & hashable dataclass -> unique particle type counter
 class Particle:
@@ -234,11 +254,11 @@ class Column:
 """ + equation + r""",
 \end{align}"""
 
-        return rerender_variables(equation)
+        return rerender_variables(equation, var_format_)
     
     def interstitial_volume_bc(self):
         if not self.resolution == "0D":
-            return rerender_variables(int_vol_BC(self.resolution, self.has_axial_dispersion))
+            return rerender_variables(int_vol_BC(self.resolution, self.has_axial_dispersion), var_format_)
         else:
             return None
     
@@ -250,10 +270,10 @@ class Column:
         for par_type in self.par_type_counts.keys():
 
             equations[par_type] = particle_transport(par_type, singleParticle=self.N_p == 1, nonlimiting_filmDiff=self.nonlimiting_filmDiff, has_surfDiff=self.has_surfDiff, has_binding=self.has_binding, req_binding=self.req_binding, has_mult_bnd_states=self.has_mult_bnd_states)
-            equations[par_type] = rerender_variables(equations[par_type])
+            equations[par_type] = rerender_variables(equations[par_type], var_format_)
 
             boundary_conditions[par_type] = particle_boundary(par_type, singleParticle=self.N_p == 1, nonlimiting_filmDiff=self.nonlimiting_filmDiff, has_surfDiff=self.has_surfDiff, has_binding=self.has_binding, req_binding=self.req_binding, has_mult_bnd_states=self.has_mult_bnd_states)
-            boundary_conditions[par_type] = rerender_variables(boundary_conditions[par_type])
+            boundary_conditions[par_type] = rerender_variables(boundary_conditions[par_type], var_format_)
 
         return equations, boundary_conditions
     
@@ -331,6 +351,8 @@ if uploaded_file is not None:
 
 # User configuration of the model
 
+var_format_ = st.sidebar.selectbox("Select format (e.g. $c^s$ or $q$ as the solid phase concentration)", ["CADET", "Historical"], key="var_format")
+
 advanced_mode_=st.sidebar.selectbox("Advanced setup options (enables e.g. multiple bound states)", ["Off", "On"], key="advanced_mode") == "On"
 if advanced_mode_:
     dev_mode_=st.sidebar.selectbox("Developer setup options (not tested! Enables e.g. multiple particle types)", ["Off", "On"], key="dev_mode") == "On"
@@ -402,7 +424,7 @@ else:
 
 
 if column_model.resolution == "0D":
-    write_and_save(r"The evolution of the liquid volume $V^l\colon (0, T_{\mathrm{end}}) \to \Reals$ and the concentrations $c_i\colon (0, T_{\mathrm{end}}) \to \Reals$ of the components in the tank is governed by")
+    write_and_save(rerender_variables(r"The evolution of the liquid volume $V^\l\colon (0, T_{\mathrm{end}}) \to \Reals$ and the concentrations $c_i\colon (0, T_{\mathrm{end}}) \to \Reals$ of the components in the tank is governed by", var_format_))
     write_and_save(interstitial_volume_eq, as_latex=True)
 else:
     write_and_save(r"In the interstitial volume, mass transfer is governed by the following convection-diffusion-reaction equations in " + int_vol_domain[column_model.resolution] + r" and for all components " + nComp_list)
@@ -434,14 +456,14 @@ if column_model.particle_models is None or column_model.particle_models[0].resol
 else:
     sol_vars_int_vol_eq += r", c^{\p}_i \colon " + re.sub(r"\$", "", particle_domain(column_model.resolution, column_model.particle_models[0].resolution, column_model.particle_models[0].hasCore, with_par_index=column_model.N_p, with_time_domain=True)) + r" \to \mathbb{R}"
 
-sol_vars_int_vol_eq = rerender_variables(sol_vars_int_vol_eq)
+sol_vars_int_vol_eq = rerender_variables(sol_vars_int_vol_eq, var_format_)
 sol_vars_int_vol_eq_names = "is the liquid concentration" if column_model.N_p == 0 else "are the bulk (interstitial volume) and particle liquid concentrations"
 # if column_model.N_p > 0 and column_model.particle_models[0].resolution == "0D" and column_model.has_req_binding: # TODO add for req. binding
 #     sol_vars_int_vol_eq_names = "are the liquid and solid concentrations"
 
-filmDiff_str = rerender_variables(r", $k_{\mathrm{f},i}\geq 0$ is the film diffusion coefficient" if column_model.N_p > 0 else "")
+filmDiff_str = rerender_variables(r", $k_{\mathrm{f},i}\geq 0$ is the film diffusion coefficient" if column_model.N_p > 0 else "", var_format_)
 
-porosity_str = rerender_variables(r", $\varepsilon_{\mathrm{c}} \colon " + re.sub(r"\(0, T_\\mathrm\{end\}\) \\times", "", re.sub(r"\$", "", int_vol_domain[column_model.resolution])) + r" \mapsto (0, 1)$ is the interstitial column porosity") if column_model.N_p > 0 else ""
+porosity_str = rerender_variables(r", $\varepsilon_{\mathrm{c}} \colon " + re.sub(r"\(0, T_\\mathrm\{end\}\) \\times", "", re.sub(r"\$", "", int_vol_domain[column_model.resolution])) + r" \mapsto (0, 1)$ is the interstitial column porosity", var_format_) if column_model.N_p > 0 else ""
 if column_model.nonlimiting_filmDiff and column_model.has_binding and column_model.particle_models[0].resolution == "0D" and column_model.req_binding:
     porosity_str = re.sub(r"\\varepsilon_{\\mathrm{c}}", r"\\varepsilon_{\\mathrm{t}}", porosity_str)
     porosity_str = re.sub("interstitial column porosity", "total porosity", porosity_str)
@@ -450,8 +472,8 @@ u_string = r"$u>0$ is the interstitial velocity" if not column_model.resolution 
 if column_model.N_p > 0:
     write_and_save(
         rerender_variables(
-            r"Here, $" + sol_vars_int_vol_eq + r"$, " + sol_vars_int_vol_eq_names + r" of component $i \in \{1, \dots, N_{\mathrm{c}}\}$, $T_{\mathrm{end}} > 0$ is the simulation end time, " + u_string + diff_string + filmDiff_str + porosity_str + r", $c_{\mathrm{in},i}\colon " + int_vol_inlet_domain[column_model.resolution] + r" \to \mathbb{R}$ is a given inlet concentration profile."
-            )
+            r"Here, $" + sol_vars_int_vol_eq + r"$, " + sol_vars_int_vol_eq_names + r" of component $i \in \{1, \dots, N_{\mathrm{c}}\}$, $T_{\mathrm{end}} > 0$ is the simulation end time, " + u_string + diff_string + filmDiff_str + porosity_str + r", $c_{\mathrm{in},i}\colon " + int_vol_inlet_domain[column_model.resolution] + r" \to \mathbb{R}$ is a given inlet concentration profile.",
+            var_format_)
     )
 
 if column_model.N_p >0:
@@ -493,8 +515,8 @@ if column_model.N_p > 0:
 
             write_and_save(
                 rerender_variables(
-                    r"Here, $c^{\s}_i \colon " + re.sub(r"\$", "", particle_domain(column_model.resolution, column_model.particle_models[0].resolution, column_model.particle_models[0].hasCore, with_par_index=column_model.N_p, with_time_domain=True)) + r" \to \mathbb{R}$ is the solid phase concentration" + diffusion_description
-                    )
+                    r"Here, $c^{\s}_i \colon " + re.sub(r"\$", "", particle_domain(column_model.resolution, column_model.particle_models[0].resolution, column_model.particle_models[0].hasCore, with_par_index=column_model.N_p, with_time_domain=True)) + r" \to \mathbb{R}$ is the solid phase concentration" + diffusion_description,
+                    var_format_)
                 )
 
         if not particle_bc[par_type] == "":

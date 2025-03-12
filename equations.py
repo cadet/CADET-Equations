@@ -5,13 +5,6 @@
 
 import re
 
-def rerender_variables(input_str:str):
-     input_str = re.sub(r"\\l(?![a-zA-Z])", r"\\mathrm{\\ell}", input_str)
-     input_str = re.sub(r"\\b(?![a-zA-Z])", r"\\mathrm{b}", input_str)
-     input_str = re.sub(r"\\p(?![a-zA-Z])", r"\\mathrm{p}", input_str)
-     input_str = re.sub(r"\\s(?![a-zA-Z])", r"\\mathrm{s}", input_str)
-     return input_str
-
 #%% Model assumptions
 
 def HRM_asmpt(N_p:int, nonlimiting_filmDiff:bool, has_binding:bool, has_surfDiff:bool, column_resolution:str):
@@ -35,7 +28,7 @@ def HRM_asmpt(N_p:int, nonlimiting_filmDiff:bool, has_binding:bool, has_surfDiff
     ]
 
     if N_p > 0:
-        asmpts.add(r"the solvent is not adsorbed;" if has_binding else "both the solvent and the solutes are not adsorbed (i.e. there is no adsorption);")
+        asmpts.append(r"the solvent is not adsorbed;" if has_binding else "both the solvent and the solutes are not adsorbed (i.e. there is no adsorption);")
 
     return [asmpt for asmpt in asmpts if not asmpt == ""]
 
@@ -72,7 +65,7 @@ def int_vol_continuum_asmpt(resolution:str, N_p:int, nonlimiting_filmDiff:bool):
     
     asmpts = []
     if int(re.search(r'\d?', resolution).group()) > 0:
-        asmpts.add(r"the fluid only flows in the axial direction of the column (i.e., there is no flow in the radial and angular direction);")
+        asmpts.append(r"the fluid only flows in the axial direction of the column (i.e., there is no flow in the radial and angular direction);")
 
     if resolution == "3D":
         return int_vol_3DContinuum_asmpt(N_p, nonlimiting_filmDiff)
