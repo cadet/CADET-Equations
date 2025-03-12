@@ -15,7 +15,7 @@ untested_variables = ["dev_mode", "advanced_mode"] # dev_mode is not tested, TOD
 critical_variables = untested_variables + ["add_particles", "has_binding", "particle_resolution", "0D (Homogeneous Tank)"]
 
 # We test every configuration by recursively iteratiing through all combinations
-def config_recursion(at, widgies, counter):
+def config_recursion(at, widgies, counter, test_file_generator_buttons:bool):
 
     if widgies[0] in at.session_state:
 
@@ -34,6 +34,12 @@ def config_recursion(at, widgies, counter):
         for opt in options: # Note: some values will be run repeatedly since the current value of that widget is applied again. Excluding this value here would make the recursion incomplete though
 
             widgy.set_value(opt).run()
+
+            if test_file_generator_buttons:
+
+                at.button(key="generate_pdf").click().run()
+                at.button(key="generate_config").click().run()
+
             counter += 1
             assert not at.exception
 
@@ -42,7 +48,7 @@ def config_recursion(at, widgies, counter):
                     print("box: ", box.key, ", value: ", box.value)
 
             if len(widgies) > 0:
-                counter = config_recursion(at, widgies, counter)
+                counter = config_recursion(at, widgies, counter, test_file_generator_buttons)
 
         widgies.append(widgy.key)
 
@@ -66,7 +72,7 @@ def run_configs(at, toBeFixed:dict, configKeys:list, numConfigsToBeChecked:int):
         if widgy.value != toBeFixed[fixKey]:
             widgy.set_value(toBeFixed[fixKey]).run()
 
-    numConfigs = config_recursion(at, configKeys, 0)
+    numConfigs = config_recursion(at, configKeys, 0, True)
     assert numConfigs == numConfigsToBeChecked # Note: repetitive configs due to the setup of the recursion
 
 

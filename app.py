@@ -513,7 +513,7 @@ latex_string = "\n".join(latex_string)
 
 st.download_button("Download .tex", latex_string, "model.tex", "text/plain")
 
-if st.button("Generate PDF"):
+if st.button("Generate PDF", key="generate_pdf"):
     with tempfile.TemporaryDirectory() as temp_dir:
         tex_path = f"{temp_dir}/model.tex"
         pdf_path = f"{temp_dir}/model.pdf"
@@ -535,7 +535,7 @@ if st.button("Generate PDF"):
             with open(pdf_path, "rb") as pdf_file:
                 st.download_button("Download PDF", pdf_file, "model.pdf", "application/pdf")
 
-if st.button("Generate configuration file"):
+if st.button("Generate configuration file", key="generate_config"):
 
     # Create a temporary directory
     with tempfile.TemporaryDirectory() as temp_dir:
