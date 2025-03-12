@@ -175,21 +175,24 @@ class Column:
             else:
                 self.par_unique_intV_contribution_counts = Counter(particle.geometry for particle in self.particle_models)
 
+        else:
+            self.has_binding = False
+
 
     def interstitial_volume_equation(self):
 
         if self.resolution == "0D":
             equation = r"""
-    \frac{\mathrm{d}V^\l}{\mathrm{d}t} &= Q_{\mathrm{in}} - Q_{\mathrm{out}} - Q_{\mathrm{filter}},
+    \frac{\mathrm{d}V^\b}{\mathrm{d}t} &= Q_{\mathrm{in}} - Q_{\mathrm{out}} - Q_{\mathrm{filter}},
     \\
-    \frac{\mathrm{d}}{\mathrm{d} t} \left( V^\l c^\l_i \right)"""
+    \frac{\mathrm{d}}{\mathrm{d} t} \left( V^\b c^\b_i \right)"""
             
             if self.nonlimiting_filmDiff and self.has_binding and self.particle_models[0].resolution == "0D":
-                equation += r" + V^\p \varepsilon_\mathrm{p} \frac{\partial c^\l_i}{\partial t}"
+                equation += r" + V^\p \varepsilon_\mathrm{p} \frac{\partial c^\b_i}{\partial t}"
                 if self.req_binding:
                     equation += r" + V^\p \left( 1 - \varepsilon_\mathrm{p} \right) \frac{\partial c^\s_i}{\partial t}"
 
-            equation += r"&= Q_{\mathrm{in}} c^\l_{\mathrm{in},i} - Q_{\mathrm{out}} c^\l_i"
+            equation += r"&= Q_{\mathrm{in}} c^\b_{\mathrm{in},i} - Q_{\mathrm{out}} c^\b_i"
             
             if self.nonlimiting_filmDiff and self.has_binding and self.particle_models[0].resolution == "0D" and not self.req_binding:
                 equation += r" - V^\p \left( 1 - \varepsilon_\mathrm{p} \right) \frac{\partial c^\s_i}{\partial t}"
@@ -296,8 +299,8 @@ class Column:
     def model_assumptions(self):
 
         asmpts = {
-            "General model assumptions": HRM_asmpt(self.N_p, self.nonlimiting_filmDiff, self.has_binding, self.has_surfDiff),
-            "Specific model assumptions": int_vol_continuum_asmpt(self.resolution, self.N_p, self.nonlimiting_filmDiff, self.has_binding, self.has_surfDiff) +
+            "General model assumptions": HRM_asmpt(self.N_p, self.nonlimiting_filmDiff, self.has_binding, self.has_surfDiff, self.resolution),
+            "Specific model assumptions": int_vol_continuum_asmpt(self.resolution, self.N_p, self.nonlimiting_filmDiff) +
             (particle_asmpt(self.particle_models[0].resolution, self.has_surfDiff) if self.N_p > 0 else [])
             }
         
