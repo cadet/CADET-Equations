@@ -15,32 +15,36 @@ from typing import List
 from typing import Literal
 
 
-#%% Get the equations
+# %% Get the equations
 exec(open("equations.py").read())
 
-#%%
-format_map_ = {"CADET": 0, "Historical": 1}
+# %%
+format_map_ = {"CADET": 0, "Legacy": 1}
 
-def rerender_variables(input_str:str, format:int):
+
+def rerender_variables(input_str: str, format: int):
     if format_map_[format] == 0:
-         input_str = re.sub(r"\\l(?![a-zA-Z])", r"\\mathrm{\\ell}", input_str)
-         input_str = re.sub(r"\\b(?![a-zA-Z])", r"\\mathrm{b}", input_str)
-         input_str = re.sub(r"\\p(?![a-zA-Z])", r"\\mathrm{p}", input_str)
-         input_str = re.sub(r"\\s(?![a-zA-Z])", r"\\mathrm{s}", input_str)
+        input_str = re.sub(r"\\l(?![a-zA-Z])", r"\\mathrm{\\ell}", input_str)
+        input_str = re.sub(r"\\b(?![a-zA-Z])", r"\\mathrm{b}", input_str)
+        input_str = re.sub(r"\\p(?![a-zA-Z])", r"\\mathrm{p}", input_str)
+        input_str = re.sub(r"\\s(?![a-zA-Z])", r"\\mathrm{s}", input_str)
     elif format_map_[format] == 1:
-         input_str = re.sub(r"\\l(?![a-zA-Z])", r"\\mathrm{\\ell}", input_str)
-         input_str = re.sub(r"\\b(?![a-zA-Z])", r"\\mathrm{\\ell}", input_str)
-         input_str = re.sub(r"\\p(?![a-zA-Z])", r"\\mathrm{p}", input_str)
-         input_str = re.sub(r"c\^\\s(?![a-zA-Z])", r"q", input_str)
-         input_str = re.sub(r"c\}\^\{\\s\}(?![a-zA-Z])", r"q}", input_str)
+        input_str = re.sub(r"\\l(?![a-zA-Z])", r"", input_str)
+        input_str = re.sub(r"\\b(?![a-zA-Z])", r"", input_str)
+        # todo: write p in the subscript
+        input_str = re.sub(r"\\p(?![a-zA-Z])", r"\\mathrm{p}", input_str)
+        input_str = re.sub(r"c\^\\s(?![a-zA-Z])", r"q", input_str)
+        input_str = re.sub(r"c\}\^\{\\s\}(?![a-zA-Z])", r"q}", input_str)
     else:
         raise ValueError(f"Only formats in {format_map_} are supported.")
-    
+
     return input_str
 
-#%% src
+# %% src
 
-@dataclass(frozen=True)  # immutable & hashable dataclass -> unique particle type counter
+
+# immutable & hashable dataclass -> unique particle type counter
+@dataclass(frozen=True)
 class Particle:
     geometry: Literal["Sphere", "Cylinder", "Slab"]
     hasCore: bool
@@ -54,10 +58,12 @@ class Particle:
         valid_resolutions = {"1D", "0D"}
 
         if self.geometry not in valid_geometries:
-            raise ValueError(f"Invalid geometry: {self.geometry}. Must be one of {valid_geometries}.")
+            raise ValueError(
+                f"Invalid geometry: {self.geometry}. Must be one of {valid_geometries}.")
         if self.resolution not in valid_resolutions:
-            raise ValueError(f"Invalid resolution: {self.resolution}. Must be one of {valid_resolutions}.")
-        
+            raise ValueError(
+                f"Invalid resolution: {self.resolution}. Must be one of {valid_resolutions}.")
+
         if self.geometry == "Sphere":
             object.__setattr__(self, 'surface_volume_ratio', 3)
         elif self.geometry == "Cylinder":
@@ -65,11 +71,12 @@ class Particle:
         elif self.geometry == "Slab":
             object.__setattr__(self, 'surface_volume_ratio', 1)
 
+
 @dataclass
 class Column:
 
-    dev_mode: bool # dev mode including untested, unstable and wip features
-    advanced_mode: bool # Ask for detailed parameter inputs
+    dev_mode: bool  # dev mode including untested, unstable and wip features
+    advanced_mode: bool  # Ask for detailed parameter inputs
     resolution: Literal = ""
     N_c: int = -1
     N_p: int = -1
@@ -81,13 +88,17 @@ class Column:
     has_radial_dispersion: bool = False
     has_angular_dispersion: bool = False
 
-    nonlimiting_filmDiff: bool = False # List[bool] = None # TODO make this possible per component and particle type in advanced mode
+    # List[bool] = None # TODO make this possible per component and particle type in advanced mode
+    nonlimiting_filmDiff: bool = False
 
     particle_models: List[Particle] = None
-    par_type_counts: Counter[Particle] = field(default_factory=Counter) # counts per unique particle type (geometry, hasCore, resolution)
-    par_unique_intV_contribution_counts: Counter[Particle] = field(default_factory=Counter) # puts particle types together that have a similar contribution to the interstitial volume equation and counts them
+    # counts per unique particle type (geometry, hasCore, resolution)
+    par_type_counts: Counter[Particle] = field(default_factory=Counter)
+    # puts particle types together that have a similar contribution to the interstitial volume equation and counts them
+    par_unique_intV_contribution_counts: Counter[Particle] = field(
+        default_factory=Counter)
     has_surfDiff: bool = False
-    has_binding: bool = True # and thus solid phase
+    has_binding: bool = True  # and thus solid phase
     req_binding: bool = False
     has_mult_bnd_states: bool = False
     # nCompReq: int
@@ -96,43 +107,50 @@ class Column:
 
     def __post_init__(self):
 
-        ### Configure interstitial column transport
+        # Configure interstitial column transport
         st.sidebar.write("Configure interstitial volume model")
         col1, col2 = st.columns(2)
 
         with col1:
-            self.resolution=re.search(r'\dD', st.sidebar.selectbox("Column resolution", ["1D (axial coordinate)", "0D (Homogeneous Tank)", "2D (axial and radial coordinate)", "3D (axial, radial and angular coordinate)"], key="column_resolution")).group()
+            self.resolution = re.search(r'\dD', st.sidebar.selectbox("Column resolution", [
+                                        "1D (axial coordinate)", "0D (Homogeneous Tank)", "2D (axial and radial coordinate)", "3D (axial, radial and angular coordinate)"], key="column_resolution")).group()
 
         valid_resolutions = {"3D", "2D", "1D", "0D"}
 
         if self.resolution not in valid_resolutions:
-            raise ValueError(f"Invalid resolution: {self.resolution}. Must be one of {valid_resolutions}.")
+            raise ValueError(
+                f"Invalid resolution: {self.resolution}. Must be one of {valid_resolutions}.")
         if int(re.search("\\d", self.resolution).group()) > 0:
-             self.has_axial_coordinate = True
-             self.has_axial_dispersion = True
+            self.has_axial_coordinate = True
+            self.has_axial_dispersion = True
         if int(re.search("\\d", self.resolution).group()) > 1:
-             self.has_radial_coordinate = True
-             self.has_radial_dispersion = True
+            self.has_radial_coordinate = True
+            self.has_radial_dispersion = True
         if int(re.search("\\d", self.resolution).group()) > 2:
-             self.has_angular_coordinate = True
-             self.has_angular_dispersion = True
-        
-        self.N_c = st.sidebar.number_input("Number of components", key="N_c", min_value=1, step=1) if advanced_mode_ else -1
+            self.has_angular_coordinate = True
+            self.has_angular_dispersion = True
+
+        self.N_c = st.sidebar.number_input(
+            "Number of components", key="N_c", min_value=1, step=1) if advanced_mode_ else -1
 
         if self.has_axial_coordinate:
             with col2:
-                self.has_axial_dispersion = st.sidebar.selectbox("Add axial Dispersion", ["No", "Yes"], key="has_axial_dispersion") == "Yes"
+                self.has_axial_dispersion = st.sidebar.selectbox(
+                    "Add axial Dispersion", ["No", "Yes"], key="has_axial_dispersion") == "Yes"
 
         if self.dev_mode:
-             if self.has_radial_coordinate:
-                self.has_radial_dispersion = st.sidebar.selectbox("Add radial Dispersion", ["Yes", "No"], key="has_radial_dispersion") == "Yes"
-             if self.has_angular_coordinate:
-                self.has_angular_dispersion = st.sidebar.selectbox("Add angular Dispersion", ["Yes", "No"], key="has_angular_dispersion") == "Yes"
+            if self.has_radial_coordinate:
+                self.has_radial_dispersion = st.sidebar.selectbox(
+                    "Add radial Dispersion", ["Yes", "No"], key="has_radial_dispersion") == "Yes"
+            if self.has_angular_coordinate:
+                self.has_angular_dispersion = st.sidebar.selectbox(
+                    "Add angular Dispersion", ["Yes", "No"], key="has_angular_dispersion") == "Yes"
 
-        ### Configure particle model
+        # Configure particle model
         st.sidebar.write("Configure particle model")
 
-        self.N_p = st.sidebar.number_input("Number of particle types", key="N_p", min_value=0, step=1) if dev_mode_ else int(st.sidebar.selectbox("Add particles", ["No", "Yes"], key="add_particles") == "Yes")
+        self.N_p = st.sidebar.number_input("Number of particle types", key="N_p", min_value=0, step=1) if dev_mode_ else int(
+            st.sidebar.selectbox("Add particles", ["No", "Yes"], key="add_particles") == "Yes")
 
         if self.N_p > 0:
 
@@ -147,57 +165,69 @@ class Column:
 
                 with col1:
 
-                    if dev_mode_: # multiple particle types
-                        resolution = re.search(r'\dD', st.sidebar.selectbox(f"Select spatial resolution of particle type {j + 1}", ["1D (radial coordinate)", "0D (homogeneous)"], key=f"parType_{j+1}_resolution")).group()
-                        hasCore = st.sidebar.selectbox(f"Choose if particle type {j + 1} is a core-shell particle (i.e. " + r"$R_\mathrm{pc} > 0$)", ["No core-shell", "Has core-shell"], key=f"parType_{j+1}_hasCore") == "Has core-shell"
-                        geometry = st.sidebar.selectbox(f"Select geometry of particle type {j + 1}", ["Sphere", "Cylinder", "Slab"], key=f"parType_{j+1}__geometry")
+                    if dev_mode_:  # multiple particle types
+                        resolution = re.search(r'\dD', st.sidebar.selectbox(f"Select spatial resolution of particle type {j + 1}", [
+                                               "1D (radial coordinate)", "0D (homogeneous)"], key=f"parType_{j+1}_resolution")).group()
+                        hasCore = st.sidebar.selectbox(f"Choose if particle type {j + 1} is a core-shell particle (i.e. " + r"$R_\mathrm{pc} > 0$)", [
+                                                       "No core-shell", "Has core-shell"], key=f"parType_{j+1}_hasCore") == "Has core-shell"
+                        geometry = st.sidebar.selectbox(f"Select geometry of particle type {j + 1}", [
+                                                        "Sphere", "Cylinder", "Slab"], key=f"parType_{j+1}__geometry")
                     else:
-                        resolution = re.search(r'\dD', st.sidebar.selectbox(f"Select spatial resolution of particles", ["1D (radial coordinate)", "0D (homogeneous)"], key="particle_resolution")).group()
-                        hasCore = st.sidebar.selectbox(f"Add impenetrable core-shell (i.e. " + r"$R_\mathrm{pc} > 0$)", ["No", "Yes"], key=f"parType_{j+1}_hasCore") == "Yes" if (resolution == "1D" and advanced_mode_) else False
+                        resolution = re.search(r'\dD', st.sidebar.selectbox(f"Select spatial resolution of particles", [
+                                               "1D (radial coordinate)", "0D (homogeneous)"], key="particle_resolution")).group()
+                        hasCore = st.sidebar.selectbox(f"Add impenetrable core-shell (i.e. " + r"$R_\mathrm{pc} > 0$)", [
+                                                       "No", "Yes"], key=f"parType_{j+1}_hasCore") == "Yes" if (resolution == "1D" and advanced_mode_) else False
                         geometry = "Sphere"
-                    
-                with col2:
-                    if j == 0: # todo make this configurable for every particle type
-                        self.nonlimiting_filmDiff = st.sidebar.selectbox("Non-limiting film diffusion", ["No", "Yes"], key="nonlimiting_filmDiff") == "Yes"
 
-                if j == 0: # todo make this configurable for every particle type
+                with col2:
+                    if j == 0:  # todo make this configurable for every particle type
+                        self.nonlimiting_filmDiff = st.sidebar.selectbox(
+                            "Non-limiting film diffusion", ["No", "Yes"], key="nonlimiting_filmDiff") == "Yes"
+
+                if j == 0:  # todo make this configurable for every particle type
                     # Configure binding model
                     st.sidebar.write("Configure binding model")
 
-                    self.has_binding = st.sidebar.selectbox("Add binding", ["No", "Yes"], key="has_binding") == "Yes"
+                    self.has_binding = st.sidebar.selectbox(
+                        "Add binding", ["No", "Yes"], key="has_binding") == "Yes"
 
                     if self.has_binding:
 
                         col1, col2 = st.columns(2)
 
                         with col1:
-                            self.req_binding = st.sidebar.selectbox("Binding kinetics mode", ["Kinetic", "Rapid-equilibrium"], key="req_binding") == "Rapid-equilibrium"
-                            self.has_mult_bnd_states = st.sidebar.selectbox("Add multiple bound states", ["No", "Yes"], key="has_mult_bnd_states") == "Yes" if advanced_mode_ else False
+                            self.req_binding = st.sidebar.selectbox("Binding kinetics mode", [
+                                                                    "Kinetic", "Rapid-equilibrium"], key="req_binding") == "Rapid-equilibrium"
+                            self.has_mult_bnd_states = st.sidebar.selectbox("Add multiple bound states", [
+                                                                            "No", "Yes"], key="has_mult_bnd_states") == "Yes" if advanced_mode_ else False
                         with col2:
-                            self.has_surfDiff = st.sidebar.selectbox("Add surface diffusion", ["No", "Yes"], key="has_surfDiff") == "Yes" if resolution == "1D" else False
+                            self.has_surfDiff = st.sidebar.selectbox("Add surface diffusion", [
+                                                                     "No", "Yes"], key="has_surfDiff") == "Yes" if resolution == "1D" else False
 
                 self.particle_models.append(
                     Particle(
                         geometry=geometry,
                         resolution=resolution,
                         hasCore=hasCore
-                        )
+                    )
                 )
-            
+
             # We need to count and thus sort particle_models:
             #  Particle types need individual particle equations, which is why we count them
             #  Only specific differences lead to changes in the interstitial volume equations: geometry if kinetic film diffusion. else geometry + resolution
             #  Sorting by (geometry, resolution) ensures we are using the same indices across the interstitial volume and particle equations.
-            self.particle_models = sorted(self.particle_models, key=lambda particle: (particle.geometry, particle.resolution))
+            self.particle_models = sorted(self.particle_models, key=lambda particle: (
+                particle.geometry, particle.resolution))
             self.par_type_counts = Counter(self.particle_models)
             if self.nonlimiting_filmDiff:
-                self.par_unique_intV_contribution_counts = Counter((particle.geometry, particle.resolution) for particle in self.particle_models)
+                self.par_unique_intV_contribution_counts = Counter(
+                    (particle.geometry, particle.resolution) for particle in self.particle_models)
             else:
-                self.par_unique_intV_contribution_counts = Counter(particle.geometry for particle in self.particle_models)
+                self.par_unique_intV_contribution_counts = Counter(
+                    particle.geometry for particle in self.particle_models)
 
         else:
             self.has_binding = False
-
 
     def interstitial_volume_equation(self):
 
@@ -206,14 +236,14 @@ class Column:
     \frac{\mathrm{d}V^\b}{\mathrm{d}t} &= Q_{\mathrm{in}} - Q_{\mathrm{out}} - Q_{\mathrm{filter}},
     \\
     \frac{\mathrm{d}}{\mathrm{d} t} \left( V^\b c^\b_i \right)"""
-            
+
             if self.nonlimiting_filmDiff and self.has_binding and self.particle_models[0].resolution == "0D":
                 equation += r" + V^\p \varepsilon_\mathrm{p} \frac{\partial c^\b_i}{\partial t}"
                 if self.req_binding:
                     equation += r" + V^\p \left( 1 - \varepsilon_\mathrm{p} \right) \frac{\partial c^\s_i}{\partial t}"
 
             equation += r"&= Q_{\mathrm{in}} c^\b_{\mathrm{in},i} - Q_{\mathrm{out}} c^\b_i"
-            
+
             if self.nonlimiting_filmDiff and self.has_binding and self.particle_models[0].resolution == "0D" and not self.req_binding:
                 equation += r" - V^\p \left( 1 - \varepsilon_\mathrm{p} \right) \frac{\partial c^\s_i}{\partial t}"
 
@@ -231,37 +261,42 @@ class Column:
             if self.has_angular_dispersion:
                 equation += " + " + angular_dispersion_eps
 
-            if self.N_p == 0: # remove occurencies of porosity, which is just constant one in this case
-                equation = re.sub(r"\\varepsilon_{\\mathrm{c}}", "", re.sub( r"\\left\( \\varepsilon_{\\mathrm{c}} c^{\\l}_i \\right\)", r"c^{\\l}_i", equation))
+            if self.N_p == 0:  # remove occurencies of porosity, which is just constant one in this case
+                equation = re.sub(r"\\varepsilon_{\\mathrm{c}}", "", re.sub(
+                    r"\\left\( \\varepsilon_{\\mathrm{c}} c^{\\l}_i \\right\)", r"c^{\\l}_i", equation))
 
         # if self.nonlimiting_filmDiff and 1Dparticle # entscheidende faktoren sind particle resolution und filmDiffMode. the following loop has thus to change
         par_added = 0
         for par_uniq in self.par_unique_intV_contribution_counts.keys():
-                if self.nonlimiting_filmDiff:
-                    equation += int_filmDiff_term(Particle(par_uniq[0], False, par_uniq[1]), 1 + par_added, par_added + self.par_unique_intV_contribution_counts[par_uniq], self.N_p == 1, self.nonlimiting_filmDiff)
-                else:
-                    equation += int_filmDiff_term(Particle(par_uniq, False, "0D"), 1 + par_added, par_added + self.par_unique_intV_contribution_counts[par_uniq], self.N_p == 1, self.nonlimiting_filmDiff)
+            if self.nonlimiting_filmDiff:
+                equation += int_filmDiff_term(Particle(par_uniq[0], False, par_uniq[1]), 1 + par_added, par_added +
+                                              self.par_unique_intV_contribution_counts[par_uniq], self.N_p == 1, self.nonlimiting_filmDiff)
+            else:
+                equation += int_filmDiff_term(Particle(par_uniq, False, "0D"), 1 + par_added, par_added +
+                                              self.par_unique_intV_contribution_counts[par_uniq], self.N_p == 1, self.nonlimiting_filmDiff)
 
-                par_added += self.par_unique_intV_contribution_counts[par_uniq]
+            par_added += self.par_unique_intV_contribution_counts[par_uniq]
 
         if self.resolution == "0D":
-            equation = re.sub(r"\\left\(1 - \\varepsilon_{\\mathrm{c}} \\right\)", r"V^s", equation)
+            equation = re.sub(
+                r"\\left\(1 - \\varepsilon_{\\mathrm{c}} \\right\)", r"V^s", equation)
 
         if self.nonlimiting_filmDiff and self.has_binding and self.particle_models[0].resolution == "0D" and self.req_binding:
-            equation = re.sub(r"\\varepsilon_{\\mathrm{c}}", r"\\varepsilon_{\\mathrm{t}}", equation)
+            equation = re.sub(
+                r"\\varepsilon_{\\mathrm{c}}", r"\\varepsilon_{\\mathrm{t}}", equation)
 
         equation = r"""\begin{align}
 """ + equation + r""",
 \end{align}"""
 
-        return rerender_variables(equation, var_format_)
-    
+        return equation
+
     def interstitial_volume_bc(self):
         if not self.resolution == "0D":
-            return rerender_variables(int_vol_BC(self.resolution, self.has_axial_dispersion), var_format_)
+            return int_vol_BC(self.resolution, self.has_axial_dispersion)
         else:
             return None
-    
+
     def particle_equations(self):
 
         equations = {}
@@ -269,14 +304,16 @@ class Column:
 
         for par_type in self.par_type_counts.keys():
 
-            equations[par_type] = particle_transport(par_type, singleParticle=self.N_p == 1, nonlimiting_filmDiff=self.nonlimiting_filmDiff, has_surfDiff=self.has_surfDiff, has_binding=self.has_binding, req_binding=self.req_binding, has_mult_bnd_states=self.has_mult_bnd_states)
-            equations[par_type] = rerender_variables(equations[par_type], var_format_)
+            equations[par_type] = particle_transport(par_type, singleParticle=self.N_p == 1, nonlimiting_filmDiff=self.nonlimiting_filmDiff,
+                                                     has_surfDiff=self.has_surfDiff, has_binding=self.has_binding, req_binding=self.req_binding, has_mult_bnd_states=self.has_mult_bnd_states)
+            equations[par_type] = equations[par_type]
 
-            boundary_conditions[par_type] = particle_boundary(par_type, singleParticle=self.N_p == 1, nonlimiting_filmDiff=self.nonlimiting_filmDiff, has_surfDiff=self.has_surfDiff, has_binding=self.has_binding, req_binding=self.req_binding, has_mult_bnd_states=self.has_mult_bnd_states)
-            boundary_conditions[par_type] = rerender_variables(boundary_conditions[par_type], var_format_)
+            boundary_conditions[par_type] = particle_boundary(par_type, singleParticle=self.N_p == 1, nonlimiting_filmDiff=self.nonlimiting_filmDiff,
+                                                              has_surfDiff=self.has_surfDiff, has_binding=self.has_binding, req_binding=self.req_binding, has_mult_bnd_states=self.has_mult_bnd_states)
+            boundary_conditions[par_type] = boundary_conditions[par_type]
 
         return equations, boundary_conditions
-    
+
     def model_name(self):
 
         if self.resolution == "0D":
@@ -294,16 +331,17 @@ class Column:
 
             if self.N_p > 1:
                 if not any(par.geometry != "Sphere" for par in self.particle_models):
-                    model_name += " PSD" # particle-size distribution
+                    model_name += " PSD"  # particle-size distribution
                 else:
-                    model_name += " PTD" # particle-type distribution # TODO use when different kinds of geometry or binding
+                    # particle-type distribution # TODO use when different kinds of geometry or binding
+                    model_name += " PTD"
 
             if self.particle_models[0].resolution == "1D":
                 model_name += "General Rate Model"
 
                 if self.has_surfDiff:
                     model_name += "  with surface diffusion"
-                    
+
             else:
                 model_name += "Lumped Rate Model"
 
@@ -312,7 +350,7 @@ class Column:
         else:
             if self.has_axial_dispersion or self.has_radial_dispersion or self.has_angular_dispersion:
                 model_name += "Dispersive "
-            model_name += "Plug Flow" # Reactor if we have reactions
+            model_name += "Plug Flow"  # Reactor if we have reactions
 
         return model_name
 
@@ -321,23 +359,29 @@ class Column:
         asmpts = {
             "General model assumptions": HRM_asmpt(self.N_p, self.nonlimiting_filmDiff, self.has_binding, self.has_surfDiff, self.resolution),
             "Specific model assumptions": int_vol_continuum_asmpt(self.resolution, self.N_p, self.nonlimiting_filmDiff) +
-            (particle_asmpt(self.particle_models[0].resolution, self.has_surfDiff) if self.N_p > 0 else [])
-            }
-        
+            (particle_asmpt(
+                self.particle_models[0].resolution, self.has_surfDiff) if self.N_p > 0 else [])
+        }
+
         if self.nonlimiting_filmDiff:
-            asmpts["Specific model assumptions"].append(r"the film around the particles does not limit mass transfer (i.e. $k_{\mathrm{f},i} \to \infty$)")
+            asmpts["Specific model assumptions"].append(
+                r"the film around the particles does not limit mass transfer (i.e. $k_{\mathrm{f},i} \to \infty$)")
         if self.req_binding:
-            asmpts["Specific model assumptions"].append(r"adsorption and desorption happen on a much faster time scale than the other mass transfer processes (e.g., convection, diffusion). Hence, we consider them to be equilibrated instantly, that is, to always be in (local) equilibrium")
+            asmpts["Specific model assumptions"].append(
+                r"adsorption and desorption happen on a much faster time scale than the other mass transfer processes (e.g., convection, diffusion). Hence, we consider them to be equilibrated instantly, that is, to always be in (local) equilibrium")
 
         return asmpts
-    
 
-#%% Streamlit UI
-st.sidebar.title("CADET-Equations: Packed-Bed Chromatography Model Equation Generator")
-st.sidebar.write("Configure a chromatography model to get the corresponding governing equations.")
+
+# %% Streamlit UI
+st.sidebar.title(
+    "CADET-Equations: Packed-Bed Chromatography Model Equation Generator")
+st.sidebar.write(
+    "Configure a chromatography model to get the corresponding governing equations.")
 
 # File uploader for JSON file
-uploaded_file = st.sidebar.file_uploader("Define the model configuration below or upload configuration file", type="json")
+uploaded_file = st.sidebar.file_uploader(
+    "Define the model configuration below or upload configuration file", type="json")
 
 if uploaded_file is not None:
     # Load JSON data
@@ -351,20 +395,23 @@ if uploaded_file is not None:
 
 # User configuration of the model
 
-var_format_ = st.sidebar.selectbox("Select format (e.g. $c^s$ or $q$ as the solid phase concentration)", ["CADET", "Historical"], key="var_format")
+var_format_ = st.sidebar.selectbox("Select format (e.g. $c^s$ or $q$ as the solid phase concentration)", [
+                                   "CADET", "Historical"], key="var_format")
 
-advanced_mode_=st.sidebar.selectbox("Advanced setup options (enables e.g. multiple bound states)", ["Off", "On"], key="advanced_mode") == "On"
+advanced_mode_ = st.sidebar.selectbox("Advanced setup options (enables e.g. multiple bound states)", [
+                                      "Off", "On"], key="advanced_mode") == "On"
 if advanced_mode_:
-    dev_mode_=st.sidebar.selectbox("Developer setup options (not tested! Enables e.g. multiple particle types)", ["Off", "On"], key="dev_mode") == "On"
+    dev_mode_ = st.sidebar.selectbox("Developer setup options (not tested! Enables e.g. multiple particle types)", [
+                                     "Off", "On"], key="dev_mode") == "On"
     advanced_mode_ = True if dev_mode_ else False
 else:
     dev_mode_ = False
 
 column_model = Column(dev_mode=dev_mode_, advanced_mode=advanced_mode_)
 
-#%% Display equations
+# %% Display equations
 
-file_content = [] # used to export model to files
+file_content = []  # used to export model to files
 
 if st.toggle("Show Model Assumptions", key="model_assumptions"):
 
@@ -381,15 +428,20 @@ if st.toggle("Show Model Assumptions", key="model_assumptions"):
 \end{itemize}
 
 """
-)
+        )
 
 interstitial_volume_eq = column_model.interstitial_volume_equation()
 
-nComp_list = r"$i\in\{" + ", ".join(str(i) for i in range(1, column_model.N_c + 1)) + r"\}$" if column_model.N_c > 0 else r"$i\in\{1, \dots, N_c\}$"
+nComp_list = r"$i\in\{" + ", ".join(str(i) for i in range(1, column_model.N_c + 1)) + \
+    r"\}$" if column_model.N_c > 0 else r"$i\in\{1, \dots, N_c\}$"
 nPar_list = ', '.join(str(j) for j in range(1, column_model.N_p + 1))
 
 # The following function is used to both print the output and collect it to later generate and export output files
-def write_and_save(output:str, as_latex:bool=False):
+
+
+def write_and_save(output: str, as_latex: bool = False):
+
+    output = rerender_variables(output, var_format_)
 
     if output is not None:
 
@@ -399,6 +451,7 @@ def write_and_save(output:str, as_latex:bool=False):
             st.latex(output)
         else:
             st.write(output)
+
 
 st.write("### " + column_model.model_name())
 file_content.append(r"\section*{" + column_model.model_name() + r"}")
@@ -411,7 +464,8 @@ else:
 if column_model.N_p == 0:
     write_and_save(intro_str + r"filled with liquid phase.")
 elif column_model.N_p == 1:
-    write_and_save(intro_str + r"packed with spherical particles.") # TODO particle geometries?
+    # TODO particle geometries?
+    write_and_save(intro_str + r"packed with spherical particles.")
 else:
     write_and_save(intro_str + r"""packed with $N_{\mathrm{p}}\geq 0$ different particle types indexed by $j \in \{1, \dots, N_{\mathrm{p}}\}$ and distributed according to the volume fractions $d_j \colon (0, R_{\mathrm{c}}) \times (0,L) \to [0, 1]$.
 	For all $(\rho,z,\varphi) \in (0, R_{\mathrm{c}}) \times (0,L) \times [0,2\pi)$ the volume fractions satisfy""")
@@ -424,10 +478,13 @@ else:
 
 
 if column_model.resolution == "0D":
-    write_and_save(rerender_variables(r"The evolution of the liquid volume $V^\l\colon (0, T_{\mathrm{end}}) \to \Reals$ and the concentrations $c_i\colon (0, T_{\mathrm{end}}) \to \Reals$ of the components in the tank is governed by", var_format_))
+    write_and_save(
+        r"The evolution of the liquid volume $V^\l\colon (0, T_{\mathrm{end}}) \to \Reals$ and the concentrations $c_i\colon (0, T_{\mathrm{end}}) \to \Reals$ of the components in the tank is governed by")
     write_and_save(interstitial_volume_eq, as_latex=True)
 else:
-    write_and_save(r"In the interstitial volume, mass transfer is governed by the following convection-diffusion-reaction equations in " + int_vol_domain[column_model.resolution] + r" and for all components " + nComp_list)
+    eq_type = "convection-diffusion-reaction"
+    write_and_save(r"In the interstitial volume, mass transfer is governed by the following " + eq_type +
+                   " equations in " + int_vol_domain[column_model.resolution] + r" and for all components " + nComp_list)
     write_and_save(interstitial_volume_eq, as_latex=True)
     write_and_save("with boundary conditions")
     write_and_save(column_model.interstitial_volume_bc(), as_latex=True)
@@ -444,61 +501,75 @@ elif column_model.resolution == "2D":
     tmp_str = "are the lumped diffusion coefficients in axial and radial direction" if column_model.has_axial_dispersion else "is the lumped radial diffusion coefficient"
     diff_string = r", " + diff_vars + tmp_str
 elif column_model.resolution == "3D":
-    diff_string = r", " + diff_vars + r"are the lumped diffusion coefficients in axial, radial and angular direction"
+    diff_string = r", " + diff_vars + \
+        r"are the lumped diffusion coefficients in axial, radial and angular direction"
 elif column_model.resolution == "0D":
     diff_string = ""
 
 # if column_model.N_p == 0:
-sol_vars_int_vol_eq = r"c^{\l}_i \colon " + re.sub(r"\$", "", int_vol_domain[column_model.resolution]) + r" \to \mathbb{R}" 
+sol_vars_int_vol_eq = r"c^{\l}_i \colon " + re.sub(
+    r"\$", "", int_vol_domain[column_model.resolution]) + r" \to \mathbb{R}"
 # else:# todo req bnd mit 0D par
 if column_model.particle_models is None or column_model.particle_models[0].resolution == "0D":
-    sol_vars_int_vol_eq = r"c^{\l}_i, c^{\p}_i \colon " + re.sub(r"\$", "", int_vol_domain[column_model.resolution]) + r" \to \mathbb{R}"
+    sol_vars_int_vol_eq = r"c^{\l}_i, c^{\p}_i \colon " + re.sub(
+        r"\$", "", int_vol_domain[column_model.resolution]) + r" \to \mathbb{R}"
 else:
-    sol_vars_int_vol_eq += r", c^{\p}_i \colon " + re.sub(r"\$", "", particle_domain(column_model.resolution, column_model.particle_models[0].resolution, column_model.particle_models[0].hasCore, with_par_index=column_model.N_p, with_time_domain=True)) + r" \to \mathbb{R}"
+    sol_vars_int_vol_eq += r", c^{\p}_i \colon " + re.sub(r"\$", "", particle_domain(
+        column_model.resolution, column_model.particle_models[0].resolution, column_model.particle_models[0].hasCore, with_par_index=column_model.N_p, with_time_domain=True)) + r" \to \mathbb{R}"
 
-sol_vars_int_vol_eq = rerender_variables(sol_vars_int_vol_eq, var_format_)
+sol_vars_int_vol_eq = sol_vars_int_vol_eq
 sol_vars_int_vol_eq_names = "is the liquid concentration" if column_model.N_p == 0 else "are the bulk (interstitial volume) and particle liquid concentrations"
 # if column_model.N_p > 0 and column_model.particle_models[0].resolution == "0D" and column_model.has_req_binding: # TODO add for req. binding
 #     sol_vars_int_vol_eq_names = "are the liquid and solid concentrations"
 
-filmDiff_str = rerender_variables(r", $k_{\mathrm{f},i}\geq 0$ is the film diffusion coefficient" if column_model.N_p > 0 else "", var_format_)
+filmDiff_str = r", $k_{\mathrm{f},i}\geq 0$ is the film diffusion coefficient" if column_model.N_p > 0 else ""
 
-porosity_str = rerender_variables(r", $\varepsilon_{\mathrm{c}} \colon " + re.sub(r"\(0, T_\\mathrm\{end\}\) \\times", "", re.sub(r"\$", "", int_vol_domain[column_model.resolution])) + r" \mapsto (0, 1)$ is the interstitial column porosity", var_format_) if column_model.N_p > 0 else ""
+porosity_str = r", $\varepsilon_{\mathrm{c}} \colon " + re.sub(r"\(0, T_\\mathrm\{end\}\) \\times", "", re.sub(
+    r"\$", "", int_vol_domain[column_model.resolution])) + r" \mapsto (0, 1)$ is the interstitial column porosity" if column_model.N_p > 0 else ""
 if column_model.nonlimiting_filmDiff and column_model.has_binding and column_model.particle_models[0].resolution == "0D" and column_model.req_binding:
-    porosity_str = re.sub(r"\\varepsilon_{\\mathrm{c}}", r"\\varepsilon_{\\mathrm{t}}", porosity_str)
-    porosity_str = re.sub("interstitial column porosity", "total porosity", porosity_str)
+    porosity_str = re.sub(
+        r"\\varepsilon_{\\mathrm{c}}", r"\\varepsilon_{\\mathrm{t}}", porosity_str)
+    porosity_str = re.sub("interstitial column porosity",
+                          "total porosity", porosity_str)
 
 u_string = r"$u>0$ is the interstitial velocity" if not column_model.resolution == "0D" else ""
 if column_model.N_p > 0:
     write_and_save(
-        rerender_variables(
-            r"Here, $" + sol_vars_int_vol_eq + r"$, " + sol_vars_int_vol_eq_names + r" of component $i \in \{1, \dots, N_{\mathrm{c}}\}$, $T_{\mathrm{end}} > 0$ is the simulation end time, " + u_string + diff_string + filmDiff_str + porosity_str + r", $c_{\mathrm{in},i}\colon " + int_vol_inlet_domain[column_model.resolution] + r" \to \mathbb{R}$ is a given inlet concentration profile.",
-            var_format_)
+        r"Here, $" + sol_vars_int_vol_eq + r"$, " + sol_vars_int_vol_eq_names + r" of component $i \in \{1, \dots, N_{\mathrm{c}}\}$, $T_{\mathrm{end}} > 0$ is the simulation end time, " + u_string +
+        diff_string + filmDiff_str + porosity_str +
+        r", $c_{\mathrm{in},i}\colon " +
+        int_vol_inlet_domain[column_model.resolution] +
+        r" \to \mathbb{R}$ is a given inlet concentration profile.",
     )
 
-if column_model.N_p >0:
-     tmp = r"and particle types $j\in\{" + str(nPar_list) + r"\}$"
+if column_model.N_p > 0:
+    tmp = r"and particle types $j\in\{" + str(nPar_list) + r"\}$"
 else:
-     tmp = r""
+    tmp = r""
 
 if column_model.N_p > 0:
 
     particle_eq, particle_bc = column_model.particle_equations()
 
-    if not (not column_model.has_binding and column_model.nonlimiting_filmDiff and column_model.particle_models[0].resolution == "0D"): # in this case, we dont have a particle model. this configuration is still allowed for educational purpose.
-        write_and_save(r"In the particle models, mass transfer is governed by the following diffusion-reaction equations,")
+    # in this case, we dont have a particle model. this configuration is still allowed for educational purpose.
+    if not (not column_model.has_binding and column_model.nonlimiting_filmDiff and column_model.particle_models[0].resolution == "0D"):
+        write_and_save(
+            r"In the particle models, mass transfer is governed by the following diffusion-reaction equations,")
 
     tmp = 0
     for par_type in column_model.par_type_counts.keys():
 
-        if not column_model.has_binding and column_model.nonlimiting_filmDiff and par_type.resolution == "0D": # in this case, we dont have a particle model. this configuration is still allowed for educational purpose.
+        # in this case, we dont have a particle model. this configuration is still allowed for educational purpose.
+        if not column_model.has_binding and column_model.nonlimiting_filmDiff and par_type.resolution == "0D":
             break
 
-        tmp_textblock = "in " + particle_domain(column_model.resolution, par_type.resolution, par_type.hasCore, with_par_index=True, with_time_domain=True) + " for "
+        tmp_textblock = "in " + particle_domain(column_model.resolution, par_type.resolution,
+                                                par_type.hasCore, with_par_index=True, with_time_domain=True) + " for "
 
         if column_model.N_p > 1:
-            
-            tmp_textblock += r"particle types $j\in\{" + nPar_list + r"\}$ and components " + nComp_list
+
+            tmp_textblock += r"particle types $j\in\{" + \
+                nPar_list + r"\}$ and components " + nComp_list
         else:
             tmp_textblock += r"components " + nComp_list
 
@@ -514,16 +585,16 @@ if column_model.N_p > 0:
                 diffusion_description = r", $D_i^{\p}$ is the particle diffusion coefficient for component $i$" if column_model.has_surfDiff else r", $D_i^{\p}, D_i^{\s}\geq 0$ are the pore and surface diffusion coefficients for component $i$."
 
             write_and_save(
-                rerender_variables(
-                    r"Here, $c^{\s}_i \colon " + re.sub(r"\$", "", particle_domain(column_model.resolution, column_model.particle_models[0].resolution, column_model.particle_models[0].hasCore, with_par_index=column_model.N_p, with_time_domain=True)) + r" \to \mathbb{R}$ is the solid phase concentration" + diffusion_description,
-                    var_format_)
-                )
+                r"Here, $c^{\s}_i \colon " + re.sub(r"\$", "", particle_domain(column_model.resolution, column_model.particle_models[0].resolution, column_model.particle_models[
+                                                    0].hasCore, with_par_index=column_model.N_p, with_time_domain=True)) + r" \to \mathbb{R}$ is the solid phase concentration" + diffusion_description,
+            )
 
         if not particle_bc[par_type] == "":
             write_and_save("The boundary conditions are given by")
             write_and_save(particle_bc[par_type], as_latex=True)
 
-write_and_save("Initial values for all solution variables (concentrations) are defined at $t = 0$.")
+write_and_save(
+    "Initial values for all solution variables (concentrations) are defined at $t = 0$.")
 
 latex_string = [
     r"""\documentclass{article}
@@ -532,7 +603,7 @@ latex_string = [
 """,
     r"""\begin{document}
 """
-    ]
+]
 latex_string.extend(file_content + [r"\end{document}"])
 latex_string = "\n".join(latex_string)
 
@@ -548,17 +619,19 @@ if st.button("Generate PDF", key="generate_pdf"):
             f.write(latex_string)
 
         result = subprocess.run(
-        ["pdflatex", "-output-directory", temp_dir, tex_path],
-        capture_output=True,
-        text=True,
-        cwd=temp_dir
+            ["pdflatex", "-output-directory", temp_dir, tex_path],
+            capture_output=True,
+            text=True,
+            cwd=temp_dir
         )
-        
+
         if result.returncode != 0:
-            st.error("PDF generation failed. Please check the LaTeX compilation output:\n" + result.stderr)
+            st.error(
+                "PDF generation failed. Please check the LaTeX compilation output:\n" + result.stderr)
         else:
             with open(pdf_path, "rb") as pdf_file:
-                st.download_button("Download PDF", pdf_file, "model.pdf", "application/pdf")
+                st.download_button("Download PDF", pdf_file,
+                                   "model.pdf", "application/pdf")
 
 if st.button("Generate configuration file", key="generate_config"):
 
