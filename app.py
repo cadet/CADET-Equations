@@ -19,24 +19,33 @@ from typing import Literal
 exec(open("equations.py").read())
 
 # %%
-format_map_ = {"CADET": 0, "Legacy": 1}
 
-
-def rerender_variables(input_str: str, format: int):
-    if format_map_[format] == 0:
+def rerender_variables(input_str: str, var_format: int):
+    if var_format == "CADET":
         input_str = re.sub(r"\\l(?![a-zA-Z])", r"\\mathrm{\\ell}", input_str)
         input_str = re.sub(r"\\b(?![a-zA-Z])", r"\\mathrm{b}", input_str)
         input_str = re.sub(r"\\p(?![a-zA-Z])", r"\\mathrm{p}", input_str)
         input_str = re.sub(r"\\s(?![a-zA-Z])", r"\\mathrm{s}", input_str)
-    elif format_map_[format] == 1:
-        input_str = re.sub(r"\\l(?![a-zA-Z])", r"", input_str)
-        input_str = re.sub(r"\\b(?![a-zA-Z])", r"", input_str)
-        # todo: write p in the subscript
-        input_str = re.sub(r"\\p(?![a-zA-Z])", r"\\mathrm{p}", input_str)
-        input_str = re.sub(r"c\^\\s(?![a-zA-Z])", r"q", input_str)
+    elif var_format == "Legacy":
+        input_str = re.sub(r"c\^\{\\l\}(?![a-zA-Z])", r"c", input_str)
+        input_str = re.sub(r"c\^\{\\b\}(?![a-zA-Z])", r"c", input_str)
+        
+        input_str = re.sub(r"V\^\{\\l\}(?![a-zA-Z])", r"V^{\\mathrm{\\ell}}", input_str)
+        input_str = re.sub(r"V\^\{\\b\}(?![a-zA-Z])", r"V^{\\mathrm{\\ell}}", input_str)
+        
+        input_str = re.sub(r"c\^\{\\p\}_\{i\}(?![a-zA-Z])", r"c_{\\mathrm{p},i}", input_str)
+        input_str = re.sub(r"c\^\{\\p\}_i(?![a-zA-Z])", r"c_{\\mathrm{p},i}", input_str)
+        input_str = re.sub(r"c\^\{\\p\}_\{j,i\}(?![a-zA-Z])", r"c_{\\mathrm{p},j,i}", input_str)
+        input_str = re.sub(r"c\^\{\\p\}(?![a-zA-Z])", r"c_{\\mathrm{p}}", input_str)
+        input_str = re.sub(r"c\}\^\{\\p\}(?![a-zA-Z])", r"c}_{\\mathrm{p}}", input_str)
+        
+        input_str = re.sub(r"c\^\{\\s\}(?![a-zA-Z])", r"q", input_str)
         input_str = re.sub(r"c\}\^\{\\s\}(?![a-zA-Z])", r"q}", input_str)
+        
+        input_str = re.sub(r"\\p(?![a-zA-Z])", r"\\mathrm{p}", input_str)
+        input_str = re.sub(r"\\s(?![a-zA-Z])", r"\\mathrm{s}", input_str)
     else:
-        raise ValueError(f"Only formats in {format_map_} are supported.")
+        raise ValueError(f"Format {var_format} is not supported.")
 
     return input_str
 
@@ -233,19 +242,19 @@ class Column:
 
         if self.resolution == "0D":
             equation = r"""
-    \frac{\mathrm{d}V^\b}{\mathrm{d}t} &= Q_{\mathrm{in}} - Q_{\mathrm{out}} - Q_{\mathrm{filter}},
+    \frac{\mathrm{d}V^{\b}}{\mathrm{d}t} &= Q_{\mathrm{in}} - Q_{\mathrm{out}} - Q_{\mathrm{filter}},
     \\
-    \frac{\mathrm{d}}{\mathrm{d} t} \left( V^\b c^\b_i \right)"""
+    \frac{\mathrm{d}}{\mathrm{d} t} \left( V^{\b} c^{\b}_i \right)"""
 
             if self.nonlimiting_filmDiff and self.has_binding and self.particle_models[0].resolution == "0D":
-                equation += r" + V^\p \varepsilon_\mathrm{p} \frac{\partial c^\b_i}{\partial t}"
+                equation += r" + V^{\p} \varepsilon_\mathrm{p} \frac{\partial c^{b}_i}{\partial t}"
                 if self.req_binding:
-                    equation += r" + V^\p \left( 1 - \varepsilon_\mathrm{p} \right) \frac{\partial c^\s_i}{\partial t}"
+                    equation += r" + V^{\p} \left( 1 - \varepsilon_\mathrm{p} \right) \frac{\partial c^{\s}_i}{\partial t}"
 
-            equation += r"&= Q_{\mathrm{in}} c^\b_{\mathrm{in},i} - Q_{\mathrm{out}} c^\b_i"
+            equation += r"&= Q_{\mathrm{in}} c^{\b}_{\mathrm{in},i} - Q_{\mathrm{out}} c^{\b}_i"
 
             if self.nonlimiting_filmDiff and self.has_binding and self.particle_models[0].resolution == "0D" and not self.req_binding:
-                equation += r" - V^\p \left( 1 - \varepsilon_\mathrm{p} \right) \frac{\partial c^\s_i}{\partial t}"
+                equation += r" - V^{\p} \left( 1 - \varepsilon_\mathrm{p} \right) \frac{\partial c^{\s}_i}{\partial t}"
 
         else:
             equation = bulk_time_derivative_eps
@@ -396,7 +405,7 @@ if uploaded_file is not None:
 # User configuration of the model
 
 var_format_ = st.sidebar.selectbox("Select format (e.g. $c^s$ or $q$ as the solid phase concentration)", [
-                                   "CADET", "Historical"], key="var_format")
+                                   "CADET", "Legacy"], key="var_format")
 
 advanced_mode_ = st.sidebar.selectbox("Advanced setup options (enables e.g. multiple bound states)", [
                                       "Off", "On"], key="advanced_mode") == "On"
@@ -479,7 +488,7 @@ else:
 
 if column_model.resolution == "0D":
     write_and_save(
-        r"The evolution of the liquid volume $V^\l\colon (0, T_{\mathrm{end}}) \to \Reals$ and the concentrations $c_i\colon (0, T_{\mathrm{end}}) \to \Reals$ of the components in the tank is governed by")
+        r"The evolution of the liquid volume $V^{\l}\colon (0, T_{\mathrm{end}}) \to \Reals$ and the concentrations $c_i\colon (0, T_{\mathrm{end}}) \to \Reals$ of the components in the tank is governed by")
     write_and_save(interstitial_volume_eq, as_latex=True)
 else:
     eq_type = "convection-diffusion-reaction"
