@@ -14,9 +14,8 @@ import tempfile
 from typing import List
 from typing import Literal
 
+import equations
 
-# %% Get the equations
-exec(open("equations.py").read())
 
 # %%
 
@@ -29,20 +28,27 @@ def rerender_variables(input_str: str, var_format: int):
     elif var_format == "Legacy":
         input_str = re.sub(r"c\^\{\\l\}(?![a-zA-Z])", r"c", input_str)
         input_str = re.sub(r"c\^\{\\b\}(?![a-zA-Z])", r"c", input_str)
-        
-        input_str = re.sub(r"V\^\{\\l\}(?![a-zA-Z])", r"V^{\\mathrm{\\ell}}", input_str)
-        input_str = re.sub(r"V\^\{\\b\}(?![a-zA-Z])", r"V^{\\mathrm{\\ell}}", input_str)
-        
-        input_str = re.sub(r"c\^\{\\p\}_\{i\}(?![a-zA-Z])", r"c_{\\mathrm{p},i}", input_str)
-        input_str = re.sub(r"c\^\{\\p\}_i(?![a-zA-Z])", r"c_{\\mathrm{p},i}", input_str)
-        input_str = re.sub(r"c\^\{\\p\}_\{j,i\}(?![a-zA-Z])", r"c_{\\mathrm{p},j,i}", input_str)
-        input_str = re.sub(r"c\^\{\\p\}(?![a-zA-Z])", r"c_{\\mathrm{p}}", input_str)
-        input_str = re.sub(r"c\}\^\{\\p\}(?![a-zA-Z])", r"c}_{\\mathrm{p}}", input_str)
+
+        input_str = re.sub(
+            r"V\^\{\\l\}(?![a-zA-Z])", r"V^{\\mathrm{\\ell}}", input_str)
+        input_str = re.sub(
+            r"V\^\{\\b\}(?![a-zA-Z])", r"V^{\\mathrm{\\ell}}", input_str)
+
+        input_str = re.sub(
+            r"c\^\{\\p\}_\{i\}(?![a-zA-Z])", r"c_{\\mathrm{p},i}", input_str)
+        input_str = re.sub(
+            r"c\^\{\\p\}_i(?![a-zA-Z])", r"c_{\\mathrm{p},i}", input_str)
+        input_str = re.sub(
+            r"c\^\{\\p\}_\{j,i\}(?![a-zA-Z])", r"c_{\\mathrm{p},j,i}", input_str)
+        input_str = re.sub(
+            r"c\^\{\\p\}(?![a-zA-Z])", r"c_{\\mathrm{p}}", input_str)
+        input_str = re.sub(
+            r"c\}\^\{\\p\}(?![a-zA-Z])", r"c}_{\\mathrm{p}}", input_str)
         input_str = re.sub(r"c\}\^\{\\l\}(?![a-zA-Z])", r"c}", input_str)
-        
+
         input_str = re.sub(r"c\^\{\\s\}(?![a-zA-Z])", r"q", input_str)
         input_str = re.sub(r"c\}\^\{\\s\}(?![a-zA-Z])", r"q}", input_str)
-        
+
         input_str = re.sub(r"\\p(?![a-zA-Z])", r"\\mathrm{p}", input_str)
         input_str = re.sub(r"\\s(?![a-zA-Z])", r"\\mathrm{s}", input_str)
     else:
@@ -258,18 +264,18 @@ class Column:
                 equation += r" - V^{\p} \left( 1 - \varepsilon_\mathrm{p} \right) \frac{\partial c^{\s}_i}{\partial t}"
 
         else:
-            equation = bulk_time_derivative_eps
+            equation = equations.bulk_time_derivative_eps
             if self.nonlimiting_filmDiff and self.has_binding and self.particle_models[0].resolution == "0D" and self.req_binding:
-                equation += r" + " + solid_time_derivative_eps
+                equation += r" + " + equations.solid_time_derivative_eps
 
-            equation += " = " + axial_convection_eps
+            equation += " = " + equations.axial_convection_eps
 
             if self.has_axial_dispersion:
-                equation += " + " + axial_dispersion_eps
+                equation += " + " + equations.axial_dispersion_eps
             if self.has_radial_dispersion:
-                equation += " + " + radial_dispersion_eps
+                equation += " + " + equations.radial_dispersion_eps
             if self.has_angular_dispersion:
-                equation += " + " + angular_dispersion_eps
+                equation += " + " + equations.angular_dispersion_eps
 
             if self.N_p == 0:  # remove occurencies of porosity, which is just constant one in this case
                 equation = re.sub(r"\\varepsilon_{\\mathrm{c}}", "", re.sub(
@@ -279,11 +285,11 @@ class Column:
         par_added = 0
         for par_uniq in self.par_unique_intV_contribution_counts.keys():
             if self.nonlimiting_filmDiff:
-                equation += int_filmDiff_term(Particle(par_uniq[0], False, par_uniq[1]), 1 + par_added, par_added +
-                                              self.par_unique_intV_contribution_counts[par_uniq], self.N_p == 1, self.nonlimiting_filmDiff)
+                equation += equations.int_filmDiff_term(Particle(par_uniq[0], False, par_uniq[1]), 1 + par_added, par_added +
+                                                        self.par_unique_intV_contribution_counts[par_uniq], self.N_p == 1, self.nonlimiting_filmDiff)
             else:
-                equation += int_filmDiff_term(Particle(par_uniq, False, "0D"), 1 + par_added, par_added +
-                                              self.par_unique_intV_contribution_counts[par_uniq], self.N_p == 1, self.nonlimiting_filmDiff)
+                equation += equations.int_filmDiff_term(Particle(par_uniq, False, "0D"), 1 + par_added, par_added +
+                                                        self.par_unique_intV_contribution_counts[par_uniq], self.N_p == 1, self.nonlimiting_filmDiff)
 
             par_added += self.par_unique_intV_contribution_counts[par_uniq]
 
@@ -303,26 +309,26 @@ class Column:
 
     def interstitial_volume_bc(self):
         if not self.resolution == "0D":
-            return int_vol_BC(self.resolution, self.has_axial_dispersion)
+            return equations.int_vol_BC(self.resolution, self.has_axial_dispersion)
         else:
             return None
 
     def particle_equations(self):
 
-        equations = {}
+        eqs = {}
         boundary_conditions = {}
 
         for par_type in self.par_type_counts.keys():
 
-            equations[par_type] = particle_transport(par_type, singleParticle=self.N_p == 1, nonlimiting_filmDiff=self.nonlimiting_filmDiff,
-                                                     has_surfDiff=self.has_surfDiff, has_binding=self.has_binding, req_binding=self.req_binding, has_mult_bnd_states=self.has_mult_bnd_states)
-            equations[par_type] = equations[par_type]
+            eqs[par_type] = equations.particle_transport(par_type, singleParticle=self.N_p == 1, nonlimiting_filmDiff=self.nonlimiting_filmDiff,
+                                                         has_surfDiff=self.has_surfDiff, has_binding=self.has_binding, req_binding=self.req_binding, has_mult_bnd_states=self.has_mult_bnd_states)
+            eqs[par_type] = eqs[par_type]
 
-            boundary_conditions[par_type] = particle_boundary(par_type, singleParticle=self.N_p == 1, nonlimiting_filmDiff=self.nonlimiting_filmDiff,
-                                                              has_surfDiff=self.has_surfDiff, has_binding=self.has_binding, req_binding=self.req_binding, has_mult_bnd_states=self.has_mult_bnd_states)
+            boundary_conditions[par_type] = equations.particle_boundary(par_type, singleParticle=self.N_p == 1, nonlimiting_filmDiff=self.nonlimiting_filmDiff,
+                                                                        has_surfDiff=self.has_surfDiff, has_binding=self.has_binding, req_binding=self.req_binding, has_mult_bnd_states=self.has_mult_bnd_states)
             boundary_conditions[par_type] = boundary_conditions[par_type]
 
-        return equations, boundary_conditions
+        return eqs, boundary_conditions
 
     def model_name(self):
 
@@ -367,9 +373,9 @@ class Column:
     def model_assumptions(self):
 
         asmpts = {
-            "General model assumptions": HRM_asmpt(self.N_p, self.nonlimiting_filmDiff, self.has_binding, self.has_surfDiff, self.resolution),
-            "Specific model assumptions": int_vol_continuum_asmpt(self.resolution, self.N_p, self.nonlimiting_filmDiff) +
-            (particle_asmpt(
+            "General model assumptions": equations.HRM_asmpt(self.N_p, self.nonlimiting_filmDiff, self.has_binding, self.has_surfDiff, self.resolution),
+            "Specific model assumptions": equations.int_vol_continuum_asmpt(self.resolution, self.N_p, self.nonlimiting_filmDiff) +
+            (equations.particle_asmpt(
                 self.particle_models[0].resolution, self.has_surfDiff) if self.N_p > 0 else [])
         }
 
@@ -399,6 +405,7 @@ if uploaded_file is not None:
 
     # Update Streamlit session state
     for key, value in config.items():
+
         st.session_state[key] = value
 
     st.sidebar.success("Configuration applied from JSON file!")
@@ -494,7 +501,7 @@ if column_model.resolution == "0D":
 else:
     eq_type = "convection-diffusion-reaction"
     write_and_save(r"In the interstitial volume, mass transfer is governed by the following " + eq_type +
-                   " equations in " + int_vol_domain[column_model.resolution] + r" and for all components " + nComp_list)
+                   " equations in " + equations.int_vol_domain[column_model.resolution] + r" and for all components " + nComp_list)
     write_and_save(interstitial_volume_eq, as_latex=True)
     write_and_save("with boundary conditions")
     write_and_save(column_model.interstitial_volume_bc(), as_latex=True)
@@ -518,13 +525,13 @@ elif column_model.resolution == "0D":
 
 # if column_model.N_p == 0:
 sol_vars_int_vol_eq = r"c^{\l}_i \colon " + re.sub(
-    r"\$", "", int_vol_domain[column_model.resolution]) + r" \to \mathbb{R}"
+    r"\$", "", equations.int_vol_domain[column_model.resolution]) + r" \to \mathbb{R}"
 # else:# todo req bnd mit 0D par
 if column_model.particle_models is None or column_model.particle_models[0].resolution == "0D":
     sol_vars_int_vol_eq = r"c^{\l}_i, c^{\p}_i \colon " + re.sub(
-        r"\$", "", int_vol_domain[column_model.resolution]) + r" \to \mathbb{R}"
+        r"\$", "", equations.int_vol_domain[column_model.resolution]) + r" \to \mathbb{R}"
 else:
-    sol_vars_int_vol_eq += r", c^{\p}_i \colon " + re.sub(r"\$", "", particle_domain(
+    sol_vars_int_vol_eq += r", c^{\p}_i \colon " + re.sub(r"\$", "", equations.particle_domain(
         column_model.resolution, column_model.particle_models[0].resolution, column_model.particle_models[0].hasCore, with_par_index=column_model.N_p, with_time_domain=True)) + r" \to \mathbb{R}"
 
 sol_vars_int_vol_eq = sol_vars_int_vol_eq
@@ -535,7 +542,7 @@ sol_vars_int_vol_eq_names = "is the liquid concentration" if column_model.N_p ==
 filmDiff_str = r", $k_{\mathrm{f},i}\geq 0$ is the film diffusion coefficient" if column_model.N_p > 0 else ""
 
 porosity_str = r", $\varepsilon_{\mathrm{c}} \colon " + re.sub(r"\(0, T_\\mathrm\{end\}\) \\times", "", re.sub(
-    r"\$", "", int_vol_domain[column_model.resolution])) + r" \mapsto (0, 1)$ is the interstitial column porosity" if column_model.N_p > 0 else ""
+    r"\$", "", equations.int_vol_domain[column_model.resolution])) + r" \mapsto (0, 1)$ is the interstitial column porosity" if column_model.N_p > 0 else ""
 if column_model.nonlimiting_filmDiff and column_model.has_binding and column_model.particle_models[0].resolution == "0D" and column_model.req_binding:
     porosity_str = re.sub(
         r"\\varepsilon_{\\mathrm{c}}", r"\\varepsilon_{\\mathrm{t}}", porosity_str)
@@ -548,7 +555,7 @@ if column_model.N_p > 0:
         r"Here, $" + sol_vars_int_vol_eq + r"$, " + sol_vars_int_vol_eq_names + r" of component $i \in \{1, \dots, N_{\mathrm{c}}\}$, $T_{\mathrm{end}} > 0$ is the simulation end time, " + u_string +
         diff_string + filmDiff_str + porosity_str +
         r", $c_{\mathrm{in},i}\colon " +
-        int_vol_inlet_domain[column_model.resolution] +
+        equations.int_vol_inlet_domain[column_model.resolution] +
         r" \to \mathbb{R}$ is a given inlet concentration profile.",
     )
 
@@ -573,8 +580,8 @@ if column_model.N_p > 0:
         if not column_model.has_binding and column_model.nonlimiting_filmDiff and par_type.resolution == "0D":
             break
 
-        tmp_textblock = "in " + particle_domain(column_model.resolution, par_type.resolution,
-                                                par_type.hasCore, with_par_index=True, with_time_domain=True) + " for "
+        tmp_textblock = "in " + equations.particle_domain(column_model.resolution, par_type.resolution,
+                                                          par_type.hasCore, with_par_index=True, with_time_domain=True) + " for "
 
         if column_model.N_p > 1:
 
@@ -595,7 +602,7 @@ if column_model.N_p > 0:
                 diffusion_description = r", $D_i^{\p}$ is the particle diffusion coefficient for component $i$" if column_model.has_surfDiff else r", $D_i^{\p}, D_i^{\s}\geq 0$ are the pore and surface diffusion coefficients for component $i$."
 
             write_and_save(
-                r"Here, $c^{\s}_i \colon " + re.sub(r"\$", "", particle_domain(column_model.resolution, column_model.particle_models[0].resolution, column_model.particle_models[
+                r"Here, $c^{\s}_i \colon " + re.sub(r"\$", "", equations.particle_domain(column_model.resolution, column_model.particle_models[0].resolution, column_model.particle_models[
                                                     0].hasCore, with_par_index=column_model.N_p, with_time_domain=True)) + r" \to \mathbb{R}$ is the solid phase concentration" + diffusion_description,
             )
 
@@ -645,11 +652,14 @@ if st.button("Generate PDF", key="generate_pdf"):
 
 if st.button("Generate configuration file", key="generate_config"):
 
+    no_config_state = ["generate_pdf", "generate_config"]
+
     # Create a temporary directory
     with tempfile.TemporaryDirectory() as temp_dir:
         json_path = f"{temp_dir}/model.tex"
 
-        config = {key: st.session_state[key] for key in st.session_state}
+        config = {key: st.session_state[key]
+                  for key in st.session_state if key not in no_config_state}
 
         config_json = json.dumps(config, indent=4)
 
