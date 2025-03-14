@@ -38,6 +38,7 @@ def rerender_variables(input_str: str, var_format: int):
         input_str = re.sub(r"c\^\{\\p\}_\{j,i\}(?![a-zA-Z])", r"c_{\\mathrm{p},j,i}", input_str)
         input_str = re.sub(r"c\^\{\\p\}(?![a-zA-Z])", r"c_{\\mathrm{p}}", input_str)
         input_str = re.sub(r"c\}\^\{\\p\}(?![a-zA-Z])", r"c}_{\\mathrm{p}}", input_str)
+        input_str = re.sub(r"c\}\^\{\\l\}(?![a-zA-Z])", r"c}", input_str)
         
         input_str = re.sub(r"c\^\{\\s\}(?![a-zA-Z])", r"q", input_str)
         input_str = re.sub(r"c\}\^\{\\s\}(?![a-zA-Z])", r"q}", input_str)
