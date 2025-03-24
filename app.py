@@ -330,6 +330,15 @@ class Column:
 
         return eqs, boundary_conditions
 
+    def domain_interstitial(self, with_time_domain=True):
+        return equations.int_vol_domain(self.resolution, with_time_domain=with_time_domain)
+
+    def domain_particle(self):
+        if self.N_p > 0:
+            return equations.particle_domain(self.resolution, self.particle_models[0].resolution, self.particle_models[0].hasCore, False, False)
+        else:
+            return ""
+        
     def model_name(self):
 
         if self.resolution == "0D":
@@ -501,7 +510,7 @@ if column_model.resolution == "0D":
 else:
     eq_type = "convection-diffusion-reaction"
     write_and_save(r"In the interstitial volume, mass transfer is governed by the following " + eq_type +
-                   " equations in " + equations.int_vol_domain[column_model.resolution] + r" and for all components " + nComp_list)
+                   " equations in " + column_model.domain_particle() + r" and for all components " + nComp_list)
     write_and_save(interstitial_volume_eq, as_latex=True)
     write_and_save("with boundary conditions")
     write_and_save(column_model.interstitial_volume_bc(), as_latex=True)
@@ -513,23 +522,23 @@ diff_vars += r"D_{\mathrm{rad},i}" if column_model.has_radial_dispersion else ""
 diff_vars += r"D_{\mathrm{ang},i}" if column_model.has_angular_dispersion else ""
 
 if column_model.resolution == "1D":
-    diff_string = r", $D_{\mathrm{ax},i} \geq 0$ is the lumped axial diffusion coefficient" if column_model.has_axial_dispersion else ""
+    diff_string = r", $D_{\mathrm{ax},i} \geq 0$ is the dispersion coefficient" if column_model.has_axial_dispersion else ""
 elif column_model.resolution == "2D":
-    tmp_str = "are the lumped diffusion coefficients in axial and radial direction" if column_model.has_axial_dispersion else "is the lumped radial diffusion coefficient"
+    tmp_str = "are the dispersion coefficients in axial and radial direction" if column_model.has_axial_dispersion else "is the lumped radial diffusion coefficient"
     diff_string = r", " + diff_vars + tmp_str
 elif column_model.resolution == "3D":
     diff_string = r", " + diff_vars + \
-        r"are the lumped diffusion coefficients in axial, radial and angular direction"
+        r"are the dispersion coefficients in axial, radial and angular direction"
 elif column_model.resolution == "0D":
     diff_string = ""
 
 # if column_model.N_p == 0:
 sol_vars_int_vol_eq = r"c^{\l}_i \colon " + re.sub(
-    r"\$", "", equations.int_vol_domain[column_model.resolution]) + r" \to \mathbb{R}"
+    r"\$", "", column_model.domain_particle()) + r" \to \mathbb{R}"
 # else:# todo req bnd mit 0D par
 if column_model.particle_models is None or column_model.particle_models[0].resolution == "0D":
     sol_vars_int_vol_eq = r"c^{\l}_i, c^{\p}_i \colon " + re.sub(
-        r"\$", "", equations.int_vol_domain[column_model.resolution]) + r" \to \mathbb{R}"
+        r"\$", "", column_model.domain_particle()) + r" \to \mathbb{R}"
 else:
     sol_vars_int_vol_eq += r", c^{\p}_i \colon " + re.sub(r"\$", "", equations.particle_domain(
         column_model.resolution, column_model.particle_models[0].resolution, column_model.particle_models[0].hasCore, with_par_index=column_model.N_p, with_time_domain=True)) + r" \to \mathbb{R}"
@@ -542,7 +551,7 @@ sol_vars_int_vol_eq_names = "is the liquid concentration" if column_model.N_p ==
 filmDiff_str = r", $k_{\mathrm{f},i}\geq 0$ is the film diffusion coefficient" if column_model.N_p > 0 else ""
 
 porosity_str = r", $\varepsilon_{\mathrm{c}} \colon " + re.sub(r"\(0, T_\\mathrm\{end\}\) \\times", "", re.sub(
-    r"\$", "", equations.int_vol_domain[column_model.resolution])) + r" \mapsto (0, 1)$ is the interstitial column porosity" if column_model.N_p > 0 else ""
+    r"\$", "", column_model.domain_particle())) + r" \mapsto (0, 1)$ is the interstitial column porosity" if column_model.N_p > 0 else ""
 if column_model.nonlimiting_filmDiff and column_model.has_binding and column_model.particle_models[0].resolution == "0D" and column_model.req_binding:
     porosity_str = re.sub(
         r"\\varepsilon_{\\mathrm{c}}", r"\\varepsilon_{\\mathrm{t}}", porosity_str)
@@ -552,7 +561,7 @@ if column_model.nonlimiting_filmDiff and column_model.has_binding and column_mod
 u_string = r"$u>0$ is the interstitial velocity" if not column_model.resolution == "0D" else ""
 if column_model.N_p > 0:
     write_and_save(
-        r"Here, $" + sol_vars_int_vol_eq + r"$, " + sol_vars_int_vol_eq_names + r" of component $i \in \{1, \dots, N_{\mathrm{c}}\}$, $T_{\mathrm{end}} > 0$ is the simulation end time, " + u_string +
+        r"Here, $" + sol_vars_int_vol_eq + r"$, " + sol_vars_int_vol_eq_names + r", $T_{\mathrm{end}} > 0$ is the simulation end time, " + u_string +
         diff_string + filmDiff_str + porosity_str +
         r", $c_{\mathrm{in},i}\colon " +
         equations.int_vol_inlet_domain[column_model.resolution] +

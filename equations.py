@@ -235,12 +235,19 @@ def int_vol_initial(resolution: str, includeParLiquid: bool):
     return equation
 
 
-int_vol_domain = {
-    "0D": r"$(0, T_\mathrm{end})$",
-    "1D": r"$(0, T_\mathrm{end}) \times (0, L)$",
-    "2D": r"$(0, T_\mathrm{end}) \times (0, L) \times (0, R_\mathrm{c})$",
-    "3D": r"$(0, T_\mathrm{end}) \times (0, L) \times (0, R_\mathrm{c}) \times (0, 2\pi)$"
-}
+def int_vol_domain(resolution:str, with_time_domain=True):
+
+    domain_ = r"$(0, T_\mathrm{end})" if with_time_domain else "$"
+
+    if int(re.search("\\d", resolution).group()) > 0:
+        domain_ += r"\times (0, L)" if with_time_domain else r"(0, L)"
+    if int(re.search("\\d", resolution).group()) > 1:
+        domain_ += r"\times (0, R_\mathrm{c})"
+    if int(re.search("\\d", resolution).group()) > 2:
+        domain_ += r"\times (0, 2\pi)"
+
+    return domain_ + r"$"
+
 int_vol_inlet_domain = {
     "0D": r"(0, T_{\mathrm{end}})",
     "1D": r"(0, T_{\mathrm{end}})",
