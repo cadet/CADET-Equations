@@ -656,7 +656,7 @@ if st.button("Generate configuration file", key="generate_config"):
 
     # Create a temporary directory
     with tempfile.TemporaryDirectory() as temp_dir:
-        json_path = f"{temp_dir}/model.tex"
+        json_path = f"{temp_dir}/model.json"
 
         config = {key: st.session_state[key]
                   for key in st.session_state if key not in no_config_state}
