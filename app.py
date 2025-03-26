@@ -97,7 +97,7 @@ class Particle:
             object.__setattr__(self, 'surface_volume_ratio', 1)
 
         vars_and_params_ = []
-
+        
         if not (self.nonlimiting_filmDiff and self.resolution == "0D"):
             vars_and_params_.append({"Group" : 0, "Symbol": r"c^\mathrm{p}_i", "Description": r"particle liquid concentration", "Unit": r"\frac{mol}{m^3}", "Domain" : eq.full_particle_conc_domain(column_resolution=self.interstitial_volume_resolution, particle_resolution=self.resolution, hasCore=self.has_core, with_par_index=False, with_time_domain=True)})
             
@@ -247,15 +247,15 @@ class Column:
                     if dev_mode_:  # multiple particle types
                         resolution = re.search(r'\dD', st.sidebar.selectbox(f"Select spatial resolution of particle type {j + 1}", [
                                                "1D (radial coordinate)", "0D (homogeneous)"], key=f"parType_{j+1}_resolution")).group()
-                        hasCore = st.sidebar.selectbox(f"Choose if particle type {j + 1} is a core-shell particle (i.e. " + r"$R_\mathrm{pc} > 0$)", [
-                                                       "No core-shell", "Has core-shell"], key=f"parType_{j+1}_hasCore") == "Has core-shell"
+                        has_core = st.sidebar.selectbox(f"Choose if particle type {j + 1} is a core-shell particle (i.e. " + r"$R_\mathrm{pc} > 0$)", [
+                                                       "No core-shell", "Has core-shell"], key=f"parType_{j+1}_has_core") == "Has core-shell"
                         geometry = st.sidebar.selectbox(f"Select geometry of particle type {j + 1}", [
                                                         "Sphere", "Cylinder", "Slab"], key=f"parType_{j+1}__geometry")
                     else:
                         resolution = re.search(r'\dD', st.sidebar.selectbox(f"Select spatial resolution of particles", [
                                                "1D (radial coordinate)", "0D (homogeneous)"], key="particle_resolution")).group()
-                        hasCore = st.sidebar.selectbox(f"Add impenetrable core-shell (i.e. " + r"$R_\mathrm{pc} > 0$)", [
-                                                       "No", "Yes"], key=f"parType_{j+1}_hasCore") == "Yes" if (resolution == "1D" and advanced_mode_) else False
+                        has_core = st.sidebar.selectbox(f"Add impenetrable core-shell (i.e. " + r"$R_\mathrm{pc} > 0$)", [
+                                                       "No", "Yes"], key=f"parType_{j+1}_has_core") == "Yes" if (resolution == "1D" and advanced_mode_) else False
                         geometry = "Sphere"
 
                 with col2:
@@ -271,17 +271,13 @@ class Column:
                         "Add binding", ["No", "Yes"], key="has_binding") == "Yes"
 
                     if self.has_binding:
-
-                        col1, col2 = st.columns(2)
-
-                        with col1:
-                            self.req_binding = st.sidebar.selectbox("Binding kinetics mode", [
-                                                                    "Kinetic", "Rapid-equilibrium"], key="req_binding") == "Rapid-equilibrium"
-                            self.has_mult_bnd_states = st.sidebar.selectbox("Add multiple bound states", [
-                                                                            "No", "Yes"], key="has_mult_bnd_states") == "Yes" if advanced_mode_ else False
-                        with col2:
-                            self.has_surfDiff = st.sidebar.selectbox("Add surface diffusion", [
-                                                                     "No", "Yes"], key="has_surfDiff") == "Yes" if resolution == "1D" else False
+                        
+                        self.req_binding = st.sidebar.selectbox("Binding kinetics mode", [
+                                                                "Kinetic", "Rapid-equilibrium"], key="req_binding") == "Rapid-equilibrium"
+                        self.has_mult_bnd_states = st.sidebar.selectbox("Add multiple bound states", [
+                                                                        "No", "Yes"], key="has_mult_bnd_states") == "Yes" if advanced_mode_ else False
+                        self.has_surfDiff = st.sidebar.selectbox("Add surface diffusion", [
+                                                                 "No", "Yes"], key="has_surfDiff") == "Yes" if resolution == "1D" else False
 
                 self.particle_models.append(
                     Particle(
@@ -319,8 +315,9 @@ class Column:
     def vars_and_params(self):
 
         self.vars_and_params = [
+            {"Group" : -1, "Symbol": r"t", "Description": r"variable time", "Unit": r"s", "Domain": r"independent variable", "Property": r"\in (0, T^{\mathrm{end}})"},
             {"Group" : 0, "Symbol": r"c^\b_i", "Description": r"bulk liquid concentration", "Unit": r"\frac{mol}{m^3}", "Domain" : eq.int_vol_domain(self.resolution)},
-            {"Group" : 2, "Symbol": r"T^{\mathrm{end}}", "Description": r"process end time", "Unit": r"-", "Domain": "-", "Property": " > 0"},
+            {"Group" : 2, "Symbol": r"T^{\mathrm{end}}", "Description": r"process end time", "Unit": r"s", "Domain": "-", "Property": r" > 0"},
             ]
     
         if self.has_axial_dispersion:
@@ -335,7 +332,16 @@ class Column:
             self.vars_and_params.append({"Group" : 1, "Symbol": r"Q^\mathrm{out}", "Description": r"volumetric flow rate into the tank", "Unit": r"\frac{m^3}{s}", "Domain": "-", "Property": r"\geq 0"})
             self.vars_and_params.append({"Group" : 1, "Symbol": r"Q^\mathrm{filter}", "Description": r"volumetric flow rate into the tank", "Unit": r"\frac{m^3}{s}", "Domain": "-", "Property": r"\geq 0"})
         else:
+            self.vars_and_params.append({"Group" : -1, "Symbol": r"z", "Description": r"axial cylinder coordinate", "Unit": r"m", "Domain": r"independent variable", "Property": "\in (0, L)"})
+            self.vars_and_params.append({"Group" : 2, "Symbol": r"L", "Description": r"length of cylinder", "Unit": r"m", "Domain": r"constant", "Property": " > 0"})
             self.vars_and_params.append({"Group" : 5, "Symbol": r"u", "Description": r"interstitial velocity", "Unit": r"\frac{m}{s}", "Domain": "-", "Property": r"> 0"})
+
+        if self.resolution == "2D":
+            self.vars_and_params.append({"Group" : -1, "Symbol": r"\rho", "Description": r"radial cylinder coordinate", "Unit": r"m", "Domain": r"independent variable", "Property": r"\in (0, R^{\mathrm{c}})"})
+            self.vars_and_params.append({"Group" : 2, "Symbol": r"R^{\mathrm{c}}", "Description": r"cylinder radius", "Unit": r"m", "Domain": r"constant", "Property": " > 0"})
+
+        if self.resolution == "3D":
+            self.vars_and_params.append({"Group" : -1, "Symbol": r"\phi", "Description": r"angular cylinder coordinate", "Unit": r"m", "Domain": r"independent variable", "Property": r"\in (0, 2\pi)"})
 
         if self.N_p > 0:
             self.vars_and_params.append({"Group" : 4, "Symbol": r"\varepsilon^\mathrm{c}", "Description": r"column porosity", "Unit": r"-", "Domain": "-", "Property": r"\in (0, 1)"})
@@ -422,11 +428,11 @@ class Column:
         for par_type in self.par_type_counts.keys():
 
             eqs[par_type] = eq.particle_transport(par_type, singleParticle=self.N_p == 1, nonlimiting_filmDiff=self.nonlimiting_filmDiff,
-                                                         has_surfDiff=self.has_surfDiff, has_binding=self.has_binding, req_binding=self.req_binding, has_mult_bnd_states=self.has_mult_bnd_states)
+                                                  has_surfDiff=self.has_surfDiff, has_binding=self.has_binding, req_binding=self.req_binding, has_mult_bnd_states=self.has_mult_bnd_states)
             eqs[par_type] = eqs[par_type]
 
             boundary_conditions[par_type] = eq.particle_boundary(par_type, singleParticle=self.N_p == 1, nonlimiting_filmDiff=self.nonlimiting_filmDiff,
-                                                                        has_surfDiff=self.has_surfDiff, has_binding=self.has_binding, req_binding=self.req_binding, has_mult_bnd_states=self.has_mult_bnd_states)
+                                                                 has_surfDiff=self.has_surfDiff, has_binding=self.has_binding, req_binding=self.req_binding, has_mult_bnd_states=self.has_mult_bnd_states)
             boundary_conditions[par_type] = boundary_conditions[par_type]
 
         return eqs, boundary_conditions
@@ -553,7 +559,8 @@ advanced_mode_ = st.sidebar.selectbox("Advanced setup options (enables e.g. mult
 if advanced_mode_:
     dev_mode_ = st.sidebar.selectbox("Developer setup options (not tested! Enables e.g. multiple particle types)", [
                                      "Off", "On"], key="dev_mode") == "On"
-    advanced_mode_ = True if dev_mode_ else False
+    if dev_mode_:
+        advanced_mode_ = True
 else:
     dev_mode_ = False
 
@@ -580,6 +587,20 @@ if st.toggle("Show Model Assumptions", key="model_assumptions"):
 """
         )
 
+if st.toggle("Show parameter table", key="param_table"):
+
+    df = pd.DataFrame(column_model.vars_and_params)
+    if column_model.N_p > 0:
+        df_par = pd.DataFrame(column_model.particle_models[0].vars_and_params, columns=["Group", 'Symbol', 'Description', 'Domain', 'Unit'])
+        df = pd.concat([df, df_par], ignore_index=True)
+    
+    df[['Symbol', 'Domain', 'Unit']] = df[['Symbol', 'Domain', 'Unit']].applymap(lambda x: f"${x}$" if isinstance(x, str) else x)
+    
+    df = df.sort_values(by="Group")
+    
+    table_md = df[['Symbol', 'Description', 'Domain', 'Unit']].to_markdown(index=False)
+    st.markdown(table_md, unsafe_allow_html=True)
+
 interstitial_volume_eq = column_model.interstitial_volume_equation()
 
 nComp_list = r"$i\in\{" + ", ".join(str(i) for i in range(1, column_model.N_c + 1)) + \
@@ -587,8 +608,6 @@ nComp_list = r"$i\in\{" + ", ".join(str(i) for i in range(1, column_model.N_c + 
 nPar_list = ', '.join(str(j) for j in range(1, column_model.N_p + 1))
 
 # The following function is used to both print the output and collect it to later generate and export output files
-
-
 def write_and_save(output: str, as_latex: bool = False):
 
     output = rerender_variables(output, var_format_)
@@ -652,7 +671,7 @@ if column_model.N_p > 0:
         if not column_model.has_binding and column_model.nonlimiting_filmDiff and par_type.resolution == "0D":
             break
 
-
+        
 
         eq_type_ = "reaction" if column_model.particle_models[0].resolution == "0D" else "diffusion-reaction"
         write_and_save(
