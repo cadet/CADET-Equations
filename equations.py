@@ -501,7 +501,7 @@ def particle_initial(domain: str, singleParticle: bool, includeParLiquid: bool):
     else:
         initial_condition = r"""
 \begin{alignat}{2}
-\left. c^{\s}_{j,i} \right|_{t = 0} &= c^{\s}_{\mathrm{init},j,i} & & \qquad\text{in }""" + re.sub("\\$", "", domain) + r""".
+\left. c^{\s}_{j,i} \right|_{t = 0} &= c^{\s, \mathrm{init}}_{j,i} & & \qquad\text{in }""" + re.sub("\\$", "", domain) + r""".
 \end{alignat}
 """
 
@@ -511,20 +511,29 @@ def particle_initial(domain: str, singleParticle: bool, includeParLiquid: bool):
     return initial_condition
 
 
-def particle_domain(column_resolution: str, particle_resolution: str, hasCore: bool, with_par_index=False, with_time_domain=True):
+def particle_domain(particle_resolution: str, hasCore: bool, with_par_index=False):
+    
+    par1D_domain = r"$(R^{\mathrm{pc}}_{j}, R^{\mathrm{p}}_{j})$" if hasCore else r"(0, R^{\mathrm{p}}_{j})"
+    if not with_par_index:
+        par1D_domain = re.sub(r",j", "", par1D_domain)
+    
+    return par1D_domain
+
+
+def full_particle_conc_domain(column_resolution: str, particle_resolution: str, hasCore: bool, with_par_index=False, with_time_domain=True):
 
     if not column_resolution == "0D":
-        domain = r"$ (0, T_\mathrm{end}) \times (0, L)" if with_time_domain else r"$ \times (0, L)"
+        domain = r"$ (0, T^\mathrm{end}) \times (0, L)" if with_time_domain else r"$ \times (0, L)"
     else:
-        domain = r"$ (0, T_\mathrm{end})" if with_time_domain else r"$ "
+        domain = r"$ (0, T^\mathrm{end})" if with_time_domain else r"$ "
 
     if column_resolution in ["2D", "3D"]:
         domain += r"\times (0, R_\mathrm{c})"
     if column_resolution == "3D":
         domain += r"\times (0, 2\pi)"
 
-    par1D_domain = r"\times (R_{\mathrm{pc},j}, R_{\mathrm{p},j})$" if hasCore else r"\times (0, R_{\mathrm{p},j})$"
+    par1D_domain = r"\times (R^{\mathrm{pc}}_{j}, R^{\mathrm{p}}_{j})$" if hasCore else r"\times (0, R^{\mathrm{p}}_{j})$"
     if not with_par_index:
-        par1D_domain = re.sub(r",j", "", par1D_domain)
+        par1D_domain = re.sub(r"_{j}", "", par1D_domain)
 
     return domain + r"$" if particle_resolution == "0D" else domain + par1D_domain
