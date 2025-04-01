@@ -126,7 +126,7 @@ class Particle:
             if self.has_surfDiff:
                 vars_and_params_.append({"Group" : 6.1, "Symbol": r"D^\mathrm{s}_i", "Description": r"surface dispersion coefficient", "Unit": r"\frac{m^2}{s}", "Dependence": r"\text{component}", "Property": r"> 0"})
             if self.has_mult_bnd_states:
-                vars_and_params_.append({"Group" : 11, "Symbol": r"N^{\mathrm{b}}_{i}", "Description": r"number of bound states", "Unit": r"-", "Dependence": "-"})
+                vars_and_params_.append({"Group" : 11, "Symbol": r"N^{\mathrm{b}}_{i}", "Description": r"number of bound states", "Unit": r"-", "Dependence": r"-"})
 
         for var_ in self.vars_and_params:
             var_["Symbol"] = rerender_variables(var_["Symbol"], var_format_)
@@ -354,17 +354,17 @@ class Column:
             self.vars_and_params.append({"Group" : 6, "Symbol": r"D^\mathrm{ang}_i", "Description": r"axial dispersion coefficient", "Unit": r"\frac{m^2}{s}", "Dependence": param_deps, "Property": r"\geq 0"})
 
         if self.resolution == "0D":
-            self.vars_and_params.append({"Group" : 1, "Symbol": r"Q^\mathrm{in}", "Description": r"volumetric flow rate into the tank", "Unit": r"\frac{m^3}{s}", "Dependence": "\text{constant}", "Property": r"\geq 0"})
-            self.vars_and_params.append({"Group" : 1, "Symbol": r"Q^\mathrm{out}", "Description": r"volumetric flow rate into the tank", "Unit": r"\frac{m^3}{s}", "Dependence": "\text{constant}", "Property": r"\geq 0"})
-            self.vars_and_params.append({"Group" : 1, "Symbol": r"Q^\mathrm{filter}", "Description": r"volumetric flow rate into the tank", "Unit": r"\frac{m^3}{s}", "Dependence": "\text{constant}", "Property": r"\geq 0"})
+            self.vars_and_params.append({"Group" : 1, "Symbol": r"Q^\mathrm{in}", "Description": r"volumetric flow rate into the tank", "Unit": r"\frac{m^3}{s}", "Dependence": r"\text{constant}", "Property": r"\geq 0"})
+            self.vars_and_params.append({"Group" : 1, "Symbol": r"Q^\mathrm{out}", "Description": r"volumetric flow rate into the tank", "Unit": r"\frac{m^3}{s}", "Dependence": r"\text{constant}", "Property": r"\geq 0"})
+            self.vars_and_params.append({"Group" : 1, "Symbol": r"Q^\mathrm{filter}", "Description": r"volumetric flow rate into the tank", "Unit": r"\frac{m^3}{s}", "Dependence": r"\text{constant}", "Property": r"\geq 0"})
         else:
-            self.vars_and_params.append({"Group" : -1, "Symbol": r"z", "Description": r"axial cylinder coordinate", "Unit": r"m", "Dependence": r"\text{independent variable}", "Property": "\in (0, L)"})
-            self.vars_and_params.append({"Group" : 2, "Symbol": r"L", "Description": r"length of cylinder", "Unit": r"m", "Dependence": r"\text{constant}", "Property": " > 0"})
+            self.vars_and_params.append({"Group" : -1, "Symbol": r"z", "Description": r"axial cylinder coordinate", "Unit": r"m", "Dependence": r"\text{independent variable}", "Property": r"\in (0, L)"})
+            self.vars_and_params.append({"Group" : 2, "Symbol": r"L", "Description": r"length of cylinder", "Unit": r"m", "Dependence": r"\text{constant}", "Property": r" > 0"})
             self.vars_and_params.append({"Group" : 5, "Symbol": r"u", "Description": r"interstitial velocity", "Unit": r"\frac{m}{s}", "Dependence": param_deps, "Property": r"> 0"})
 
         if self.resolution == "2D":
             self.vars_and_params.append({"Group" : -1, "Symbol": r"\rho", "Description": r"radial cylinder coordinate", "Unit": r"m", "Dependence": r"\text{independent variable}", "Property": r"\in (0, R^{\mathrm{c}})"})
-            self.vars_and_params.append({"Group" : 2, "Symbol": r"R^{\mathrm{c}}", "Description": r"cylinder radius", "Unit": r"m", "Dependence": r"\text{constant}", "Property": " > 0"})
+            self.vars_and_params.append({"Group" : 2, "Symbol": r"R^{\mathrm{c}}", "Description": r"cylinder radius", "Unit": r"m", "Dependence": r"\text{constant}", "Property": r" > 0"})
 
         if self.resolution == "3D":
             self.vars_and_params.append({"Group" : -1, "Symbol": r"\phi", "Description": r"angular cylinder coordinate", "Unit": r"m", "Dependence": r"\text{independent variable}", "Property": r"\in (0, 2\pi)"})
