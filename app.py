@@ -475,7 +475,18 @@ class Column:
     def model_name(self):
 
         if self.resolution == "0D":
-            return "Finite Bath" if self.N_p > 0 else "Continuously Stirred Tank"
+            
+            if self.N_p > 0:
+                model_name = "Finite Bath"
+                
+                if self.particle_models[0].resolution == "0D":
+                    model_name += " without Pores" if self.nonlimiting_filmDiff else " with Pores"
+                else:
+                    model_name = "General " + model_name
+                
+                return model_name
+            else:
+                return "Continuously Stirred Tank"
 
         if self.has_angular_coordinate:
             model_name = "3D"
@@ -633,6 +644,8 @@ nComp_list = r"$i\in\{" + ", ".join(str(i) for i in range(1, column_model.N_c + 
     r"\}$" if column_model.N_c > 0 else r"$i\in\{1, \dots, N_c\}$"
 nPar_list = ', '.join(str(j) for j in range(1, column_model.N_p + 1))
 
+show_eq_description = st.toggle("Show equation description", key="show_eq_description", value=True)
+
 # The following function is used to both print the output and collect it to later generate and export output files
 def write_and_save(output: str, as_latex: bool = False):
 
@@ -684,7 +697,8 @@ else:
     write_and_save("with boundary conditions")
     write_and_save(column_model.interstitial_volume_bc(), as_latex=True)
 
-write_and_save("Here, " + column_model.vars_params_description())
+if show_eq_description:
+    write_and_save("Here, " + column_model.vars_params_description())
 
 if column_model.N_p > 0:
 
@@ -710,7 +724,8 @@ if column_model.N_p > 0:
             write_and_save("with boundary conditions")
             write_and_save(particle_bc[par_type], as_latex=True)
 
-        write_and_save("Here, " + column_model.particle_models[0].vars_params_description())
+        if show_eq_description:
+            write_and_save("Here, " + column_model.particle_models[0].vars_params_description())
 
 write_and_save("Consistent initial values for all solution variables (concentrations) are defined at $t = 0$.")
 

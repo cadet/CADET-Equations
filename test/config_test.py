@@ -6,7 +6,7 @@
 from streamlit.testing.v1 import AppTest
 
 
-untested_variables = ["dev_mode", "advanced_mode", "var_format", "param_table"] # dev_mode is not tested, TODO: test the advanced_mode
+untested_variables = ["dev_mode", "advanced_mode", "var_format", "param_table", "show_eq_description"] # dev_mode is not tested, TODO: test the advanced_mode
 
 # Some boxes are conditional, e.g. film_diffusion can only be configured when particles are present.
 # We thus first identify the boxes that change the number of boxes and thus combinations (critical_variables).
@@ -89,6 +89,7 @@ def test_streamlit_app():
     assert not at.exception
 
     assert at.selectbox(key="column_resolution").value == "1D (axial coordinate)"
+    assert at.selectbox(key="show_eq_description")
 
     # check if we are in the mode we support
     assert at.selectbox(key="advanced_mode").value == "Off"
