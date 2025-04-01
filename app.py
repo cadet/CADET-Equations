@@ -74,6 +74,7 @@ class Particle:
     nonlimiting_filmDiff: bool = None
     surface_volume_ratio: float = None
     interstitial_volume_resolution: str = None
+    single_partype: bool = True
     # volume fraction ?
     # binding -> is_kinetic, nBound
     vars_and_params = []
@@ -112,15 +113,16 @@ class Particle:
             vars_and_params_.append({"Group" : 0, "Symbol": r"c^\mathrm{p}_i", "Description": r"particle liquid concentration", "Unit": r"\frac{mol}{m^3}", "Dependence" : state_deps, "Domain" : eq.full_particle_conc_domain(column_resolution=self.interstitial_volume_resolution, particle_resolution=self.resolution, hasCore=self.has_core, with_par_index=False, with_time_domain=True)})
             
         if self.resolution == "1D":
-            vars_and_params_.append({"Group" : 6.1, "Symbol": r"D^\mathrm{p}_i", "Description": r"particle dispersion coefficient", "Unit": r"\frac{m^2}{s}", "Dependence": "component", "Property": r"> 0"})
+            vars_and_params_.append({"Group" : -1, "Symbol": r"r", "Description": r"radial particle coordinate", "Unit": r"m", "Dependence": r"\text{independent variable}", "Property": r""})
+            vars_and_params_.append({"Group" : 6.1, "Symbol": r"D^\mathrm{p}_i", "Description": r"particle dispersion coefficient", "Unit": r"\frac{m^2}{s}", "Dependence": r"\text{component}", "Property": r"> 0"})
 
 
         if self.has_binding:
             vars_and_params_.append({"Group" : 0, "Symbol": r"c^\mathrm{s}_i", "Description": r"particle solid concentration", "Unit": r"\frac{mol}{m^3}", "Dependence" : state_deps, "Domain" : eq.full_particle_conc_domain(column_resolution=self.interstitial_volume_resolution, particle_resolution=self.resolution, hasCore=self.has_core, with_par_index=False, with_time_domain=True)})
             vars_and_params_.append({"Group" : 10, "Symbol":r"f^\mathrm{bind}_i", "Description": r"adsorption isotherm function", "Unit": r"\frac{1}{s}", "Dependence": "c^\mathrm{p}_i, c^\mathrm{s}_i"})
-            vars_and_params_.append({"Group" : 4, "Symbol": r"\varepsilon^\mathrm{p}", "Description": r"particle porosity", "Unit": r"-", "Dependence": "-", "Property": r"\in (0, 1)"})
+            vars_and_params_.append({"Group" : 4, "Symbol": r"\varepsilon^\mathrm{p}", "Description": r"particle porosity", "Unit": r"-", "Dependence": r"\text{constant}" if self.single_partype else r"\text{particle type}", "Property": r"\in (0, 1)"})
             if self.has_surfDiff:
-                vars_and_params_.append({"Group" : 6.1, "Symbol": r"D^\mathrm{s}_i", "Description": r"surface dispersion coefficient", "Unit": r"\frac{m^2}{s}", "Dependence": "component", "Property": r"> 0"})
+                vars_and_params_.append({"Group" : 6.1, "Symbol": r"D^\mathrm{s}_i", "Description": r"surface dispersion coefficient", "Unit": r"\frac{m^2}{s}", "Dependence": r"\text{component}", "Property": r"> 0"})
             if self.has_mult_bnd_states:
                 vars_and_params_.append({"Group" : 11, "Symbol": r"N^{\mathrm{b}}_{i}", "Description": r"number of bound states", "Unit": r"-", "Dependence": "-"})
 
@@ -141,7 +143,7 @@ class Particle:
 
         for thing in self.vars_and_params:
 
-            if not idx == 0:
+            if not idx == 1:
                 description_ += ", " if idx < num_VP else ", and "
                 
             description_ += r"$" + thing["Symbol"]
@@ -299,7 +301,8 @@ class Column:
                         has_mult_bnd_states=self.has_mult_bnd_states,
                         has_surfDiff=self.has_surfDiff,
                         nonlimiting_filmDiff=self.nonlimiting_filmDiff,
-                        interstitial_volume_resolution=self.resolution
+                        interstitial_volume_resolution=self.resolution,
+                        single_partype=(self.N_p == 1)
                     )
                 )
 
@@ -336,7 +339,7 @@ class Column:
             param_deps = r"z, \rho, \phi"
 
         self.vars_and_params = [
-            {"Group" : -1, "Symbol": r"t", "Description": r"time", "Unit": r"s", "Dependence": r"\text{independent variable}", "Property": r"\in (0, T^{\mathrm{end}})"},
+            {"Group" : -1, "Symbol": r"t", "Description": r"time coordinate", "Unit": r"s", "Dependence": r"\text{independent variable}", "Property": r"\in (0, T^{\mathrm{end}})"},
             {"Group" : 0, "Symbol": r"c^\b_i", "Description": r"bulk liquid concentration", "Unit": r"\frac{mol}{m^3}", "Dependence" : state_deps, "Domain": eq.int_vol_domain(self.resolution)},
             {"Group" : 2, "Symbol": r"T^{\mathrm{end}}", "Description": r"process end time", "Unit": r"s", "Dependence": r"\text{constant}", "Property": r" > 0"},
             ]
@@ -365,8 +368,8 @@ class Column:
             self.vars_and_params.append({"Group" : -1, "Symbol": r"\phi", "Description": r"angular cylinder coordinate", "Unit": r"m", "Dependence": r"\text{independent variable}", "Property": r"\in (0, 2\pi)"})
 
         if self.N_p > 0:
-            self.vars_and_params.append({"Group" : 4, "Symbol": r"\varepsilon^\mathrm{c}", "Description": r"column porosity", "Unit": r"-", "Dependence": param_deps, "Property": r"\in (0, 1)"})
-            self.vars_and_params.append({"Group" : 7, "Symbol": r"k^\mathrm{f}_i", "Description": r"film diffusion coefficient", "Unit": r"\frac{m}{s}", "Dependence": "component", "Property": r"> 0"})
+            self.vars_and_params.append({"Group" : 4, "Symbol": r"\varepsilon^\mathrm{c}", "Description": r"column porosity", "Unit": r"-", "Dependence": re.sub("t, ", "", state_deps), "Property": r"\in (0, 1)"})
+            self.vars_and_params.append({"Group" : 7, "Symbol": r"k^\mathrm{f}_i", "Description": r"film diffusion coefficient", "Unit": r"\frac{m}{s}", "Dependence": r"\text{component}", "Property": r"> 0"})
 
         for var_ in self.vars_and_params:
             var_["Symbol"] = rerender_variables(var_["Symbol"], var_format_)
@@ -459,7 +462,7 @@ class Column:
         return eqs, boundary_conditions
 
     def domain_interstitial(self, with_time_domain=True):
-        return eq.int_vol_domain(self.resolution, with_time_domain=with_time_domain)
+        return r"$" + eq.int_vol_domain(self.resolution, with_time_domain=with_time_domain) + r"$"
 
     def domain_particle(self):
         if self.N_p > 0:
@@ -674,7 +677,7 @@ if column_model.resolution == "0D":
 else:
     eq_type = "convection-diffusion-reaction"
     write_and_save(r"In the interstitial volume, mass transfer is governed by the following " + eq_type +
-                   " equations in " + column_model.domain_particle() + r" and for all components " + nComp_list)
+                   " equations in " + column_model.domain_interstitial() + r" and for all components " + nComp_list)
     write_and_save(interstitial_volume_eq, as_latex=True)
     write_and_save("with boundary conditions")
     write_and_save(column_model.interstitial_volume_bc(), as_latex=True)
@@ -696,7 +699,7 @@ if column_model.N_p > 0:
 
         eq_type_ = "reaction" if column_model.particle_models[0].resolution == "0D" else "diffusion-reaction"
         write_and_save(
-            "In the particles, mass transfer is governed by " + eq_type_ + " equations in " + eq.full_particle_conc_domain(column_model.resolution, par_type.resolution, par_type.has_core, with_par_index=True, with_time_domain=True) + r" and for all components " + nComp_list)
+            "In the particles, mass transfer is governed by " + eq_type_ + " equations in " + eq.full_particle_conc_domain(column_model.resolution, par_type.resolution, par_type.has_core, with_par_index=False, with_time_domain=True) + r" and for all components " + nComp_list)
 
         write_and_save(particle_eq[par_type], as_latex=True)
         tmp += column_model.par_type_counts[par_type]

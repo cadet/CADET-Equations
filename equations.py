@@ -44,7 +44,7 @@ def int_vol_3DContinuum_asmpt(N_p: int, nonlimiting_filmDiff: bool):
 
     asmpts = [
         r"the particles form a continuum inside the column (i.e., there is interstitial and particle volume at every point in the column);" if N_p > 0 else "",
-        r"there is a small number $N^{\mathrm{p}}\geq 1$ of (representative) particle radii $R^{\mathrm{p}}_{j}$, $j \in \{ 1, \dots, N^{\mathrm{p}} \}$;"if N_p > 0 else "",
+        r"there is a number $N^{\mathrm{p}}\geq 1$ of (representative) particle radii $R^{\mathrm{p}}_{j}$, $j \in \{ 1, \dots, N^{\mathrm{p}} \}$;"if N_p > 1 else "",
     ]
 
     return [asmpt for asmpt in asmpts if not asmpt == ""]
@@ -493,7 +493,8 @@ def particle_boundary(particle, singleParticle: bool, nonlimiting_filmDiff: bool
     boundary_condition = r"\begin{align}" + boundary_condition + r"\end{align}"
 
     if singleParticle:
-        boundary_condition = re.sub(",j", "", boundary_condition)
+        boundary_condition = re.sub("j,", "", boundary_condition)
+        boundary_condition = re.sub(r"j}", r"}", boundary_condition)
 
     return boundary_condition
 
@@ -524,7 +525,7 @@ def particle_domain(particle_resolution: str, hasCore: bool, with_par_index=Fals
     
     par1D_domain = r"$(R^{\mathrm{pc}}_{j}, R^{\mathrm{p}}_{j})$" if hasCore else r"(0, R^{\mathrm{p}}_{j})"
     if not with_par_index:
-        par1D_domain = re.sub(r",j", "", par1D_domain)
+        par1D_domain = re.sub(r"\_{j}", "", par1D_domain)
     
     return par1D_domain
 
@@ -543,6 +544,6 @@ def full_particle_conc_domain(column_resolution: str, particle_resolution: str, 
     
     par1D_domain = r"\times (R^{\mathrm{pc}}_{j}, R^{\mathrm{p}}_{j})$" if hasCore else r"\times (0, R^{\mathrm{p}}_{j})$"
     if not with_par_index:
-        par1D_domain = re.sub(r"_{j}", "", par1D_domain)
+        par1D_domain = re.sub(r"\_{j}", "", par1D_domain)
     
     return domain + r"$" if particle_resolution == "0D" else domain + par1D_domain
