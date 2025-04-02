@@ -89,7 +89,7 @@ def test_streamlit_app():
     assert not at.exception
 
     assert at.selectbox(key="column_resolution").value == "1D (axial coordinate)"
-    assert at.selectbox(key="show_eq_description")
+    assert at.toggle(key="show_eq_description")
 
     # check if we are in the mode we support
     assert at.selectbox(key="advanced_mode").value == "Off"
