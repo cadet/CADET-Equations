@@ -4,10 +4,11 @@
 """
 
 from streamlit.testing.v1 import AppTest
+import json
 
 # The following test compares the latex output with a reference output file
-# At the time of writing, streamlit.testing did not provide functionality for upload_file
-# which is why the tested configuration is explicitly set in the test via the input widgets
+# At the time of writing, streamlit.testing did not provide functionality for upload_file,
+# which is circumvened by applying the configuration variables explicitly
 # Also, testing the download_button is not supported yet, which is why this is circumvened
 # using the session_state variable latex_string
 
@@ -23,7 +24,22 @@ def read_tex_file(file_path):
         print(f"An error occurred: {e}")
         return None
 
+def apply_model_from_config_json(at, config_path:str):
 
+    with open(config_path, 'r') as file:
+        
+        model_config = json.load(file)
+
+        for config in model_config.keys():
+
+            if config in [box.key for box in at.toggle]:
+                at.toggle(key=config).set_value(model_config[config]).run()
+            elif config in [box.key for box in at.selectbox]:
+                at.selectbox(key=config).set_value(model_config[config]).run()
+            else:
+                raise ValueError(f"Error: {config} is neither a toggle nor a selectbox")
+
+    return model_config
 
 def test_latex_model_output_with_reference():
 
@@ -32,8 +48,16 @@ def test_latex_model_output_with_reference():
     at.run()
     assert not at.exception
 
-    latex_string = at.session_state.latex_string
+    at.toggle(key="model_assumptions").set_value(True).run()
 
-    ref_string = read_tex_file("test/data/Plug_Flow.tex")
+    model_list = ["Plug_Flow"]
 
-    assert latex_string == ref_string
+    # Test models
+    for mode_name in model_list:
+        apply_model_from_config_json(at, "test/data/" + mode_name + ".json")
+
+        latex_string = at.session_state.latex_string
+
+        ref_string = read_tex_file("test/data/" + mode_name + ".tex")
+
+        assert latex_string == ref_string
