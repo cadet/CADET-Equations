@@ -511,9 +511,6 @@ class Column:
             if self.particle_models[0].resolution == "1D":
                 model_name += "General Rate Model"
 
-                if self.has_surfDiff:
-                    model_name += "  with surface diffusion"
-
             else:
                 model_name += "Lumped Rate Model"
 
