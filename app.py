@@ -110,15 +110,15 @@ class Particle:
             state_deps += r", r"
 
         if not (self.nonlimiting_filmDiff and self.resolution == "0D"):
-            vars_and_params_.append({"Group" : 0, "Symbol": r"c^\mathrm{p}_i", "Description": r"particle liquid concentration", "Unit": r"\frac{mol}{m^3}", "Dependence" : state_deps, "Domain" : eq.full_particle_conc_domain(column_resolution=self.interstitial_volume_resolution, particle_resolution=self.resolution, hasCore=self.has_core, with_par_index=False, with_time_domain=True)})
+            vars_and_params_.append({"Group" : 1, "Symbol": r"c^\mathrm{p}_i", "Description": r"particle liquid concentration", "Unit": r"\frac{mol}{m^3}", "Dependence" : state_deps, "Domain" : eq.full_particle_conc_domain(column_resolution=self.interstitial_volume_resolution, particle_resolution=self.resolution, hasCore=self.has_core, with_par_index=False, with_time_domain=True)})
             
         if self.resolution == "1D":
-            vars_and_params_.append({"Group" : -1, "Symbol": r"r", "Description": r"radial particle coordinate", "Unit": r"m", "Dependence": r"\text{independent variable}", "Property": r""})
+            vars_and_params_.append({"Group" : 0, "Symbol": r"r", "Description": r"radial particle coordinate", "Unit": r"m", "Dependence": r"\text{independent variable}", "Property": r""})
             vars_and_params_.append({"Group" : 6.1, "Symbol": r"D^\mathrm{p}_i", "Description": r"particle dispersion coefficient", "Unit": r"\frac{m^2}{s}", "Dependence": r"\text{component}", "Property": r"> 0"})
 
 
         if self.has_binding:
-            vars_and_params_.append({"Group" : 0, "Symbol": r"c^\mathrm{s}_i", "Description": r"particle solid concentration", "Unit": r"\frac{mol}{m^3}", "Dependence" : state_deps, "Domain" : eq.full_particle_conc_domain(column_resolution=self.interstitial_volume_resolution, particle_resolution=self.resolution, hasCore=self.has_core, with_par_index=False, with_time_domain=True)})
+            vars_and_params_.append({"Group" : 1, "Symbol": r"c^\mathrm{s}_i", "Description": r"particle solid concentration", "Unit": r"\frac{mol}{m^3}", "Dependence" : state_deps, "Domain" : eq.full_particle_conc_domain(column_resolution=self.interstitial_volume_resolution, particle_resolution=self.resolution, hasCore=self.has_core, with_par_index=False, with_time_domain=True)})
             vars_and_params_.append({"Group" : 10, "Symbol":r"f^\mathrm{bind}_i", "Description": r"adsorption isotherm function", "Unit": r"\frac{1}{s}", "Dependence": r"\vec{c}^\mathrm{p}, \vec{c}^\mathrm{s}"})
             vars_and_params_.append({"Group" : 10.1, "Symbol":r"\vec{c}^\mathrm{p}", "Description": r"particle liquid components vector", "Unit": r"[\frac{mol}{m^3}]", "Dependence": state_deps})
             vars_and_params_.append({"Group" : 10.1, "Symbol":r"\vec{c}^\mathrm{s}", "Description": r"particle solid components vector", "Unit": r"[\frac{mol}{m^3}]", "Dependence": state_deps})
@@ -144,6 +144,9 @@ class Particle:
         num_VP = len(self.vars_and_params)
 
         for thing in self.vars_and_params:
+
+            if thing.get("Group", -1) == -1:
+                continue
 
             if not idx == 1:
                 description_ += ", " if idx < num_VP else ", and "
@@ -341,9 +344,9 @@ class Column:
             param_deps = r"z, \rho, \phi"
 
         self.vars_and_params = [
-            {"Group" : -1, "Symbol": r"t", "Description": r"time coordinate", "Unit": r"s", "Dependence": r"\text{independent variable}", "Property": r"\in (0, T^{\mathrm{end}})"},
-            {"Group" : 0, "Symbol": r"c^\b_i", "Description": r"bulk liquid concentration", "Unit": r"\frac{mol}{m^3}", "Dependence" : state_deps, "Domain": eq.int_vol_domain(self.resolution)},
-            {"Group" : 2, "Symbol": r"T^{\mathrm{end}}", "Description": r"process end time", "Unit": r"s", "Dependence": r"\text{constant}", "Property": r" > 0"},
+            {"Group" : 0, "Symbol": r"t", "Description": r"time coordinate", "Unit": r"s", "Dependence": r"\text{independent variable}", "Property": r"\in (0, T^{\mathrm{end}})"},
+            {"Group" : 1, "Symbol": r"c^\b_i", "Description": r"bulk liquid concentration", "Unit": r"\frac{mol}{m^3}", "Dependence" : state_deps, "Domain": eq.int_vol_domain(self.resolution)},
+            {"Group" : -1, "Symbol": r"T^{\mathrm{end}}", "Description": r"process end time", "Unit": r"s", "Dependence": r"\text{constant}", "Property": r" > 0"},
             ]
 
         if self.has_axial_dispersion:
@@ -354,20 +357,20 @@ class Column:
             self.vars_and_params.append({"Group" : 6, "Symbol": r"D^\mathrm{ang}_i", "Description": r"axial dispersion coefficient", "Unit": r"\frac{m^2}{s}", "Dependence": param_deps, "Property": r"\geq 0"})
 
         if self.resolution == "0D":
-            self.vars_and_params.append({"Group" : 1, "Symbol": r"Q^\mathrm{in}", "Description": r"volumetric flow rate into the tank", "Unit": r"\frac{m^3}{s}", "Dependence": r"\text{constant}", "Property": r"\geq 0"})
-            self.vars_and_params.append({"Group" : 1, "Symbol": r"Q^\mathrm{out}", "Description": r"volumetric flow rate into the tank", "Unit": r"\frac{m^3}{s}", "Dependence": r"\text{constant}", "Property": r"\geq 0"})
-            self.vars_and_params.append({"Group" : 1, "Symbol": r"Q^\mathrm{filter}", "Description": r"volumetric flow rate into the tank", "Unit": r"\frac{m^3}{s}", "Dependence": r"\text{constant}", "Property": r"\geq 0"})
+            self.vars_and_params.append({"Group" : 2, "Symbol": r"Q^\mathrm{in}", "Description": r"volumetric flow rate into the tank", "Unit": r"\frac{m^3}{s}", "Dependence": r"\text{constant}", "Property": r"\geq 0"})
+            self.vars_and_params.append({"Group" : 2, "Symbol": r"Q^\mathrm{out}", "Description": r"volumetric flow rate into the tank", "Unit": r"\frac{m^3}{s}", "Dependence": r"\text{constant}", "Property": r"\geq 0"})
+            self.vars_and_params.append({"Group" : 2, "Symbol": r"Q^\mathrm{filter}", "Description": r"volumetric flow rate into the tank", "Unit": r"\frac{m^3}{s}", "Dependence": r"\text{constant}", "Property": r"\geq 0"})
         else:
-            self.vars_and_params.append({"Group" : -1, "Symbol": r"z", "Description": r"axial cylinder coordinate", "Unit": r"m", "Dependence": r"\text{independent variable}", "Property": r"\in (0, L)"})
-            self.vars_and_params.append({"Group" : 2, "Symbol": r"L", "Description": r"length of cylinder", "Unit": r"m", "Dependence": r"\text{constant}", "Property": r" > 0"})
+            self.vars_and_params.append({"Group" : 0, "Symbol": r"z", "Description": r"axial cylinder coordinate", "Unit": r"m", "Dependence": r"\text{independent variable}", "Property": r"\in (0, L)"})
+            self.vars_and_params.append({"Group" : -1, "Symbol": r"L", "Description": r"length of cylinder", "Unit": r"m", "Dependence": r"\text{constant}", "Property": r" > 0"})
             self.vars_and_params.append({"Group" : 5, "Symbol": r"u", "Description": r"interstitial velocity", "Unit": r"\frac{m}{s}", "Dependence": param_deps, "Property": r"> 0"})
 
         if self.resolution == "2D":
-            self.vars_and_params.append({"Group" : -1, "Symbol": r"\rho", "Description": r"radial cylinder coordinate", "Unit": r"m", "Dependence": r"\text{independent variable}", "Property": r"\in (0, R^{\mathrm{c}})"})
-            self.vars_and_params.append({"Group" : 2, "Symbol": r"R^{\mathrm{c}}", "Description": r"cylinder radius", "Unit": r"m", "Dependence": r"\text{constant}", "Property": r" > 0"})
+            self.vars_and_params.append({"Group" : 0, "Symbol": r"\rho", "Description": r"radial cylinder coordinate", "Unit": r"m", "Dependence": r"\text{independent variable}", "Property": r"\in (0, R^{\mathrm{c}})"})
+            self.vars_and_params.append({"Group" : -1, "Symbol": r"R^{\mathrm{c}}", "Description": r"cylinder radius", "Unit": r"m", "Dependence": r"\text{constant}", "Property": r" > 0"})
 
         if self.resolution == "3D":
-            self.vars_and_params.append({"Group" : -1, "Symbol": r"\phi", "Description": r"angular cylinder coordinate", "Unit": r"m", "Dependence": r"\text{independent variable}", "Property": r"\in (0, 2\pi)"})
+            self.vars_and_params.append({"Group" : 0, "Symbol": r"\phi", "Description": r"angular cylinder coordinate", "Unit": r"m", "Dependence": r"\text{independent variable}", "Property": r"\in (0, 2\pi)"})
 
         if self.N_p > 0:
             self.vars_and_params.append({"Group" : 4, "Symbol": r"\varepsilon^\mathrm{c}", "Description": r"column porosity", "Unit": r"-", "Dependence": re.sub("t, ", "", state_deps), "Property": r"\in (0, 1)"})
@@ -550,6 +553,9 @@ class Column:
 
         for thing in self.vars_and_params:
 
+            if thing.get("Group", -1) == -1:
+                continue
+
             if not idx_ == 1:
                 description_ += ", " if idx_ < num_VP else ", and "
             description_ += r"$" + thing["Symbol"]
@@ -667,13 +673,15 @@ file_content.append(r"\section*{" + column_model.model_name() + r"}")
 if column_model.resolution == "0D":
     intro_str = r"Consider a continuously stirred tank "
 else:
-    intro_str = r"Consider a cylindrical column "
+    intro_str = r"Consider a cylindrical column of length $L > 0$ "
+    if column_model.resolution == "2D" or column_model.resolution == "3D":
+        intro_str += r" and radius $R_{\mathrm{c}} > 0$ "
 
 if column_model.N_p == 0:
-    write_and_save(intro_str + r"filled with liquid phase.")
+    write_and_save(intro_str + r"filled with a liquid phase, and observed over a time interval $(0, T^{\mathrm{end}})$.")
 elif column_model.N_p == 1:
     # TODO particle geometries?
-    write_and_save(intro_str + r"packed with spherical particles.")
+    write_and_save(intro_str + r"packed with spherical particles, and observed over a time interval $(0, T^{\mathrm{end}})$.")
 else:
     write_and_save(intro_str + r"""packed with $N_{\mathrm{p}}\geq 0$ different particle types indexed by $j \in \{1, \dots, N_{\mathrm{p}}\}$ and distributed according to the volume fractions $d_j \colon (0, R_{\mathrm{c}}) \times (0,L) \to [0, 1]$.
 	For all $(\rho,z,\varphi) \in (0, R_{\mathrm{c}}) \times (0,L) \times [0,2\pi)$ the volume fractions satisfy""")
@@ -690,7 +698,12 @@ if column_model.resolution == "0D":
         r"The evolution of the liquid volume $V^{\l}\colon (0, T^{\mathrm{end}}) \to \mathbb{R}$ and the concentrations $c_i\colon (0, T^{\mathrm{end}}) \to \mathbb{R}$ of the components in the tank is governed by")
     write_and_save(interstitial_volume_eq, as_latex=True)
 else:
-    eq_type = "convection-diffusion-reaction"
+    eq_type = "convection" # first order derivative
+    if not column_model.resolution == "1D" or column_model.has_axial_dispersion: # second order derivative
+        eq_type += "-diffusion"
+    if column_model.has_binding and not column_model.nonlimiting_filmDiff: # i.e. film diffusion term (reaction type)
+        eq_type += "-reaction"
+
     write_and_save(r"In the interstitial volume, mass transfer is governed by the following " + eq_type +
                    " equations in " + column_model.domain_interstitial() + r" and for all components " + nComp_list)
     write_and_save(interstitial_volume_eq, as_latex=True)
@@ -710,8 +723,6 @@ if column_model.N_p > 0:
         # in this case, we dont have a particle model. this configuration is still allowed for educational purpose.
         if not column_model.has_binding and column_model.nonlimiting_filmDiff and par_type.resolution == "0D":
             break
-
-        
 
         eq_type_ = "reaction" if column_model.particle_models[0].resolution == "0D" else "diffusion-reaction"
         write_and_save(
