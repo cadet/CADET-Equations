@@ -1,0 +1,20 @@
+\documentclass{article}
+
+\usepackage{amssymb,amsmath,mleftright}
+
+\begin{document}
+
+\section*{Plug Flow}
+Consider a cylindrical column of length $L > 0$ filled with a liquid phase, and observed over a time interval $(0, T^{\mathrm{end}})$.
+In the interstitial volume, mass transfer is governed by the following convection equations in $(0, T^\mathrm{end})\times (0, L)$ and for all components $i\in\{1, \dots, N_c\}$
+\begin{align}
+\varepsilon^{\mathrm{c}} \frac{\partial c^{\mathrm{b}}_i}{\partial t} = - u \frac{\partial \left( \varepsilon^{\mathrm{c}} c^{\mathrm{b}}_i \right)}{\partial z},
+\end{align}
+with boundary conditions
+
+\begin{alignat}{2}
+u c_{\mathrm{in},i} &= \left.\left( u c^{\mathrm{b}}_i \right)\right|_{z=0} & &\qquad\text{on }(0, T^{\mathrm{end}}).
+\end{alignat}
+Here, $t\in (0, T^{\mathrm{end}})$ is the time coordinate, $z\in (0, L)$ is the axial cylinder coordinate, $c^\mathrm{b}_i\colon (0, T^\mathrm{end})\times (0, L) \mapsto \mathbb{R}$ is the bulk liquid concentration, $u> 0$ is the interstitial velocity.
+Consistent initial values for all solution variables (concentrations) are defined at $t = 0$.
+\end{document}
