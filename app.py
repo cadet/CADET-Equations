@@ -778,7 +778,7 @@ if st.button("Generate PDF", key="generate_pdf"):
 
 if st.button("Generate configuration file", key="generate_config"):
 
-    no_config_state = ["generate_pdf", "generate_config", "param_table"]
+    no_config_state = ["generate_pdf", "generate_config", "param_table", "latex_string"]
 
     # Create a temporary directory
     with tempfile.TemporaryDirectory() as temp_dir:
