@@ -740,7 +740,7 @@ if column_model.N_p > 0:
 
 write_and_save("Consistent initial values for all solution variables (concentrations) are defined at $t = 0$.")
 
-latex_string = [
+st.session_state.latex_string = [
     r"""\documentclass{article}
 """,
     r"""\usepackage{amssymb,amsmath,mleftright}
@@ -748,10 +748,12 @@ latex_string = [
     r"""\begin{document}
 """
 ]
-latex_string.extend(file_content + [r"\end{document}"])
-latex_string = "\n".join(latex_string)
+st.session_state.latex_string.extend(file_content + [r"\end{document}"])
+st.session_state.latex_string = "\n".join(st.session_state.latex_string)
 
-st.download_button("Download .tex", latex_string, "model.tex", "text/plain")
+st.session_state.latex_string = str(st.session_state.latex_string) # for testing purposes
+
+st.download_button("Download .tex", st.session_state.latex_string, "model.tex", "text/plain")
 
 if st.button("Generate PDF", key="generate_pdf"):
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -760,7 +762,7 @@ if st.button("Generate PDF", key="generate_pdf"):
 
         # Write LaTeX content to a temporary file
         with open(tex_path, "w") as f:
-            f.write(latex_string)
+            f.write(st.session_state.latex_string)
 
         result = subprocess.run(
             ["pdflatex", "-output-directory", temp_dir, tex_path],
