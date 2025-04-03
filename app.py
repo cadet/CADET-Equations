@@ -582,6 +582,12 @@ class Column:
         return description_ + "."
 
 # %% Streamlit UI
+
+st.set_page_config(
+    page_title="CADET-Equations",
+    page_icon=":material/biotech:", #":material/modeling:",
+)
+
 st.sidebar.title(
     "CADET-Equations: Packed-Bed Chromatography Model Equation Generator")
 st.sidebar.write(
