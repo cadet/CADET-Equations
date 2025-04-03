@@ -104,7 +104,7 @@ def particle_1D_asmpt(has_surfDiff: bool):
 
 def particle_0D_asmpt():
 
-    return particle_1D_asmpt(False) + [
+    return particle_1D_asmpt(True) + [
         r"the pore and surface diffusion are infinitely fast. That is, we assume $D_{i}^{\p} = D_{i}^{\s} = \infty$;"
     ]
 

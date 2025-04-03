@@ -541,6 +541,14 @@ class Column:
             asmpts["Specific model assumptions"].append(
                 r"adsorption and desorption happen on a much faster time scale than the other mass transfer processes (e.g., convection, diffusion). Hence, we consider them to be equilibrated instantly, that is, to always be in (local) equilibrium")
 
+        for idx in range(0, len(asmpts["Specific model assumptions"])):
+            
+            asmpts["Specific model assumptions"][idx] = rerender_variables(asmpts["Specific model assumptions"][idx], var_format_)
+            
+        for idx in range(0, len(asmpts["General model assumptions"])):
+            
+            asmpts["General model assumptions"][idx] = rerender_variables(asmpts["General model assumptions"][idx], var_format_)
+            
         return asmpts
 
     def vars_params_description(self):
