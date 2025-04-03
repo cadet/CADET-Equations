@@ -14,6 +14,7 @@ import pandas as pd
 
 from typing import List
 from typing import Literal
+from collections import OrderedDict
 
 import equations as eq
 
@@ -146,6 +147,7 @@ class Particle:
         for thing in self.vars_and_params:
 
             if thing.get("Group", -1) == -1:
+                num_VP -= 1
                 continue
 
             if not idx == 1:
@@ -551,6 +553,7 @@ class Column:
         for thing in self.vars_and_params:
 
             if thing.get("Group", -1) == -1:
+                num_VP -= 1
                 continue
 
             if not idx_ == 1:
@@ -780,12 +783,29 @@ if st.button("Generate configuration file", key="generate_config"):
 
     no_config_state = ["generate_pdf", "generate_config", "param_table", "latex_string"]
 
+    def sort_session_states(key):
+        # a proper sorting is required for the tests, where we cannot apply a
+        # global session state but must loop over the keys
+        if key == "dev_mode":
+            return 0
+        elif key == "advanced_mode":
+            return 1
+        elif key == "column_resolution":
+            return 2
+        elif key == "add_particles":
+            return 3
+        elif key == "has_binding":
+            return 4
+        return 10
+
     # Create a temporary directory
     with tempfile.TemporaryDirectory() as temp_dir:
         json_path = f"{temp_dir}/model.json"
 
         config = {key: st.session_state[key]
                   for key in st.session_state if key not in no_config_state}
+
+        config = OrderedDict(sorted(config.items(), key=lambda x: (sort_session_states(x[0]), x[0])))
 
         config_json = json.dumps(config, indent=4)
 
