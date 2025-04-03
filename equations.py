@@ -16,9 +16,8 @@ def HRM_asmpt(N_p: int, nonlimiting_filmDiff: bool, has_binding: bool, has_surfD
         device_str = "column"
 
     asmpts = [
-        r"the fluid is incompressible;",
+        r"the fluid density and viscosity are constant in time and space (implies incompressibility);",
         r"the fluid flow is laminar;",
-        r"the fluid density and viscosity are constant;",
         r"the " + device_str +
         " is operated under constant conditions (e.g., temperature, flow rate);",
         r"the process is isothermal (i.e., there are no thermal effects);",
@@ -26,7 +25,9 @@ def HRM_asmpt(N_p: int, nonlimiting_filmDiff: bool, has_binding: bool, has_surfD
             re.search(r'\d?', column_resolution).group()) > 0 else "",
         r"the fluid in the particles is stagnant (i.e., there is no convective flow);" if N_p > 0 else "there is no solid phase in the " +
         device_str + " (and thus no adsorption);",
-        r"the porous particles are spherical, homogeneous, rigid, of uniform porosity, and do not move;" if N_p > 0 else "",
+        r"the porous particles are spherical, rigid, and do not move;" if N_p > 0 else "",
+        r"the particles are homogeneous and of uniform porosity;" if N_p > 0 else "",
+        r"all components access the same particle volume;" if N_p > 0 else "",
         r"the partial molar volumes are the same in mobile and solid phase;" if has_binding else "",
         r"the binding model parameters do not depend on pressure and are constant along the column;"if has_binding else "",
     ]
@@ -59,8 +60,8 @@ def int_vol_2DContinuum_asmpt(N_p: int, nonlimiting_filmDiff: bool):
 
 def int_vol_1DContinuum_asmpt(N_p: int, nonlimiting_filmDiff: bool):
 
-    return int_vol_2DContinuum_asmpt(N_p, nonlimiting_filmDiff) + [
-        r"the column is radially homogeneous (i.e., concentration profiles and parameters only depend on the axial position);"
+    return int_vol_3DContinuum_asmpt(N_p, nonlimiting_filmDiff) + [
+        r"the column is radially symmetric and homogeneous (i.e., concentration profiles and parameters only depend on the axial position);"
     ]
 
 
@@ -94,7 +95,7 @@ def particle_1D_asmpt(has_surfDiff: bool):
         r"the interstitial liquid phase concentration is spatially constant on the particle surface;"
     ]
 
-    if has_surfDiff:
+    if not has_surfDiff:
         asmpts.append(
             r"there is no surface diffusion (i.e. adsorbed molecules are spatially constant)")
 
