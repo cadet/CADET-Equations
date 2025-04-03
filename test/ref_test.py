@@ -52,7 +52,7 @@ def test_latex_model_output_with_reference():
 
     at.toggle(key="model_assumptions").set_value(True).run()
 
-    model_list = ["Plug_Flow", "GRM"]
+    model_list = ["Plug_Flow", "GRM", "LRMP"]
 
     # Test models
     for mode_name in model_list:
