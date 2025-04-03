@@ -84,7 +84,7 @@ def getInputToBeTested(at):
 @pytest.mark.ci
 def test_streamlit_app():
     
-    at = AppTest.from_file("../app.py")
+    at = AppTest.from_file("../Equation-Generator.py")
     
     at.run()
     assert not at.exception

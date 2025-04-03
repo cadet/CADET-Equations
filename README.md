@@ -51,7 +51,7 @@ Once you have installed the necessary dependencies, you can use the tool to gene
 
 ```bash
 # Run the tool (replace with your script or command)
-streamlit run app.py
+streamlit run Equation-Generator.py
 ```
 
 ### Notes
