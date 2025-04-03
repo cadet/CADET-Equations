@@ -653,7 +653,7 @@ if st.toggle("Show parameter table", key="param_table"):
         df_par = pd.DataFrame(column_model.particle_models[0].vars_and_params, columns=["Group", 'Symbol', 'Description', "Dependence", 'Unit'])
         df = pd.concat([df, df_par], ignore_index=True)
     
-    df[['Symbol', "Dependence", 'Unit']] = df[['Symbol', "Dependence", 'Unit']].applymap(lambda x: f"${x}$" if isinstance(x, str) else x)
+    df[['Symbol', "Dependence", 'Unit']] = df[['Symbol', "Dependence", 'Unit']].map(lambda x: f"${x}$" if isinstance(x, str) else x)
     
     df = df.sort_values(by="Group")
     
