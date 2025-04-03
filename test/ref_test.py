@@ -5,6 +5,7 @@
 
 from streamlit.testing.v1 import AppTest
 import json
+import pytest
 
 # The following test compares the latex output with a reference output file
 # At the time of writing, streamlit.testing did not provide functionality for upload_file,
@@ -41,6 +42,7 @@ def apply_model_from_config_json(at, config_path:str):
 
     return model_config
 
+@pytest.mark.ci
 def test_latex_model_output_with_reference():
 
     at = AppTest.from_file("../app.py")

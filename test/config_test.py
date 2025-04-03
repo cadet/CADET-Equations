@@ -4,7 +4,7 @@
 """
 
 from streamlit.testing.v1 import AppTest
-
+import pytest
 
 untested_variables = ["dev_mode", "advanced_mode", "var_format", "param_table", "show_eq_description"] # dev_mode is not tested, TODO: test the advanced_mode
 
@@ -81,6 +81,7 @@ def getInputToBeTested(at):
     return [box.key for box in at.selectbox if box.key not in critical_variables] + [box.key for box in at.toggle if box.key not in critical_variables]
 
 
+@pytest.mark.ci
 def test_streamlit_app():
     
     at = AppTest.from_file("../app.py")

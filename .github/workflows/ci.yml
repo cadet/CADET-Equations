@@ -50,4 +50,4 @@ jobs:
       run: |
         source $(conda info --base)/etc/profile.d/conda.sh
         conda activate cadet-equations
-        pytest test/config_test.py
+        pytest -m "ci"
