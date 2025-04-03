@@ -1,0 +1,9 @@
+{
+    "advanced_mode": "Off",
+    "column_resolution": "1D (axial coordinate)",
+    "add_particles": "No",
+    "has_axial_dispersion": "No",
+    "model_assumptions": true,
+    "show_eq_description": true,
+    "var_format": "CADET"
+}

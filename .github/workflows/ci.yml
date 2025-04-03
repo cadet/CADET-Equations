@@ -12,26 +12,42 @@ jobs:
   test:
     runs-on: ubuntu-latest
     
+    defaults:
+      run:
+        shell: bash -l {0}  # Ensures conda init happens for bash shell
+
     steps:
     - name: Checkout code
       uses: actions/checkout@v2
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: '3.10'
+    - name: Install LaTex
+      run: sudo apt-get install texlive-latex-base texlive-fonts-recommended texlive-fonts-extra texlive-latex-extra
 
     - name: Set up Conda
-      uses: conda-incubator/setup-miniconda@v2
+      uses: conda-incubator/setup-miniconda@v3
       with:
-        miniconda-version: 'latest'
-        environment-file: environment.yml
-        python-version: '3.10'
+        miniforge-version: latest
+        use-mamba: true
+        activate-environment: cadet-equations
+        channels: conda-forge,
 
-    - name: Install dependencies from environment.yml
-      run: conda env update --file environment.yml --prune
+    - name: Cache Conda environment
+      uses: actions/cache@v4
+      with:
+        path: ${{ env.CONDA }}/envs
+        key: ${{ matrix.os }}-python_${{ matrix.python-version }}-${{ hashFiles('environment.yml') }}
+        restore-keys: |
+          ${{ matrix.os }}-python_${{ matrix.python-version }}-
+
+    - name: Update environment
+      run: |
+        mamba install "setuptools>=69" "pip>=24"
+        mamba install python=3.10  # Ensure the Python version matches
+        mamba env update -n cadet-equations -f environment.yml
+      if: steps.cache.outputs.cache-hit != 'true'
 
     - name: Run pytest
       run: |
+        source $(conda info --base)/etc/profile.d/conda.sh
         conda activate cadet-equations
-        pytest test/config_test.py
+        pytest -m "ci"
