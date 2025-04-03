@@ -123,9 +123,10 @@ class Particle:
             vars_and_params_.append({"Group" : 10, "Symbol":r"f^\mathrm{bind}_i", "Description": r"adsorption isotherm function", "Unit": r"\frac{1}{s}", "Dependence": r"\vec{c}^\mathrm{p}, \vec{c}^\mathrm{s}"})
             vars_and_params_.append({"Group" : 10.1, "Symbol":r"\vec{c}^\mathrm{p}", "Description": r"particle liquid components vector", "Unit": r"[\frac{mol}{m^3}]", "Dependence": state_deps})
             vars_and_params_.append({"Group" : 10.1, "Symbol":r"\vec{c}^\mathrm{s}", "Description": r"particle solid components vector", "Unit": r"[\frac{mol}{m^3}]", "Dependence": state_deps})
-            vars_and_params_.append({"Group" : 4, "Symbol": r"\varepsilon^\mathrm{p}", "Description": r"particle porosity", "Unit": r"-", "Dependence": r"\text{constant}" if self.single_partype else r"\text{particle type}", "Property": r"\in (0, 1)"})
+            if not (self.nonlimiting_filmDiff and self.resolution == "0D"):
+                vars_and_params_.append({"Group" : 4, "Symbol": r"\varepsilon^\mathrm{p}", "Description": r"particle porosity", "Unit": r"-", "Dependence": r"\text{constant}" if self.single_partype else r"\text{particle type}", "Property": r"\in (0, 1)"})
             if self.has_surfDiff:
-                vars_and_params_.append({"Group" : 6.1, "Symbol": r"D^\mathrm{s}_i", "Description": r"surface dispersion coefficient", "Unit": r"\frac{m^2}{s}", "Dependence": r"\text{component}", "Property": r"> 0"})
+                vars_and_params_.append({"Group" : 6.1, "Symbol": r"D^\mathrm{s}_i", "Description": r"surface dispersion coefficient", "Unit": r"\frac{m^2}{s}", "Dependence": r"\text{component}", "Property": r"\geq 0"})
             if self.has_mult_bnd_states:
                 vars_and_params_.append({"Group" : 11, "Symbol": r"N^{\mathrm{b}}_{i}", "Description": r"number of bound states", "Unit": r"-", "Dependence": r"-"})
 
@@ -376,7 +377,8 @@ class Column:
 
         if self.N_p > 0:
             self.vars_and_params.append({"Group" : 4, "Symbol": r"\varepsilon^\mathrm{c}", "Description": r"column porosity", "Unit": r"-", "Dependence": re.sub("t, ", "", state_deps), "Property": r"\in (0, 1)"})
-            self.vars_and_params.append({"Group" : 7, "Symbol": r"k^\mathrm{f}_i", "Description": r"film diffusion coefficient", "Unit": r"\frac{m}{s}", "Dependence": r"\text{component}", "Property": r"> 0"})
+            if not self.nonlimiting_filmDiff:
+                self.vars_and_params.append({"Group" : 7, "Symbol": r"k^\mathrm{f}_i", "Description": r"film diffusion coefficient", "Unit": r"\frac{m}{s}", "Dependence": r"\text{component}", "Property": r"> 0"})
 
         for var_ in self.vars_and_params:
             var_["Symbol"] = rerender_variables(var_["Symbol"], var_format_)
@@ -536,7 +538,7 @@ class Column:
 
         if self.nonlimiting_filmDiff:
             asmpts["Specific model assumptions"].append(
-                r"the film around the particles does not limit mass transfer (i.e. $k_{\mathrm{f},i} \to \infty$)")
+                r"the film around the particles does not limit mass transfer. That is, we assume $k^{\mathrm{f}}_i = \infty$)")
         if self.req_binding:
             asmpts["Specific model assumptions"].append(
                 r"adsorption and desorption happen on a much faster time scale than the other mass transfer processes (e.g., convection, diffusion). Hence, we consider them to be equilibrated instantly, that is, to always be in (local) equilibrium")
