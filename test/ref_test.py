@@ -50,7 +50,7 @@ def test_latex_model_output_with_reference():
 
     at.toggle(key="model_assumptions").set_value(True).run()
 
-    model_list = ["Plug_Flow"]
+    model_list = ["Plug_Flow", "GRM"]
 
     # Test models
     for mode_name in model_list:
@@ -61,3 +61,21 @@ def test_latex_model_output_with_reference():
         ref_string = read_tex_file("test/data/" + mode_name + ".tex")
 
         assert latex_string == ref_string
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
