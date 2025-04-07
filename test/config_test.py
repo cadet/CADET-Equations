@@ -82,6 +82,7 @@ def getInputToBeTested(at):
 
 
 @pytest.mark.ci
+@pytest.mark.all_config_runs
 def test_streamlit_app():
     
     at = AppTest.from_file("../Equation-Generator.py")

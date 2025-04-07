@@ -43,7 +43,9 @@ def apply_model_from_config_json(at, config_path:str):
     return model_config
 
 @pytest.mark.ci
-def test_latex_model_output_with_reference():
+@pytest.mark.reference
+@pytest.mark.parametrize("model_name", ["Plug_Flow", "GRM", "LRMP", "LRM", "CSTR"])
+def test_latex_model_output_with_reference(model_name):
 
     at = AppTest.from_file("../Equation-Generator.py")
     
@@ -52,17 +54,13 @@ def test_latex_model_output_with_reference():
 
     at.toggle(key="model_assumptions").set_value(True).run()
 
-    model_list = ["Plug_Flow", "GRM", "LRMP", "LRM", "CSTR"]
+    apply_model_from_config_json(at, "test/data/" + model_name + ".json")
 
-    # Test models
-    for mode_name in model_list:
-        apply_model_from_config_json(at, "test/data/" + mode_name + ".json")
+    latex_string = at.session_state.latex_string
 
-        latex_string = at.session_state.latex_string
+    ref_string = read_tex_file("test/data/" + model_name + ".tex")
 
-        ref_string = read_tex_file("test/data/" + mode_name + ".tex")
-
-        assert latex_string == ref_string
+    assert latex_string == ref_string
 
 
 
