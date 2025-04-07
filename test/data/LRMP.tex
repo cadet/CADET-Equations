@@ -42,7 +42,7 @@ with boundary conditions
 u c_{\mathrm{in},i} &= \left.\left( u c^{\mathrm{b}}_i - D^{\mathrm{ax}}_{i} \frac{\partial c^{\mathrm{b}}_i}{\partial z}\right)\right|_{z=0} & &\qquad\text{on }(0, T^{\mathrm{end}}),\\
                0 &= - D^{\mathrm{ax}}_{i} \left. \frac{\partial c^{\mathrm{b}}_i}{\partial z} \right|_{z=L} & &\qquad\text{on }(0, T^{\mathrm{end}}).
 \end{alignat}
-Here, $t\in (0, T^{\mathrm{end}})$ is the time coordinate, $z\in (0, L)$ is the axial cylinder coordinate, $c^\mathrm{b}_i\colon (0, T^\mathrm{end})\times (0, L) \mapsto \mathbb{R}$ is the bulk liquid concentration, $\varepsilon^\mathrm{c}\in (0, 1)$ is the column porosity, $u> 0$ is the interstitial velocity, $D^\mathrm{ax}_i\geq 0$ is the axial dispersion coefficient, and $k^\mathrm{f}_i> 0$ is the film diffusion coefficient.
+Here, $t\in (0, T^{\mathrm{end}})$ is the time coordinate, $z\in (0, L)$ is the axial cylinder coordinate, $c^\mathrm{b}_i\colon (0, T^\mathrm{end})\times (0, L) \mapsto \mathbb{R}$ is the bulk liquid concentration, $\varepsilon^{\mathrm{c}}\in (0, 1)$ is the column porosity, $u> 0$ is the interstitial velocity, $D^\mathrm{ax}_i\geq 0$ is the axial dispersion coefficient, and $k^\mathrm{f}_i> 0$ is the film diffusion coefficient.
 In the particles, mass transfer is governed by reaction equations in $ (0, T^\mathrm{end}) \times (0, L)$ and for all components $i\in\{1, \dots, N_c\}$
 
 \begin{align}
@@ -54,6 +54,6 @@ In the particles, mass transfer is governed by reaction equations in $ (0, T^\ma
           &= f^{\mathrm{bind}}_{i}\left( \vec{c}^{\mathrm{p}}, \vec{c}^{\mathrm{s}} \right).
 \end{align}
 
-Here, $c^\mathrm{p}_i\colon  (0, T^\mathrm{end}) \times (0, L) \mapsto \mathbb{R}$ is the particle liquid concentration, $c^\mathrm{s}_i\colon  (0, T^\mathrm{end}) \times (0, L) \mapsto \mathbb{R}$ is the particle solid concentration, $\varepsilon^\mathrm{p}\in (0, 1)$ is the particle porosity, $f^\mathrm{bind}_i$ is the adsorption isotherm function, $\vec{c}^\mathrm{p}$ is the particle liquid components vector, and $\vec{c}^\mathrm{s}$ is the particle solid components vector.
+Here, $c^\mathrm{p}_i\colon  (0, T^\mathrm{end}) \times (0, L) \mapsto \mathbb{R}$ is the particle liquid concentration, $c^\mathrm{s}_i\colon  (0, T^\mathrm{end}) \times (0, L) \mapsto \mathbb{R}$ is the particle solid concentration, $\varepsilon^{\mathrm{p}}\in (0, 1)$ is the particle porosity, $f^\mathrm{bind}_i$ is the adsorption isotherm function, $\vec{c}^\mathrm{p}$ is the particle liquid components vector, and $\vec{c}^\mathrm{s}$ is the particle solid components vector.
 Consistent initial values for all solution variables (concentrations) are defined at $t = 0$.
 \end{document}

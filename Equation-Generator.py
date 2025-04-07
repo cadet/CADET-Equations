@@ -124,7 +124,7 @@ class Particle:
             vars_and_params_.append({"Group" : 10.1, "Symbol":r"\vec{c}^\mathrm{p}", "Description": r"particle liquid components vector", "Unit": r"[\frac{mol}{m^3}]", "Dependence": state_deps})
             vars_and_params_.append({"Group" : 10.1, "Symbol":r"\vec{c}^\mathrm{s}", "Description": r"particle solid components vector", "Unit": r"[\frac{mol}{m^3}]", "Dependence": state_deps})
             if not (self.nonlimiting_filmDiff and self.resolution == "0D"):
-                vars_and_params_.append({"Group" : 4, "Symbol": r"\varepsilon^\mathrm{p}", "Description": r"particle porosity", "Unit": r"-", "Dependence": r"\text{constant}" if self.single_partype else r"\text{particle type}", "Property": r"\in (0, 1)"})
+                vars_and_params_.append({"Group" : 4, "Symbol": r"\varepsilon^{\mathrm{p}}", "Description": r"particle porosity", "Unit": r"-", "Dependence": r"\text{constant}" if self.single_partype else r"\text{particle type}", "Property": r"\in (0, 1)"})
             if self.has_surfDiff:
                 vars_and_params_.append({"Group" : 6.1, "Symbol": r"D^\mathrm{s}_i", "Description": r"surface dispersion coefficient", "Unit": r"\frac{m^2}{s}", "Dependence": r"\text{component}", "Property": r"\geq 0"})
             if self.has_mult_bnd_states:
@@ -335,6 +335,8 @@ class Column:
 
     def vars_and_params(self):
 
+        without_pores_ = self.nonlimiting_filmDiff and self.has_binding and self.particle_models[0].resolution == "0D"
+
         state_deps = r"t"
         param_deps = r"\text{constant}"
         if self.resolution == "1D":
@@ -353,11 +355,14 @@ class Column:
             ]
 
         if self.has_axial_dispersion:
-            self.vars_and_params.append({"Group" : 6, "Symbol": r"D^\mathrm{ax}_i", "Description": r"axial dispersion coefficient", "Unit": r"\frac{m^2}{s}", "Dependence": param_deps, "Property": r"\geq 0"})
+            if not without_pores_:
+                self.vars_and_params.append({"Group" : 6, "Symbol": r"D^\mathrm{ax}_i", "Description": r"axial dispersion coefficient", "Unit": r"\frac{m^2}{s}", "Dependence": param_deps, "Property": r"\geq 0"})
+            else:
+                self.vars_and_params.append({"Group" : 6, "Symbol": r"\tilde{D}^\mathrm{ax}_i", "Description": r"apparent axial dispersion coefficient", "Unit": r"\frac{m^2}{s}", "Dependence": param_deps, "Property": r"\geq 0"})
         if self.has_radial_dispersion:
-            self.vars_and_params.append({"Group" : 6, "Symbol": r"D^\mathrm{rad}_i", "Description": r"axial dispersion coefficient", "Unit": r"\frac{m^2}{s}", "Dependence": param_deps, "Property": r"\geq 0"})
+            self.vars_and_params.append({"Group" : 6, "Symbol": r"D^\mathrm{rad}_i", "Description": r"radial dispersion coefficient", "Unit": r"\frac{m^2}{s}", "Dependence": param_deps, "Property": r"\geq 0"})
         if self.has_angular_dispersion:
-            self.vars_and_params.append({"Group" : 6, "Symbol": r"D^\mathrm{ang}_i", "Description": r"axial dispersion coefficient", "Unit": r"\frac{m^2}{s}", "Dependence": param_deps, "Property": r"\geq 0"})
+            self.vars_and_params.append({"Group" : 6, "Symbol": r"D^\mathrm{ang}_i", "Description": r"angular dispersion coefficient", "Unit": r"\frac{m^2}{s}", "Dependence": param_deps, "Property": r"\geq 0"})
 
         if self.resolution == "0D":
             self.vars_and_params.append({"Group" : 2, "Symbol": r"Q^\mathrm{in}", "Description": r"volumetric flow rate into the tank", "Unit": r"\frac{m^3}{s}", "Dependence": r"\text{constant}", "Property": r"\geq 0"})
@@ -366,7 +371,10 @@ class Column:
         else:
             self.vars_and_params.append({"Group" : 0, "Symbol": r"z", "Description": r"axial cylinder coordinate", "Unit": r"m", "Dependence": r"\text{independent variable}", "Property": r"\in (0, L)"})
             self.vars_and_params.append({"Group" : -1, "Symbol": r"L", "Description": r"length of cylinder", "Unit": r"m", "Dependence": r"\text{constant}", "Property": r" > 0"})
-            self.vars_and_params.append({"Group" : 5, "Symbol": r"u", "Description": r"interstitial velocity", "Unit": r"\frac{m}{s}", "Dependence": param_deps, "Property": r"> 0"})
+            if not without_pores_:
+                self.vars_and_params.append({"Group" : 5, "Symbol": r"u", "Description": r"interstitial velocity", "Unit": r"\frac{m}{s}", "Dependence": param_deps, "Property": r"> 0"})
+            else:
+                self.vars_and_params.append({"Group" : 5, "Symbol": r"\tilde{u}", "Description": r"apparent interstitial velocity", "Unit": r"\frac{m}{s}", "Dependence": param_deps, "Property": r"> 0"})
 
         if self.resolution == "2D":
             self.vars_and_params.append({"Group" : 0, "Symbol": r"\rho", "Description": r"radial cylinder coordinate", "Unit": r"m", "Dependence": r"\text{independent variable}", "Property": r"\in (0, R^{\mathrm{c}})"})
@@ -376,7 +384,10 @@ class Column:
             self.vars_and_params.append({"Group" : 0, "Symbol": r"\phi", "Description": r"angular cylinder coordinate", "Unit": r"m", "Dependence": r"\text{independent variable}", "Property": r"\in (0, 2\pi)"})
 
         if self.N_p > 0:
-            self.vars_and_params.append({"Group" : 4, "Symbol": r"\varepsilon^\mathrm{c}", "Description": r"column porosity", "Unit": r"-", "Dependence": re.sub("t, ", "", state_deps), "Property": r"\in (0, 1)"})
+            if not without_pores_:
+                self.vars_and_params.append({"Group" : 4, "Symbol": r"\varepsilon^{\mathrm{c}}", "Description": r"column porosity", "Unit": r"-", "Dependence": re.sub("t, ", "", state_deps), "Property": r"\in (0, 1)"})
+            else:
+                self.vars_and_params.append({"Group" : 4, "Symbol": r"\varepsilon^{\mathrm{t}}", "Description": r"total porosity", "Unit": r"-", "Dependence": re.sub("t, ", "", state_deps), "Property": r"\in (0, 1)"})
             if not self.nonlimiting_filmDiff:
                 self.vars_and_params.append({"Group" : 7, "Symbol": r"k^\mathrm{f}_i", "Description": r"film diffusion coefficient", "Unit": r"\frac{m}{s}", "Dependence": r"\text{component}", "Property": r"> 0"})
 
@@ -387,6 +398,8 @@ class Column:
 
     def interstitial_volume_equation(self):
 
+        without_pores_ = self.nonlimiting_filmDiff and self.has_binding and self.particle_models[0].resolution == "0D"       
+
         if self.resolution == "0D":
             equation = r"""
     \frac{\mathrm{d}V^{\b}}{\mathrm{d}t} &= Q_{\mathrm{in}} - Q_{\mathrm{out}} - Q_{\mathrm{filter}},
@@ -394,32 +407,32 @@ class Column:
     \frac{\mathrm{d}}{\mathrm{d} t} \left( V^{\b} c^{\b}_i \right)"""
 
             if self.nonlimiting_filmDiff and self.has_binding and self.particle_models[0].resolution == "0D":
-                equation += r" + V^{\p} \varepsilon_\mathrm{p} \frac{\partial c^{b}_i}{\partial t}"
+                equation += r" + V^{\p} \varepsilon^{\mathrm{p}} \frac{\partial c^{b}_i}{\partial t}"
                 if self.req_binding:
-                    equation += r" + V^{\p} \left( 1 - \varepsilon_\mathrm{p} \right) \frac{\partial c^{\s}_i}{\partial t}"
+                    equation += r" + V^{\p} \left( 1 - \varepsilon^{\mathrm{p}} \right) \frac{\partial c^{\s}_i}{\partial t}"
 
             equation += r"&= Q_{\mathrm{in}} c^{\b}_{\mathrm{in},i} - Q_{\mathrm{out}} c^{\b}_i"
 
             if self.nonlimiting_filmDiff and self.has_binding and self.particle_models[0].resolution == "0D" and not self.req_binding:
-                equation += r" - V^{\p} \left( 1 - \varepsilon_\mathrm{p} \right) \frac{\partial c^{\s}_i}{\partial t}"
+                equation += r" - V^{\p} \left( 1 - \varepsilon^{\mathrm{p}} \right) \frac{\partial c^{\s}_i}{\partial t}"
 
         else:
-            equation = eq.bulk_time_derivative_eps
-            if self.nonlimiting_filmDiff and self.has_binding and self.particle_models[0].resolution == "0D" and self.req_binding:
-                equation += r" + " + eq.solid_time_derivative_eps
+            equation = eq.bulk_time_derivative(r"\varepsilon^{\mathrm{c}}") if not without_pores_ else eq.bulk_time_derivative()
+            if without_pores_:
+                equation += r" + " + eq.solid_time_derivative(r"\varepsilon^{\mathrm{t}}")
 
-            equation += " = " + eq.axial_convection_eps
+            equation += " = " + eq.axial_convection() if without_pores_ else " = " + eq.axial_convection(r"\varepsilon^{\mathrm{c}}")
 
             if self.has_axial_dispersion:
-                equation += " + " + eq.axial_dispersion_eps
+                equation += " + " + eq.axial_dispersion(r"\varepsilon^{\mathrm{c}}")
             if self.has_radial_dispersion:
-                equation += " + " + eq.radial_dispersion_eps
+                equation += " + " + eq.radial_dispersion(r"\varepsilon^{\mathrm{c}}")
             if self.has_angular_dispersion:
-                equation += " + " + eq.angular_dispersion_eps
+                equation += " + " + eq.angular_dispersion(r"\varepsilon^{\mathrm{c}}")
 
             if self.N_p == 0:  # remove occurencies of porosity, which is just constant one in this case
-                equation = re.sub(r"\\varepsilon_{\\mathrm{c}}", "", re.sub(
-                    r"\\left\( \\varepsilon_{\\mathrm{c}} c^{\\l}_i \\right\)", r"c^{\\l}_i", equation))
+                equation = re.sub(r"\\varepsilon^{\\mathrm{c}}", "", re.sub(
+                    r"\\left\( \\varepsilon^{\\mathrm{c}} c^{\\l}_i \\right\)", r"c^{\\l}_i", equation))
 
         # if self.nonlimiting_filmDiff and 1Dparticle # entscheidende faktoren sind particle resolution und filmDiffMode. the following loop has thus to change
         par_added = 0
@@ -435,11 +448,7 @@ class Column:
 
         if self.resolution == "0D":
             equation = re.sub(
-                r"\\left\(1 - \\varepsilon_{\\mathrm{c}} \\right\)", r"V^s", equation)
-
-        if self.nonlimiting_filmDiff and self.has_binding and self.particle_models[0].resolution == "0D" and self.req_binding:
-            equation = re.sub(
-                r"\\varepsilon_{\\mathrm{c}}", r"\\varepsilon_{\\mathrm{t}}", equation)
+                r"\\left\(1 - \\varepsilon^{\\mathrm{c}} \\right\)", r"V^s", equation)
 
         equation = r"""\begin{align}
 """ + equation + r""",

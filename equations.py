@@ -120,12 +120,36 @@ def particle_asmpt(resolution: str, has_surfDiff: bool):
 
 
 # Interstitial volume transport terms including spatially variable porosity (epsilon)
-bulk_time_derivative_eps = r"\varepsilon^{\mathrm{c}} \frac{\partial c^{\b}_i}{\partial t}"
-solid_time_derivative_eps = r"\left( 1 - \varepsilon^{\mathrm{c}} \right) \frac{\partial c^{\s}_i}{\partial t}"
-axial_convection_eps = r"- u \frac{\partial \left( \varepsilon^{\mathrm{c}} c^{\b}_i \right)}{\partial z}"
-axial_dispersion_eps = r"\frac{\partial}{\partial z} \left( \varepsilon^{\mathrm{c}} D^{\mathrm{ax}}_{i} \frac{\partial c^{\b}_i}{\partial z} \right)"
-radial_dispersion_eps = r"\frac{1}{\rho} \frac{\partial}{\partial \rho} \left( \rho \varepsilon^{\mathrm{c}} D^{\mathrm{rad}}_{i}  \frac{\partial c^{\b}_i}{\partial \rho} \right)"
-angular_dispersion_eps = r"\frac{1}{\rho} \frac{\partial}{\partial \varphi} \left( \varepsilon^{\mathrm{c}} D^{\mathrm{ang}}_{i}  \frac{\partial c^{\b}_i}{\partial \varphi} \right)"
+def bulk_time_derivative(eps:str=None):
+    if eps is None:
+        return r"\frac{\partial c^{\b}_i}{\partial t}"
+    else:
+        return eps + r" \frac{\partial c^{\b}_i}{\partial t}"
+def solid_time_derivative(eps:str=None):
+    if eps is None:
+        return r"\frac{\partial c^{\s}_i}{\partial t}"
+    else:
+        return r"\frac{1 - " + eps + r"}{" + eps + r"} \frac{\partial c^{\s}_i}{\partial t}"
+def axial_convection(eps:str=None):
+    if eps is None:
+        return r"- u \frac{\partial c^{\b}_i }{\partial z}"
+    else:
+        return r"- u \frac{\partial \left( " + eps + r" c^{\b}_i \right)}{\partial z}"
+def axial_dispersion(eps:str=None):
+    if eps is None:
+        return r"\frac{\partial}{\partial z} \left( D^{\mathrm{ax}}_{i} \frac{\partial c^{\b}_i}{\partial z} \right)"
+    else:
+        return r"\frac{\partial}{\partial z} \left( " + eps + r" D^{\mathrm{ax}}_{i} \frac{\partial c^{\b}_i}{\partial z} \right)"
+def radial_dispersion(eps:str=None):
+    if eps is None:
+        return r"\frac{1}{\rho} \frac{\partial}{\partial \rho} \left( \rho D^{\mathrm{rad}}_{i}  \frac{\partial c^{\b}_i}{\partial \rho} \right)"
+    else:
+        return r"\frac{1}{\rho} \frac{\partial}{\partial \rho} \left( \rho " + eps + r" D^{\mathrm{rad}}_{i}  \frac{\partial c^{\b}_i}{\partial \rho} \right)"
+def angular_dispersion(eps:str=None):
+    if eps is None:
+        return r"\frac{1}{\rho} \frac{\partial}{\partial \varphi} \left( D^{\mathrm{ang}}_{i}  \frac{\partial c^{\b}_i}{\partial \varphi} \right)"
+    else:
+        return r"\frac{1}{\rho} \frac{\partial}{\partial \varphi} \left( " + eps + r" D^{\mathrm{ang}}_{i}  \frac{\partial c^{\b}_i}{\partial \varphi} \right)"
 
 
 # Film diffusion in the interstitial volume
