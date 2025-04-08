@@ -664,10 +664,9 @@ if st.toggle("Show parameter table", key="param_table"):
     
     df[['Symbol', "Dependence", 'Unit']] = df[['Symbol', "Dependence", 'Unit']].map(lambda x: f"${x}$" if isinstance(x, str) else x)
     
-    df = df.sort_values(by="Group")
+    df = df.sort_values(by="Group").reset_index()
     
-    table_md = df[['Symbol', 'Description', "Dependence", 'Unit']].to_markdown(index=False)
-    st.markdown(table_md, unsafe_allow_html=True)
+    st.table(df[['Symbol', 'Description', 'Dependence', 'Unit']])
 
 interstitial_volume_eq = column_model.interstitial_volume_equation()
 
