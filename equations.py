@@ -157,10 +157,10 @@ def int_filmDiff_term(particle, numIdxBegin, numIdxEnd, singleParticle=False, no
 
     if singleParticle:
         term = r"- \left(1 - \varepsilon^{\mathrm{c}} \right) \frac{" + str(particle.surface_volume_ratio) + \
-            r"}{R_{\mathrm{p}}} k_{\mathrm{f},i} \left(c^{\b}_i - \left. c^{\p}_{i} \right|_{r = R_{\mathrm{p}}} \right)"
+            r"}{R_{\mathrm{p}}} k^{\mathrm{f}}_{i} \left(c^{\b}_i - \left. c^{\p}_{i} \right|_{r = R_{\mathrm{p}}} \right)"
     else:
         term = r"- \left(1 - \varepsilon^{\mathrm{c}} \right) \sum_{j=" + str(numIdxBegin) + r"}^{" + str(numIdxEnd) + r"} \frac{" + str(
-            particle.surface_volume_ratio) + r"d_j}{R^{\mathrm{p}}_{j}} k_{\mathrm{f},j,i} \left(c^{\b}_i - \left. c^{\p}_{j,i} \right|_{r = R^{\mathrm{p}}_{j}} \right)"
+            particle.surface_volume_ratio) + r"d_j}{R^{\mathrm{p}}_{j}} k^{\mathrm{f}}_{j,i} \left(c^{\b}_i - \left. c^{\p}_{j,i} \right|_{r = R^{\mathrm{p}}_{j}} \right)"
 
     if nonLimitingFilmDiff:
 
@@ -483,10 +483,10 @@ def particle_boundary(particle, singleParticle: bool, nonlimiting_filmDiff: bool
         outerLiquidBC = r"\varepsilon^{\mathrm{p}}" if has_binding else ""
         if not req_binding:
             outerLiquidBC += r""" \left. \left( D^{\p}_{j,i} \frac{\partial c^{\p}_{j,i}}{\partial r} \right)\right|_{r = R^{\mathrm{p}}_{j}}
-               &= k_{\mathrm{f},j,i} \left. \left( c^{\b}_i - c^{\p}_{j,i} \right|_{r = R^{\mathrm{p}}_{j}} \right)"""
+               &= k^{\mathrm{f}}_{j,i} \left. \left( c^{\b}_i - c^{\p}_{j,i} \right|_{r = R^{\mathrm{p}}_{j}} \right)"""
         else:
             outerLiquidBC += r""" \left. \left( \varepsilon^{\mathrm{p}}  D^{\p}_{j,i} \frac{\partial c^{\p}_{j,i}}{\partial r} + (1 - \varepsilon^{\mathrm{p}} ) D^{\s}_{j,i} \frac{\partial c^{\s}_{j,i}}{\partial r} \right)\right|_{r = R^{\mathrm{p}}_{j}}
-               &= k_{\mathrm{f},j,i} \left. \left( c^{\b}_i - c^{\p}_{j,i} \right|_{r = R^{\mathrm{p}}_{j}} \right)"""
+               &= k^{\mathrm{f}}_{j,i} \left. \left( c^{\b}_i - c^{\p}_{j,i} \right|_{r = R^{\mathrm{p}}_{j}} \right)"""
 
     inner_boundary = r"R^{\mathrm{pc}}_{j}" if particle.has_core else r"0"
 
