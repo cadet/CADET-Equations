@@ -671,8 +671,7 @@ if st.toggle("Show parameter table", key="param_table"):
 interstitial_volume_eq = column_model.interstitial_volume_equation()
 
 nComp_list = r"$i\in\{" + ", ".join(str(i) for i in range(1, column_model.N_c + 1)) + \
-    r"\}$" if column_model.N_c > 0 else r"$i\in\{1, \dots, N_c\}$"
-nPar_list = ', '.join(str(j) for j in range(1, column_model.N_p + 1))
+    r"\}$" if column_model.N_c > 0 else r"$i\in\{1, \dots, N^{\mathrm{c}} \}$"
 
 show_eq_description = st.toggle("Show equation description", key="show_eq_description", value=True)
 
