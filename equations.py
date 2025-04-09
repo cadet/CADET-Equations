@@ -45,7 +45,7 @@ def int_vol_3DContinuum_asmpt(N_p: int, nonlimiting_filmDiff: bool):
 
     asmpts = [
         r"the particles form a continuum inside the column (i.e., there is interstitial and particle volume at every point in the column);" if N_p > 0 else "",
-        r"there is a number $N^{\mathrm{p}}\geq 1$ of (representative) particle radii $R^{\mathrm{p}}_{j}$, $j \in \{ 1, \dots, N^{\mathrm{p}} \}$;"if N_p > 1 else "",
+        r"there is a small number $N^{\mathrm{p}}\geq 1$ of (representative) particle radii $R^{\mathrm{p}}_{j}$, $j \in \{ 1, \dots, N^{\mathrm{p}} \}$;"if N_p > 1 else "",
     ]
 
     return [asmpt for asmpt in asmpts if not asmpt == ""]

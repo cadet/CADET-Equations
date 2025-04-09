@@ -470,7 +470,7 @@ class Column:
                     Particle(
                         self.particle_models[0].geometry, self.particle_models[0].has_core, self.particle_models[0].resolution
                     ),
-                    1, "N^{\mathrm{p}}", self.N_p == 1, self.nonlimiting_filmDiff
+                    1, r"N^{\mathrm{p}}", self.N_p == 1, self.nonlimiting_filmDiff
                 )
 
             par_added += self.par_unique_intV_contribution_counts[par_uniq]
@@ -782,8 +782,10 @@ if column_model.N_p > 0:
             nPar_list = r"$j\in\{1, \dots, N^{\mathrm{p}}\}$"
 
         eq_type_ = "reaction" if column_model.particle_models[0].resolution == "0D" else "diffusion-reaction"
+        
+        tmp_str = r" and all particle sizes " + nPar_list if column_model.N_p > 1 else r""
         write_and_save(
-            "In the particles, mass transfer is governed by " + eq_type_ + " equations in " + eq.full_particle_conc_domain(column_model.resolution, par_type.resolution, par_type.has_core, with_par_index=False, with_time_domain=True) + r" and for all components " + nComp_list + " and all particle sizes " + nPar_list)
+            "In the particles, mass transfer is governed by " + eq_type_ + " equations in " + eq.full_particle_conc_domain(column_model.resolution, par_type.resolution, par_type.has_core, with_par_index=False, with_time_domain=True) + r" and for all components" + tmp_str)
 
         write_and_save(particle_eq[par_type], as_latex=True)
         cur_par_count += column_model.par_type_counts[par_type]
