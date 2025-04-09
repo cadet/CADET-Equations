@@ -31,9 +31,9 @@ Specific model assumptions:
 
 \section*{General Rate Model}
 Consider a cylindrical column of length $L > 0$ packed with spherical particles, and observed over a time interval $(0, T^{\mathrm{end}})$.
-In the interstitial volume, mass transfer is governed by the following convection-diffusion-reaction equations in $(0, T^\mathrm{end})\times (0, L)$ and for all components $i\in\{1, \dots, N_c\}$
+In the interstitial volume, mass transfer is governed by the following convection-diffusion-reaction equations in $(0, T^\mathrm{end})\times (0, L)$ and for all components $i\in\{1, \dots, N^{\mathrm{c}} \}$
 \begin{align}
-\varepsilon^{\mathrm{c}} \frac{\partial c^{\mathrm{b}}_i}{\partial t} = - u \frac{\partial \left( \varepsilon^{\mathrm{c}} c^{\mathrm{b}}_i \right)}{\partial z} + \frac{\partial}{\partial z} \left( \varepsilon^{\mathrm{c}} D^{\mathrm{ax}}_{i} \frac{\partial c^{\mathrm{b}}_i}{\partial z} \right)- \left(1 - \varepsilon^{\mathrm{c}} \right) \frac{3}{R_{\mathrm{p}}} k_{\mathrm{f},i} \left(c^{\mathrm{b}}_i - \left. c^{\mathrm{p}}_{i} \right|_{r = R_{\mathrm{p}}} \right),
+\varepsilon^{\mathrm{c}} \frac{\partial c^{\mathrm{b}}_i}{\partial t} = - u \frac{\partial \left( \varepsilon^{\mathrm{c}} c^{\mathrm{b}}_i \right)}{\partial z} + \frac{\partial}{\partial z} \left( \varepsilon^{\mathrm{c}} D^{\mathrm{ax}}_{i} \frac{\partial c^{\mathrm{b}}_i}{\partial z} \right)- \left(1 - \varepsilon^{\mathrm{c}} \right) \frac{3}{R_{\mathrm{p}}} k^{\mathrm{f}}_{i} \left(c^{\mathrm{b}}_i - \left. c^{\mathrm{p}}_{i} \right|_{r = R_{\mathrm{p}}} \right),
 \end{align}
 with boundary conditions
 
@@ -41,8 +41,8 @@ with boundary conditions
 u c_{\mathrm{in},i} &= \left.\left( u c^{\mathrm{b}}_i - D^{\mathrm{ax}}_{i} \frac{\partial c^{\mathrm{b}}_i}{\partial z}\right)\right|_{z=0} & &\qquad\text{on }(0, T^{\mathrm{end}}),\\
                0 &= - D^{\mathrm{ax}}_{i} \left. \frac{\partial c^{\mathrm{b}}_i}{\partial z} \right|_{z=L} & &\qquad\text{on }(0, T^{\mathrm{end}}).
 \end{alignat}
-Here, $t\in (0, T^{\mathrm{end}})$ is the time coordinate, $z\in (0, L)$ is the axial cylinder coordinate, $c^\mathrm{b}_i\colon (0, T^\mathrm{end})\times (0, L) \mapsto \mathbb{R}$ is the bulk liquid concentration, $\varepsilon^{\mathrm{c}}\in (0, 1)$ is the column porosity, $u> 0$ is the interstitial velocity, $D^\mathrm{ax}_i\geq 0$ is the axial dispersion coefficient, and $k^\mathrm{f}_i> 0$ is the film diffusion coefficient.
-In the particles, mass transfer is governed by diffusion-reaction equations in $ (0, T^\mathrm{end}) \times (0, L)\times (0, R^{\mathrm{p}})$ and for all components $i\in\{1, \dots, N_c\}$
+Here, $t\in (0, T^{\mathrm{end}})$ is the time coordinate, $z\in (0, L)$ is the axial cylinder coordinate, $c^{\mathrm{b}}_i\colon (0, T^\mathrm{end})\times (0, L) \mapsto \mathbb{R}$ is the bulk liquid concentration, $\varepsilon^{\mathrm{c}}\in (0, 1)$ is the column porosity, $u> 0$ is the interstitial velocity, $D^\mathrm{ax}_i\geq 0$ is the axial dispersion coefficient, and $k^\mathrm{f}_{i}> 0$ is the film diffusion coefficient.
+In the particles, mass transfer is governed by diffusion-reaction equations in $ (0, T^\mathrm{end}) \times (0, L)\times (0, R^{\mathrm{p}})$ and for all components
 
 \begin{align}
 \frac{\partial c^{\mathrm{p}}_{i}}{\partial t} &= \frac{1}{r^2} \frac{\partial }{\partial r} \left( r^2 D_{i}^{\mathrm{p}} \frac{\partial c^{\mathrm{p}}_{i}}{\partial r} \right) - \frac{1 - \varepsilon^{\mathrm{p}}_{j}}{\varepsilon^{\mathrm{p}}_{j}}f^{\mathrm{bind}}_{i}\left( \vec{c}^{\mathrm{p}}, \vec{c}^{\mathrm{s}} \right) , \\
@@ -54,12 +54,12 @@ with boundary conditions
 - \left. \left( D^{\mathrm{p}}_{i} \frac{\partial c^{\mathrm{p}}_{i}}{\partial r} \right) \right|_{r=0}
 &= 0, \\
 \varepsilon^{\mathrm{p}} \left. \left( D^{\mathrm{p}}_{i} \frac{\partial c^{\mathrm{p}}_{i}}{\partial r} \right)\right|_{r = R^{\mathrm{p}}_{}}
-               &= k_{\mathrm{f},i} \left. \left( c^{\mathrm{b}}_i - c^{\mathrm{p}}_{i} \right|_{r = R^{\mathrm{p}}_{}} \right),\\
+               &= k^{\mathrm{f}}_{i} \left. \left( c^{\mathrm{b}}_i - c^{\mathrm{p}}_{i} \right|_{r = R^{\mathrm{p}}_{}} \right),\\
 -\left( \left. D^{\mathrm{s}}_{i} \frac{\partial c^{\mathrm{s}}_{i}}{\partial r} \right) \right|_{r=0}
 &= 0, \\
 \left( \left. D^{\mathrm{s}}_{i} \frac{\partial c^{\mathrm{s}}_{i}}{\partial r} \right) \right|_{r = R^{\mathrm{p}}_{}}
 &= 0.
 \end{align}
-Here, $r$ is the radial particle coordinate, $c^\mathrm{p}_i\colon  (0, T^\mathrm{end}) \times (0, L)\times (0, R^{\mathrm{p}}) \mapsto \mathbb{R}$ is the particle liquid concentration, $c^\mathrm{s}_i\colon  (0, T^\mathrm{end}) \times (0, L)\times (0, R^{\mathrm{p}}) \mapsto \mathbb{R}$ is the particle solid concentration, $\varepsilon^{\mathrm{p}}\in (0, 1)$ is the particle porosity, $D^\mathrm{p}_i> 0$ is the particle dispersion coefficient, $D^\mathrm{s}_i\geq 0$ is the surface dispersion coefficient, $f^\mathrm{bind}_i$ is the adsorption isotherm function, $\vec{c}^\mathrm{p}$ is the particle liquid components vector, and $\vec{c}^\mathrm{s}$ is the particle solid components vector.
+Here, $r$ is the radial particle coordinate, $c^{\mathrm{p}}_{i}\colon  (0, T^\mathrm{end}) \times (0, L)\times (0, R^{\mathrm{p}}) \mapsto \mathbb{R}$ is the particle liquid concentration, $c^{\mathrm{s}}_{i}\colon  (0, T^\mathrm{end}) \times (0, L)\times (0, R^{\mathrm{p}}) \mapsto \mathbb{R}$ is the particle solid concentration, $\varepsilon^{\mathrm{p}}\in (0, 1)$ is the particle porosity, $D^\mathrm{p}_{i}> 0$ is the particle dispersion coefficient, $D^\mathrm{s}_{i}\geq 0$ is the surface dispersion coefficient, $f^\mathrm{bind}_{i}$ is the adsorption isotherm function, $\vec{c}^\mathrm{p}$ is the particle liquid components vector, and $\vec{c}^\mathrm{s}$ is the particle solid components vector.
 Consistent initial values for all solution variables (concentrations) are defined at $t = 0$.
 \end{document}

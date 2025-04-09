@@ -44,7 +44,7 @@ def apply_model_from_config_json(at, config_path:str):
 
 @pytest.mark.ci
 @pytest.mark.reference
-@pytest.mark.parametrize("model_name", ["Plug_Flow", "GRM", "LRMP", "LRM", "CSTR"])
+@pytest.mark.parametrize("model_name", ["Plug_Flow", "GRM2D", "GRM", "LRMP", "LRM", "CSTR"])
 def test_latex_model_output_with_reference(model_name):
 
     at = AppTest.from_file("../Equation-Generator.py")
