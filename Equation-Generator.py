@@ -111,7 +111,7 @@ class Particle:
             state_deps += r", r"
 
         if not (self.nonlimiting_filmDiff and self.resolution == "0D"):
-            symbol_name_ = r"c^\mathrm{p}_{i}" if self.single_partype else r"c^\mathrm{p}_{j,i}"
+            symbol_name_ = r"c^{\p}_{i}" if self.single_partype else r"c^{\p}_{j,i}"
             vars_and_params_.append({"Group" : 1, "Symbol": symbol_name_, "Description": r"particle liquid concentration", "Unit": r"\frac{mol}{m^3}", "Dependence" : state_deps, "Domain" : eq.full_particle_conc_domain(column_resolution=self.interstitial_volume_resolution, particle_resolution=self.resolution, hasCore=self.has_core, with_par_index=False, with_time_domain=True)})
             
         if self.resolution == "1D":
@@ -120,7 +120,7 @@ class Particle:
             vars_and_params_.append({"Group" : 6.1, "Symbol": symbol_name_, "Description": r"particle dispersion coefficient", "Unit": r"\frac{m^2}{s}", "Dependence": r"\text{component}", "Property": r"> 0"})
 
         if self.has_binding:
-            symbol_name_ = r"c^\mathrm{s}_{i}" if self.single_partype else r"c^\mathrm{s}_{j,i}"
+            symbol_name_ = r"c^{\s}_{i}" if self.single_partype else r"c^{\s}_{j,i}"
             vars_and_params_.append({"Group" : 1, "Symbol": symbol_name_, "Description": r"particle solid concentration", "Unit": r"\frac{mol}{m^3}", "Dependence" : state_deps, "Domain" : eq.full_particle_conc_domain(column_resolution=self.interstitial_volume_resolution, particle_resolution=self.resolution, hasCore=self.has_core, with_par_index=False, with_time_domain=True)})
             symbol_name_ = r"f^\mathrm{bind}_{i}" if self.single_partype else r"f^\mathrm{bind}_{j,i}"
             vars_and_params_.append({"Group" : 10, "Symbol": symbol_name_, "Description": r"adsorption isotherm function", "Unit": r"\frac{1}{s}", "Dependence": r"\vec{c}^\mathrm{p}, \vec{c}^\mathrm{s}"})
@@ -139,9 +139,8 @@ class Particle:
             vars_and_params_.append({"Group" : -0.1, "Symbol": r"j", "Description": r"particle type index", "Unit": r"-", "Dependence": r"-", "Property": r""})
             vars_and_params_.append({"Group" : 1.9, "Symbol": r"d_j", "Description": r"particle type volume fraction", "Unit": r"-", "Dependence": r"particle type", "Property": r""})
 
-        for var_ in self.vars_and_params:
+        for var_ in vars_and_params_:
             var_["Symbol"] = rerender_variables(var_["Symbol"], var_format_)
-            
         
         vars_and_params_ = sorted(vars_and_params_, key=lambda x: x['Group'])
 
@@ -364,7 +363,7 @@ class Column:
 
         self.vars_and_params = [
             {"Group" : 0, "Symbol": r"t", "Description": r"time coordinate", "Unit": r"s", "Dependence": r"\text{independent variable}", "Property": r"\in (0, T^{\mathrm{end}})"},
-            {"Group" : 1, "Symbol": r"c^\b_i", "Description": r"bulk liquid concentration", "Unit": r"\frac{mol}{m^3}", "Dependence" : state_deps, "Domain": eq.int_vol_domain(self.resolution)},
+            {"Group" : 1, "Symbol": r"c^{\b}_i", "Description": r"bulk liquid concentration", "Unit": r"\frac{mol}{m^3}", "Dependence" : state_deps, "Domain": eq.int_vol_domain(self.resolution)},
             {"Group" : -1, "Symbol": r"T^{\mathrm{end}}", "Description": r"process end time", "Unit": r"s", "Dependence": r"\text{constant}", "Property": r" > 0"},
             {"Group" : -0.1, "Symbol": r"i", "Description": r"component index", "Unit": r"s", "Dependence": r"-", "Property": r"-"},
             ]
