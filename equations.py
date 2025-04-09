@@ -288,7 +288,7 @@ int_vol_vars = {
 # Particle transport terms
 
 
-def particle_transport(particle, singleParticle: bool, nonlimiting_filmDiff: bool, has_surfDiff: bool, has_binding: bool, req_binding: bool, has_mult_bnd_states: bool):
+def particle_transport(particle, singleParticle: bool, nonlimiting_filmDiff: bool, has_surfDiff: bool, has_binding: bool, req_binding: bool, has_mult_bnd_states: bool, PTD:bool=False):
 
     ret_term = ""
 
@@ -309,6 +309,8 @@ def particle_transport(particle, singleParticle: bool, nonlimiting_filmDiff: boo
     if singleParticle:
         ret_term = re.sub(",j", "", ret_term)
         ret_term = re.sub("j,", "", ret_term)
+    elif not PTD:
+        ret_term = re.sub(r"f\^\{\\mathrm\{bind\}\}_\{j,i\}", r"f^{\\mathrm{bind}}_{i}", ret_term)
 
     return ret_term
 
