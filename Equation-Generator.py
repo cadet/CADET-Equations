@@ -76,6 +76,7 @@ class Particle:
     surface_volume_ratio: float = None
     interstitial_volume_resolution: str = None
     single_partype: bool = True
+    PTD: bool = False
     # volume fraction ?
     # binding -> is_kinetic, nBound
     vars_and_params = []
@@ -124,8 +125,9 @@ class Particle:
         if self.has_binding:
             symbol_name_ = r"c^{\s}_{i}" if self.single_partype else r"c^{\s}_{j,i}"
             vars_and_params_.append({"Group" : 1, "Symbol": symbol_name_, "Description": r"particle solid concentration", "Unit": r"\frac{mol}{m^3}", "Dependence" : state_deps, "Domain" : eq.full_particle_conc_domain(column_resolution=self.interstitial_volume_resolution, particle_resolution=self.resolution, hasCore=self.has_core, with_par_index=False, with_time_domain=True)})
-            symbol_name_ = r"f^\mathrm{bind}" if self.single_partype else r"f^\mathrm{bind}_{j}"
-            vars_and_params_.append({"Group" : 10, "Symbol": symbol_name_, "Description": r"adsorption isotherm function", "Unit": r"\frac{1}{s}", "Dependence": r"\vec{c}^\mathrm{p}, \vec{c}^\mathrm{s}"})
+            symbol_name_ = r"f^\mathrm{bind}_{j,i}" if self.PTD else r"f^\mathrm{bind}_{i}"
+            dep_ = r"\vec{c}^\mathrm{p}, \vec{c}^\mathrm{s}; j, i" if self.PTD else r"\vec{c}^\mathrm{p}, \vec{c}^\mathrm{s}; i"
+            vars_and_params_.append({"Group" : 10, "Symbol": symbol_name_, "Description": r"adsorption isotherm function", "Unit": r"\frac{1}{s}", "Dependence": dep_})
             vars_and_params_.append({"Group" : 10.1, "Symbol": r"\vec{c}^\mathrm{p}", "Description": r"particle liquid components vector", "Unit": r"[\frac{mol}{m^3}]", "Dependence": state_deps})
             vars_and_params_.append({"Group" : 10.1, "Symbol": r"\vec{c}^\mathrm{s}", "Description": r"particle solid components vector", "Unit": r"[\frac{mol}{m^3}]", "Dependence": state_deps})
             if not (self.nonlimiting_filmDiff and self.resolution == "0D"):
@@ -208,6 +210,7 @@ class Column:
     has_binding: bool = True  # and thus solid phase
     req_binding: bool = False
     has_mult_bnd_states: bool = False
+    PTD: bool = False
     # nCompReq: int
     # nCompKin: int
     # noPoresButReqBinding: bool
@@ -265,6 +268,8 @@ class Column:
                 self.N_p = st.sidebar.number_input("Number of particle types", key="N_p", min_value=0, step=1)
             elif advanced_mode_:
                 self.N_p = 1 + int(st.sidebar.selectbox("Particle size distribution", ["No", "Yes"], key="PSD") == "Yes")
+                if self.N_p > 1:
+                    self.PTD = st.sidebar.selectbox("Particle type distribution (binding per j)", ["No", "Yes"], key="PTD") == "Yes"
                 
         if self.N_p > 0:
 
@@ -325,7 +330,8 @@ class Column:
                         has_surfDiff=self.has_surfDiff,
                         nonlimiting_filmDiff=self.nonlimiting_filmDiff,
                         interstitial_volume_resolution=self.resolution,
-                        single_partype=(self.N_p == 1)
+                        single_partype=(self.N_p == 1),
+                        PTD=self.PTD
                     )
                 )
 
@@ -499,7 +505,7 @@ class Column:
         for par_type in self.par_type_counts.keys():
 
             eqs[par_type] = eq.particle_transport(par_type, singleParticle=self.N_p == 1, nonlimiting_filmDiff=self.nonlimiting_filmDiff,
-                                                  has_surfDiff=self.has_surfDiff, has_binding=self.has_binding, req_binding=self.req_binding, has_mult_bnd_states=self.has_mult_bnd_states)
+                                                  has_surfDiff=self.has_surfDiff, has_binding=self.has_binding, req_binding=self.req_binding, has_mult_bnd_states=self.has_mult_bnd_states, PTD=self.PTD)
             eqs[par_type] = eqs[par_type]
 
             boundary_conditions[par_type] = eq.particle_boundary(par_type, singleParticle=self.N_p == 1, nonlimiting_filmDiff=self.nonlimiting_filmDiff,
@@ -735,14 +741,30 @@ elif column_model.N_p == 1:
     # TODO particle geometries?
     write_and_save(intro_str + r"packed with spherical particles, and observed over a time interval $(0, T^{\mathrm{end}})$.")
 else:
-    write_and_save(intro_str + r"""packed with $N_{\mathrm{p}}\geq 0$ different particle sizes indexed by $j \in \{1, \dots, N_{\mathrm{p}}\}$ and distributed according to the volume fractions $d_j \colon (0, R_{\mathrm{c}}) \times (0,L) \to [0, 1]$.
-	For all $(\rho,z,\varphi) \in (0, R_{\mathrm{c}}) \times (0,L) \times [0,2\pi)$ the volume fractions satisfy""")
-    write_and_save(r"""
-	\begin{equation*}
-		\sum_{j=1}^{N_{\mathrm{p}}} d_j(\rho, z, \varphi) = 1.
-	\end{equation*}
+    if column_model.resolution == "0D":
+        d_j_def = r"$d_j \in [0, 1]$"
+    else:
+        d_j_def = r"$d_j \colon " + re.sub(r"\$", "", column_model.domain_interstitial(with_time_domain=False)) + r" \to [0, 1]$"
+    write_and_save(intro_str + r"packed with $N^{\mathrm{p}}\geq 0$ different particle-sizes indexed by $j \in \{1, \dots, N^{\mathrm{p}}\}$ and distributed according to the volume fractions " + d_j_def + r", which satisfy")
 
-""", as_latex=True)
+    if column_model.resolution == "0D":
+        d_j_dep = r""
+    else:
+        if column_model.resolution == "1D":
+            d_j_dep = r"z"
+        elif column_model.resolution == "2D":
+            d_j_dep = r"z, \rho"
+        elif column_model.resolution == "3D":
+            d_j_dep = r"z, \rho, \phi"
+
+        d_j_dep = r", \quad \forall """ + d_j_dep + r""" \in """ + re.sub(r"\$", "", column_model.domain_interstitial(with_time_domain=False))
+
+    write_and_save(r"""
+    \begin{equation*}
+	    \sum_{j=1}^{N_{\mathrm{p}}} d_j = 1 """ + d_j_dep + r""".
+    \end{equation*}
+
+    """, as_latex=True)
 
 
 if column_model.resolution == "0D":
