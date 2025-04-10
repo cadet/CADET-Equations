@@ -745,7 +745,7 @@ else:
         d_j_def = r"$d_j \in [0, 1]$"
     else:
         d_j_def = r"$d_j \colon " + re.sub(r"\$", "", column_model.domain_interstitial(with_time_domain=False)) + r" \to [0, 1]$"
-    write_and_save(intro_str + r"packed with $N^{\mathrm{p}}\geq 0$ different particle-sizes indexed by $j \in \{1, \dots, N^{\mathrm{p}}\}$ and distributed according to the volume fractions " + d_j_def + r", which satisfy")
+    write_and_save(intro_str + r"packed with $N^{\mathrm{p}}$ different particle-sizes indexed by $j \in \{1, \dots, N^{\mathrm{p}}\}$ and distributed according to the volume fractions " + d_j_def + r", which satisfy")
 
     if column_model.resolution == "0D":
         d_j_dep = r""
@@ -757,11 +757,12 @@ else:
         elif column_model.resolution == "3D":
             d_j_dep = r"z, \rho, \phi"
 
-        d_j_dep = r", \quad \forall """ + d_j_dep + r""" \in """ + re.sub(r"\$", "", column_model.domain_interstitial(with_time_domain=False))
+        d_j_dep2 = r", \quad \forall """ + d_j_dep + r""" \in """ + re.sub(r"\$", "", column_model.domain_interstitial(with_time_domain=False))
+        d_j_dep = "(" + d_j_dep + ")"
 
     write_and_save(r"""
     \begin{equation*}
-	    \sum_{j=1}^{N_{\mathrm{p}}} d_j = 1 """ + d_j_dep + r""".
+	    \sum_{j=1}^{N_{\mathrm{p}}} d_j""" + d_j_dep + r" = 1 " + d_j_dep2 + r""".
     \end{equation*}
 
     """, as_latex=True)
@@ -867,9 +868,9 @@ if st.button("Generate configuration file", key="generate_config"):
     def sort_session_states(key):
         # a proper sorting is required for the tests, where we cannot apply a
         # global session state but must loop over the keys
-        if key == "dev_mode":
+        if key == "advanced_mode":
             return 0
-        elif key == "advanced_mode":
+        elif key == "dev_mode":
             return 1
         elif key == "column_resolution":
             return 2
