@@ -38,13 +38,13 @@ def apply_model_from_config_json(at, config_path:str):
             elif config in [box.key for box in at.selectbox]:
                 at.selectbox(key=config).set_value(model_config[config]).run()
             else:
-                raise ValueError(f"Error: {config} is neither a toggle nor a selectbox")
+                raise ValueError(f"Error: {config} is neither a toggle nor a selectbox in the current session state")
 
     return model_config
 
 @pytest.mark.ci
 @pytest.mark.reference
-@pytest.mark.parametrize("model_name", ["Plug_Flow", "GRM2D", "GRM", "LRMP", "LRM", "CSTR"])
+@pytest.mark.parametrize("model_name", ["CSTR", "Plug_Flow", "LRM", "LRMP", "GRM", "GRM_PSD", "GRM2D"])
 def test_latex_model_output_with_reference(model_name):
 
     at = AppTest.from_file("../Equation-Generator.py")
