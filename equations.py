@@ -157,7 +157,7 @@ def int_filmDiff_term(particle, numIdxBegin, numIdxEnd, singleParticle:bool, non
 
     if singleParticle:
         term = r"- \left(1 - \varepsilon^{\mathrm{c}} \right) \frac{" + str(particle.surface_volume_ratio) + \
-            r"}{R_{\mathrm{p}}} k^{\mathrm{f}}_{i} \left(c^{\b}_i - \left. c^{\p}_{i} \right|_{r = R_{\mathrm{p}}} \right)"
+            r"}{R^{\mathrm{p}}} k^{\mathrm{f}}_{i} \left(c^{\b}_i - \left. c^{\p}_{i} \right|_{r = R^{\mathrm{p}}} \right)"
     else:
         term = r"- \left(1 - \varepsilon^{\mathrm{c}} \right) \sum_{j=" + str(numIdxBegin) + r"}^{" + str(numIdxEnd) + r"} \frac{" + str(
             particle.surface_volume_ratio) + r"d_j}{R^{\mathrm{p}}_{j}} k^{\mathrm{f}}_{j,i} \left(c^{\b}_i - \left. c^{\p}_{j,i} \right|_{r = R^{\mathrm{p}}_{j}} \right)"
@@ -171,7 +171,7 @@ def int_filmDiff_term(particle, numIdxBegin, numIdxEnd, singleParticle:bool, non
             substitute = r"\\left( \\varepsilon^{\\mathrm{p}}_{j} D^{\\mathrm{p}}_{j,i} \\left. \\frac{\\partial c^{\\p}_{j,i}}{\\partial r}"
             if hasSurfDiff:
                 substitute += r" + (1 - \\varepsilon^{\\mathrm{p}}_{j}) D^{\\mathrm{s}}_{j,i} \\frac{\\partial c^{\\s}_{j,i}}{\\partial r}"
-            substitute += r"\\right)\\right|_{r = R_{\\mathrm{p},j}}"
+            substitute += r"\\right)\\right|_{r = R^{\\mathrm{p},j}}"
 
             term = re.sub(r"k\^.*?right.$", substitute, term)
 
@@ -274,7 +274,7 @@ def int_vol_domain(resolution:str, with_time_domain=True):
     if int(re.search("\\d", resolution).group()) > 0:
         domain_ += r"\times (0, L)" if with_time_domain else r"(0, L)"
     if int(re.search("\\d", resolution).group()) > 1:
-        domain_ += r"\times (0, R_\mathrm{c})"
+        domain_ += r"\times (0, R^\mathrm{c})"
     if int(re.search("\\d", resolution).group()) > 2:
         domain_ += r"\times (0, 2\pi)"
 
@@ -572,7 +572,7 @@ def full_particle_conc_domain(column_resolution: str, particle_resolution: str, 
         domain = r"$ (0, T^\mathrm{end})" if with_time_domain else r"$ "
     
     if column_resolution in ["2D", "3D"]:
-        domain += r"\times (0, R_\mathrm{c})"
+        domain += r"\times (0, R^\mathrm{c})"
     if column_resolution == "3D":
         domain += r"\times (0, 2\pi)"
     

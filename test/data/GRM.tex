@@ -33,7 +33,7 @@ Specific model assumptions:
 Consider a cylindrical column of length $L > 0$ packed with spherical particles, and observed over a time interval $(0, T^{\mathrm{end}})$.
 In the interstitial volume, mass transfer is governed by the following convection-diffusion-reaction equations in $(0, T^\mathrm{end})\times (0, L)$ and for all components $i\in\{1, \dots, N^{\mathrm{c}} \}$
 \begin{align}
-\varepsilon^{\mathrm{c}} \frac{\partial c^{\mathrm{b}}_i}{\partial t} = - u \frac{\partial \left( \varepsilon^{\mathrm{c}} c^{\mathrm{b}}_i \right)}{\partial z} + \frac{\partial}{\partial z} \left( \varepsilon^{\mathrm{c}} D^{\mathrm{ax}}_{i} \frac{\partial c^{\mathrm{b}}_i}{\partial z} \right)- \left(1 - \varepsilon^{\mathrm{c}} \right) \frac{3}{R_{\mathrm{p}}} k^{\mathrm{f}}_{i} \left(c^{\mathrm{b}}_i - \left. c^{\mathrm{p}}_{i} \right|_{r = R_{\mathrm{p}}} \right),
+\varepsilon^{\mathrm{c}} \frac{\partial c^{\mathrm{b}}_i}{\partial t} = - u \frac{\partial \left( \varepsilon^{\mathrm{c}} c^{\mathrm{b}}_i \right)}{\partial z} + \frac{\partial}{\partial z} \left( \varepsilon^{\mathrm{c}} D^{\mathrm{ax}}_{i} \frac{\partial c^{\mathrm{b}}_i}{\partial z} \right)- \left(1 - \varepsilon^{\mathrm{c}} \right) \frac{3}{R^{\mathrm{p}}} k^{\mathrm{f}}_{i} \left(c^{\mathrm{b}}_i - \left. c^{\mathrm{p}}_{i} \right|_{r = R^{\mathrm{p}}} \right),
 \end{align}
 with boundary conditions
 
@@ -41,7 +41,7 @@ with boundary conditions
 u c_{\mathrm{in},i} &= \left.\left( u c^{\mathrm{b}}_i - D^{\mathrm{ax}}_{i} \frac{\partial c^{\mathrm{b}}_i}{\partial z}\right)\right|_{z=0} & &\qquad\text{on }(0, T^{\mathrm{end}}),\\
                0 &= - D^{\mathrm{ax}}_{i} \left. \frac{\partial c^{\mathrm{b}}_i}{\partial z} \right|_{z=L} & &\qquad\text{on }(0, T^{\mathrm{end}}).
 \end{alignat}
-Here, $t\in (0, T^{\mathrm{end}})$ is the time coordinate, $z\in (0, L)$ is the axial cylinder coordinate, $c^{\mathrm{b}}_i\colon (0, T^\mathrm{end})\times (0, L) \mapsto \mathbb{R}$ is the bulk liquid concentration, $\varepsilon^{\mathrm{c}}\in (0, 1)$ is the column porosity, $u> 0$ is the interstitial velocity, $D^\mathrm{ax}_i\geq 0$ is the axial dispersion coefficient, and $k^\mathrm{f}_{i}> 0$ is the film diffusion coefficient.
+Here, $t\in (0, T^{\mathrm{end}})$ is the time coordinate, $z\in (0, L)$ is the axial cylinder coordinate, $R^\mathrm{p}> 0$ is the particle radius, $c^{\mathrm{b}}_i\colon (0, T^\mathrm{end})\times (0, L) \mapsto \mathbb{R}$ is the bulk liquid concentration, $\varepsilon^{\mathrm{c}}\in (0, 1)$ is the column porosity, $u> 0$ is the interstitial velocity, $D^\mathrm{ax}_i\geq 0$ is the axial dispersion coefficient, and $k^\mathrm{f}_{i}> 0$ is the film diffusion coefficient.
 In the particles, mass transfer is governed by diffusion-reaction equations in $ (0, T^\mathrm{end}) \times (0, L)\times (0, R^{\mathrm{p}})$ and for all components
 
 \begin{align}

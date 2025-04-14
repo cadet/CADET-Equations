@@ -130,14 +130,20 @@ class Particle:
             vars_and_params_.append({"Group" : 10, "Symbol": symbol_name_, "Description": r"adsorption isotherm function", "Unit": r"\frac{1}{s}", "Dependence": dep_})
             vars_and_params_.append({"Group" : 10.1, "Symbol": r"\vec{c}^\mathrm{p}", "Description": r"particle liquid components vector", "Unit": r"[\frac{mol}{m^3}]", "Dependence": state_deps})
             vars_and_params_.append({"Group" : 10.1, "Symbol": r"\vec{c}^\mathrm{s}", "Description": r"particle solid components vector", "Unit": r"[\frac{mol}{m^3}]", "Dependence": state_deps})
+            
             if not (self.nonlimiting_filmDiff and self.resolution == "0D"):
                 vars_and_params_.append({"Group" : 4, "Symbol": r"\varepsilon^{\mathrm{p}}" if self.single_partype else r"\varepsilon^{\mathrm{p}}_{j}", "Description": r"particle porosity", "Unit": r"-", "Dependence": r"\text{constant}" if self.single_partype else r"j", "Property": r"\in (0, 1)"})
+            
             if self.has_surfDiff:
                 symbol_name_ = r"D^\mathrm{s}_{i}" if self.single_partype else r"D^\mathrm{s}_{j,i}"
                 vars_and_params_.append({"Group" : 6.1, "Symbol": symbol_name_, "Description": r"surface diffusion coefficient", "Unit": r"\frac{m^2}{s}", "Dependence": r"i" if self.single_partype else r"j,i", "Property": r"\geq 0"})
+            
             if self.has_mult_bnd_states:
                 symbol_name_ = r"N^{\mathrm{b}}_{i}" if self.single_partype else r"N^{\mathrm{b}}_{j,i}"
                 vars_and_params_.append({"Group" : 11, "Symbol": symbol_name_, "Description": r"number of bound states", "Unit": r"-", "Dependence": r"i" if self.single_partype else r"j,i"})
+            
+            if self.has_core:
+                self.vars_and_params.append({"Group" : 0.1, "Symbol": r"R^\mathrm{pc}", "Description": r"particle core radius", "Unit": r"-", "Dependence": r"-", "Property": r"\in (0, R^\mathrm{p})"})
 
         if not self.single_partype:
             vars_and_params_.append({"Group" : -0.1, "Symbol": r"j", "Description": r"particle type index", "Unit": r"-", "Dependence": r"-", "Property": r""})
@@ -265,7 +271,7 @@ class Column:
 
         if self.N_p > 0:
             if dev_mode_:
-                self.N_p = st.sidebar.number_input("Number of particle types", key="N_p", min_value=0, step=1)
+                self.N_p = st.sidebar.number_input("Number of particle types", key="N^\mathrm{p}", min_value=0, step=1)
             elif advanced_mode_:
                 self.N_p = 1 + int(st.sidebar.selectbox("Particle size distribution", ["No", "Yes"], key="PSD") == "Yes")
                 if self.N_p > 1:
@@ -287,14 +293,14 @@ class Column:
                     if dev_mode_:  # multiple particle types
                         resolution = re.search(r'\dD', st.sidebar.selectbox(f"Select spatial resolution of particle type {j + 1}", [
                                                "1D (radial coordinate)", "0D (homogeneous)"], key=f"parType_{j+1}_resolution")).group()
-                        has_core = st.sidebar.selectbox(f"Choose if particle type {j + 1} is a core-shell particle (i.e. " + r"$R_\mathrm{pc} > 0$)", [
+                        has_core = st.sidebar.selectbox(f"Choose if particle type {j + 1} is a core-shell particle (i.e. " + r"$R^\mathrm{pc} > 0$)", [
                                                        "No core-shell", "Has core-shell"], key=f"parType_{j+1}_has_core") == "Has core-shell"
                         geometry = st.sidebar.selectbox(f"Select geometry of particle type {j + 1}", [
                                                         "Sphere", "Cylinder", "Slab"], key=f"parType_{j+1}__geometry")
                     elif j == 0:
                         resolution = re.search(r'\dD', st.sidebar.selectbox(f"Select spatial resolution of particles", [
                                                "1D (radial coordinate)", "0D (homogeneous)"], key="particle_resolution")).group()
-                        has_core = st.sidebar.selectbox(f"Add impenetrable core-shell to particles (i.e. " + r"$R_\mathrm{pc} > 0$)", [
+                        has_core = st.sidebar.selectbox(f"Add impenetrable core-shell to particles (i.e. " + r"$R^\mathrm{pc} > 0$)", [
                                                        "No", "Yes"], key=f"particle_has_core") == "Yes" if (resolution == "1D" and advanced_mode_) else False
                         geometry = "Sphere"
 
@@ -376,6 +382,7 @@ class Column:
             {"Group" : 0, "Symbol": r"t", "Description": r"time coordinate", "Unit": r"s", "Dependence": r"\text{independent variable}", "Property": r"\in (0, T^{\mathrm{end}})"},
             {"Group" : 1, "Symbol": r"c^{\b}_i", "Description": r"bulk liquid concentration", "Unit": r"\frac{mol}{m^3}", "Dependence" : state_deps, "Domain": eq.int_vol_domain(self.resolution)},
             {"Group" : -1, "Symbol": r"T^{\mathrm{end}}", "Description": r"process end time", "Unit": r"s", "Dependence": r"\text{constant}", "Property": r" > 0"},
+            {"Group" : -0.2, "Symbol": r"N^\mathrm{c}", "Description": r"number of components", "Unit": r"-", "Dependence": r"-", "Property": r"\in \mathbb{N}"},
             {"Group" : -0.1, "Symbol": r"i", "Description": r"component index", "Unit": r"s", "Dependence": r"-", "Property": r"-"},
             ]
 
@@ -409,6 +416,8 @@ class Column:
             self.vars_and_params.append({"Group" : 0, "Symbol": r"\phi", "Description": r"angular cylinder coordinate", "Unit": r"m", "Dependence": r"\text{independent variable}", "Property": r"\in (0, 2\pi)"})
 
         if self.N_p > 0:
+            if not without_pores_:
+                self.vars_and_params.append({"Group" : 0.1, "Symbol": r"R^\mathrm{p}", "Description": r"particle radius", "Unit": r"-", "Dependence": r"-", "Property": r"> 0"})
             if not without_pores_:
                 self.vars_and_params.append({"Group" : 4, "Symbol": r"\varepsilon^{\mathrm{c}}", "Description": r"column porosity", "Unit": r"-", "Dependence": re.sub("t, ", "", state_deps), "Property": r"\in (0, 1)"})
             else:
@@ -614,7 +623,7 @@ class Column:
 
         for thing in self.vars_and_params:
 
-            if thing.get("Group", -1) < 0:
+            if thing.get("Group", -1) < 0: # dont print symbols with negative group no.
                 num_VP -= 1
                 continue
 
@@ -698,7 +707,7 @@ if st.toggle("Show Model Assumptions", key="model_assumptions"):
 """
         )
 
-if st.toggle("Show parameter table", key="param_table"):
+if st.toggle("Show symbol table", key="sym_table"):
 
     df = pd.DataFrame(column_model.vars_and_params)
     if column_model.N_p > 0:
@@ -741,7 +750,7 @@ if column_model.resolution == "0D":
 else:
     intro_str = r"Consider a cylindrical column of length $L > 0$ "
     if column_model.resolution == "2D" or column_model.resolution == "3D":
-        intro_str += r" and radius $R_{\mathrm{c}} > 0$ "
+        intro_str += r" and radius $R^{\mathrm{c}} > 0$ "
 
 if column_model.N_p == 0:
     write_and_save(intro_str + r"filled with a liquid phase, and observed over a time interval $(0, T^{\mathrm{end}})$.")
@@ -871,7 +880,7 @@ if st.button("Generate PDF", key="generate_pdf"):
 
 if st.button("Generate configuration file", key="generate_config"):
 
-    no_config_state = ["generate_pdf", "generate_config", "param_table", "latex_string"]
+    no_config_state = ["generate_pdf", "generate_config", "sym_table", "latex_string"]
 
     def sort_session_states(key):
         # a proper sorting is required for the tests, where we cannot apply a
