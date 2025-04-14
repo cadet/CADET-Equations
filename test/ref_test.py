@@ -44,7 +44,7 @@ def apply_model_from_config_json(at, config_path:str):
 
 @pytest.mark.ci
 @pytest.mark.reference
-@pytest.mark.parametrize("model_name", ["CSTR", "Plug_Flow", "LRM", "LRMP", "GRM", "GRM_PSD", "GRM2D"])
+@pytest.mark.parametrize("model_name", ["CSTR", "Plug_Flow", "LRM", "LRMP", "GRM", "GRM_PSD", "GRM2D", "GRM_nonLimFD_parCore", "GRM_nonLimFD_sd_reqBnd"])
 def test_latex_model_output_with_reference(model_name):
 
     at = AppTest.from_file("../Equation-Generator.py")
@@ -61,21 +61,3 @@ def test_latex_model_output_with_reference(model_name):
     ref_string = read_tex_file("test/data/" + model_name + ".tex")
 
     assert latex_string == ref_string
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
