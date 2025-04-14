@@ -512,6 +512,14 @@ class Column:
                                                                  has_surfDiff=self.has_surfDiff, has_binding=self.has_binding, req_binding=self.req_binding, has_mult_bnd_states=self.has_mult_bnd_states)
             boundary_conditions[par_type] = boundary_conditions[par_type]
 
+            if self.N_p == 1:
+                eqs[par_type] = re.sub(",j", "", eqs[par_type])
+                eqs[par_type] = re.sub("j,", "", eqs[par_type])
+                eqs[par_type] = re.sub("_{j}", "", eqs[par_type])
+                boundary_conditions[par_type] = re.sub(",j", "", boundary_conditions[par_type])
+                boundary_conditions[par_type] = re.sub("j,", "", boundary_conditions[par_type])
+                boundary_conditions[par_type] = re.sub("_{j}", "", boundary_conditions[par_type])
+
         return eqs, boundary_conditions
 
     def domain_interstitial(self, with_time_domain=True):
