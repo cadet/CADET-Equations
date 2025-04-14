@@ -784,7 +784,7 @@ else:
     eq_type = "convection" # first order derivative
     if not column_model.resolution == "1D" or column_model.has_axial_dispersion: # second order derivative
         eq_type += "-diffusion"
-    if column_model.has_binding and not column_model.nonlimiting_filmDiff: # i.e. film diffusion term (reaction type)
+    if column_model.N_p > 0 and not column_model.nonlimiting_filmDiff: # i.e. film diffusion term (reaction type)
         eq_type += "-reaction"
 
     write_and_save(r"In the interstitial volume, mass transfer is governed by the following " + eq_type +
