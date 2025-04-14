@@ -153,7 +153,7 @@ def angular_dispersion(eps:str=None):
 
 
 # Film diffusion in the interstitial volume
-def int_filmDiff_term(particle, numIdxBegin, numIdxEnd, singleParticle=False, nonLimitingFilmDiff=False):
+def int_filmDiff_term(particle, numIdxBegin, numIdxEnd, singleParticle:bool, nonLimitingFilmDiff:bool, hasSurfDiff:bool):
 
     if singleParticle:
         term = r"- \left(1 - \varepsilon^{\mathrm{c}} \right) \frac{" + str(particle.surface_volume_ratio) + \
@@ -168,10 +168,17 @@ def int_filmDiff_term(particle, numIdxBegin, numIdxEnd, singleParticle=False, no
             return ""
         else:
             # substitute boundary condition into equation
-            substitute = r"\\varepsilon^{\\mathrm{p}}_{j} \\left(D^{\\p}_{j,i} \\left. \\frac{\\partial c^{\\p}_{j,i}}{\\partial r} \\right)\\right|_{r = R_{\\mathrm{p},j}}"
-            term = re.sub("k_.*?right.$", substitute, term)
+            substitute = r"\\left( \\varepsilon^{\\mathrm{p}}_{j} D^{\\mathrm{p}}_{j,i} \\left. \\frac{\\partial c^{\\p}_{j,i}}{\\partial r}"
+            if hasSurfDiff:
+                substitute += r" + (1 - \\varepsilon^{\\mathrm{p}}_{j}) D^{\\mathrm{s}}_{j,i} \\frac{\\partial c^{\\s}_{j,i}}{\\partial r}"
+            substitute += r"\\right)\\right|_{r = R_{\\mathrm{p},j}}"
+
+            term = re.sub(r"k\^.*?right.$", substitute, term)
+
             if singleParticle:
                 term = re.sub(",j", "", term)
+                term = re.sub("j,", "", term)
+                term = re.sub("_{j}", "", term)
 
     return term
 
