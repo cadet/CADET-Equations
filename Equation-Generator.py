@@ -120,7 +120,7 @@ class Particle:
         if self.resolution == "1D":
             vars_and_params_.append({"Group" : 0, "Symbol": r"r", "Description": r"radial particle coordinate", "Unit": r"m", "Dependence": r"\text{independent variable}", "Property": r""})
             symbol_name_ = r"D^\mathrm{p}_{i}" if self.single_partype else r"D^\mathrm{p}_{j,i}"
-            vars_and_params_.append({"Group" : 6.1, "Symbol": symbol_name_, "Description": r"particle dispersion coefficient", "Unit": r"\frac{m^2}{s}", "Dependence": r"i" if self.single_partype else r"j,i", "Property": r"> 0"})
+            vars_and_params_.append({"Group" : 6.1, "Symbol": symbol_name_, "Description": r"particle diffusion coefficient", "Unit": r"\frac{m^2}{s}", "Dependence": r"i" if self.single_partype else r"j,i", "Property": r"> 0"})
 
         if self.has_binding:
             symbol_name_ = r"c^{\s}_{i}" if self.single_partype else r"c^{\s}_{j,i}"
@@ -134,7 +134,7 @@ class Particle:
                 vars_and_params_.append({"Group" : 4, "Symbol": r"\varepsilon^{\mathrm{p}}" if self.single_partype else r"\varepsilon^{\mathrm{p}}_{j}", "Description": r"particle porosity", "Unit": r"-", "Dependence": r"\text{constant}" if self.single_partype else r"j", "Property": r"\in (0, 1)"})
             if self.has_surfDiff:
                 symbol_name_ = r"D^\mathrm{s}_{i}" if self.single_partype else r"D^\mathrm{s}_{j,i}"
-                vars_and_params_.append({"Group" : 6.1, "Symbol": symbol_name_, "Description": r"surface dispersion coefficient", "Unit": r"\frac{m^2}{s}", "Dependence": r"i" if self.single_partype else r"j,i", "Property": r"\geq 0"})
+                vars_and_params_.append({"Group" : 6.1, "Symbol": symbol_name_, "Description": r"surface diffusion coefficient", "Unit": r"\frac{m^2}{s}", "Dependence": r"i" if self.single_partype else r"j,i", "Property": r"\geq 0"})
             if self.has_mult_bnd_states:
                 symbol_name_ = r"N^{\mathrm{b}}_{i}" if self.single_partype else r"N^{\mathrm{b}}_{j,i}"
                 vars_and_params_.append({"Group" : 11, "Symbol": symbol_name_, "Description": r"number of bound states", "Unit": r"-", "Dependence": r"i" if self.single_partype else r"j,i"})
