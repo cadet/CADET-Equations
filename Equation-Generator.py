@@ -766,6 +766,7 @@ else:
 
     if column_model.resolution == "0D":
         d_j_dep = r""
+        d_j_dep2 = r""
     else:
         if column_model.resolution == "1D":
             d_j_dep = r"z"
