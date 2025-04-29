@@ -8,7 +8,7 @@
     "has_axial_dispersion": "Yes",
     "has_mult_bnd_states": "No",
     "has_surfDiff": "No",
-    "model_assumptions": false,
+    "model_assumptions": true,
     "nonlimiting_filmDiff": "Yes",
     "particle_has_core": "Yes",
     "particle_resolution": "1D (radial coordinate)",

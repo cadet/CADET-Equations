@@ -4,6 +4,34 @@
 
 \begin{document}
 
+General model assumptions:
+\begin{itemize}
+\item the fluid density and viscosity are constant in time and space (implies incompressibility);
+\item the fluid flow is laminar;
+\item the column is operated under constant conditions (e.g., temperature, flow rate);
+\item the process is isothermal (i.e., there are no thermal effects);
+\item diffusion does not depend on the concentration of the components, viscosity of the fluid, or pressure;
+\item the fluid in the particles is stagnant (i.e., there is no convective flow);
+\item the porous particles are spherical, rigid, and do not move;
+\item the particles are homogeneous and of uniform porosity;
+\item all components access the same particle volume;
+\item the partial molar volumes are the same in mobile and solid phase;
+\item the binding model parameters do not depend on pressure and are constant along the column;
+\item the solvent is not adsorbed;
+\end{itemize}
+
+
+Specific model assumptions:
+\begin{itemize}
+\item the particles form a continuum inside the column (i.e., there is interstitial and particle volume at every point in the column);
+\item the column is radially symmetric and homogeneous (i.e., concentration profiles and parameters only depend on the axial position);
+\item the interstitial liquid phase concentration is spatially constant on the outer particle surface;
+\item inside the particles, adsorbed molecules may diffuse along the surface of the stationary phase (surface diffusion);
+\item the film around the particles does not limit mass transfer. That is, we assume $k^{\mathrm{f}}_i = \infty$)
+\item adsorption and desorption happen on a much faster time scale than the other mass transfer processes (e.g., convection, diffusion). Hence, we consider them to be equilibrated instantly, that is, to always be in (local) equilibrium
+\end{itemize}
+
+
 \section*{General Rate Model}
 Consider a cylindrical column of length $L > 0$ packed with spherical particles, and observed over a time interval $(0, T^{\mathrm{end}})$.
 In the interstitial volume, mass transfer is governed by the following convection equations in $(0, T^\mathrm{end})\times (0, L)$ and for all components $i\in\{1, \dots, N^{\mathrm{c}} \}$

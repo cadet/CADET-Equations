@@ -89,22 +89,28 @@ def int_vol_continuum_asmpt(resolution: str, N_p: int, nonlimiting_filmDiff: boo
         return int_vol_0DContinuum_asmpt(N_p, nonlimiting_filmDiff)
 
 
+def particle_asmpts():
+    return [
+        r"the interstitial liquid phase concentration is spatially constant on the outer particle surface;"
+    ]
+
 def particle_1D_asmpt(has_surfDiff: bool):
 
-    asmpts = [
-        r"the interstitial liquid phase concentration is spatially constant on the particle surface;"
-    ]
+    asmpts = particle_asmpts()
 
     if not has_surfDiff:
         asmpts.append(
-            r"there is no surface diffusion (i.e. adsorbed molecules are spatially constant)")
+            r"there is no surface diffusion (i.e. adsorbed molecules are spatially constant);")
+    else:
+        asmpts.append(
+            r"inside the particles, adsorbed molecules may diffuse along the surface of the stationary phase (surface diffusion);")
 
     return asmpts
 
 
 def particle_0D_asmpt():
 
-    return particle_1D_asmpt(True) + [
+    return particle_asmpts() + [
         r"the pore and surface diffusion are infinitely fast. That is, we assume $D_{i}^{\p} = D_{i}^{\s} = \infty$;"
     ]
 

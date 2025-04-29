@@ -5,7 +5,7 @@
     "has_binding": "Yes",
     "has_axial_dispersion": "No",
     "has_surfDiff": "Yes",
-    "model_assumptions": false,
+    "model_assumptions": true,
     "nonlimiting_filmDiff": "Yes",
     "particle_resolution": "1D (radial coordinate)",
     "req_binding": "Rapid-equilibrium",
