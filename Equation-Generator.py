@@ -231,7 +231,7 @@ class Column:
 
         with col1:
             self.resolution = re.search(r'\dD', st.sidebar.selectbox("Column resolution", [
-                                        "1D (axial coordinate)", "0D (Homogeneous Tank)", "2D (axial and radial coordinate)", "3D (axial, radial and angular coordinate)"], key="column_resolution")).group()
+                                        "1D (axial coordinate)", "0D (Homogeneous Tank)", "2D (axial and radial coordinate)", "3D (axial, radial and angular coordinate)"], key=r"column_resolution")).group()
 
         valid_resolutions = {"3D", "2D", "1D", "0D"}
 
@@ -249,33 +249,33 @@ class Column:
             self.has_angular_dispersion = True
 
         self.N_c = st.sidebar.number_input(
-            "Number of components", key="N_c", min_value=1, step=1) if dev_mode_ else -1
+            "Number of components", key=r"N_c", min_value=1, step=1) if dev_mode_ else -1
 
         if self.has_axial_coordinate:
             with col2:
                 self.has_axial_dispersion = st.sidebar.selectbox(
-                    "Add axial Dispersion", ["No", "Yes"], key="has_axial_dispersion") == "Yes"
+                    "Add axial Dispersion", ["No", "Yes"], key=r"has_axial_dispersion") == "Yes"
 
         if self.dev_mode:
             if self.has_radial_coordinate:
                 self.has_radial_dispersion = st.sidebar.selectbox(
-                    "Add radial Dispersion", ["Yes", "No"], key="has_radial_dispersion") == "Yes"
+                    "Add radial Dispersion", ["Yes", "No"], key=r"has_radial_dispersion") == "Yes"
             if self.has_angular_coordinate:
                 self.has_angular_dispersion = st.sidebar.selectbox(
-                    "Add angular Dispersion", ["Yes", "No"], key="has_angular_dispersion") == "Yes"
+                    "Add angular Dispersion", ["Yes", "No"], key=r"has_angular_dispersion") == "Yes"
 
         # Configure particle model
         st.sidebar.write("Configure particle model")
 
-        self.N_p = int(st.sidebar.selectbox("Add particles", ["No", "Yes"], key="add_particles") == "Yes")
+        self.N_p = int(st.sidebar.selectbox("Add particles", ["No", "Yes"], key=r"add_particles") == "Yes")
 
         if self.N_p > 0:
             if dev_mode_:
-                self.N_p = st.sidebar.number_input("Number of particle types", key="N^\mathrm{p}", min_value=0, step=1)
+                self.N_p = st.sidebar.number_input("Number of particle types", key=r"N^\mathrm{p}", min_value=0, step=1)
             elif advanced_mode_:
-                self.N_p = 1 + int(st.sidebar.selectbox("Particle size distribution", ["No", "Yes"], key="PSD") == "Yes")
+                self.N_p = 1 + int(st.sidebar.selectbox("Particle size distribution", ["No", "Yes"], key=r"PSD") == "Yes")
                 if self.N_p > 1:
-                    self.PTD = st.sidebar.selectbox("Particle type distribution (binding per j)", ["No", "Yes"], key="PTD") == "Yes"
+                    self.PTD = st.sidebar.selectbox("Particle type distribution (binding per j)", ["No", "Yes"], key=r"PTD") == "Yes"
                 
         if self.N_p > 0:
 
@@ -299,7 +299,7 @@ class Column:
                                                         "Sphere", "Cylinder", "Slab"], key=f"parType_{j+1}__geometry")
                     elif j == 0:
                         resolution = re.search(r'\dD', st.sidebar.selectbox(f"Select spatial resolution of particles", [
-                                               "1D (radial coordinate)", "0D (homogeneous)"], key="particle_resolution")).group()
+                                               "1D (radial coordinate)", "0D (homogeneous)"], key=r"particle_resolution")).group()
                         has_core = st.sidebar.selectbox(f"Add impenetrable core-shell to particles (i.e. " + r"$R^\mathrm{pc} > 0$)", [
                                                        "No", "Yes"], key=f"particle_has_core") == "Yes" if (resolution == "1D" and advanced_mode_) else False
                         geometry = "Sphere"
@@ -307,23 +307,23 @@ class Column:
                 with col2:
                     if j == 0:  # todo make this configurable for every particle type
                         self.nonlimiting_filmDiff = st.sidebar.selectbox(
-                            "Non-limiting film diffusion", ["No", "Yes"], key="nonlimiting_filmDiff") == "Yes"
+                            "Non-limiting film diffusion", ["No", "Yes"], key=r"nonlimiting_filmDiff") == "Yes"
 
                 if j == 0:  # todo make this configurable for every particle type
                     # Configure binding model
                     st.sidebar.write("Configure binding model")
 
                     self.has_binding = st.sidebar.selectbox(
-                        "Add binding", ["No", "Yes"], key="has_binding") == "Yes"
+                        "Add binding", ["No", "Yes"], key=r"has_binding") == "Yes"
 
                     if self.has_binding:
                         
                         self.req_binding = st.sidebar.selectbox("Binding kinetics mode", [
-                                                                "Kinetic", "Rapid-equilibrium"], key="req_binding") == "Rapid-equilibrium"
+                                                                "Kinetic", "Rapid-equilibrium"], key=r"req_binding") == "Rapid-equilibrium"
                         self.has_mult_bnd_states = st.sidebar.selectbox("Add multiple bound states", [
-                                                                        "No", "Yes"], key="has_mult_bnd_states") == "Yes" if advanced_mode_ else False
+                                                                        "No", "Yes"], key=r"has_mult_bnd_states") == "Yes" if advanced_mode_ else False
                         self.has_surfDiff = st.sidebar.selectbox("Add surface diffusion", [
-                                                                 "No", "Yes"], key="has_surfDiff") == "Yes" if resolution == "1D" else False
+                                                                 "No", "Yes"], key=r"has_surfDiff") == "Yes" if resolution == "1D" else False
 
                 self.particle_models.append(
                     Particle(
@@ -645,8 +645,8 @@ class Column:
 # %% Streamlit UI
 
 st.set_page_config(
-    page_title="CADET-Equations",
-    page_icon=":material/biotech:", #":material/modeling:",
+    page_title=r"CADET-Equations",
+    page_icon=r":material/biotech:", #":material/modeling:",
 )
 
 st.sidebar.title(
@@ -672,13 +672,13 @@ if uploaded_file is not None:
 # User configuration of the model
 
 var_format_ = st.sidebar.selectbox("Select format (e.g. $c^s$ or $q$ as the solid phase concentration)", [
-                                   "CADET", "Legacy"], key="var_format")
+                                   "CADET", "Legacy"], key=r"var_format")
 
 advanced_mode_ = st.sidebar.selectbox("Advanced setup options (enables e.g. particle size distribution)", [
-                                      "Off", "On"], key="advanced_mode") == "On"
+                                      "Off", "On"], key=r"advanced_mode") == "On"
 if advanced_mode_:
     dev_mode_ = st.sidebar.selectbox("Developer setup options (not tested! Enables e.g. particle type distribution)", [
-                                     "Off", "On"], key="dev_mode") == "On"
+                                     "Off", "On"], key=r"dev_mode") == "On"
     if dev_mode_:
         advanced_mode_ = True
 else:
@@ -690,7 +690,7 @@ column_model = Column(dev_mode=dev_mode_, advanced_mode=advanced_mode_)
 
 file_content = []  # used to export model to files
 
-if st.toggle("Show Model Assumptions", key="model_assumptions"):
+if st.toggle("Show Model Assumptions", key=r"model_assumptions"):
 
     asmpts = column_model.model_assumptions()
 
@@ -707,7 +707,7 @@ if st.toggle("Show Model Assumptions", key="model_assumptions"):
 """
         )
 
-if st.toggle("Show symbol table", key="sym_table"):
+if st.toggle("Show symbol table", key=r"sym_table"):
 
     df = pd.DataFrame(column_model.vars_and_params)
     if column_model.N_p > 0:
@@ -716,7 +716,7 @@ if st.toggle("Show symbol table", key="sym_table"):
     
     df[['Symbol', "Dependence", 'Unit']] = df[['Symbol', "Dependence", 'Unit']].map(lambda x: f"${x}$" if isinstance(x, str) else x)
     
-    df = df.sort_values(by="Group").reset_index()
+    df = df.sort_values(by=r"Group").reset_index()
     
     st.table(df[['Symbol', 'Description', 'Dependence', 'Unit']])
 
@@ -725,7 +725,7 @@ interstitial_volume_eq = column_model.interstitial_volume_equation()
 nComp_list = r"$i\in\{" + ", ".join(str(i) for i in range(1, column_model.N_c + 1)) + \
     r"\}$" if column_model.N_c > 0 else r"$i\in\{1, \dots, N^{\mathrm{c}} \}$"
 
-show_eq_description = st.toggle("Show equation description", key="show_eq_description", value=True)
+show_eq_description = st.toggle("Show equation description", key=r"show_eq_description", value=True)
 
 # The following function is used to both print the output and collect it to later generate and export output files
 def write_and_save(output: str, as_latex: bool = False):
@@ -854,7 +854,7 @@ st.session_state.latex_string = str(st.session_state.latex_string) # for testing
 
 st.download_button("Download .tex", st.session_state.latex_string, "model.tex", "text/plain")
 
-if st.button("Generate PDF", key="generate_pdf"):
+if st.button("Generate PDF", key=r"generate_pdf"):
     with tempfile.TemporaryDirectory() as temp_dir:
         tex_path = f"{temp_dir}/model.tex"
         pdf_path = f"{temp_dir}/model.pdf"
@@ -878,7 +878,7 @@ if st.button("Generate PDF", key="generate_pdf"):
                 st.download_button("Download PDF", pdf_file,
                                    "model.pdf", "application/pdf")
 
-if st.button("Generate configuration file", key="generate_config"):
+if st.button("Generate configuration file", key=r"generate_config"):
 
     no_config_state = ["generate_pdf", "generate_config", "sym_table", "latex_string"]
 
