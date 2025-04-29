@@ -557,9 +557,9 @@ class Column:
                 return "Continuously Stirred Tank"
 
         if self.has_angular_coordinate:
-            model_name = "3D"
+            model_name = "3D "
         elif self.has_radial_coordinate:
-            model_name = "2D"
+            model_name = "2D "
         # elif self.has_axial_coordinate: # default case, no name prefix !
         else:
             model_name = ""
