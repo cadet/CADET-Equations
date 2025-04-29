@@ -1,0 +1,14 @@
+{
+    "advanced_mode": "Off",
+    "column_resolution": "1D (axial coordinate)",
+    "add_particles": "Yes",
+    "has_binding": "Yes",
+    "has_axial_dispersion": "Yes",
+    "has_surfDiff": "No",
+    "model_assumptions": true,
+    "nonlimiting_filmDiff": "No",
+    "particle_resolution": "1D (radial coordinate)",
+    "req_binding": "Kinetic",
+    "show_eq_description": true,
+    "var_format": "CADET"
+}
