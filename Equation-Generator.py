@@ -572,8 +572,7 @@ class Column:
             else:
                 model_name += "Lumped Rate Model"
 
-                if self.nonlimiting_filmDiff:
-                    model_name += " without Pores"
+                model_name += " without Pores" if self.nonlimiting_filmDiff else " with Pores"
 
             if self.N_p > 1:
                 if not any(par.geometry != "Sphere" for par in self.particle_models):
