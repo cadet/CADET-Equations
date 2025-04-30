@@ -20,7 +20,6 @@ from src import equations as eq
 from src import load_CADET_h5
 from src import ui_config
 
-# %%
 
 def rerender_variables(input_str:str, var_format:int, mul_pars:bool=False):
     if var_format == "CADET":
@@ -58,8 +57,6 @@ def rerender_variables(input_str:str, var_format:int, mul_pars:bool=False):
         raise ValueError(f"Format {var_format} is not supported.")
 
     return input_str
-
-# %% src
 
 
 # immutable & hashable dataclass -> unique particle type counter
@@ -643,6 +640,8 @@ class Column:
         return description_ + "."
 
 # %% Streamlit UI
+
+st.logo("images/logo_CADET.png", size="medium", link=None, icon_image=None)
 
 st.set_page_config(
     page_title=r"CADET-Equations",
