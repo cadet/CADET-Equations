@@ -43,7 +43,7 @@ jobs:
       run: |
         mamba install "setuptools>=69" "pip>=24"
         mamba install python=3.10  # Ensure the Python version matches
-        mamba env update -n cadet-equations -f environment.yml
+        pip install -r requirements.txt
       if: steps.cache.outputs.cache-hit != 'true'
 
     - name: Run pytest

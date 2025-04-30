@@ -1,2 +1,4 @@
+streamlit
+pytest
 h5py
 bibtexparser

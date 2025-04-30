@@ -9,28 +9,18 @@ To get started with CADET-Equations, you need to install the required Python dep
 
 ### Step 1: Install Python Dependencies
 
-First, create a virtual environment (optional but recommended) and activate it. This will help to keep your Python dependencies isolated.
+Create a new Conda environment with Python 3.10:
 
 ```bash
-# Create a virtual environment (optional)
-python3 -m venv venv
+conda create -n cadet-equations python=3.10
 
-# Activate the virtual environment
-source venv/bin/activate  # On Linux/macOS
-venv\Scripts\activate     # On Windows
-```
-
-Next, install the necessary Python packages using `conda` or `pip` by running the following command:
+Next, install the necessary Python packages using `pip` by running the following commands:
 
 ```bash
-# Install dependencies from requirements.yml
-conda env create -f requirements.yml
-```
+conda activate cadet-equations
 
-If you are using `pip` instead of `conda`, make sure to create a `requirements.txt` file from `requirements.yml`, and install the dependencies with:
+conda install pip
 
-```bash
-# If you use pip
 pip install -r requirements.txt
 ```
 
