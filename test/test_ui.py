@@ -6,7 +6,8 @@
 from streamlit.testing.v1 import AppTest
 import pytest
 
-untested_variables = ["dev_mode", "advanced_mode", "var_format", "sym_table", "show_eq_description", "PSD", "PTD"] # dev_mode is not tested, TODO: test the advanced_mode (which includes PSD, PTD)
+untested_variables = ["dev_mode", "advanced_mode", "var_format", "sym_table", "show_eq_description", "PSD", "PTD", "has_filter"]
+# dev_mode is not tested, TODO: test the advanced_mode (which includes PSD, PTD). test filter
 
 # Some boxes are conditional, e.g. film_diffusion can only be configured when particles are present.
 # We thus first identify the boxes that change the number of boxes and thus combinations (critical_variables).
