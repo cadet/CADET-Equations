@@ -219,6 +219,8 @@ class Column:
     # nCompKin: int
     # noPoresButReqBinding: bool
 
+    has_filter: bool = False
+
     vars_and_params = List[dict]
 
     def __post_init__(self):
@@ -236,6 +238,9 @@ class Column:
         if self.resolution not in valid_resolutions:
             raise ValueError(
                 f"Invalid resolution: {self.resolution}. Must be one of {valid_resolutions}.")
+        if int(re.search("\\d", self.resolution).group()) == 0:
+            self.has_filter = st.sidebar.selectbox(
+                    "Add flow rate filter", ["No", "Yes"], key=r"has_filter") == "Yes"
         if int(re.search("\\d", self.resolution).group()) > 0:
             self.has_axial_coordinate = True
             self.has_axial_dispersion = True
@@ -397,7 +402,8 @@ class Column:
         if self.resolution == "0D":
             self.vars_and_params.append({"Group" : 2, "Symbol": r"Q^\mathrm{in}", "Description": r"volumetric flow rate into the tank", "Unit": r"\frac{m^3}{s}", "Dependence": r"\text{constant}", "Property": r"\geq 0"})
             self.vars_and_params.append({"Group" : 2, "Symbol": r"Q^\mathrm{out}", "Description": r"volumetric flow rate out of the tank", "Unit": r"\frac{m^3}{s}", "Dependence": r"\text{constant}", "Property": r"\geq 0"})
-            self.vars_and_params.append({"Group" : 2, "Symbol": r"Q^\mathrm{filter}", "Description": r"volumetric flow rate out of the tank (solvent only)", "Unit": r"\frac{m^3}{s}", "Dependence": r"\text{constant}", "Property": r"\geq 0"})
+            if self.has_filter:
+                self.vars_and_params.append({"Group" : 2, "Symbol": r"Q^\mathrm{filter}", "Description": r"volumetric flow rate out of the tank (solvent only)", "Unit": r"\frac{m^3}{s}", "Dependence": r"\text{constant}", "Property": r"\geq 0"})
         else:
             self.vars_and_params.append({"Group" : 0, "Symbol": r"z", "Description": r"axial cylinder coordinate", "Unit": r"m", "Dependence": r"\text{independent variable}", "Property": r"\in (0, L)"})
             self.vars_and_params.append({"Group" : -1, "Symbol": r"L", "Description": r"length of cylinder", "Unit": r"m", "Dependence": r"\text{constant}", "Property": r" > 0"})
@@ -434,8 +440,11 @@ class Column:
         without_pores_ = self.nonlimiting_filmDiff and self.has_binding and self.particle_models[0].resolution == "0D"       
 
         if self.resolution == "0D":
+
+            filter_str = r" - Q_{\mathrm{filter}}" if self.has_filter else ""
+
             equation = r"""
-    \frac{\mathrm{d}V^{\b}}{\mathrm{d}t} &= Q_{\mathrm{in}} - Q_{\mathrm{out}} - Q_{\mathrm{filter}},
+    \frac{\mathrm{d}V^{\b}}{\mathrm{d}t} &= Q_{\mathrm{in}} - Q_{\mathrm{out}}""" + filter_str + r""",
     \\
     \frac{\mathrm{d}}{\mathrm{d} t} \left( V^{\b} c^{\b}_i \right)"""
 

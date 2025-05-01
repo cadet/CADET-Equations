@@ -85,6 +85,12 @@ def extract_config_data_from_unit(unit_type, h5_unit_group):
 
     config['column_resolution'] = map_unit_type_to_column_model(unit_type)
 
+    if re.search("0D", config['column_resolution']):
+        flow_filter = get_h5_value(h5_unit_group, 'FLOWRATE_FILTER')
+        config['has_filter'] = "No"
+        if flow_filter is not None:
+            config['has_filter'] = "Yes" if flow_filter > 0.0 else "No"
+
     if re.search("2D", config['column_resolution']):
 
         Dax = get_h5_value(h5_unit_group, 'COL_DISPERSION')
