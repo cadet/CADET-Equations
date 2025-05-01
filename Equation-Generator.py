@@ -641,7 +641,7 @@ class Column:
 
 # %% Streamlit UI
 
-st.logo("images/logo_CADET.png", size="medium", link=None, icon_image=None)
+st.logo("images/logo_CADET.png", size="large", link=None, icon_image=None)
 
 st.set_page_config(
     page_title=r"CADET-Equations",
