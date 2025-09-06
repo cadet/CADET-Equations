@@ -11,6 +11,7 @@ import json
 import subprocess
 import tempfile
 import pandas as pd
+import h5py
 
 from typing import List
 from typing import Literal
@@ -672,14 +673,18 @@ if uploaded_file is not None:
     
     config = None
 
-    if uploaded_file_name.endswith(".json"):
+    if uploaded_file_name.endswith(".json"):      
 
         config = json.load(uploaded_file)
 
     elif uploaded_file_name.endswith(".h5"):
 
+        with h5py.File(uploaded_file, 'r') as f:
+
+            nUnits = f['input/model/NUNITS']
+
         config = load_CADET_h5.get_config_from_CADET_h5(uploaded_file,
-        str(st.sidebar.number_input("Unit index in CADET file", key=r"h5_input_unit_index", min_value=-1, max_value=999, step=1, value=-1)).zfill(3)
+        str(st.sidebar.number_input("Unit index in CADET file", key=r"h5_input_unit_index", min_value=-1, max_value=nUnits-1, step=1, value=-1)).zfill(3)
         )
 
     if config is not None:
