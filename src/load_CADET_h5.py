@@ -219,7 +219,7 @@ def get_config_from_CADET_h5(h5_filename, unit_idx):
 
             if unit_type in CADET_column_unit_types:
 
-                st.sidebar.success(f"Unit type {unit_type} is applied.")
+                st.sidebar.success(f"{unit_type} unit_{unit_idx} is applied.")
 
                 return extract_config_data_from_unit(unit_type, unit_group)
 
