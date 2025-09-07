@@ -679,9 +679,11 @@ if uploaded_file is not None:
 
     elif uploaded_file_name.endswith(".h5"):
 
+        nUnits = 0
+        
         with h5py.File(uploaded_file, 'r') as f:
 
-            nUnits = f['input/model/NUNITS']
+            nUnits = int(f['input/model/NUNITS'][()])
 
         config = load_CADET_h5.get_config_from_CADET_h5(uploaded_file,
         str(st.sidebar.number_input("Unit index in CADET file", key=r"h5_input_unit_index", min_value=-1, max_value=nUnits-1, step=1, value=-1)).zfill(3)
