@@ -14,6 +14,7 @@ CADET_column_unit_types = [
                     'GENERAL_RATE_MODEL_2D', 'CSTR'
                 ]
 CADET_unit_types = CADET_column_unit_types.copy()
+CADET_unit_types.extend(['INLET', 'OUTLET'])
 
 
 def get_h5_value(unit_group, key:str, firstEntryIfList=True):
