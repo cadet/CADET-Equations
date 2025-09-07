@@ -11,6 +11,7 @@ import json
 import subprocess
 import tempfile
 import pandas as pd
+import h5py
 
 from typing import List
 from typing import Literal
@@ -194,6 +195,8 @@ class Column:
     N_c: int = -1
     N_p: int = -1
 
+    is_chrom_column: bool = True
+    
     has_axial_coordinate: bool = False
     has_radial_coordinate: bool = False
     has_angular_coordinate: bool = False
@@ -648,6 +651,111 @@ class Column:
                 
         return description_ + "."
 
+
+@dataclass
+class AuxiliaryModel:
+
+    aux_model: str
+    aux_model_list = ['INLET', 'OUTLET']
+    N_c: int = -1
+    N_p:int = 0
+    
+    is_chrom_column: bool = False
+
+    vars_and_params = List[dict]
+
+    def __post_init__(self):
+        
+        if self.aux_model not in self.aux_model_list:
+            raise ValueError(
+                f"Invalid auxiliary model: {self.aux_model}. Must be one of {self.aux_model_list}.")
+        
+        self.vars_and_params()
+
+    def vars_and_params(self):
+        
+        if self.aux_model == 'INLET':
+            state_deps = r"t; i"
+            param_deps = r"t; i"
+    
+            self.vars_and_params = [
+                {"Group" : 0, "Symbol": r"t", "Description": r"time coordinate", "Unit": r"s", "Dependence": r"\text{independent variable}", "Property": r"\in (0, T^{\mathrm{end}})"},
+                {"Group" : 1, "Symbol": r"c^{\b, in}_i", "Description": r"feed of bulk liquid concentration", "Unit": r"\frac{mol}{m^3}", "Dependence" : state_deps, "Domain": "(0, T^{\mathrm{end}})"},
+                {"Group" : -1, "Symbol": r"T^{\mathrm{end}}", "Description": r"process end time", "Unit": r"s", "Dependence": r"\text{constant}", "Property": r" > 0"},
+                {"Group" : -0.99, "Symbol": r"0 \leq t_1 < \dots < t_{N^{\mathrm{sec}}+1} \leq T^{\mathrm{end}}", "Description": r"decomposition of the simulation time interval", "Unit": r"s", "Dependence": r"\text{constant}"},
+                {"Group" : -0.2, "Symbol": r"N^\mathrm{sec}", "Description": r"number of time sections", "Unit": r"-", "Dependence": r"-", "Property": r"\in \mathbb{N}"},
+                {"Group" : -0.2, "Symbol": r"N^\mathrm{c}", "Description": r"number of components", "Unit": r"-", "Dependence": r"-", "Property": r"\in \mathbb{N}"},
+                {"Group" : -0.1, "Symbol": r"i", "Description": r"component index", "Unit": r"s", "Dependence": r"-", "Property": r"-"},
+                ]
+            
+            for var_ in self.vars_and_params:
+                var_["Symbol"] = rerender_variables(var_["Symbol"], var_format_)
+                
+            self.vars_and_params = sorted(self.vars_and_params, key=lambda x: x['Group'])
+        else:
+            self.vars_and_params = []
+        
+    def model_name(self):
+
+        return self.aux_model
+
+    def model_assumptions(self):
+        
+        if self.aux_model == 'INLET':
+            return {
+                "General model assumptions": [
+                    r"A system inlet unit operation is a pseudo unit operation since there is no physical correspondence. The inlet serves as a mass source in the network of unit operations.",
+                    r"The feed for every component can be described by a piecewise cubic polynomial, which can both represent discontinuous signals (e.g., pulse or step) and smooth signals (cubic spline)"]
+            }
+        elif self.aux_model == 'OUTLET':
+            return {
+                "General model assumptions": [
+                    r"A system outlet unit operation is a pseudo unit operation since there is no physical correspondence. The outlet serves as a sink (terminal node) in the network of unit operations.",
+                    r"Outlets are used, e.g., when a certain fraction of a unit operation’s output is taken out of the system and the rest is recycled; or when the output of multiple unit operations merges together leaving the network."]
+            }
+        
+        return None
+
+    def model_equation(self):
+        
+        if self.aux_model == 'INLET':
+            return r"""
+\begin{equation}
+    c_i^{\b, in} = \sum_{k=1}^{N^{\mathrm{sec}}} \mathbb{R}_{[t_k, t_{k+1})}(t) \left[a_{k,i} (t-t_k)^3 + b_{k,i} (t-t_k)^2 + d_{k,i} (t-t_k) + f_{k,i} \right].
+\end{equation}
+"""
+        else:
+            return None
+
+    def vars_params_description(self):
+
+        description_ = ""
+
+        idx_ = 1
+        num_VP = len(self.vars_and_params)
+
+        for thing in self.vars_and_params:
+
+            if thing.get("Group", -1) < 0: # dont print symbols with negative group no.
+                num_VP -= 1
+                continue
+
+            if not idx_ == 1:
+                description_ += ", " if idx_ < num_VP else ", and "
+            description_ += r"$" + thing["Symbol"]
+
+            if not thing.get("Domain", "-") == "-":
+                description_ += r"\colon " + re.sub(r"\$", "", thing["Domain"]) + r" \mapsto \mathbb{R}"
+
+            description_ += thing.get("Property", "") + r"$"
+            
+            description_ += " is the " + thing["Description"]
+
+            idx_ += 1
+                
+        return description_ + "."
+
+
 # %% Streamlit UI
 
 st.logo("images/logo_CADET.png", size="large", link=None, icon_image=None)
@@ -669,17 +777,21 @@ uploaded_file = st.sidebar.file_uploader(
 if uploaded_file is not None:
 
     uploaded_file_name = uploaded_file.name.lower()
-    
-    config = None
 
-    if uploaded_file_name.endswith(".json"):
+    if uploaded_file_name.endswith(".json"):      
 
         config = json.load(uploaded_file)
 
     elif uploaded_file_name.endswith(".h5"):
 
+        nUnits = 0
+        
+        with h5py.File(uploaded_file, 'r') as f:
+            
+            nUnits = int(f['input/model/NUNITS'][()])
+
         config = load_CADET_h5.get_config_from_CADET_h5(uploaded_file,
-        str(st.sidebar.number_input("Unit index in CADET file", key=r"h5_input_unit_index", min_value=-1, max_value=999, step=1, value=-1)).zfill(3)
+        str(st.sidebar.number_input("Unit index in CADET file", key=r"h5_input_unit_index", min_value=-1, max_value=nUnits-1, step=1, value=-1)).zfill(3)
         )
 
     if config is not None:
@@ -707,7 +819,16 @@ if advanced_mode_:
 else:
     dev_mode_ = False
 
-column_model = Column(dev_mode=dev_mode_, advanced_mode=advanced_mode_)
+
+if uploaded_file is not None:
+    
+    if config['column_resolution'] not in load_CADET_h5.CADET_column_unit_types and config['column_resolution'] in load_CADET_h5.CADET_unit_types:
+        uo_model = AuxiliaryModel(aux_model=config['column_resolution'])
+    else:
+        uo_model = Column(dev_mode=dev_mode_, advanced_mode=advanced_mode_)
+        
+else:
+    uo_model = Column(dev_mode=dev_mode_, advanced_mode=advanced_mode_)
 
 # %% Display equations
 
@@ -715,7 +836,7 @@ file_content = []  # used to export model to files
 
 if st.toggle("Show Model Assumptions", key=r"model_assumptions"):
 
-    asmpts = column_model.model_assumptions()
+    asmpts = uo_model.model_assumptions()
 
     for key in asmpts.keys():
 
@@ -730,11 +851,11 @@ if st.toggle("Show Model Assumptions", key=r"model_assumptions"):
 """
         )
 
-if st.toggle("Show symbol table", key=r"sym_table"):
+if uo_model.vars_and_params and st.toggle("Show symbol table", key=r"sym_table"):
 
-    df = pd.DataFrame(column_model.vars_and_params)
-    if column_model.N_p > 0:
-        df_par = pd.DataFrame(column_model.particle_models[0].vars_and_params, columns=["Group", 'Symbol', 'Description', "Dependence", 'Unit'])
+    df = pd.DataFrame(uo_model.vars_and_params)
+    if uo_model.N_p > 0:
+        df_par = pd.DataFrame(uo_model.particle_models[0].vars_and_params, columns=["Group", 'Symbol', 'Description', "Dependence", 'Unit'])
         df = pd.concat([df, df_par], ignore_index=True)
     
     df[['Symbol', "Dependence", 'Unit']] = df[['Symbol', "Dependence", 'Unit']].map(lambda x: f"${x}$" if isinstance(x, str) else x)
@@ -743,10 +864,8 @@ if st.toggle("Show symbol table", key=r"sym_table"):
     
     st.table(df[['Symbol', 'Description', 'Dependence', 'Unit']])
 
-interstitial_volume_eq = column_model.interstitial_volume_equation()
-
-nComp_list = r"$i\in\{" + ", ".join(str(i) for i in range(1, column_model.N_c + 1)) + \
-    r"\}$" if column_model.N_c > 0 else r"$i\in\{1, \dots, N^{\mathrm{c}} \}$"
+nComp_list = r"$i\in\{" + ", ".join(str(i) for i in range(1, uo_model.N_c + 1)) + \
+    r"\}$" if uo_model.N_c > 0 else r"$i\in\{1, \dots, N^{\mathrm{c}} \}$"
 
 show_eq_description = st.toggle("Show equation description", key=r"show_eq_description", value=True)
 
@@ -765,103 +884,110 @@ def write_and_save(output: str, as_latex: bool = False):
             st.write(output)
 
 
-st.write("### " + column_model.model_name())
-file_content.append(r"\section*{" + column_model.model_name() + r"}")
+st.write("### " + uo_model.model_name())
+file_content.append(r"\section*{" + uo_model.model_name() + r"}")
 
-if column_model.resolution == "0D":
-    intro_str = r"Consider a continuously stirred tank "
-else:
-    intro_str = r"Consider a cylindrical column of length $L > 0$ "
-    if column_model.resolution == "2D" or column_model.resolution == "3D":
-        intro_str += r" and radius $R^{\mathrm{c}} > 0$ "
 
-if column_model.N_p == 0:
-    write_and_save(intro_str + r"filled with a liquid phase, and observed over a time interval $(0, T^{\mathrm{end}})$.")
-elif column_model.N_p == 1:
-    # TODO particle geometries?
-    write_and_save(intro_str + r"packed with spherical particles, and observed over a time interval $(0, T^{\mathrm{end}})$.")
-else:
-    if column_model.resolution == "0D":
-        d_j_def = r"$d_j \in [0, 1]$"
+if uo_model.is_chrom_column:
+
+    interstitial_volume_eq = uo_model.interstitial_volume_equation()
+    
+    if uo_model.resolution == "0D":
+        intro_str = r"Consider a continuously stirred tank "
     else:
-        d_j_def = r"$d_j \colon " + re.sub(r"\$", "", column_model.domain_interstitial(with_time_domain=False)) + r" \to [0, 1]$"
-    write_and_save(intro_str + r"packed with $N^{\mathrm{p}}$ different particle-sizes indexed by $j \in \{1, \dots, N^{\mathrm{p}}\}$ and distributed according to the volume fractions " + d_j_def + r", which satisfy")
-
-    if column_model.resolution == "0D":
-        d_j_dep = r""
-        d_j_dep2 = r""
+        intro_str = r"Consider a cylindrical column of length $L > 0$ "
+        if uo_model.resolution == "2D" or uo_model.resolution == "3D":
+            intro_str += r" and radius $R^{\mathrm{c}} > 0$ "
+    
+    if uo_model.N_p == 0:
+        write_and_save(intro_str + r"filled with a liquid phase, and observed over a time interval $(0, T^{\mathrm{end}})$.")
+    elif uo_model.N_p == 1:
+        # TODO particle geometries?
+        write_and_save(intro_str + r"packed with spherical particles, and observed over a time interval $(0, T^{\mathrm{end}})$.")
     else:
-        if column_model.resolution == "1D":
-            d_j_dep = r"z"
-        elif column_model.resolution == "2D":
-            d_j_dep = r"z, \rho"
-        elif column_model.resolution == "3D":
-            d_j_dep = r"z, \rho, \phi"
-
-        d_j_dep2 = r", \quad \forall """ + d_j_dep + r""" \in """ + re.sub(r"\$", "", column_model.domain_interstitial(with_time_domain=False))
-        d_j_dep = "(" + d_j_dep + ")"
-
-    write_and_save(r"""
-    \begin{equation*}
-	    \sum_{j=1}^{N_{\mathrm{p}}} d_j""" + d_j_dep + r" = 1 " + d_j_dep2 + r""".
-    \end{equation*}
-
-    """, as_latex=True)
-
-
-if column_model.resolution == "0D":
-    write_and_save(
-        r"The evolution of the liquid volume $V^{\l}\colon (0, T^{\mathrm{end}}) \to \mathbb{R}$ and the concentrations $c_i\colon (0, T^{\mathrm{end}}) \to \mathbb{R}$ of the components in the tank is governed by")
-    write_and_save(interstitial_volume_eq, as_latex=True)
-else:
-    eq_type = "convection" # first order derivative
-    if not column_model.resolution == "1D" or column_model.has_axial_dispersion: # second order derivative
-        eq_type += "-diffusion"
-    if column_model.N_p > 0 and not column_model.nonlimiting_filmDiff: # i.e. film diffusion term (reaction type)
-        eq_type += "-reaction"
-
-    write_and_save(r"In the interstitial volume, mass transfer is governed by the following " + eq_type +
-                   " equations in " + column_model.domain_interstitial() + r" and for all components " + nComp_list)
-    write_and_save(interstitial_volume_eq, as_latex=True)
-    write_and_save("with boundary conditions")
-    write_and_save(column_model.interstitial_volume_bc(), as_latex=True)
-
-if show_eq_description:
-    write_and_save("Here, " + column_model.vars_params_description())
-
-if column_model.N_p > 0:
-
-    particle_eq, particle_bc = column_model.particle_equations()
-
-    cur_par_count = 0
-    for par_type in column_model.par_type_counts.keys():
-
-        # in this case, we dont have a particle model. this configuration is still allowed for educational purpose.
-        if not column_model.has_binding and column_model.nonlimiting_filmDiff and par_type.resolution == "0D":
-            break
-
-        if dev_mode_:
-            nPar_list = ', '.join(str(j) for j in range(cur_par_count, column_model.par_type_counts[par_type] + 1))
+        if uo_model.resolution == "0D":
+            d_j_def = r"$d_j \in [0, 1]$"
         else:
-            nPar_list = r"$j\in\{1, \dots, N^{\mathrm{p}}\}$"
-
-        eq_type_ = "reaction" if column_model.particle_models[0].resolution == "0D" else "diffusion-reaction"
-        
-        tmp_str = r" and all particle sizes " + nPar_list if column_model.N_p > 1 else r""
+            d_j_def = r"$d_j \colon " + re.sub(r"\$", "", uo_model.domain_interstitial(with_time_domain=False)) + r" \to [0, 1]$"
+        write_and_save(intro_str + r"packed with $N^{\mathrm{p}}$ different particle-sizes indexed by $j \in \{1, \dots, N^{\mathrm{p}}\}$ and distributed according to the volume fractions " + d_j_def + r", which satisfy")
+    
+        if uo_model.resolution == "0D":
+            d_j_dep = r""
+            d_j_dep2 = r""
+        else:
+            if uo_model.resolution == "1D":
+                d_j_dep = r"z"
+            elif uo_model.resolution == "2D":
+                d_j_dep = r"z, \rho"
+            elif uo_model.resolution == "3D":
+                d_j_dep = r"z, \rho, \phi"
+    
+            d_j_dep2 = r", \quad \forall """ + d_j_dep + r""" \in """ + re.sub(r"\$", "", uo_model.domain_interstitial(with_time_domain=False))
+            d_j_dep = "(" + d_j_dep + ")"
+    
+        write_and_save(r"""
+        \begin{equation*}
+    	    \sum_{j=1}^{N_{\mathrm{p}}} d_j""" + d_j_dep + r" = 1 " + d_j_dep2 + r""".
+        \end{equation*}
+    
+        """, as_latex=True)
+    
+    
+    if uo_model.resolution == "0D":
         write_and_save(
-            "In the particles, mass transfer is governed by " + eq_type_ + " equations in " + eq.full_particle_conc_domain(column_model.resolution, par_type.resolution, par_type.has_core, with_par_index=False, with_time_domain=True) + r" and for all components" + tmp_str)
-
-        write_and_save(particle_eq[par_type], as_latex=True)
-        cur_par_count += column_model.par_type_counts[par_type]
-
-        if not particle_bc[par_type] == "":
-            write_and_save("with boundary conditions")
-            write_and_save(particle_bc[par_type], as_latex=True)
-
-        if show_eq_description:
-            write_and_save("Here, " + column_model.particle_models[0].vars_params_description())
-
-write_and_save("Consistent initial values for all solution variables (concentrations) are defined at $t = 0$.")
+            r"The evolution of the liquid volume $V^{\l}\colon (0, T^{\mathrm{end}}) \to \mathbb{R}$ and the concentrations $c_i\colon (0, T^{\mathrm{end}}) \to \mathbb{R}$ of the components in the tank is governed by")
+        write_and_save(interstitial_volume_eq, as_latex=True)
+    else:
+        eq_type = "convection" # first order derivative
+        if not uo_model.resolution == "1D" or uo_model.has_axial_dispersion: # second order derivative
+            eq_type += "-diffusion"
+        if uo_model.N_p > 0 and not uo_model.nonlimiting_filmDiff: # i.e. film diffusion term (reaction type)
+            eq_type += "-reaction"
+    
+        write_and_save(r"In the interstitial volume, mass transfer is governed by the following " + eq_type +
+                       " equations in " + uo_model.domain_interstitial() + r" and for all components " + nComp_list)
+        write_and_save(interstitial_volume_eq, as_latex=True)
+        write_and_save("with boundary conditions")
+        write_and_save(uo_model.interstitial_volume_bc(), as_latex=True)
+    
+    if show_eq_description:
+        write_and_save("Here, " + uo_model.vars_params_description())
+    
+    if uo_model.N_p > 0:
+    
+        particle_eq, particle_bc = uo_model.particle_equations()
+    
+        cur_par_count = 0
+        for par_type in uo_model.par_type_counts.keys():
+    
+            # in this case, we dont have a particle model. this configuration is still allowed for educational purpose.
+            if not uo_model.has_binding and uo_model.nonlimiting_filmDiff and par_type.resolution == "0D":
+                break
+    
+            if dev_mode_:
+                nPar_list = ', '.join(str(j) for j in range(cur_par_count, uo_model.par_type_counts[par_type] + 1))
+            else:
+                nPar_list = r"$j\in\{1, \dots, N^{\mathrm{p}}\}$"
+    
+            eq_type_ = "reaction" if uo_model.particle_models[0].resolution == "0D" else "diffusion-reaction"
+            
+            tmp_str = r" and all particle sizes " + nPar_list if uo_model.N_p > 1 else r""
+            write_and_save(
+                "In the particles, mass transfer is governed by " + eq_type_ + " equations in " + eq.full_particle_conc_domain(uo_model.resolution, par_type.resolution, par_type.has_core, with_par_index=False, with_time_domain=True) + r" and for all components" + tmp_str)
+    
+            write_and_save(particle_eq[par_type], as_latex=True)
+            cur_par_count += uo_model.par_type_counts[par_type]
+    
+            if not particle_bc[par_type] == "":
+                write_and_save("with boundary conditions")
+                write_and_save(particle_bc[par_type], as_latex=True)
+    
+            if show_eq_description:
+                write_and_save("Here, " + uo_model.particle_models[0].vars_params_description())
+    
+    write_and_save("Consistent initial values for all solution variables (concentrations) are defined at $t = 0$.")
+else:
+    raise ValueError(f"Unknown model.")
 
 st.session_state.latex_string = [
     r"""\documentclass{article}

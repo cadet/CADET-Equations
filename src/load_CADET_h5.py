@@ -13,6 +13,8 @@ CADET_column_unit_types = [
                     'GENERAL_RATE_MODEL_DG', 'LUMPED_RATE_MODEL_WITHOUT_PORES_DG', 'LUMPED_RATE_MODEL_WITH_PORES_DG',
                     'GENERAL_RATE_MODEL_2D', 'CSTR'
                 ]
+CADET_unit_types = CADET_column_unit_types.copy()
+CADET_unit_types.extend(['INLET', 'OUTLET'])
 
 
 def get_h5_value(unit_group, key:str, firstEntryIfList=True):
@@ -45,9 +47,11 @@ def map_unit_type_to_column_model(cadet_unit_type):
         return "0D (Homogeneous Tank)"
     elif cadet_unit_type in CADET_column_unit_types:
         return "1D (axial coordinate)"
+    elif cadet_unit_type in CADET_unit_types:
+        return cadet_unit_type
     else:
         raise ValueError(
-            f"Invalid unit type: {cadet_unit_type}. Must be one of {CADET_column_unit_types}.")
+            f"Invalid unit type: {cadet_unit_type}. Must be one of {CADET_unit_types}.")
 
 
 def map_unit_to_particle_model(cadet_unit_type, h5_unit_group):
@@ -84,6 +88,9 @@ def extract_config_data_from_unit(unit_type, h5_unit_group):
     config['model_assumptions'] = True
 
     config['column_resolution'] = map_unit_type_to_column_model(unit_type)
+
+    if unit_type not in CADET_column_unit_types and unit_type in CADET_unit_types:
+        return config
 
     if re.search("0D", config['column_resolution']):
         flow_filter = get_h5_value(h5_unit_group, 'FLOWRATE_FILTER')
@@ -217,9 +224,9 @@ def get_config_from_CADET_h5(h5_filename, unit_idx):
                 st.error(f"unit_{unit_idx} does not exist!")
                 return None
 
-            if unit_type in CADET_column_unit_types:
+            if unit_type in CADET_unit_types:
 
-                st.sidebar.success(f"Unit type {unit_type} is applied.")
+                st.sidebar.success(f"{unit_type} unit_{unit_idx} is applied.")
 
                 return extract_config_data_from_unit(unit_type, unit_group)
 
