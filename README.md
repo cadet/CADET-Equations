@@ -26,12 +26,45 @@ pip install -r requirements.txt
 
 ### Step 2: Install LaTeX Compiler
 
-CADET-Equations requires a LaTeX compiler to generate mathematical equations in LaTeX format. If you are using a Linux-based system, you can install the necessary LaTeX packages using the following command:
+CADET-Equations requires a LaTeX compiler to generate mathematical equations in LaTeX format. 
+1. If you are using a Linux-based system, you can install the necessary LaTeX packages using the following command:
 
 ```bash
 # Install LaTeX compiler
 sudo apt-get install texlive-latex-base texlive-fonts-recommended texlive-fonts-extra texlive-latex-extra
 ```
+2. If you use windows, do as follows:
+### 1. Download MiKTeX
+
+Download the MiKTeX installer for Windows from the official site:
+
+👉 https://miktex.org/download
+
+Choose the **"Net Installer"** for Windows (64-bit).
+
+---
+
+### 2. Install MiKTeX
+
+- Run the downloaded `.exe` installer.
+- Choose **"Install for just me"** (unless you need system-wide installation).
+- During installation, make sure to enable:
+
+  ✅ **"Install missing packages on-the-fly"**
+
+> This is important: it allows MiKTeX to automatically fetch any required LaTeX packages when needed by your app or script.
+
+---
+
+### 3. Verify the Installation
+
+After installation is complete:
+
+- Open a **new Command Prompt** (or Miniforge Prompt)
+- Run the following command:
+
+```bash
+pdflatex --version
 
 This will install the required LaTeX components needed to render equations properly.
 
