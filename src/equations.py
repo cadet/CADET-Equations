@@ -136,11 +136,12 @@ def solid_time_derivative(eps:str=None):
         return r"\frac{\partial c^{\s}_i}{\partial t}"
     else:
         return r"\frac{1 - " + eps + r"}{" + eps + r"} \frac{\partial c^{\s}_i}{\partial t}"
-def axial_convection(eps:str=None):
+def axial_convection(eps:str=None, aligned:bool=False):
+    return_string = r"&" if aligned else r""
     if eps is None:
-        return r"- u \frac{\partial c^{\b}_i }{\partial z}"
+        return return_string + r"- u \frac{\partial c^{\b}_i }{\partial z}"
     else:
-        return r"- u \frac{\partial \left( " + eps + r" c^{\b}_i \right)}{\partial z}"
+        return return_string + r"- u \frac{\partial \left( " + eps + r" c^{\b}_i \right)}{\partial z}"
 def axial_dispersion(eps:str=None):
     if eps is None:
         return r"\frac{\partial}{\partial z} \left( D^{\mathrm{ax}}_{i} \frac{\partial c^{\b}_i}{\partial z} \right)"
