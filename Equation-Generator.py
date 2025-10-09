@@ -463,14 +463,14 @@ class Column:
             if without_pores_:
                 equation += r" + " + eq.solid_time_derivative(r"\varepsilon^{\mathrm{t}}")
 
-            equation += " = " + eq.axial_convection() if without_pores_ else " = " + eq.axial_convection(r"\varepsilon^{\mathrm{c}}")
+            equation += " = &" + eq.axial_convection(aligned=self.has_angular_dispersion) if without_pores_ else " = " + eq.axial_convection(r"\varepsilon^{\mathrm{c}}",aligned=self.has_angular_dispersion)
 
             if self.has_axial_dispersion:
                 equation += " + " + eq.axial_dispersion(r"\varepsilon^{\mathrm{c}}")
             if self.has_radial_dispersion:
                 equation += " + " + eq.radial_dispersion(r"\varepsilon^{\mathrm{c}}")
             if self.has_angular_dispersion:
-                equation += " + " + eq.angular_dispersion(r"\varepsilon^{\mathrm{c}}")
+                equation += r"\nonumber \newline &+ " + eq.angular_dispersion(r"\varepsilon^{\mathrm{c}}")
 
             if self.N_p == 0:  # remove occurencies of porosity, which is just constant one in this case
                 equation = re.sub(r"\\varepsilon^{\\mathrm{c}}", "", re.sub(
