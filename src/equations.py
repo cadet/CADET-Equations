@@ -161,7 +161,6 @@ def angular_dispersion(eps:str=None):
 
 # Film diffusion in the interstitial volume
 def int_filmDiff_term(particle, numIdxBegin, numIdxEnd, singleParticle:bool, nonLimitingFilmDiff:bool, hasSurfDiff:bool):
-
     if singleParticle:
         term = r"- \left(1 - \varepsilon^{\mathrm{c}} \right) \frac{" + str(particle.surface_volume_ratio) + \
             r"}{R^{\mathrm{p}}} k^{\mathrm{f}}_{i} \left(c^{\b}_i - \left. c^{\p}_{i} \right|_{r = R^{\mathrm{p}}} \right)"
