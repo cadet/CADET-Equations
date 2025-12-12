@@ -136,11 +136,12 @@ def solid_time_derivative(eps:str=None):
         return r"\frac{\partial c^{\s}_i}{\partial t}"
     else:
         return r"\frac{1 - " + eps + r"}{" + eps + r"} \frac{\partial c^{\s}_i}{\partial t}"
-def axial_convection(eps:str=None):
+def axial_convection(eps:str=None, aligned:bool=False):
+    return_string = r"&" if aligned else r""
     if eps is None:
-        return r"- u \frac{\partial c^{\b}_i }{\partial z}"
+        return return_string + r"- u \frac{\partial c^{\b}_i }{\partial z}"
     else:
-        return r"- u \frac{\partial \left( " + eps + r" c^{\b}_i \right)}{\partial z}"
+        return return_string + r"- u \frac{\partial \left( " + eps + r" c^{\b}_i \right)}{\partial z}"
 def axial_dispersion(eps:str=None):
     if eps is None:
         return r"\frac{\partial}{\partial z} \left( D^{\mathrm{ax}}_{i} \frac{\partial c^{\b}_i}{\partial z} \right)"
@@ -160,7 +161,6 @@ def angular_dispersion(eps:str=None):
 
 # Film diffusion in the interstitial volume
 def int_filmDiff_term(particle, numIdxBegin, numIdxEnd, singleParticle:bool, nonLimitingFilmDiff:bool, hasSurfDiff:bool):
-
     if singleParticle:
         term = r"- \left(1 - \varepsilon^{\mathrm{c}} \right) \frac{" + str(particle.surface_volume_ratio) + \
             r"}{R^{\mathrm{p}}} k^{\mathrm{f}}_{i} \left(c^{\b}_i - \left. c^{\p}_{i} \right|_{r = R^{\mathrm{p}}} \right)"
