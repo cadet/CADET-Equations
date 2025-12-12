@@ -471,10 +471,10 @@ class Column:
                 equation += " + " + eq.axial_dispersion(r"\varepsilon^{\mathrm{c}}")
             if self.has_radial_dispersion:
                 equation += " + " + eq.radial_dispersion(r"\varepsilon^{\mathrm{c}}")
-                if self.resolution == "2D" and self.has_axial_dispersion:
-                    equation += r"\\ &"
             if self.has_angular_dispersion:
                 equation += r"\nonumber \newline &+ " + eq.angular_dispersion(r"\varepsilon^{\mathrm{c}}")
+            elif self.N_p > 0:
+                equation += r"\nonumber \\&"
 
             if self.N_p == 0:  # remove occurencies of porosity, which is just constant one in this case
                 equation = re.sub(r"\\varepsilon^{\\mathrm{c}}", "", re.sub(
@@ -482,6 +482,7 @@ class Column:
 
         # if self.nonlimiting_filmDiff and 1Dparticle # entscheidende faktoren sind particle resolution und filmDiffMode. the following loop has thus to change
         par_added = 0
+        total_par = sum(self.par_unique_intV_contribution_counts.values())
         for par_uniq in self.par_unique_intV_contribution_counts.keys():
 
             if dev_mode_:
@@ -499,11 +500,12 @@ class Column:
                     1, r"N^{\mathrm{p}}", self.N_p == 1, self.nonlimiting_filmDiff, self.particle_models[0].has_surfDiff
                 )
 
-            #Add linebreak after first particle type
-            if par_added == 0:
-                if "&=" not in equation and "= &" not in equation:
-                    equation = equation.replace(r"=", r"&=", 1)
-                equation += r"\\&"    
+            #Add linebreak after each particle type
+            if "= &" not in equation: 
+                 equation = equation.replace(r"=", r"= &", 1)
+            if par_added + self.par_unique_intV_contribution_counts[par_uniq] < total_par:
+                    equation += r"\nonumber \\&"
+   
 
             par_added += self.par_unique_intV_contribution_counts[par_uniq]
 
@@ -511,8 +513,20 @@ class Column:
             equation = re.sub(
                 r"\\left\(1 - \\varepsilon^{\\mathrm{c}} \\right\)", r"V^s", equation)
 
+        
+        #clean up trailing spaces/newlines
+        equation = equation.rstrip()
+
+        # Corner case: last line ends with dangling \\&
+        if equation.endswith(r"\\&"):
+            equation = equation[:-3] + r","  # remove \\& and attach comma
+        else:
+            equation += r","  # normal case, append comma
+
+        
+        # Wrap in align environment
         equation = r"""\begin{align}
-""" + equation + r""",
+""" + equation + r"""
 \end{align}"""
 
         return equation
