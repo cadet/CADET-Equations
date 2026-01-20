@@ -1,0 +1,31 @@
+{
+  "title": "CADET-Equations: Version 0.1.0",
+  "upload_type": "software",
+  "creators": [
+    {
+      "name": "Breuer, Jan Michael",
+      "orcid": "0000-0002-1999-2439",
+      "affiliation": [ "University of Cologne", "Forschungszentrum Jülich" ]
+    },
+    {
+      "name": "von Lieres, Eric",
+      "orcid": "0000-0002-0309-8408",
+      "affiliation": "Forschungszentrum Jülich"
+    }
+  ],
+  "license": "GPL-3.0",
+  "keywords": [
+    "modeling",
+    "simulation",
+    "biotechnology",
+    "process",
+    "chromatography",
+    "CADET",
+    "general rate model"
+  ],
+  "version": "0.1.0",
+  "access_right": "open",
+  "communities": [
+    { "identifier": "open-source" }
+  ]
+}
