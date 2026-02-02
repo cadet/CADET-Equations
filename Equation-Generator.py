@@ -483,9 +483,9 @@ class Column:
             if dev_mode_:
                 equation += eq.int_filmDiff_term(
                     Particle(
-                        self.particle_models[0].geometry, self.particle_models[0].has_core, self.particle_models[0].resolution
+                        self.particle_models[par_added].geometry, self.particle_models[par_added].has_core, self.particle_models[par_added].resolution
                     ),
-                    1 + par_added, par_added + self.par_unique_intV_contribution_counts[par_uniq], self.N_p == 1, self.nonlimiting_filmDiff, self.particle_models[0].has_surfDiff
+                    1 + par_added, par_added + self.par_unique_intV_contribution_counts[par_uniq], self.N_p == 1, self.nonlimiting_filmDiff, self.particle_models[par_added].has_surfDiff
                 )
             else:
                 equation += eq.int_filmDiff_term(
