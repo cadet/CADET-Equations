@@ -2,11 +2,9 @@ name: CI
 
 on:
   push:
-    branches:
-      - master
+    branches: [master]
   pull_request:
-    branches:
-      - master
+    branches: [master]
 
 jobs:
   test:
@@ -14,46 +12,60 @@ jobs:
 
     defaults:
       run:
-        shell: bash -l {0}  # Ensures conda init happens for bash shell
+        shell: bash -l {0}
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v2
+      uses: actions/checkout@v4
 
-    - name: Install LaTeX
+    # --------------------
+    # Minimal, robust LaTeX
+    # --------------------
+    - name: Install minimal LaTeX
       run: |
         sudo apt-get update
-        sudo apt-get install -y \
+        sudo apt-get install -y --no-install-recommends \
+          texlive-base \
           texlive-latex-base \
-          texlive-fonts-recommended \
-          texlive-fonts-extra \
-          texlive-latex-extra
+          texlive-latex-recommended \
+          texlive-fonts-recommended
 
+    # --------------------
+    # Conda / Mamba setup
+    # --------------------
     - name: Set up Conda
       uses: conda-incubator/setup-miniconda@v3
       with:
         miniforge-version: latest
         use-mamba: true
         activate-environment: cadet-equations
-        channels: conda-forge,
+        channels: conda-forge
 
+    # --------------------
+    # Cache Conda env
+    # --------------------
     - name: Cache Conda environment
+      id: conda-cache
       uses: actions/cache@v4
       with:
-        path: ${{ env.CONDA }}/envs
-        key: ${{ matrix.os }}-python_${{ matrix.python-version }}-${{ hashFiles('environment.yml') }}
+        path: ${{ env.CONDA }}/envs/cadet-equations
+        key: conda-${{ runner.os }}-${{ hashFiles('environment.yml') }}
         restore-keys: |
-          ${{ matrix.os }}-python_${{ matrix.python-version }}-
+          conda-${{ runner.os }}-
 
+    # --------------------
+    # Environment install
+    # --------------------
     - name: Update environment
-      if: steps.cache.outputs.cache-hit != 'true'
+      if: steps.conda-cache.outputs.cache-hit != 'true'
       run: |
-        mamba install -y "setuptools>=69" "pip>=24"
-        mamba install -y python=3.10
+        mamba install -y python=3.10 "setuptools>=69" "pip>=24"
         pip install -r requirements.txt
 
+    # --------------------
+    # Tests
+    # --------------------
     - name: Run pytest
       run: |
-        source $(conda info --base)/etc/profile.d/conda.sh
         conda activate cadet-equations
         pytest -m "ci"
