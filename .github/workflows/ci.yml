@@ -11,7 +11,7 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    
+
     defaults:
       run:
         shell: bash -l {0}  # Ensures conda init happens for bash shell
@@ -20,8 +20,14 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
 
-    - name: Install LaTex
-      run: sudo apt-get install texlive-latex-base texlive-fonts-recommended texlive-fonts-extra texlive-latex-extra
+    - name: Install LaTeX
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          texlive-latex-base \
+          texlive-fonts-recommended \
+          texlive-fonts-extra \
+          texlive-latex-extra
 
     - name: Set up Conda
       uses: conda-incubator/setup-miniconda@v3
@@ -40,11 +46,11 @@ jobs:
           ${{ matrix.os }}-python_${{ matrix.python-version }}-
 
     - name: Update environment
-      run: |
-        mamba install "setuptools>=69" "pip>=24"
-        mamba install python=3.10  # Ensure the Python version matches
-        pip install -r requirements.txt
       if: steps.cache.outputs.cache-hit != 'true'
+      run: |
+        mamba install -y "setuptools>=69" "pip>=24"
+        mamba install -y python=3.10
+        pip install -r requirements.txt
 
     - name: Run pytest
       run: |
