@@ -398,6 +398,21 @@ class Column:
 
         return availability
 
+    def available_CADET_Process(self):
+
+        # All CADET-Core models supported except multiple particle type and 2D models
+        if not self.available_CADET_Core():
+            return False
+        
+        if self.N_p > 1:
+            return False
+        
+        if self.has_radial_coordinate:
+            return False
+        
+        else:
+            return True
+
     def vars_and_params(self):
 
         without_pores_ = self.nonlimiting_filmDiff and self.has_binding and self.particle_models[0].resolution == "0D"
@@ -683,26 +698,22 @@ class Column:
                 
         return description_ + "."
 
-def availability_badge(available: bool):
+def availability_badge_html(name: str, available: bool):
     color_bg = "#e6f4ea" if available else "#fdecea"
     color_fg = "#137333" if available else "#b71c1c"
-    icon = "supported" if available else "not supported" # "✔" if available else "✖"
-    text = f"CADET-Core: {icon}"
+    icon = "supported" if available else "not supported"
 
-    st.markdown(
-        f"""
-        <span style="
-            background-color:{color_bg};
-            color:{color_fg};
-            padding:4px 10px;
-            border-radius:12px;
-            font-size:0.85em;
-            margin-right:6px;
-            display:inline-block;">
-            {text}
-        </span>
-        """,
-        unsafe_allow_html=True,
+    return (
+        f'<span style="'
+        f'background-color:{color_bg};'
+        f'color:{color_fg};'
+        f'padding:4px 10px;'
+        f'border-radius:12px;'
+        f'font-size:0.85em;'
+        f'margin-right:6px;'
+        f'display:inline-block;">'
+        f'{name}: {icon}'
+        f'</span>'
     )
 
 # %% Streamlit UI
@@ -821,10 +832,25 @@ def write_and_save(output: str, as_latex: bool = False):
         else:
             st.write(output)
 
-
+# Title
 st.write("### " + column_model.model_name())
-availability_badge(available=column_model.available_CADET_Core())
 file_content.append(r"\section*{" + column_model.model_name() + r"}")
+
+#%% CADET model availability badge
+
+html = availability_badge_html(
+    "CADET-Core",
+    column_model.available_CADET_Core()
+)
+
+html += availability_badge_html(
+    "CADET-Process",
+    column_model.available_CADET_Process()
+)
+
+st.markdown(html, unsafe_allow_html=True)
+
+#%% Continue with model
 
 if column_model.resolution == "0D":
     intro_str = r"Consider a continuously stirred tank "
