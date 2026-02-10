@@ -154,6 +154,10 @@ class Particle:
 
         object.__setattr__(self, 'vars_and_params', vars_and_params_)
 
+    
+    def available_CADET_Core(self):
+        return True
+
     def vars_params_description(self):
 
         description_ = ""
@@ -362,6 +366,37 @@ class Column:
             self.has_binding = False
 
         self.vars_and_params()
+
+    def available_CADET_Core(self):
+
+        if self.has_angular_coordinate:
+            return False
+
+        availability = True
+
+        if self.N_p > 0:
+            
+            par1D = False
+
+            for p in self.particle_models:
+
+                availability = availability and p.available_CADET_Core()
+                par1D = par1D or p.resolution == "1D"
+                
+            # no particles with pore diffusion but no film diffusion (yet)
+            if par1D and self.nonlimiting_filmDiff:
+                return False
+        
+            # tank model
+            if not self.has_axial_coordinate:
+                # only 0D particles with non limiting film diffusion available
+                if self.nonlimiting_filmDiff:
+                    if par1D:
+                        return False
+                else:
+                    return False
+
+        return availability
 
     def vars_and_params(self):
 
@@ -648,6 +683,28 @@ class Column:
                 
         return description_ + "."
 
+def availability_badge(available: bool):
+    color_bg = "#e6f4ea" if available else "#fdecea"
+    color_fg = "#137333" if available else "#b71c1c"
+    icon = "supported" if available else "not supported" # "✔" if available else "✖"
+    text = f"CADET-Core: {icon}"
+
+    st.markdown(
+        f"""
+        <span style="
+            background-color:{color_bg};
+            color:{color_fg};
+            padding:4px 10px;
+            border-radius:12px;
+            font-size:0.85em;
+            margin-right:6px;
+            display:inline-block;">
+            {text}
+        </span>
+        """,
+        unsafe_allow_html=True,
+    )
+
 # %% Streamlit UI
 
 st.logo("images/logo_CADET.png", size="large", link=None, icon_image=None)
@@ -766,6 +823,7 @@ def write_and_save(output: str, as_latex: bool = False):
 
 
 st.write("### " + column_model.model_name())
+availability_badge(available=column_model.available_CADET_Core())
 file_content.append(r"\section*{" + column_model.model_name() + r"}")
 
 if column_model.resolution == "0D":
