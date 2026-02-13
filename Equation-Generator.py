@@ -209,8 +209,10 @@ class Column:
     nonlimiting_filmDiff: bool = False
 
     particle_models: List[Particle] = None
+    
     # counts per unique particle type (geometry, has_core, resolution)
     par_type_counts: Counter[Particle] = field(default_factory=Counter)
+
     # puts particle types together that have a similar contribution to the interstitial volume equation and counts them
     par_unique_intV_contribution_counts: Counter[Particle] = field(
         default_factory=Counter)
@@ -494,7 +496,7 @@ class Column:
             filter_str = r" - Q_{\mathrm{filter}}" if self.has_filter else ""
 
             equation = r"""
-    \frac{\mathrm{d}V^{\b}}{\mathrm{d}t} &= Q_{\mathrm{in}} - Q_{\mathrm{out}}""" + filter_str + r""",
+    \frac{\mathrm{d}V^{\b}}{\mathrm{d}t} &= Q_{\mathrm{in}} - Q_{\mathrm{out}}""" + filter_str + r"""
     \\
     \frac{\mathrm{d}}{\mathrm{d} t} \left( V^{\b} c^{\b}_i \right)"""
 
@@ -513,14 +515,16 @@ class Column:
             if without_pores_:
                 equation += r" + " + eq.solid_time_derivative(r"\varepsilon^{\mathrm{t}}")
 
-            equation += " = " + eq.axial_convection() if without_pores_ else " = " + eq.axial_convection(r"\varepsilon^{\mathrm{c}}")
+            equation += " = &" + eq.axial_convection(aligned=self.has_angular_dispersion) if without_pores_ else " = " + eq.axial_convection(r"\varepsilon^{\mathrm{c}}",aligned=self.has_angular_dispersion)
 
             if self.has_axial_dispersion:
                 equation += " + " + eq.axial_dispersion(r"\varepsilon^{\mathrm{c}}")
             if self.has_radial_dispersion:
                 equation += " + " + eq.radial_dispersion(r"\varepsilon^{\mathrm{c}}")
             if self.has_angular_dispersion:
-                equation += " + " + eq.angular_dispersion(r"\varepsilon^{\mathrm{c}}")
+                equation += r"\nonumber \newline &+ " + eq.angular_dispersion(r"\varepsilon^{\mathrm{c}}")
+            elif self.N_p > 0:
+                equation += r"\nonumber \\&"
 
             if self.N_p == 0:  # remove occurencies of porosity, which is just constant one in this case
                 equation = re.sub(r"\\varepsilon^{\\mathrm{c}}", "", re.sub(
@@ -528,6 +532,7 @@ class Column:
 
         # if self.nonlimiting_filmDiff and 1Dparticle # entscheidende faktoren sind particle resolution und filmDiffMode. the following loop has thus to change
         par_added = 0
+        total_par = sum(self.par_unique_intV_contribution_counts.values())
         for par_uniq in self.par_unique_intV_contribution_counts.keys():
 
             if dev_mode_:
@@ -545,14 +550,33 @@ class Column:
                     1, r"N^{\mathrm{p}}", self.N_p == 1, self.nonlimiting_filmDiff, self.particle_models[0].has_surfDiff
                 )
 
+            #Add linebreak after each particle type
+            if "= &" not in equation: 
+                 equation = equation.replace(r"=", r"= &", 1)
+            if par_added + self.par_unique_intV_contribution_counts[par_uniq] < total_par:
+                    equation += r"\nonumber \\&"
+   
+
             par_added += self.par_unique_intV_contribution_counts[par_uniq]
 
         if self.resolution == "0D":
             equation = re.sub(
                 r"\\left\(1 - \\varepsilon^{\\mathrm{c}} \\right\)", r"V^s", equation)
 
+        
+        #clean up trailing spaces/newlines
+        equation = equation.rstrip()
+
+        # Corner case: last line ends with dangling \\&
+        if equation.endswith(r"\\&"):
+            equation = equation[:-3] + r","  # remove \\& and attach comma
+        else:
+            equation += r","  # normal case, append comma
+
+        
+        # Wrap in align environment
         equation = r"""\begin{align}
-""" + equation + r""",
+""" + equation + r"""
 \end{align}"""
 
         return equation
@@ -572,7 +596,7 @@ class Column:
 
             eqs[par_type] = eq.particle_transport(par_type, singleParticle=self.N_p == 1, nonlimiting_filmDiff=self.nonlimiting_filmDiff,
                                                   has_surfDiff=self.has_surfDiff, has_binding=self.has_binding, req_binding=self.req_binding, has_mult_bnd_states=self.has_mult_bnd_states, PTD=self.PTD)
-            eqs[par_type] = eqs[par_type]
+            eqs[par_type] = eqs[par_type] #why this ?
 
             boundary_conditions[par_type] = eq.particle_boundary(par_type, singleParticle=self.N_p == 1, nonlimiting_filmDiff=self.nonlimiting_filmDiff,
                                                                  has_surfDiff=self.has_surfDiff, has_binding=self.has_binding, req_binding=self.req_binding, has_mult_bnd_states=self.has_mult_bnd_states)
