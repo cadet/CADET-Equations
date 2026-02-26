@@ -723,7 +723,37 @@ st.logo("images/logo_CADET.png", size="large", link=None, icon_image=None)
 st.set_page_config(
     page_title=r"CADET-Equations",
     page_icon=r":material/biotech:", #":material/modeling:",
+    layout="wide",
 )
+
+# Custom CSS to fix equation tag overlap and improve responsiveness
+st.markdown("""
+<style>
+    /* Prevent equation numbers from overlapping with long equations */
+    .katex-display {
+        overflow-x: auto !important;
+        overflow-y: hidden !important;
+        text-align: center !important;
+        padding: 0.5em 3em !important; /* Safety padding for the tag at the far right */
+        position: relative !important;
+        display: flex !important;
+        justify-content: center !important;
+        align-items: center !important;
+    }
+    .katex-display > .katex {
+        display: inline-block !important;
+        white-space: nowrap !important;
+        position: relative !important;
+    }
+    /* Position the tag at the right-most point of the display container */
+    .katex .tag {
+        position: absolute !important;
+        right: -2.5em !important; /* Pull it slightly inside the padding, or pin to edge of formula */
+        top: 50% !important;
+        transform: translateY(-50%) !important;
+    }
+</style>
+""", unsafe_allow_html=True)
 
 st.sidebar.title(
     "CADET-Equations: Packed-Bed Chromatography Model Equation Generator")

@@ -12,6 +12,7 @@ st.logo("images/logo_CADET.png", size="large", link=None, icon_image=None)
 st.set_page_config(
     page_title="Documentation",
     page_icon=":material/docs:",
+    layout="wide",
 )
 
 # Helper funciton to use citations in standard markdown (streamlit)
