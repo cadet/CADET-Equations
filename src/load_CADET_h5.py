@@ -8,11 +8,19 @@ import h5py
 
 import re
 
-CADET_column_unit_types = [
+CADET_column_unit_types_v5 = [
                     'GENERAL_RATE_MODEL', 'LUMPED_RATE_MODEL_WITHOUT_PORES', 'LUMPED_RATE_MODEL_WITH_PORES',
                     'GENERAL_RATE_MODEL_DG', 'LUMPED_RATE_MODEL_WITHOUT_PORES_DG', 'LUMPED_RATE_MODEL_WITH_PORES_DG',
                     'GENERAL_RATE_MODEL_2D', 'CSTR'
                 ]
+
+CADET_column_unit_types_v6 = [
+                    'COLUMN_MODEL_1D', 'COLUMN_MODEL_2D', 'RADIAL_COLUMN_MODEL_1D', 
+                    'FRUSTUM_COLUMN_MODEL_1D', 'COLUMN_MODEL_3D'
+                ]
+
+CADET_column_unit_types = CADET_column_unit_types_v5 + CADET_column_unit_types_v6
+
 
 
 def get_h5_value(unit_group, key:str, firstEntryIfList=True):
@@ -50,16 +58,16 @@ def map_unit_type_to_column_model(cadet_unit_type):
             f"Invalid unit type: {cadet_unit_type}. Must be one of {CADET_column_unit_types}.")
 
 
-def map_unit_to_particle_model(cadet_unit_type, h5_unit_group):
+def map_unit_to_particle_model(cadet_unit_type, h5_unit_group, is_v6=False):
 
     if re.search("WITHOUT_PORES", cadet_unit_type) or re.search("CSTR", cadet_unit_type):
         
-        if get_h5_value(h5_unit_group, 'TOTAL_POROSITY') == 1.0:
+        if get_cadet_unit_value(h5_unit_group, 'TOTAL_POROSITY', is_v6) == 1.0:
             return None
-        if get_h5_value(h5_unit_group, 'CONST_SOLID_VOLUME') == 0.0:
+        if get_cadet_unit_value(h5_unit_group, 'CONST_SOLID_VOLUME', is_v6) == 0.0:
             return None
         
-    elif get_h5_value(h5_unit_group, 'COL_POROSITY') == 1.0:
+    elif get_cadet_unit_value(h5_unit_group, 'COL_POROSITY', is_v6) == 1.0:
         return None 
 
     if re.search("GENERAL_RATE", cadet_unit_type):
@@ -73,7 +81,26 @@ def map_unit_to_particle_model(cadet_unit_type, h5_unit_group):
             f"Invalid unit type: {cadet_unit_type}. Must be one of {CADET_column_unit_types}.")
 
 
-def extract_config_data_from_unit(unit_type, h5_unit_group):
+def get_cadet_unit_value(unit_group, key, is_v6=False, firstEntryIfList=True):
+    if is_v6:
+        for sub in ['model', 'discretization']:
+            if sub in unit_group:
+                val = get_h5_value(unit_group[sub], key, firstEntryIfList)
+                if val is not None:
+                    return val
+    return get_h5_value(unit_group, key, firstEntryIfList)
+
+
+def get_cadet_subgroup(unit_group, subgroup_path, is_v6=False):
+    if is_v6:
+        # Most subgroups like 'adsorption' should be under 'model' in v6
+        v6_path = 'model/' + subgroup_path
+        if v6_path in unit_group:
+            return unit_group[v6_path]
+    return unit_group[subgroup_path] if subgroup_path in unit_group else None
+
+
+def extract_config_data_from_unit(unit_type, h5_unit_group, is_v6=False):
 
     config = {}
 
@@ -86,28 +113,28 @@ def extract_config_data_from_unit(unit_type, h5_unit_group):
     config['column_resolution'] = map_unit_type_to_column_model(unit_type)
 
     if re.search("0D", config['column_resolution']):
-        flow_filter = get_h5_value(h5_unit_group, 'FLOWRATE_FILTER')
+        flow_filter = get_cadet_unit_value(h5_unit_group, 'FLOWRATE_FILTER', is_v6)
         config['has_filter'] = "No"
         if flow_filter is not None:
             config['has_filter'] = "Yes" if flow_filter > 0.0 else "No"
 
     if re.search("2D", config['column_resolution']):
 
-        Dax = get_h5_value(h5_unit_group, 'COL_DISPERSION')
+        Dax = get_cadet_unit_value(h5_unit_group, 'COL_DISPERSION', is_v6)
         if Dax is not None:
             config['has_axial_dispersion'] = "No" if Dax < 1E-20 else "Yes"
         
-        Drad = get_h5_value(h5_unit_group, 'COL_DISPERSION_RADIAL')
+        Drad = get_cadet_unit_value(h5_unit_group, 'COL_DISPERSION_RADIAL', is_v6)
         if Drad is not None:
             config['has_radial_dispersion'] = "No" if Drad < 1E-20 else "Yes"
 
     elif re.search("1D", config['column_resolution']):
 
-        Dax = get_h5_value(h5_unit_group, 'COL_DISPERSION')
+        Dax = get_cadet_unit_value(h5_unit_group, 'COL_DISPERSION', is_v6)
         if Dax is not None:
             config['has_axial_dispersion'] = "No" if Dax < 1E-20 else "Yes"
     
-    par_model = map_unit_to_particle_model(unit_type, h5_unit_group)
+    par_model = map_unit_to_particle_model(unit_type, h5_unit_group, is_v6)
 
     if par_model is not None:
 
@@ -117,7 +144,7 @@ def extract_config_data_from_unit(unit_type, h5_unit_group):
 
         config['nonlimiting_filmDiff'] = "Yes" if re.search("WITHOUT_PORES", unit_type) else "No"
 
-        nParType = get_h5_value(h5_unit_group, 'NPARTYPE')
+        nParType = get_cadet_unit_value(h5_unit_group, 'NPARTYPE', is_v6)
         nParType = 1 if nParType is None else nParType
 
         if nParType > 1:
@@ -126,7 +153,7 @@ def extract_config_data_from_unit(unit_type, h5_unit_group):
 
             config['PSD'] = "Yes"
 
-        binding_model = get_h5_value(h5_unit_group, 'ADSORPTION_MODEL', firstEntryIfList=False)
+        binding_model = get_cadet_unit_value(h5_unit_group, 'ADSORPTION_MODEL', is_v6, firstEntryIfList=False)
         
         config['has_binding'] = "No"
 
@@ -147,23 +174,25 @@ def extract_config_data_from_unit(unit_type, h5_unit_group):
                 config['has_mult_bnd_states'] = "No"
 
                 if nParType > 1:
-                    config['req_binding'] = "Kinetic" if get_h5_value(h5_unit_group['adsorption_000'], 'IS_KINETIC') else "Rapid-equilibrium"
-                    if get_h5_value(h5_unit_group['adsorption_000'], 'NBOUND') is not None:
-                        config['has_mult_bnd_states'] = "Yes" if get_h5_value(h5_unit_group['adsorption_000'], 'NBOUND') > 1 else "No"
+                    ads_group = get_cadet_subgroup(h5_unit_group, 'adsorption_000', is_v6)
+                    config['req_binding'] = "Kinetic" if get_h5_value(ads_group, 'IS_KINETIC') else "Rapid-equilibrium"
+                    if get_h5_value(ads_group, 'NBOUND') is not None:
+                        config['has_mult_bnd_states'] = "Yes" if get_h5_value(ads_group, 'NBOUND') > 1 else "No"
                 else:
-                    config['req_binding'] = "Kinetic" if get_h5_value(h5_unit_group['adsorption'], 'IS_KINETIC') else "Rapid-equilibrium"
-                    if get_h5_value(h5_unit_group['adsorption'], 'NBOUND') is not None:
-                        config['has_mult_bnd_states'] = "Yes" if get_h5_value(h5_unit_group['adsorption'], 'NBOUND') > 1 else "No"
+                    ads_group = get_cadet_subgroup(h5_unit_group, 'adsorption', is_v6)
+                    config['req_binding'] = "Kinetic" if get_h5_value(ads_group, 'IS_KINETIC') else "Rapid-equilibrium"
+                    if get_h5_value(ads_group, 'NBOUND') is not None:
+                        config['has_mult_bnd_states'] = "Yes" if get_h5_value(ads_group, 'NBOUND') > 1 else "No"
 
                 if par_model == "1D (radial coordinate)":
 
                     config['has_surfDiff'] = "No"
-                    surfDiff = get_h5_value(h5_unit_group, 'PAR_SURFDIFFUSION')
+                    surfDiff = get_cadet_unit_value(h5_unit_group, 'PAR_SURFDIFFUSION', is_v6)
                     if surfDiff is not None:
                         config['has_surfDiff'] = "Yes" if surfDiff > 0.0 else "No"
 
                     config['particle_has_core'] = "No"
-                    parCore = get_h5_value(h5_unit_group, 'PAR_CORERADIUS')
+                    parCore = get_cadet_unit_value(h5_unit_group, 'PAR_CORERADIUS', is_v6)
                     if parCore is not None:
                         if parCore > 0.0:
                             config['particle_has_core'] = "Yes"
@@ -187,6 +216,13 @@ def get_config_from_CADET_h5(h5_filename, unit_idx):
 
     with h5py.File(h5_filename, 'r') as f:
 
+        # Check for CADET version
+        is_v6 = False
+        if 'meta' in f:
+            sim_version = get_h5_value(f['meta'], 'SIMULATOR_VERSION')
+            if sim_version and str(sim_version).startswith('6'):
+                is_v6 = True
+        
         model_group = f['input/model']
 
         if unit_idx == "-01":
@@ -202,11 +238,15 @@ def get_config_from_CADET_h5(h5_filename, unit_idx):
 
                 if unit_type is not None:
 
+                    # Optional: infer v6 from unit_type if not explicitly set in meta
+                    if not is_v6 and unit_type in CADET_column_unit_types_v6:
+                        is_v6 = True
+
                     if unit_type in CADET_column_unit_types:
                         
-                        st.sidebar.success(unit_type + " was found in " + re.sub(r"input/model/", "", unit_key) + " and is applied!")
+                        st.sidebar.success(unit_type + " was found in " + re.sub(r"input/model/", "", unit_key) + " and is applied!" + (" (CADET v6 detected)" if is_v6 else ""))
 
-                        return extract_config_data_from_unit(unit_type, unit_group)
+                        return extract_config_data_from_unit(unit_type, unit_group, is_v6)
 
         else:
 
@@ -216,14 +256,18 @@ def get_config_from_CADET_h5(h5_filename, unit_idx):
             else:
                 st.error(f"unit_{unit_idx} does not exist!")
                 return None
+            
+            if unit_type is not None:
+                if not is_v6 and unit_type in CADET_column_unit_types_v6:
+                    is_v6 = True
 
-            if unit_type in CADET_column_unit_types:
+                if unit_type in CADET_column_unit_types:
 
-                st.sidebar.success(f"Unit type {unit_type} is applied.")
+                    st.sidebar.success(f"Unit type {unit_type} is applied." + (" (CADET v6 detected)" if is_v6 else ""))
 
-                return extract_config_data_from_unit(unit_type, unit_group)
+                    return extract_config_data_from_unit(unit_type, unit_group, is_v6)
 
-            else:
-                st.error(f"Equations for {unit_type} are not available.")
+                else:
+                    st.error(f"Equations for {unit_type} are not available.")
             
         return None

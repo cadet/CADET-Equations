@@ -236,9 +236,9 @@ def int_vol_BC(resolution: str, hasAxialDispersion: bool):
 """ + ang_periodic_bc
 
     return r"""
-\begin{alignat}{2}
+\begin{alignedat}{2}
 """ + boundary_conditions + r""".
-\end{alignat}"""
+\end{alignedat}"""
 
 
 def int_vol_initial(resolution: str, includeParLiquid: bool):
@@ -258,16 +258,16 @@ def int_vol_initial(resolution: str, includeParLiquid: bool):
 
     if includeParLiquid:
         equation = r"""
-          \begin{align}
+          \begin{aligned}
           """ + bulk_liquid_eq + r""",
           \\""" + par_liquid_eq + r""".
-          \end{align}
+          \end{aligned}
           """
     else:
         equation = r"""
-          \begin{align}
+          \begin{aligned}
           """ + bulk_liquid_eq + r""".
-          \end{align}
+          \end{aligned}
           """
 
     return equation
@@ -307,11 +307,11 @@ def particle_transport(particle, singleParticle: bool, nonlimiting_filmDiff: boo
 
     if particle.resolution == "0D":
         if nonlimiting_filmDiff and has_binding:
-            ret_term = r"""\begin{align}""" + re.sub(r"{\\p}", r"{\\l}", particle_transport_homogeneous_solid(
-                req_binding, has_mult_bnd_states)) + r""", \end{align}"""
+            ret_term = r"""\begin{aligned}""" + re.sub(r"{\\p}", r"{\\l}", particle_transport_homogeneous_solid(
+                req_binding, has_mult_bnd_states)) + r""", \end{aligned}"""
         elif not has_binding:
-            ret_term = r"""\begin{align}""" + re.sub(r"{\\p}", r"{\\l}", particle_transport_homogeneous_liquid(
-                has_binding, req_binding, has_mult_bnd_states)) + r""". \end{align}"""
+            ret_term = r"""\begin{aligned}""" + re.sub(r"{\\p}", r"{\\l}", particle_transport_homogeneous_liquid(
+                has_binding, req_binding, has_mult_bnd_states)) + r""". \end{aligned}"""
         else:
             ret_term = particle_transport_homogeneous(
                 has_binding, req_binding, has_mult_bnd_states)
@@ -381,10 +381,10 @@ def particle_transport_homogeneous(has_binding: bool, req_binding: bool, has_mul
         has_binding, req_binding, has_mult_bnd_states)
 
     return r"""
-\begin{align}
+\begin{aligned}
 """ + particle_transport_homogeneous_liquid(has_binding, req_binding, has_mult_bnd_states) + r""",\\
 """ + particle_transport_homogeneous_solid(req_binding, has_mult_bnd_states) + r""".
-\end{align}
+\end{aligned}
 """
 
 
@@ -442,16 +442,16 @@ def particle_transport_radial(geometry: str, has_surfDiff: bool, has_binding: bo
 
         if has_binding:
             return r"""
-\begin{align}
+\begin{aligned}
 """ + liquid_eq + r""", \\
 """ + solid_eq + r""",
-\end{align}
+\end{aligned}
 """
         else:
             return r"""
-\begin{align}
+\begin{aligned}
 """ + liquid_eq + r""",
-\end{align}
+\end{aligned}
 """
 
     if geometry == "Cylinder":
@@ -460,14 +460,14 @@ def particle_transport_radial(geometry: str, has_surfDiff: bool, has_binding: bo
             surfDiffTerm = r"\left( 1 - \varepsilon^{\mathrm{p}}_{j} \right) \frac{1}{r} \frac{\partial }{\partial r} \left( r D_{j,i}^{\s} \frac{\partial c^{\s}_{j,i}}{\partial r} \right) + "
 
         return r"""
-\begin{align}    
+\begin{aligned}    
 \varepsilon^{\mathrm{p}}_{j} \frac{\partial c^{\p}_{j,i}}{\partial t}
 &=
-\varepsilon^{\mathrm{p}}_{j} \frac{1}{r} \frac{\partial }{\partial r} \left( r D_{j,i}^{\p} \frac{\partial c^{\p}_{j,i}}{\partial r} \right) - \left( 1 - \varepsilon^{\mathrm{p}}_{j} \right) f^{\mathrm{bind}}_{j,i}\left( \vec{c}^{\p}, \vec{c}^{\s} \right), \\
-     \left( 1 - \varepsilon^{\mathrm{p}}_{j} \right) \frac{\partial c^{\s}_{j,i}}{\partial t}
+\varepsilon^{\mathrm{p}}_{j} \frac{1}{r} \frac{\partial }{\partial r} \left( r D_{j,i}^{\mathrm{p}} \frac{\partial c^{\mathrm{p}}_{j,i}}{\partial r} \right) - \left( 1 - \varepsilon^{\mathrm{p}}_{j} \right) f^{\mathrm{bind}}_{j,i}\left( \vec{c}^{\mathrm{p}}, \vec{c}^{\mathrm{s}} \right), \\
+     \left( 1 - \varepsilon^{\mathrm{p}}_{j} \right) \frac{\partial c^{\mathrm{s}}_{j,i}}{\partial t}
 &=
 """ + surfDiffTerm + r"""\left( 1 - \varepsilon^{\mathrm{p}}_{j} \right) f^{\mathrm{bind}}_{j,i}\left( \vec{c}^{\p}, \vec{c}^{\s} \right).
-\end{align}
+\end{aligned}
 """
     if geometry == "Slab":
 
@@ -475,14 +475,14 @@ def particle_transport_radial(geometry: str, has_surfDiff: bool, has_binding: bo
             surfDiffTerm = r"\left( 1 - \varepsilon^{\mathrm{p}}_{j} \right) \frac{\partial }{\partial r} \left( D_{j,i}^{\s} \frac{\partial c^{\s}_{j,i}}{\partial r} \right) + "
 
         return r"""
-\begin{align}    
+\begin{aligned}    
 \varepsilon^{\mathrm{p}}_{j} \frac{\partial c^{\p}_{j,i}}{\partial t}
 &=
-\varepsilon^{\mathrm{p}}_{j} \frac{\partial }{\partial r} \left( D_{j,i}^{\p} \frac{\partial c^{\p}_{j,i}}{\partial r} \right) - \left( 1 - \varepsilon^{\mathrm{p}}_{j} \right) f^{\mathrm{bind}}_{j,i}\left( \vec{c}^{\p}, \vec{c}^{\s} \right), \\
-     \left( 1 - \varepsilon^{\mathrm{p}}_{j} \right) \frac{\partial c^{\s}_{j,i}}{\partial t}
+\varepsilon^{\mathrm{p}}_{j} \frac{\partial }{\partial r} \left( D_{j,i}^{\mathrm{p}} \frac{\partial c^{\mathrm{p}}_{j,i}}{\partial r} \right) - \left( 1 - \varepsilon^{\mathrm{p}}_{j} \right) f^{\mathrm{bind}}_{j,i}\left( \vec{c}^{\mathrm{p}}, \vec{c}^{\mathrm{s}} \right), \\
+     \left( 1 - \varepsilon^{\mathrm{p}}_{j} \right) \frac{\partial c^{\mathrm{s}}_{j,i}}{\partial t}
 &=
 """ + surfDiffTerm + r"""\left( 1 - \varepsilon^{\mathrm{p}}_{j} \right) f^{\mathrm{bind}}_{j,i}\left( \vec{c}^{\p}, \vec{c}^{\s} \right).
-\end{align}
+\end{aligned}
 """
 
 
@@ -530,7 +530,7 @@ def particle_boundary(particle, singleParticle: bool, nonlimiting_filmDiff: bool
     else:
         boundary_condition = particleLiquidBC + "."
 
-    boundary_condition = r"\begin{align}" + boundary_condition + r"\end{align}"
+    boundary_condition = r"\begin{aligned}" + boundary_condition + r"\end{aligned}"
 
     if singleParticle:
         boundary_condition = re.sub("j,", "", boundary_condition)
@@ -543,16 +543,16 @@ def particle_initial(domain: str, singleParticle: bool, includeParLiquid: bool):
 
     if includeParLiquid:
         initial_condition = r"""
-\begin{alignat}{2}
+\begin{alignedat}{2}
 \left. c^{\p}_{j,i} \right|_{t = 0} &= c^{\p, \mathrm{init}}_{j,i} & & \qquad\text{in }""" + re.sub("\\$", "", domain) + r""",\\
 \left. c^{\s}_{j,i} \right|_{t = 0} &= c^{\s, \mathrm{init}}_{j,i} & & \qquad\text{in }""" + re.sub("\\$", "", domain) + r""".
-\end{alignat}
+\end{alignedat}
 """
     else:
         initial_condition = r"""
-\begin{alignat}{2}
+\begin{alignedat}{2}
 \left. c^{\s}_{j,i} \right|_{t = 0} &= c^{\s, \mathrm{init}}_{j,i} & & \qquad\text{in }""" + re.sub("\\$", "", domain) + r""".
-\end{alignat}
+\end{alignedat}
 """
 
     if singleParticle:
@@ -573,9 +573,9 @@ def particle_domain(particle_resolution: str, hasCore: bool, with_par_index=Fals
 def full_particle_conc_domain(column_resolution: str, particle_resolution: str, hasCore: bool, with_par_index=False, with_time_domain=True):
     
     if not column_resolution == "0D":
-        domain = r"$ (0, T^\mathrm{end}) \times (0, L)" if with_time_domain else r"$ \times (0, L)"
+        domain = r"$(0, T^\mathrm{end}) \times (0, L)" if with_time_domain else r"$\times (0, L)"
     else:
-        domain = r"$ (0, T^\mathrm{end})" if with_time_domain else r"$ "
+        domain = r"$(0, T^\mathrm{end})" if with_time_domain else r"$"
     
     if column_resolution in ["2D", "3D"]:
         domain += r"\times (0, R^\mathrm{c})"
