@@ -42,7 +42,7 @@ def apply_model_from_config(at, model_config):
 
 @pytest.mark.ci
 @pytest.mark.reference
-@pytest.mark.parametrize("model_name", ["CSTR", "Plug_Flow", "LRM", "LRMP", "GRMsd", "GRM", "GRMsd_PSD", "GRMsd2D", "GRMsd_nonLimFD_parCore", "GRMsd_nonLimFD_reqBnd"])
+@pytest.mark.parametrize("model_name", ["CSTR", "Plug_Flow", "LRM", "LRMP", "GRMsd", "GRM", "GRMsd_PSD", "GRMsd2D", "GRMsd_nonLimFD_parCore", "GRMsd_nonLimFD_reqBnd", "GeneralFiniteBath"])
 def test_json_config_output_against_latex_reference(model_name, test_dir):
 
     at = AppTest.from_file("../Equation-Generator.py")
