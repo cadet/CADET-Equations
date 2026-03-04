@@ -383,6 +383,8 @@ class Column:
 
         availability = 1
 
+        par1D = None
+        
         if self.N_p > 0:
             
             par1D = False
@@ -399,12 +401,15 @@ class Column:
         # tank model
         if not self.has_axial_coordinate:
             # only 0D particles with non limiting film diffusion available
-            if not par1D and self.nonlimiting_filmDiff:
-                return 1
-            elif par1D and not self.nonlimiting_filmDiff: # can be approximated using 1 FV cell
-                return 0
+            if self.N_p > 0:
+                if not par1D and self.nonlimiting_filmDiff:
+                    return 1
+                elif par1D and not self.nonlimiting_filmDiff: # can be approximated using 1 FV cell
+                    return 0
+                else:
+                    return -1
             else:
-                return -1
+                return 1
 
         return availability
 
