@@ -495,7 +495,7 @@ def particle_boundary(particle, singleParticle: bool, nonlimiting_filmDiff: bool
         outerLiquidBC = r"\left. c^{\p}_{j,i} \right|_{r = R^{\mathrm{p}}_{j}} &= c^{\b}_i"
     else:
         
-        outerLiquidBC = r"\varepsilon^{\mathrm{p}}" if has_binding else ""
+        outerLiquidBC = r"\varepsilon^{\mathrm{p}}"
         if not req_binding:
             outerLiquidBC += r""" \left. \left( D^{\p}_{j,i} \frac{\partial c^{\p}_{j,i}}{\partial r} \right)\right|_{r = R^{\mathrm{p}}_{j}}
                &= k^{\mathrm{f}}_{j,i} \left. \left( c^{\b}_i - c^{\p}_{j,i} \right|_{r = R^{\mathrm{p}}_{j}} \right)"""
