@@ -401,6 +401,8 @@ class Column:
             # only 0D particles with non limiting film diffusion available
             if not par1D and self.nonlimiting_filmDiff:
                 return 1
+            elif par1D and not self.nonlimiting_filmDiff: # can be approximated using 1 FV cell
+                return 0
             else:
                 return -1
 
