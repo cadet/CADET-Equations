@@ -120,6 +120,9 @@ class Particle:
             symbol_name_ = r"D^\mathrm{p}_{i}" if self.single_partype else r"D^\mathrm{p}_{j,i}"
             vars_and_params_.append({"Group" : 6.1, "Symbol": symbol_name_, "Description": r"particle diffusion coefficient", "Unit": r"\frac{m^2}{s}", "Dependence": r"i" if self.single_partype else r"j,i", "Property": r"> 0"})
 
+            if not self.nonlimiting_filmDiff:
+                vars_and_params_.append({"Group" : 4, "Symbol": r"\varepsilon^{\mathrm{p}}" if self.single_partype else r"\varepsilon^{\mathrm{p}}_{j}", "Description": r"particle porosity", "Unit": r"-", "Dependence": r"\text{constant}" if self.single_partype else r"j", "Property": r"\in (0, 1)"})
+
         if self.has_binding:
             symbol_name_ = r"c^{\s}_{i}" if self.single_partype else r"c^{\s}_{j,i}"
             vars_and_params_.append({"Group" : 1, "Symbol": symbol_name_, "Description": r"particle solid concentration", "Unit": r"\frac{mol}{m^3}", "Dependence" : state_deps, "Domain" : eq.full_particle_conc_domain(column_resolution=self.interstitial_volume_resolution, particle_resolution=self.resolution, hasCore=self.has_core, with_par_index=False, with_time_domain=True)})
@@ -128,9 +131,6 @@ class Particle:
             vars_and_params_.append({"Group" : 10, "Symbol": symbol_name_, "Description": r"adsorption isotherm function", "Unit": r"\frac{1}{s}", "Dependence": dep_})
             vars_and_params_.append({"Group" : 10.1, "Symbol": r"\vec{c}^\mathrm{p}", "Description": r"particle liquid components vector", "Unit": r"[\frac{mol}{m^3}]", "Dependence": state_deps})
             vars_and_params_.append({"Group" : 10.1, "Symbol": r"\vec{c}^\mathrm{s}", "Description": r"particle solid components vector", "Unit": r"[\frac{mol}{m^3}]", "Dependence": state_deps})
-            
-            if not (self.nonlimiting_filmDiff and self.resolution == "0D"):
-                vars_and_params_.append({"Group" : 4, "Symbol": r"\varepsilon^{\mathrm{p}}" if self.single_partype else r"\varepsilon^{\mathrm{p}}_{j}", "Description": r"particle porosity", "Unit": r"-", "Dependence": r"\text{constant}" if self.single_partype else r"j", "Property": r"\in (0, 1)"})
             
             if self.has_surfDiff:
                 symbol_name_ = r"D^\mathrm{s}_{i}" if self.single_partype else r"D^\mathrm{s}_{j,i}"
