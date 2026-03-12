@@ -563,7 +563,7 @@ def particle_initial(domain: str, singleParticle: bool, includeParLiquid: bool):
 
 def particle_domain(particle_resolution: str, hasCore: bool, with_par_index=False):
     
-    par1D_domain = r"$(R^{\mathrm{pc}}_{j}, R^{\mathrm{p}}_{j})$" if hasCore else r"(0, R^{\mathrm{p}}_{j})"
+    par1D_domain = r"$(R^{\mathrm{pc}}_{j}, R^{\mathrm{p}}_{j})$" if hasCore else r"$(0, R^{\mathrm{p}}_{j})$"
     if not with_par_index:
         par1D_domain = re.sub(r"\_{j}", "", par1D_domain)
     
@@ -573,9 +573,9 @@ def particle_domain(particle_resolution: str, hasCore: bool, with_par_index=Fals
 def full_particle_conc_domain(column_resolution: str, particle_resolution: str, hasCore: bool, with_par_index=False, with_time_domain=True):
     
     if not column_resolution == "0D":
-        domain = r"$ (0, T^\mathrm{end}) \times (0, L)" if with_time_domain else r"$ \times (0, L)"
+        domain = r"$(0, T^\mathrm{end}) \times (0, L)" if with_time_domain else r"$\times (0, L)"
     else:
-        domain = r"$ (0, T^\mathrm{end})" if with_time_domain else r"$ "
+        domain = r"$(0, T^\mathrm{end})" if with_time_domain else r"$"
     
     if column_resolution in ["2D", "3D"]:
         domain += r"\times (0, R^\mathrm{c})"
