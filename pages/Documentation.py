@@ -55,8 +55,8 @@ This framework embodies the CADET group's modeling philosophy, and its principle
 
 CADET-Equations provides a simplistic user interface that allows users to define models, and outputs the corresponding equations in <b>LaTeX format</b> and as <b>PDF</b>.
 </div>
-""", unsafe_allow_html=True)
-
+""",
+unsafe_allow_html=True)
 
 st.markdown(
 """
@@ -66,7 +66,8 @@ st.markdown(
     - Configuration via model upload:
       - [CADET model file](https://cadet.github.io/master/interface/index.html) (HDF5)
       - simplistic configuration file: download and upload your session state as json file
-    - Downloadable models as PDF and LaTeX files. We thankfully ask to be cited
+    - Downloadable models as PDF and LaTeX files. We thankfully ask to be cited: <a href="#ref-leweke2021">Leweke, 2021</a>
+    - Availability indicator for CADET-Core and CADET-Process. Note that some models can be approximated even if the corresponding equations are not implemented exactly
 
     ## Limitations
 
@@ -79,8 +80,8 @@ st.markdown(
 
     We welcome contributions - such as [reporting bugs on GitHub](https://github.com/cadet/CADET-Equations/issues), or by reaching out with modeling questions on the [CADET forum](https://forum.cadet-web.de/).
 
-"""
-)
+""",
+unsafe_allow_html=True)
 
 st.markdown("---")
 st.markdown("## References", unsafe_allow_html=True)

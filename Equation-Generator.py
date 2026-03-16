@@ -120,6 +120,9 @@ class Particle:
             symbol_name_ = r"D^\mathrm{p}_{i}" if self.single_partype else r"D^\mathrm{p}_{j,i}"
             vars_and_params_.append({"Group" : 6.1, "Symbol": symbol_name_, "Description": r"particle diffusion coefficient", "Unit": r"\frac{m^2}{s}", "Dependence": r"i" if self.single_partype else r"j,i", "Property": r"> 0"})
 
+            if not self.nonlimiting_filmDiff:
+                vars_and_params_.append({"Group" : 4, "Symbol": r"\varepsilon^{\mathrm{p}}" if self.single_partype else r"\varepsilon^{\mathrm{p}}_{j}", "Description": r"particle porosity", "Unit": r"-", "Dependence": r"\text{constant}" if self.single_partype else r"j", "Property": r"\in (0, 1)"})
+
         if self.has_binding:
             symbol_name_ = r"c^{\s}_{i}" if self.single_partype else r"c^{\s}_{j,i}"
             vars_and_params_.append({"Group" : 1, "Symbol": symbol_name_, "Description": r"particle solid concentration", "Unit": r"\frac{mol}{m^3}", "Dependence" : state_deps, "Domain" : eq.full_particle_conc_domain(column_resolution=self.interstitial_volume_resolution, particle_resolution=self.resolution, hasCore=self.has_core, with_par_index=False, with_time_domain=True)})
@@ -128,9 +131,6 @@ class Particle:
             vars_and_params_.append({"Group" : 10, "Symbol": symbol_name_, "Description": r"adsorption isotherm function", "Unit": r"\frac{1}{s}", "Dependence": dep_})
             vars_and_params_.append({"Group" : 10.1, "Symbol": r"\vec{c}^\mathrm{p}", "Description": r"particle liquid components vector", "Unit": r"[\frac{mol}{m^3}]", "Dependence": state_deps})
             vars_and_params_.append({"Group" : 10.1, "Symbol": r"\vec{c}^\mathrm{s}", "Description": r"particle solid components vector", "Unit": r"[\frac{mol}{m^3}]", "Dependence": state_deps})
-            
-            if not (self.nonlimiting_filmDiff and self.resolution == "0D"):
-                vars_and_params_.append({"Group" : 4, "Symbol": r"\varepsilon^{\mathrm{p}}" if self.single_partype else r"\varepsilon^{\mathrm{p}}_{j}", "Description": r"particle porosity", "Unit": r"-", "Dependence": r"\text{constant}" if self.single_partype else r"j", "Property": r"\in (0, 1)"})
             
             if self.has_surfDiff:
                 symbol_name_ = r"D^\mathrm{s}_{i}" if self.single_partype else r"D^\mathrm{s}_{j,i}"
@@ -368,50 +368,78 @@ class Column:
         self.vars_and_params()
 
     def available_CADET_Core(self):
-
+        """
+        Return the availability status of the model in CADET-Core.
+    
+        Returns
+        -------
+        int
+            -1 if model is not present,
+             0 if model can be approximated,
+             1 if model is present.
+        """
         if self.has_angular_coordinate:
-            return False
+            return -1
 
-        availability = True
+        availability = 1
 
+        par1D = None
+        
         if self.N_p > 0:
             
             par1D = False
 
             for p in self.particle_models:
 
-                availability = availability and p.available_CADET_Core()
+                availability = int(availability and p.available_CADET_Core())
                 par1D = par1D or p.resolution == "1D"
                 
             # no particles with pore diffusion but no film diffusion (yet)
             if par1D and self.nonlimiting_filmDiff:
-                return False
+                return 0
         
-            # tank model
-            if not self.has_axial_coordinate:
-                # only 0D particles with non limiting film diffusion available
-                if self.nonlimiting_filmDiff:
-                    if par1D:
-                        return False
+        # tank model
+        if not self.has_axial_coordinate:
+            # only 0D particles with non limiting film diffusion available
+            if self.N_p > 0:
+                if not par1D and self.nonlimiting_filmDiff:
+                    return 1
+                elif par1D and not self.nonlimiting_filmDiff: # can be approximated using 1 FV cell
+                    return 0
                 else:
-                    return False
+                    return -1
+            else:
+                return 1
 
         return availability
 
     def available_CADET_Process(self):
+        """
+        Return the availability status of the model in CADET-Process.
+    
+        Returns
+        -------
+        int
+            -1 if model is not present,
+             0 if model can be approximated,
+             1 if model is present.
+        """
 
         # All CADET-Core models supported except multiple particle type and 2D models
-        if not self.available_CADET_Core():
-            return False
+        
+        core_availability = self.available_CADET_Core()
+        
+        if core_availability == -1:
+            return -1
         
         if self.N_p > 1:
-            return False
+            return -1
         
         if self.has_radial_coordinate:
-            return False
+            return -1
         
         else:
-            return True
+            return core_availability
 
     def vars_and_params(self):
 
@@ -699,9 +727,20 @@ class Column:
         return description_ + "."
 
 def availability_badge_html(name: str, available: bool):
-    color_bg = "#e6f4ea" if available else "#fdecea"
-    color_fg = "#137333" if available else "#b71c1c"
-    icon = "supported" if available else "not supported"
+    
+    # model not available default
+    color_bg = "#fdecea"
+    color_fg = "#b71c1c"
+    icon = "not supported"
+    
+    if available == 1:
+        color_bg = "#e6f4ea"
+        color_fg = "#137333"
+        icon = "supported"
+    elif available == 0:
+        color_bg = "#fff4e5"
+        color_fg = "#b26a00"
+        icon = "approximation"
 
     return (
         f'<span style="'
