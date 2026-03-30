@@ -65,7 +65,15 @@ jobs:
     # --------------------
     # Tests
     # --------------------
-    - name: Run pytest
+    - name: Run pytest with coverage
       run: |
         conda activate cadet-equations
-        pytest -m "ci"
+        # run CI tests and produce coverage reports (xml + terminal)
+        pytest -m "ci" --cov=src --cov-report=xml --cov-report=term-missing
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v4
+      with:
+        # the xml produced by pytest-cov is picked up by the action automatically
+        files: coverage.xml
+        fail_ci_if_error: false
