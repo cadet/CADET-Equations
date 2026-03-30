@@ -16,8 +16,15 @@ CADET_column_unit_types = [
                 ]
 
 
-def is_v6_interface(unit_type):
-    return unit_type in ['COLUMN_MODEL_1D', 'COLUMN_MODEL_2D']
+def is_v6_interface(unit_type, h5_unit_group):
+    """Detect v6 interface. V6 uses COLUMN_MODEL_1D/2D unit types, or old unit type
+    names with particle_type_xxx subgroups when NPARTYPE >= 1."""
+    if unit_type in ['COLUMN_MODEL_1D', 'COLUMN_MODEL_2D']:
+        return True
+    nParType = get_h5_value(h5_unit_group, 'NPARTYPE')
+    if nParType is not None and nParType >= 1 and 'particle_type_000' in h5_unit_group:
+        return True
+    return False
 
 
 def get_h5_value(unit_group, key:str, firstEntryIfList=True):
@@ -57,7 +64,7 @@ def map_unit_type_to_column_model(cadet_unit_type):
 
 def map_unit_to_particle_model(cadet_unit_type, h5_unit_group):
 
-    if is_v6_interface(cadet_unit_type):
+    if is_v6_interface(cadet_unit_type, h5_unit_group):
         return _map_v6_particle_model(h5_unit_group)
 
     if re.search("WITHOUT_PORES", cadet_unit_type) or re.search("CSTR", cadet_unit_type):
@@ -148,7 +155,7 @@ def extract_config_data_from_unit(unit_type, h5_unit_group):
 
         config['particle_resolution'] = par_model
 
-        if is_v6_interface(unit_type):
+        if is_v6_interface(unit_type, h5_unit_group):
             _extract_v6_particle_config(config, h5_unit_group, par_model)
         else:
             _extract_v5_particle_config(config, unit_type, h5_unit_group, par_model)
