@@ -11,8 +11,13 @@ import re
 CADET_column_unit_types = [
                     'GENERAL_RATE_MODEL', 'LUMPED_RATE_MODEL_WITHOUT_PORES', 'LUMPED_RATE_MODEL_WITH_PORES',
                     'GENERAL_RATE_MODEL_DG', 'LUMPED_RATE_MODEL_WITHOUT_PORES_DG', 'LUMPED_RATE_MODEL_WITH_PORES_DG',
-                    'GENERAL_RATE_MODEL_2D', 'CSTR'
+                    'GENERAL_RATE_MODEL_2D', 'CSTR',
+                    'COLUMN_MODEL_1D', 'COLUMN_MODEL_2D'
                 ]
+
+
+def is_v6_interface(unit_type):
+    return unit_type in ['COLUMN_MODEL_1D', 'COLUMN_MODEL_2D']
 
 
 def get_h5_value(unit_group, key:str, firstEntryIfList=True):
@@ -52,15 +57,18 @@ def map_unit_type_to_column_model(cadet_unit_type):
 
 def map_unit_to_particle_model(cadet_unit_type, h5_unit_group):
 
+    if is_v6_interface(cadet_unit_type):
+        return _map_v6_particle_model(h5_unit_group)
+
     if re.search("WITHOUT_PORES", cadet_unit_type) or re.search("CSTR", cadet_unit_type):
-        
+
         if get_h5_value(h5_unit_group, 'TOTAL_POROSITY') == 1.0:
             return None
         if get_h5_value(h5_unit_group, 'CONST_SOLID_VOLUME') == 0.0:
             return None
-        
+
     elif get_h5_value(h5_unit_group, 'COL_POROSITY') == 1.0:
-        return None 
+        return None
 
     if re.search("GENERAL_RATE", cadet_unit_type):
         return "1D (radial coordinate)"
@@ -71,6 +79,31 @@ def map_unit_to_particle_model(cadet_unit_type, h5_unit_group):
     else:
         raise ValueError(
             f"Invalid unit type: {cadet_unit_type}. Must be one of {CADET_column_unit_types}.")
+
+
+def _map_v6_particle_model(h5_unit_group):
+    """Determine particle model for v6 interface using HAS_* flags in particle_type_000."""
+
+    nParType = get_h5_value(h5_unit_group, 'NPARTYPE')
+    if nParType is None or nParType < 1:
+        return None
+
+    pt_group = h5_unit_group.get('particle_type_000')
+    if pt_group is None:
+        return None
+
+    has_pore_diff = get_h5_value(pt_group, 'HAS_PORE_DIFFUSION')
+    has_surf_diff = get_h5_value(pt_group, 'HAS_SURFACE_DIFFUSION')
+
+    if has_pore_diff or has_surf_diff:
+        return "1D (radial coordinate)"
+
+    has_film_diff = get_h5_value(pt_group, 'HAS_FILM_DIFFUSION')
+    if has_film_diff:
+        return "0D (homogeneous)"
+
+    # Equilibrium particle (no film/pore/surface diffusion) — LRM-like
+    return "0D (homogeneous)"
 
 
 def extract_config_data_from_unit(unit_type, h5_unit_group):
@@ -115,59 +148,10 @@ def extract_config_data_from_unit(unit_type, h5_unit_group):
 
         config['particle_resolution'] = par_model
 
-        config['nonlimiting_filmDiff'] = "Yes" if re.search("WITHOUT_PORES", unit_type) else "No"
-
-        nParType = get_h5_value(h5_unit_group, 'NPARTYPE')
-        nParType = 1 if nParType is None else nParType
-
-        if nParType > 1:
-            
-            config['advanced_mode'] = "On"
-
-            config['PSD'] = "Yes"
-
-        binding_model = get_h5_value(h5_unit_group, 'ADSORPTION_MODEL', firstEntryIfList=False)
-        
-        config['has_binding'] = "No"
-
-        if binding_model is not None:
-            
-            config['PTD'] = "No"
-            if not isinstance(binding_model, str):
-                if len(binding_model) > 1:
-                    return binding_model
-                    if len(set(binding_model)) > 1:
-                        config['PTD'] = "Yes"
-                    binding_model = binding_model[0]
-            
-            if binding_model != "NONE":
-
-                config['has_binding'] = "Yes"
-                
-                config['has_mult_bnd_states'] = "No"
-
-                if nParType > 1:
-                    config['req_binding'] = "Kinetic" if get_h5_value(h5_unit_group['adsorption_000'], 'IS_KINETIC') else "Rapid-equilibrium"
-                    if get_h5_value(h5_unit_group['adsorption_000'], 'NBOUND') is not None:
-                        config['has_mult_bnd_states'] = "Yes" if get_h5_value(h5_unit_group['adsorption_000'], 'NBOUND') > 1 else "No"
-                else:
-                    config['req_binding'] = "Kinetic" if get_h5_value(h5_unit_group['adsorption'], 'IS_KINETIC') else "Rapid-equilibrium"
-                    if get_h5_value(h5_unit_group['adsorption'], 'NBOUND') is not None:
-                        config['has_mult_bnd_states'] = "Yes" if get_h5_value(h5_unit_group['adsorption'], 'NBOUND') > 1 else "No"
-
-                if par_model == "1D (radial coordinate)":
-
-                    config['has_surfDiff'] = "No"
-                    surfDiff = get_h5_value(h5_unit_group, 'PAR_SURFDIFFUSION')
-                    if surfDiff is not None:
-                        config['has_surfDiff'] = "Yes" if surfDiff > 0.0 else "No"
-
-                    config['particle_has_core'] = "No"
-                    parCore = get_h5_value(h5_unit_group, 'PAR_CORERADIUS')
-                    if parCore is not None:
-                        if parCore > 0.0:
-                            config['particle_has_core'] = "Yes"
-                            config['advanced_mode'] = "On"
+        if is_v6_interface(unit_type):
+            _extract_v6_particle_config(config, h5_unit_group, par_model)
+        else:
+            _extract_v5_particle_config(config, unit_type, h5_unit_group, par_model)
 
     else:
 
@@ -181,6 +165,114 @@ def extract_config_data_from_unit(unit_type, h5_unit_group):
         config.pop('PTD', None)
 
     return config
+
+
+def _extract_v5_particle_config(config, unit_type, h5_unit_group, par_model):
+    """Extract particle configuration from v5 interface (particle info at unit level)."""
+
+    config['nonlimiting_filmDiff'] = "Yes" if re.search("WITHOUT_PORES", unit_type) else "No"
+
+    nParType = get_h5_value(h5_unit_group, 'NPARTYPE')
+    nParType = 1 if nParType is None else nParType
+
+    if nParType > 1:
+        config['advanced_mode'] = "On"
+        config['PSD'] = "Yes"
+
+    binding_model = get_h5_value(h5_unit_group, 'ADSORPTION_MODEL', firstEntryIfList=False)
+
+    config['has_binding'] = "No"
+
+    if binding_model is not None:
+
+        config['PTD'] = "No"
+        if not isinstance(binding_model, str):
+            if len(binding_model) > 1:
+                return binding_model
+                if len(set(binding_model)) > 1:
+                    config['PTD'] = "Yes"
+                binding_model = binding_model[0]
+
+        if binding_model != "NONE":
+
+            config['has_binding'] = "Yes"
+
+            config['has_mult_bnd_states'] = "No"
+
+            if nParType > 1:
+                ads_group = h5_unit_group['adsorption_000']
+            else:
+                ads_group = h5_unit_group['adsorption']
+
+            config['req_binding'] = "Kinetic" if get_h5_value(ads_group, 'IS_KINETIC') else "Rapid-equilibrium"
+            if get_h5_value(ads_group, 'NBOUND') is not None:
+                config['has_mult_bnd_states'] = "Yes" if get_h5_value(ads_group, 'NBOUND') > 1 else "No"
+
+            if par_model == "1D (radial coordinate)":
+
+                config['has_surfDiff'] = "No"
+                surfDiff = get_h5_value(h5_unit_group, 'PAR_SURFDIFFUSION')
+                if surfDiff is not None:
+                    config['has_surfDiff'] = "Yes" if surfDiff > 0.0 else "No"
+
+                _extract_particle_core_config(config, h5_unit_group)
+
+
+def _extract_v6_particle_config(config, h5_unit_group, par_model):
+    """Extract particle configuration from v6 interface (particle info in particle_type_xxx subgroups)."""
+
+    nParType = get_h5_value(h5_unit_group, 'NPARTYPE')
+    nParType = 1 if nParType is None else nParType
+
+    if nParType > 1:
+        config['advanced_mode'] = "On"
+        config['PSD'] = "Yes"
+
+    pt_group = h5_unit_group['particle_type_000']
+
+    has_film_diff = get_h5_value(pt_group, 'HAS_FILM_DIFFUSION')
+    config['nonlimiting_filmDiff'] = "No" if has_film_diff else "Yes"
+
+    binding_model = get_h5_value(pt_group, 'ADSORPTION_MODEL', firstEntryIfList=False)
+
+    config['has_binding'] = "No"
+
+    if binding_model is not None:
+
+        config['PTD'] = "No"
+        if not isinstance(binding_model, str):
+            if len(binding_model) > 1:
+                if len(set(binding_model)) > 1:
+                    config['PTD'] = "Yes"
+                binding_model = binding_model[0]
+
+        if binding_model != "NONE":
+
+            config['has_binding'] = "Yes"
+
+            config['has_mult_bnd_states'] = "No"
+
+            ads_group = pt_group['adsorption']
+            config['req_binding'] = "Kinetic" if get_h5_value(ads_group, 'IS_KINETIC') else "Rapid-equilibrium"
+            if get_h5_value(pt_group, 'NBOUND') is not None:
+                config['has_mult_bnd_states'] = "Yes" if get_h5_value(pt_group, 'NBOUND') > 1 else "No"
+
+            if par_model == "1D (radial coordinate)":
+
+                has_surf_diff = get_h5_value(pt_group, 'HAS_SURFACE_DIFFUSION')
+                config['has_surfDiff'] = "Yes" if has_surf_diff else "No"
+
+                _extract_particle_core_config(config, pt_group)
+
+
+def _extract_particle_core_config(config, group):
+    """Extract particle core radius config. Shared between v5 (unit group) and v6 (particle_type group)."""
+    config['particle_has_core'] = "No"
+    parCore = get_h5_value(group, 'PAR_CORERADIUS')
+    if parCore is not None:
+        if parCore > 0.0:
+            config['particle_has_core'] = "Yes"
+            config['advanced_mode'] = "On"
 
 
 def get_config_from_CADET_h5(h5_filename, unit_idx):

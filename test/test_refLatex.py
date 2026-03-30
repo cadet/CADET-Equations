@@ -127,6 +127,58 @@ def test_CADET_config_output_against_latex_reference(model_name, test_dir):
 
 @pytest.mark.ci
 @pytest.mark.reference
+@pytest.mark.parametrize("model_name", ["CSTR", "Plug_Flow", "LRM", "LRMP", "GRM", "GRMsd", "GRMsd_PSD", "GRMsd2D"])
+def test_CADET_v6_config_output_against_latex_reference(model_name, test_dir):
+
+    CADET_v6_file_ref = {
+        "CSTR": "v6_CSTR",
+        "Plug_Flow": "v6_PlugFlow_1comp",
+        "LRM": "v6_LRM_dynLin_1comp",
+        "LRMP": "v6_LRMP_dynLin_1comp",
+        "GRM": "v6_GRM_dynLin_1comp",
+        "GRMsd": "v6_GRMsd_dynLin_1comp",
+        "GRMsd_PSD": "v6_GRMsd_PSD_dynLin_1comp",
+        "GRMsd2D": "v6_GRMsd2D_dynLin_1comp",
+    }
+
+    ref_name = CADET_v6_file_ref[model_name]
+
+    at = AppTest.from_file("../Equation-Generator.py")
+
+    at.run()
+    assert not at.exception
+
+    at.toggle(key="model_assumptions").set_value(True).run()
+
+    config_file = test_dir + "/data/CADET_configs/" + ref_name + ".h5"
+
+    model_config = load_CADET_h5.get_config_from_CADET_h5(config_file, "-01")
+
+    ###########  test against config json  ##############
+
+    json_config_dir = test_dir + '/data/EquationGenerator_configs/'
+
+    with open(json_config_dir + model_name + ".json", 'r') as file:
+
+        model_config_json = json.load(file)
+
+        assert model_config == model_config_json
+
+    ###########  test against latex  ##############
+
+    apply_model_from_config(at, model_config)
+
+    latex_string = at.session_state.latex_string
+
+    ref_latex_dir = test_dir + '/data/ref_latex/'
+
+    ref_string = read_tex_file(ref_latex_dir + model_name + ".tex")
+
+    assert latex_string == ref_string
+
+
+@pytest.mark.ci
+@pytest.mark.reference
 @pytest.mark.debug
 def test_CADET_config_manual_unitIdx(test_dir):
     
