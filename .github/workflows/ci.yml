@@ -10,6 +10,10 @@ jobs:
   test:
     runs-on: ubuntu-latest
 
+    env:
+      COVERAGE_PROCESS_START: .coveragerc
+      PYTHONPATH: ${{ github.workspace }}
+
     defaults:
       run:
         shell: bash -l {0}
@@ -79,7 +83,6 @@ jobs:
         token: ${{ secrets.CODECOV_TOKEN }}
         slug: cadet/CADET-Equations
         files: coverage.xml
-        flags: unit
         fail_ci_if_error: true
 
     - name: Run more integration tests without coverage
