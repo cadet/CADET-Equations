@@ -65,7 +65,7 @@ jobs:
     # --------------------
     # Tests
     # --------------------
-    - name: Run unit tests with coverage
+    - name: Run unit and (some) integration tests with coverage
       run: |
         conda run -n cadet-equations pytest -m "ci and (unit_test or reference)" \
           --cov=src \
@@ -74,12 +74,14 @@ jobs:
           --cov-report=term-missing
 
     - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v5
       with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        slug: cadet/CADET-Equations
         files: coverage.xml
         flags: unit
-        fail_ci_if_error: false
+        fail_ci_if_error: true
 
-    - name: Run integration tests without coverage
+    - name: Run more integration tests without coverage
       run: |
         conda run -n cadet-equations pytest -m "ci and all_config_runs"
