@@ -11,18 +11,24 @@ from src.load_CADET_h5 import (
     get_h5_value,
     map_unit_type_to_column_model,
     map_unit_to_particle_model,
+    is_v6_interface,
+    extract_config_data_from_unit,
     CADET_column_unit_types,
 )
 
 
 # %% Helpers
 
-def _make_h5_group(mapping: dict):
+def _make_h5_group(mapping: dict, subgroups: dict = None):
     """Create a mock HDF5 group that mimics h5py dataset access.
 
     Keys present in *mapping* return mock datasets whose [()] call
     yields the corresponding value.  Missing keys return None.
+
+    *subgroups* is an optional dict of {name: _make_h5_group(...)},
+    accessible via group['name'] and the ``in`` operator.
     """
+    subgroups = subgroups or {}
     group = MagicMock()
 
     def get_side_effect(k):
@@ -31,9 +37,13 @@ def _make_h5_group(mapping: dict):
             val = mapping[k]
             type(ds).__getitem__ = lambda self, idx: val
             return ds
+        if k in subgroups:
+            return subgroups[k]
         return None
 
     group.get = get_side_effect
+    group.__contains__ = lambda self, k: k in mapping or k in subgroups
+    group.__getitem__ = lambda self, k: subgroups[k] if k in subgroups else get_side_effect(k)
     return group
 
 
@@ -164,3 +174,198 @@ def test_CADET_column_unit_types_completeness():
     assert len(CADET_column_unit_types) == 10
     for t in expected:
         assert t in CADET_column_unit_types
+
+
+# %% is_v6_interface
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_is_v6_interface_column_model_1d():
+    """COLUMN_MODEL_1D should always be detected as v6."""
+    group = _make_h5_group({})
+    assert is_v6_interface('COLUMN_MODEL_1D', group) is True
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_is_v6_interface_column_model_2d():
+    """COLUMN_MODEL_2D should always be detected as v6."""
+    group = _make_h5_group({})
+    assert is_v6_interface('COLUMN_MODEL_2D', group) is True
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_is_v6_interface_old_type_with_particle_type_group():
+    """Old unit type with particle_type_000 subgroup should be detected as v6."""
+    pt_group = _make_h5_group({'HAS_FILM_DIFFUSION': True})
+    group = _make_h5_group({'NPARTYPE': 1}, subgroups={'particle_type_000': pt_group})
+    assert is_v6_interface('GENERAL_RATE_MODEL', group) is True
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_is_v6_interface_old_type_without_particle_type_group():
+    """Old unit type without particle_type_000 is v5."""
+    group = _make_h5_group({'NPARTYPE': 1})
+    assert is_v6_interface('GENERAL_RATE_MODEL', group) is False
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_is_v6_interface_old_type_npartype_zero():
+    """Old unit type with NPARTYPE=0 is v5 (no interface changes for npartype=0)."""
+    group = _make_h5_group({'NPARTYPE': 0})
+    assert is_v6_interface('LUMPED_RATE_MODEL_WITHOUT_PORES', group) is False
+
+
+# %% map_unit_to_particle_model – v6 paths
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_map_v6_particle_model_column_model_1d_with_pore_diff():
+    """COLUMN_MODEL_1D with HAS_PORE_DIFFUSION should map to 1D (radial coordinate)."""
+    pt_group = _make_h5_group({
+        'HAS_FILM_DIFFUSION': True,
+        'HAS_PORE_DIFFUSION': True,
+        'HAS_SURFACE_DIFFUSION': False,
+    })
+    group = _make_h5_group({'NPARTYPE': 1}, subgroups={'particle_type_000': pt_group})
+    assert map_unit_to_particle_model('COLUMN_MODEL_1D', group) == "1D (radial coordinate)"
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_map_v6_particle_model_film_diff_only():
+    """COLUMN_MODEL_1D with only HAS_FILM_DIFFUSION should map to 0D (homogeneous)."""
+    pt_group = _make_h5_group({
+        'HAS_FILM_DIFFUSION': True,
+        'HAS_PORE_DIFFUSION': False,
+        'HAS_SURFACE_DIFFUSION': False,
+    })
+    group = _make_h5_group({'NPARTYPE': 1}, subgroups={'particle_type_000': pt_group})
+    assert map_unit_to_particle_model('COLUMN_MODEL_1D', group) == "0D (homogeneous)"
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_map_v6_particle_model_equilibrium():
+    """COLUMN_MODEL_1D with no diffusion flags should map to 0D (homogeneous)."""
+    pt_group = _make_h5_group({
+        'HAS_FILM_DIFFUSION': False,
+        'HAS_PORE_DIFFUSION': False,
+        'HAS_SURFACE_DIFFUSION': False,
+    })
+    group = _make_h5_group({'NPARTYPE': 1}, subgroups={'particle_type_000': pt_group})
+    assert map_unit_to_particle_model('COLUMN_MODEL_1D', group) == "0D (homogeneous)"
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_map_v6_particle_model_npartype_zero():
+    """COLUMN_MODEL_1D with NPARTYPE=0 should return None (no particles)."""
+    group = _make_h5_group({'NPARTYPE': 0})
+    assert map_unit_to_particle_model('COLUMN_MODEL_1D', group) is None
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_map_v6_particle_model_missing_particle_type_group():
+    """COLUMN_MODEL_1D with NPARTYPE=1 but no particle_type_000 should return None."""
+    group = _make_h5_group({'NPARTYPE': 1})
+    assert map_unit_to_particle_model('COLUMN_MODEL_1D', group) is None
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_map_v6_particle_model_old_type_with_particle_group():
+    """Old unit type with particle_type_000 subgroup should use v6 logic."""
+    pt_group = _make_h5_group({
+        'HAS_FILM_DIFFUSION': True,
+        'HAS_PORE_DIFFUSION': True,
+        'HAS_SURFACE_DIFFUSION': True,
+    })
+    group = _make_h5_group({'NPARTYPE': 1}, subgroups={'particle_type_000': pt_group})
+    assert map_unit_to_particle_model('GENERAL_RATE_MODEL', group) == "1D (radial coordinate)"
+
+
+# %% map_unit_type_to_column_model – v6 types
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+@pytest.mark.parametrize("unit_type, expected", [
+    ('COLUMN_MODEL_1D', "1D (axial coordinate)"),
+    ('COLUMN_MODEL_2D', "2D (axial and radial coordinate)"),
+])
+def test_map_unit_type_to_column_model_v6(unit_type, expected):
+    """V6 unit types should map to correct column resolution."""
+    assert map_unit_type_to_column_model(unit_type) == expected
+
+
+# %% extract_config_data_from_unit – v6 paths
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_extract_v6_config_grm_with_surface_diff_and_core():
+    """V6 GRM-like config with surface diffusion and core radius > 0."""
+    ads_group = _make_h5_group({'IS_KINETIC': True})
+    pt_group = _make_h5_group(
+        {
+            'HAS_FILM_DIFFUSION': True,
+            'HAS_PORE_DIFFUSION': True,
+            'HAS_SURFACE_DIFFUSION': True,
+            'ADSORPTION_MODEL': 'LINEAR',
+            'NBOUND': np.array([1]),
+            'PAR_CORERADIUS': 0.001,
+        },
+        subgroups={'adsorption': ads_group},
+    )
+    group = _make_h5_group(
+        {
+            'NPARTYPE': 1,
+            'COL_POROSITY': 0.37,
+            'COL_DISPERSION': 5.75e-08,
+        },
+        subgroups={'particle_type_000': pt_group},
+    )
+
+    config = extract_config_data_from_unit('COLUMN_MODEL_1D', group)
+
+    assert config['add_particles'] == "Yes"
+    assert config['particle_resolution'] == "1D (radial coordinate)"
+    assert config['nonlimiting_filmDiff'] == "No"
+    assert config['has_binding'] == "Yes"
+    assert config['has_surfDiff'] == "Yes"
+    assert config['particle_has_core'] == "Yes"
+    assert config['advanced_mode'] == "On"
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_extract_v6_config_ptd_detection():
+    """V6 config where binding model is an array with different entries should set PTD=Yes."""
+    ads_group = _make_h5_group({'IS_KINETIC': True})
+    pt_group = _make_h5_group(
+        {
+            'HAS_FILM_DIFFUSION': True,
+            'HAS_PORE_DIFFUSION': False,
+            'HAS_SURFACE_DIFFUSION': False,
+            'ADSORPTION_MODEL': np.array([b'LINEAR', b'LANGMUIR']),
+            'NBOUND': np.array([1]),
+        },
+        subgroups={'adsorption': ads_group},
+    )
+    group = _make_h5_group(
+        {
+            'NPARTYPE': 2,
+            'COL_POROSITY': 0.37,
+            'COL_DISPERSION': 5.75e-08,
+        },
+        subgroups={'particle_type_000': pt_group},
+    )
+
+    config = extract_config_data_from_unit('COLUMN_MODEL_1D', group)
+
+    assert config['PTD'] == "Yes"
+    assert config['PSD'] == "Yes"
+    assert config['advanced_mode'] == "On"
