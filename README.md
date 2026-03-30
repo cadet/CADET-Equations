@@ -2,6 +2,7 @@
 
 [![DOI](https://zenodo.org/badge/936276911.svg)](https://doi.org/10.5281/zenodo.18339286)
 [![CI](https://github.com/cadet/cadet-equations/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/cadet/cadet-equations/actions/workflows/ci.yml?query=branch%3Amaster)
+[![codecov](https://codecov.io/gh/cadet/CADET-Equations/graph/badge.svg?token=CU85FHDKOO)](https://codecov.io/gh/cadet/CADET-Equations)
 
 CADET-Equations is a Python tool designed to generate modeling equations for packed-bed chromatography.  
 It provides a simple user interface that allows users to configure the model, and outputs the corresponding mathematical equations in LaTeX format.
