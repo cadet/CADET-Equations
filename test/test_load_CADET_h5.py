@@ -40,6 +40,7 @@ def _make_h5_group(mapping: dict):
 # %% get_h5_value
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_get_h5_value_missing_key():
     """A missing key should return None."""
     group = MagicMock()
@@ -48,6 +49,7 @@ def test_get_h5_value_missing_key():
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_get_h5_value_decodes_bytes():
     """Byte-string values should be decoded to str."""
     group = _make_h5_group({'UNIT_TYPE': b'GENERAL_RATE_MODEL'})
@@ -55,6 +57,7 @@ def test_get_h5_value_decodes_bytes():
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_get_h5_value_scalar():
     """Scalar numeric values should be returned as-is."""
     group = _make_h5_group({'COL_POROSITY': 0.37})
@@ -62,6 +65,7 @@ def test_get_h5_value_scalar():
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_get_h5_value_array_first_entry():
     """With firstEntryIfList=True (default), only the first element should be returned."""
     group = _make_h5_group({'COL_DISPERSION': np.array([5.75e-8, 1.0e-7])})
@@ -69,6 +73,7 @@ def test_get_h5_value_array_first_entry():
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_get_h5_value_array_full():
     """With firstEntryIfList=False, the full array should be returned."""
     arr = np.array([5.75e-8, 1.0e-7])
@@ -79,6 +84,7 @@ def test_get_h5_value_array_full():
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_get_h5_value_empty_array():
     """An empty array with firstEntryIfList=True should return the empty array (no crash)."""
     group = _make_h5_group({'EMPTY': np.array([])})
@@ -90,6 +96,7 @@ def test_get_h5_value_empty_array():
 # %% map_unit_type_to_column_model
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 @pytest.mark.parametrize("unit_type, expected", [
     ('GENERAL_RATE_MODEL',                 "1D (axial coordinate)"),
     ('GENERAL_RATE_MODEL_DG',              "1D (axial coordinate)"),
@@ -106,6 +113,7 @@ def test_map_unit_type_to_column_model(unit_type, expected):
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_map_unit_type_to_column_model_invalid():
     """An unsupported unit type should raise ValueError."""
     with pytest.raises(ValueError, match="Invalid unit type"):
@@ -115,6 +123,7 @@ def test_map_unit_type_to_column_model_invalid():
 # %% map_unit_to_particle_model
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 @pytest.mark.parametrize("unit_type, h5_values, expected", [
     ('GENERAL_RATE_MODEL',              {'COL_POROSITY': 0.37},                                 "1D (radial coordinate)"),
     ('GENERAL_RATE_MODEL',              {'COL_POROSITY': 1.0},                                  None),
@@ -131,6 +140,7 @@ def test_map_unit_to_particle_model(unit_type, h5_values, expected):
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_map_unit_to_particle_model_invalid():
     """An unsupported unit type should raise ValueError."""
     group = _make_h5_group({})
@@ -141,6 +151,7 @@ def test_map_unit_to_particle_model_invalid():
 # %% CADET_column_unit_types constant
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_CADET_column_unit_types_completeness():
     """The constant should contain all 8 supported CADET column unit types."""
     expected = [

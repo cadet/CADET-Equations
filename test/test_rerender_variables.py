@@ -15,6 +15,7 @@ rerender_variables = _eg.rerender_variables
 # %% CADET format
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 @pytest.mark.parametrize("input_str, expected_frag", [
     (r"c^{\b}",  r"\mathrm{b}"),
     (r"c^{\p}",  r"\mathrm{p}"),
@@ -28,6 +29,7 @@ def test_rerender_CADET_superscript_substitution(input_str, expected_frag):
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_rerender_CADET_preserves_longer_commands():
     """CADET format should not modify longer LaTeX commands like \\partial."""
     assert rerender_variables(r"\partial", "CADET") == r"\partial"
@@ -36,18 +38,21 @@ def test_rerender_CADET_preserves_longer_commands():
 # %% Legacy format
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_rerender_Legacy_bulk_conc():
     """Legacy format should strip the superscript from bulk concentration."""
     assert rerender_variables(r"c^{\b}", "Legacy") == "c"
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_rerender_Legacy_particle_conc():
     """Legacy format should move the particle phase to a subscript."""
     assert rerender_variables(r"c^{\p}_{i}", "Legacy") == r"c_{\mathrm{p},i}"
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_rerender_Legacy_solid_conc():
     """Legacy format should replace solid concentration c^s with q."""
     result = rerender_variables(r"c^{\s}", "Legacy")
@@ -57,6 +62,7 @@ def test_rerender_Legacy_solid_conc():
 # %% Error handling
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_rerender_invalid_format_raises():
     """An unsupported variable format should raise ValueError."""
     with pytest.raises(ValueError, match="not supported"):

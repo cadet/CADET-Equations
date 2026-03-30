@@ -39,6 +39,7 @@ def _make_particle(**overrides):
 # %% HRM_asmpt
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 @pytest.mark.parametrize("column_resolution, N_p, has_binding, expected_keyword", [
     ("0D (Homogeneous Tank)", 0, False, "tank"),
     ("1D (axial coordinate)", 0, False, "column"),
@@ -55,6 +56,7 @@ def test_HRM_asmpt_device_and_particle_text(column_resolution, N_p, has_binding,
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_HRM_asmpt_binding_toggle():
     """Binding-related assumptions should only appear when has_binding is True."""
     with_bnd = eq.HRM_asmpt(N_p=1, nonlimiting_filmDiff=False,
@@ -68,6 +70,7 @@ def test_HRM_asmpt_binding_toggle():
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_HRM_asmpt_filters_empty_strings():
     """Empty assumption strings resulting from disabled options should be removed."""
     result = eq.HRM_asmpt(N_p=0, nonlimiting_filmDiff=False,
@@ -79,6 +82,7 @@ def test_HRM_asmpt_filters_empty_strings():
 # %% Interstitial volume continuum assumptions
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 @pytest.mark.parametrize("resolution, expected_keyword", [
     ("3D", "continuum"),
     ("2D", "radially symmetric"),
@@ -93,6 +97,7 @@ def test_int_vol_continuum_asmpt_per_resolution(resolution, expected_keyword):
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 @pytest.mark.parametrize("N_p, expected_keyword", [
     (0, "tank"),
     (1, "interstitial volume"),
@@ -105,6 +110,7 @@ def test_int_vol_0D_volume_naming(N_p, expected_keyword):
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_int_vol_3D_multiple_particle_types():
     """Multiple particle types (N_p > 1) should mention representative radii."""
     result = eq.int_vol_3DContinuum_asmpt(N_p=2, nonlimiting_filmDiff=False)
@@ -115,6 +121,7 @@ def test_int_vol_3D_multiple_particle_types():
 # %% Particle assumptions
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_particle_asmpts_base():
     """Base particle assumptions should reference the outer particle surface."""
     result = eq.particle_asmpts()
@@ -123,6 +130,7 @@ def test_particle_asmpts_base():
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 @pytest.mark.parametrize("has_surfDiff, expected_keyword", [
     (True, "surface diffusion"),
     (False, "no surface diffusion"),
@@ -135,6 +143,7 @@ def test_particle_1D_surfDiff_toggle(has_surfDiff, expected_keyword):
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_particle_0D_infinite_diffusion():
     """0D particles should state that diffusion is infinitely fast."""
     result = eq.particle_0D_asmpt()
@@ -142,6 +151,7 @@ def test_particle_0D_infinite_diffusion():
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 @pytest.mark.parametrize("resolution, has_surfDiff", [
     ("0D", False),
     ("1D", True),
@@ -159,6 +169,7 @@ def test_particle_asmpt_router(resolution, has_surfDiff):
 # %% Equation term generators (bulk transport)
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 @pytest.mark.parametrize("term_func, latex_fragment", [
     (eq.bulk_time_derivative, r"\frac{\partial c^{\b}_i}{\partial t}"),
     (eq.solid_time_derivative, r"\frac{\partial c^{\s}_i}{\partial t}"),
@@ -173,6 +184,7 @@ def test_transport_term_without_eps(term_func, latex_fragment):
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 @pytest.mark.parametrize("term_func", [
     eq.bulk_time_derivative,
     eq.solid_time_derivative,
@@ -190,6 +202,7 @@ def test_transport_term_with_eps(term_func):
 # %% Film diffusion term
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_int_filmDiff_single_particle():
     """Single-particle film diffusion should not contain a summation."""
     particle = _make_particle(surface_volume_ratio=3, resolution="1D")
@@ -200,6 +213,7 @@ def test_int_filmDiff_single_particle():
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_int_filmDiff_multiple_particles():
     """Multiple-particle film diffusion should contain a summation."""
     particle = _make_particle(surface_volume_ratio=3, resolution="1D")
@@ -209,6 +223,7 @@ def test_int_filmDiff_multiple_particles():
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_int_filmDiff_nonlimiting_0D_returns_empty():
     """Non-limiting film diffusion with 0D resolution should produce an empty string."""
     particle = _make_particle(resolution="0D")
@@ -218,6 +233,7 @@ def test_int_filmDiff_nonlimiting_0D_returns_empty():
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_int_filmDiff_nonlimiting_1D_substitutes_BC():
     """Non-limiting film diffusion in 1D substitutes the BC into the term, removing k_f."""
     particle = _make_particle(surface_volume_ratio=3, resolution="1D")
@@ -228,6 +244,7 @@ def test_int_filmDiff_nonlimiting_1D_substitutes_BC():
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_int_filmDiff_nonlimiting_with_surfDiff():
     """Non-limiting film diffusion with surface diffusion should include D^s."""
     particle = _make_particle(surface_volume_ratio=3, resolution="1D")
@@ -239,6 +256,7 @@ def test_int_filmDiff_nonlimiting_with_surfDiff():
 # %% Interstitial volume boundary conditions
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 @pytest.mark.parametrize("resolution, hasAxDisp, expected, not_expected", [
     ("1D", True,  [r"D^{\mathrm{ax}}", r"z=0", r"z=L"], []),
     ("1D", False, [r"c_{\mathrm{in}"],                    [r"z=L"]),
@@ -257,6 +275,7 @@ def test_int_vol_BC(resolution, hasAxDisp, expected, not_expected):
 # %% Interstitial volume initial conditions
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 @pytest.mark.parametrize("resolution, includeParLiquid, has_bulk, has_par", [
     ("1D", False, True,  False),
     ("1D", True,  True,  True),
@@ -271,6 +290,7 @@ def test_int_vol_initial(resolution, includeParLiquid, has_bulk, has_par):
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_int_vol_initial_2D_domain():
     """2D initial conditions domain should reference column radius."""
     result = eq.int_vol_initial("2D", includeParLiquid=False)
@@ -278,6 +298,7 @@ def test_int_vol_initial_2D_domain():
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_int_vol_initial_3D_domain():
     """3D initial conditions domain should include angular component."""
     result = eq.int_vol_initial("3D", includeParLiquid=False)
@@ -287,6 +308,7 @@ def test_int_vol_initial_3D_domain():
 # %% Domain functions
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 @pytest.mark.parametrize("resolution, with_time, expected, not_expected", [
     ("0D", True,  [r"T^\mathrm{end}"],              [r"L"]),
     ("1D", True,  [r"T^\mathrm{end}", r"(0, L)"],   []),
@@ -304,6 +326,7 @@ def test_int_vol_domain(resolution, with_time, expected, not_expected):
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 @pytest.mark.parametrize("hasCore, with_par_index, expected, not_expected", [
     (False, False, [r"(0, R^{\mathrm{p}})"],  [r"R^{\mathrm{pc}}", r"_{j}"]),
     (True,  False, [r"R^{\mathrm{pc}}"],       []),
@@ -319,6 +342,7 @@ def test_particle_domain(hasCore, with_par_index, expected, not_expected):
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 @pytest.mark.parametrize("col_res, par_res, hasCore, with_time, expected, not_expected", [
     ("1D", "1D", False, True,  [r"(0, L)", r"R^{\mathrm{p}}"],        []),
     ("0D", "0D", False, True,  [r"T^\mathrm{end}"],                   [r"R^{\mathrm{p}}"]),
@@ -338,6 +362,7 @@ def test_full_particle_conc_domain(col_res, par_res, hasCore, with_time, expecte
 # %% Particle transport
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 @pytest.mark.parametrize("resolution, geometry, has_binding, expected_frag", [
     ("0D", "Sphere", True,  r"\begin{align}"),
     ("0D", "Sphere", False, r"\begin{align}"),
@@ -354,6 +379,7 @@ def test_particle_transport_resolution_and_geometry(resolution, geometry, has_bi
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_particle_transport_single_removes_j_index():
     """Single-particle transport equations should not contain the particle-type index j."""
     particle = _make_particle(resolution="1D", geometry="Sphere")
@@ -365,6 +391,7 @@ def test_particle_transport_single_removes_j_index():
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_particle_transport_multiple_keeps_j_index():
     """Multi-particle-type transport equations should contain the particle-type index j."""
     particle = _make_particle(resolution="1D", geometry="Sphere")
@@ -378,6 +405,7 @@ def test_particle_transport_multiple_keeps_j_index():
 # %% Particle transport radial (geometry-specific)
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 @pytest.mark.parametrize("geometry, expected_frag", [
     ("Sphere",   r"r^2"),
     ("Cylinder", r"\frac{1}{r}"),
@@ -392,6 +420,7 @@ def test_particle_transport_radial_geometry(geometry, expected_frag):
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_particle_transport_radial_surfDiff_toggle():
     """Surface diffusion coefficient should appear only when has_surfDiff is True."""
     with_sd = eq.particle_transport_radial(
@@ -405,6 +434,7 @@ def test_particle_transport_radial_surfDiff_toggle():
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_particle_transport_radial_req_binding():
     """Rapid-equilibrium binding should set the solid phase LHS to zero."""
     result = eq.particle_transport_radial(
@@ -415,6 +445,7 @@ def test_particle_transport_radial_req_binding():
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_particle_transport_radial_no_binding():
     """Without binding, the solid phase concentration should not appear."""
     result = eq.particle_transport_radial(
@@ -424,6 +455,7 @@ def test_particle_transport_radial_no_binding():
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_particle_transport_radial_mult_bnd_states():
     """Multiple bound states should introduce a sum over bound state index k."""
     result = eq.particle_transport_radial(
@@ -435,6 +467,7 @@ def test_particle_transport_radial_mult_bnd_states():
 # %% Particle transport homogeneous
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_particle_transport_homogeneous_liquid_binding_toggle():
     """Homogeneous liquid transport should include binding term only when binding is active."""
     with_bnd = eq.particle_transport_homogeneous_liquid(
@@ -446,6 +479,7 @@ def test_particle_transport_homogeneous_liquid_binding_toggle():
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_particle_transport_homogeneous_solid_req_binding():
     """Rapid-equilibrium solid transport should have zero on the LHS."""
     result = eq.particle_transport_homogeneous_solid(
@@ -454,6 +488,7 @@ def test_particle_transport_homogeneous_solid_req_binding():
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_particle_transport_homogeneous_combined():
     """Combined homogeneous transport should wrap both equations in align environment."""
     result = eq.particle_transport_homogeneous(
@@ -465,6 +500,7 @@ def test_particle_transport_homogeneous_combined():
 # %% Particle boundary conditions
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_particle_boundary_0D_returns_empty():
     """0D particles have no spatial boundary, so boundary conditions should be empty."""
     particle = _make_particle(resolution="0D")
@@ -476,6 +512,7 @@ def test_particle_boundary_0D_returns_empty():
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 @pytest.mark.parametrize("has_core, expected_frag", [
     (True,  r"R^{\mathrm{pc}}"),
     (False, r"|_{r=0}"),
@@ -491,6 +528,7 @@ def test_particle_boundary_core_toggle(has_core, expected_frag):
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_particle_boundary_nonlimiting():
     """Non-limiting film diffusion should set particle concentration equal to bulk at boundary."""
     particle = _make_particle(resolution="1D", has_core=False)
@@ -502,6 +540,7 @@ def test_particle_boundary_nonlimiting():
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_particle_boundary_single_particle_removes_j():
     """Single-particle boundary conditions should not contain the particle type index."""
     particle = _make_particle(resolution="1D", has_core=False)
@@ -515,6 +554,7 @@ def test_particle_boundary_single_particle_removes_j():
 # %% Particle initial conditions
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 @pytest.mark.parametrize("includeParLiquid, has_p, has_s", [
     (True,  True,  True),
     (False, False, True),
@@ -528,6 +568,7 @@ def test_particle_initial_liquid_toggle(includeParLiquid, has_p, has_s):
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_particle_initial_single_particle_removes_comma_j():
     """Single-particle initial conditions should not contain ',j' subscript patterns."""
     domain = r"$(0, R^{\mathrm{p}})$"
@@ -536,6 +577,7 @@ def test_particle_initial_single_particle_removes_comma_j():
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_particle_initial_multiple_particles_keeps_j():
     """Multi-particle-type initial conditions should retain the particle-type index j."""
     domain = r"$(0, R^{\mathrm{p}}_{j})$"
