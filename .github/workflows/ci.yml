@@ -49,7 +49,7 @@ jobs:
       uses: actions/cache@v4
       with:
         path: ${{ env.CONDA }}/envs/cadet-equations
-        key: conda-${{ runner.os }}-${{ hashFiles('environment.yml') }}
+        key: conda-${{ runner.os }}-${{ hashFiles('requirements.txt') }}
         restore-keys: |
           conda-${{ runner.os }}-
 
@@ -59,13 +59,29 @@ jobs:
     - name: Update environment
       if: steps.conda-cache.outputs.cache-hit != 'true'
       run: |
-        mamba install -y python=3.10 "setuptools>=69" "pip>=24"
-        pip install -r requirements.txt
+        conda install -n cadet-equations -y python=3.10 "setuptools>=69" "pip>=24"
+        conda run -n cadet-equations pip install -r requirements.txt
 
     # --------------------
     # Tests
     # --------------------
-    - name: Run pytest
+    - name: Run unit and (some) integration tests with coverage
       run: |
-        conda activate cadet-equations
-        pytest -m "ci"
+        conda run -n cadet-equations pytest -m "ci and (unit_test or reference)" \
+          --cov=src \
+          --cov=Equation-Generator.py \
+          --cov-report=xml:coverage.xml \
+          --cov-report=term-missing
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v5
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        slug: cadet/CADET-Equations
+        files: coverage.xml
+        flags: unit
+        fail_ci_if_error: true
+
+    - name: Run more integration tests without coverage
+      run: |
+        conda run -n cadet-equations pytest -m "ci and all_config_runs"

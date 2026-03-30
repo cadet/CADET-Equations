@@ -1,0 +1,20 @@
+coverage:
+  status:
+    project:
+      default:
+        target: auto       # compare against base (master)
+        threshold: 0%      # no drop allowed
+        if_not_found: success
+        if_ci_failed: error
+
+    patch:
+      default:
+        target: auto       # compare changed lines
+        threshold: 0%
+        if_not_found: success
+        if_ci_failed: error
+
+comment:
+  layout: "reach,diff,flags,tree"
+  behavior: default
+  require_changes: false
