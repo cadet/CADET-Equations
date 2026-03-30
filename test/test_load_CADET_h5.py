@@ -153,13 +153,14 @@ def test_map_unit_to_particle_model_invalid():
 @pytest.mark.ci
 @pytest.mark.unit_test
 def test_CADET_column_unit_types_completeness():
-    """The constant should contain all 8 supported CADET column unit types."""
+    """The constant should contain all supported CADET column unit types (v5 + v6)."""
     expected = [
         'GENERAL_RATE_MODEL', 'LUMPED_RATE_MODEL_WITHOUT_PORES',
         'LUMPED_RATE_MODEL_WITH_PORES', 'GENERAL_RATE_MODEL_DG',
         'LUMPED_RATE_MODEL_WITHOUT_PORES_DG', 'LUMPED_RATE_MODEL_WITH_PORES_DG',
-        'GENERAL_RATE_MODEL_2D', 'CSTR'
+        'GENERAL_RATE_MODEL_2D', 'CSTR',
+        'COLUMN_MODEL_1D', 'COLUMN_MODEL_2D'
     ]
-    assert len(CADET_column_unit_types) == 8
+    assert len(CADET_column_unit_types) == 10
     for t in expected:
         assert t in CADET_column_unit_types
