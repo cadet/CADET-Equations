@@ -49,7 +49,7 @@ jobs:
       uses: actions/cache@v4
       with:
         path: ${{ env.CONDA }}/envs/cadet-equations
-        key: conda-${{ runner.os }}-${{ hashFiles('environment.yml') }}
+        key: conda-${{ runner.os }}-${{ hashFiles('requirements.txt') }}
         restore-keys: |
           conda-${{ runner.os }}-
 
@@ -59,21 +59,18 @@ jobs:
     - name: Update environment
       if: steps.conda-cache.outputs.cache-hit != 'true'
       run: |
-        mamba install -y python=3.10 "setuptools>=69" "pip>=24"
-        pip install -r requirements.txt
+        conda install -n cadet-equations -y python=3.10 "setuptools>=69" "pip>=24"
+        conda run -n cadet-equations pip install -r requirements.txt
 
     # --------------------
     # Tests
     # --------------------
     - name: Run pytest with coverage
       run: |
-        conda activate cadet-equations
-        # run CI tests and produce coverage reports (xml + terminal)
-        pytest -m "ci" --cov=src --cov-report=xml --cov-report=term-missing
+        conda run -n cadet-equations pytest -m "ci"
 
     - name: Upload coverage to Codecov
       uses: codecov/codecov-action@v4
       with:
-        # the xml produced by pytest-cov is picked up by the action automatically
         files: coverage.xml
         fail_ci_if_error: false
