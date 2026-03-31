@@ -583,3 +583,82 @@ def test_particle_initial_multiple_particles_keeps_j():
     domain = r"$(0, R^{\mathrm{p}}_{j})$"
     result = eq.particle_initial(domain, singleParticle=False, includeParLiquid=True)
     assert "j," in result
+
+
+# %% Reaction terms
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_bulk_reaction_term():
+    """Bulk reaction term should contain the reaction function for bulk phase."""
+    result = eq.bulk_reaction_term()
+    assert r"f^{\mathrm{react},\b}" in result
+    assert r"\vec{c}^{\b}" in result
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+@pytest.mark.parametrize("singleParticle, expected_idx", [
+    (True,  r"_{i}"),
+    (False, r"_{j,i}"),
+])
+def test_particle_liquid_reaction_term(singleParticle, expected_idx):
+    """Particle liquid reaction term should use correct index based on particle count."""
+    result = eq.particle_liquid_reaction_term(singleParticle)
+    assert r"f^{\mathrm{react},\p}" in result
+    assert expected_idx in result
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+@pytest.mark.parametrize("singleParticle, expected_idx", [
+    (True,  r"_{i}"),
+    (False, r"_{j,i}"),
+])
+def test_particle_solid_reaction_term(singleParticle, expected_idx):
+    """Particle solid reaction term should use correct index based on particle count."""
+    result = eq.particle_solid_reaction_term(singleParticle)
+    assert r"f^{\mathrm{react},\s}" in result
+    assert expected_idx in result
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_particle_transport_homogeneous_liquid_reaction():
+    """Homogeneous liquid transport should include reaction term when enabled."""
+    with_react = eq.particle_transport_homogeneous_liquid(
+        has_binding=True, req_binding=False, has_mult_bnd_states=False, has_reaction_liquid=True)
+    without_react = eq.particle_transport_homogeneous_liquid(
+        has_binding=True, req_binding=False, has_mult_bnd_states=False, has_reaction_liquid=False)
+    assert r"f^{\mathrm{react},\p}" in with_react
+    assert r"f^{\mathrm{react},\p}" not in without_react
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_particle_transport_homogeneous_solid_reaction():
+    """Homogeneous solid transport should include reaction term when enabled."""
+    with_react = eq.particle_transport_homogeneous_solid(
+        req_binding=False, has_mult_bnd_states=False, has_reaction_solid=True)
+    without_react = eq.particle_transport_homogeneous_solid(
+        req_binding=False, has_mult_bnd_states=False, has_reaction_solid=False)
+    assert r"f^{\mathrm{react},\s}" in with_react
+    assert r"f^{\mathrm{react},\s}" not in without_react
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+@pytest.mark.parametrize("geometry", ["Sphere", "Cylinder", "Slab"])
+def test_particle_transport_radial_reaction(geometry):
+    """Radial transport should include reaction terms when enabled for all geometries."""
+    with_react = eq.particle_transport_radial(
+        geometry, has_surfDiff=False, has_binding=True,
+        req_binding=False, has_mult_bnd_states=False,
+        has_reaction_liquid=True, has_reaction_solid=True)
+    without_react = eq.particle_transport_radial(
+        geometry, has_surfDiff=False, has_binding=True,
+        req_binding=False, has_mult_bnd_states=False,
+        has_reaction_liquid=False, has_reaction_solid=False)
+    assert r"f^{\mathrm{react},\p}" in with_react
+    assert r"f^{\mathrm{react},\s}" in with_react
+    assert r"f^{\mathrm{react}" not in without_react
