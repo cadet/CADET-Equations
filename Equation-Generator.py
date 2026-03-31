@@ -75,6 +75,8 @@ class Particle:
     interstitial_volume_resolution: str = None
     single_partype: bool = True
     PTD: bool = False
+    has_reaction_liquid: bool = False
+    has_reaction_solid: bool = False
     # volume fraction ?
     # binding -> is_kinetic, nBound
     vars_and_params = []
@@ -142,6 +144,16 @@ class Particle:
             
             if self.has_core:
                 self.vars_and_params.append({"Group" : 0.1, "Symbol": r"R^\mathrm{pc}", "Description": r"particle core radius", "Unit": r"-", "Dependence": r"-", "Property": r"\in (0, R^\mathrm{p})"})
+
+        if self.has_reaction_liquid:
+            symbol_name_ = r"f^{\mathrm{react},\p}_{i}" if self.single_partype else r"f^{\mathrm{react},\p}_{j,i}"
+            dep_ = r"\vec{c}^{\p}, \vec{c}^{\s}; i" if self.single_partype else r"\vec{c}^{\p}, \vec{c}^{\s}; j, i"
+            vars_and_params_.append({"Group" : 10.2, "Symbol": symbol_name_, "Description": r"particle liquid phase reaction function", "Unit": r"\frac{mol}{m^3 \cdot s}", "Dependence": dep_})
+
+        if self.has_reaction_solid:
+            symbol_name_ = r"f^{\mathrm{react},\s}_{i}" if self.single_partype else r"f^{\mathrm{react},\s}_{j,i}"
+            dep_ = r"\vec{c}^{\p}, \vec{c}^{\s}; i" if self.single_partype else r"\vec{c}^{\p}, \vec{c}^{\s}; j, i"
+            vars_and_params_.append({"Group" : 10.3, "Symbol": symbol_name_, "Description": r"particle solid phase reaction function", "Unit": r"\frac{mol}{m^3 \cdot s}", "Dependence": dep_})
 
         if not self.single_partype:
             vars_and_params_.append({"Group" : -0.1, "Symbol": r"j", "Description": r"particle type index", "Unit": r"-", "Dependence": r"-", "Property": r""})
@@ -224,6 +236,10 @@ class Column:
     # noPoresButReqBinding: bool
 
     has_filter: bool = False
+
+    has_reaction_bulk: bool = False
+    has_reaction_particle_liquid: bool = False
+    has_reaction_particle_solid: bool = False
 
     vars_and_params = List[dict]
 
@@ -344,7 +360,9 @@ class Column:
                         nonlimiting_filmDiff=self.nonlimiting_filmDiff,
                         interstitial_volume_resolution=self.resolution,
                         single_partype=(self.N_p == 1),
-                        PTD=self.PTD
+                        PTD=self.PTD,
+                        has_reaction_liquid=self.has_reaction_particle_liquid,
+                        has_reaction_solid=self.has_reaction_particle_solid
                     )
                 )
 
@@ -364,6 +382,16 @@ class Column:
 
         else:
             self.has_binding = False
+
+        if advanced_mode_:
+            st.sidebar.write("Configure reactions")
+            self.has_reaction_bulk = st.sidebar.selectbox(
+                "Add bulk liquid reaction", ["No", "Yes"], key=r"has_reaction_bulk") == "Yes"
+            if self.N_p > 0:
+                self.has_reaction_particle_liquid = st.sidebar.selectbox(
+                    "Add particle liquid reaction", ["No", "Yes"], key=r"has_reaction_particle_liquid") == "Yes"
+                self.has_reaction_particle_solid = st.sidebar.selectbox(
+                    "Add particle solid reaction", ["No", "Yes"], key=r"has_reaction_particle_solid") == "Yes"
 
         self.vars_and_params()
 
@@ -508,6 +536,10 @@ class Column:
                 symbol_name_ = r"k^\mathrm{f}_{i}" if self.N_p<=1 else r"k^\mathrm{f}_{j,i}"
                 self.vars_and_params.append({"Group" : 7, "Symbol": symbol_name_, "Description": r"film diffusion coefficient", "Unit": r"\frac{m}{s}", "Dependence": r"i" if self.N_p<=1 else r"j,i", "Property": r"> 0"})
 
+        if self.has_reaction_bulk:
+            self.vars_and_params.append({"Group" : 8, "Symbol": r"f^{\mathrm{react},\b}_{i}", "Description": r"bulk liquid phase reaction function", "Unit": r"\frac{mol}{m^3 \cdot s}", "Dependence": r"\vec{c}^{\b}; i"})
+            self.vars_and_params.append({"Group" : 8.1, "Symbol": r"\vec{c}^{\b}", "Description": r"bulk liquid components vector", "Unit": r"[\frac{mol}{m^3}]", "Dependence": state_deps})
+
         for var_ in self.vars_and_params:
             var_["Symbol"] = rerender_variables(var_["Symbol"], var_format_)
             
@@ -535,6 +567,9 @@ class Column:
 
             if self.nonlimiting_filmDiff and self.has_binding and self.particle_models[0].resolution == "0D" and not self.req_binding:
                 equation += r" - V^{\p} \left( 1 - \varepsilon^{\mathrm{p}} \right) \frac{\partial c^{\s}_i}{\partial t}"
+
+            if self.has_reaction_bulk:
+                equation += " + " + eq.bulk_reaction_term()
 
         else:
             equation = eq.bulk_time_derivative(r"\varepsilon^{\mathrm{c}}") if not without_pores_ else eq.bulk_time_derivative()
@@ -575,6 +610,9 @@ class Column:
 
             par_added += self.par_unique_intV_contribution_counts[par_uniq]
 
+        if self.has_reaction_bulk and self.resolution != "0D":
+            equation += " + " + eq.bulk_reaction_term()
+
         if self.resolution == "0D":
             equation = re.sub(
                 r"\\left\(1 - \\varepsilon^{\\mathrm{c}} \\right\)", r"V^s", equation)
@@ -599,7 +637,8 @@ class Column:
         for par_type in self.par_type_counts.keys():
 
             eqs[par_type] = eq.particle_transport(par_type, singleParticle=self.N_p == 1, nonlimiting_filmDiff=self.nonlimiting_filmDiff,
-                                                  has_surfDiff=self.has_surfDiff, has_binding=self.has_binding, req_binding=self.req_binding, has_mult_bnd_states=self.has_mult_bnd_states, PTD=self.PTD)
+                                                  has_surfDiff=self.has_surfDiff, has_binding=self.has_binding, req_binding=self.req_binding, has_mult_bnd_states=self.has_mult_bnd_states, PTD=self.PTD,
+                                                  has_reaction_liquid=self.has_reaction_particle_liquid, has_reaction_solid=self.has_reaction_particle_solid)
             eqs[par_type] = eqs[par_type]
 
             boundary_conditions[par_type] = eq.particle_boundary(par_type, singleParticle=self.N_p == 1, nonlimiting_filmDiff=self.nonlimiting_filmDiff,
