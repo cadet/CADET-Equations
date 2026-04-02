@@ -188,6 +188,26 @@ def int_filmDiff_term(particle, numIdxBegin, numIdxEnd, singleParticle:bool, non
 
     return term
 
+
+# Reaction terms
+def bulk_reaction_term():
+    return r"f^{\mathrm{react},\b}_{i}\left( \vec{c}^{\b} \right)"
+
+
+def particle_liquid_reaction_term(singleParticle: bool):
+    if singleParticle:
+        return r"f^{\mathrm{react},\p}_{i}\left( \vec{c}^{\p}, \vec{c}^{\s} \right)"
+    else:
+        return r"f^{\mathrm{react},\p}_{j,i}\left( \vec{c}^{\p}, \vec{c}^{\s} \right)"
+
+
+def particle_solid_reaction_term(singleParticle: bool):
+    if singleParticle:
+        return r"f^{\mathrm{react},\s}_{i}\left( \vec{c}^{\p}, \vec{c}^{\s} \right)"
+    else:
+        return r"f^{\mathrm{react},\s}_{j,i}\left( \vec{c}^{\p}, \vec{c}^{\s} \right)"
+
+
 # Boundary conditions of the interstitial volume equations
 
 
@@ -301,23 +321,23 @@ int_vol_vars = {
 # Particle transport terms
 
 
-def particle_transport(particle, singleParticle: bool, nonlimiting_filmDiff: bool, has_surfDiff: bool, has_binding: bool, req_binding: bool, has_mult_bnd_states: bool, PTD:bool=False):
+def particle_transport(particle, singleParticle: bool, nonlimiting_filmDiff: bool, has_surfDiff: bool, has_binding: bool, req_binding: bool, has_mult_bnd_states: bool, PTD:bool=False, has_reaction_liquid:bool=False, has_reaction_solid:bool=False):
 
     ret_term = ""
 
     if particle.resolution == "0D":
         if nonlimiting_filmDiff and has_binding:
             ret_term = r"""\begin{align}""" + re.sub(r"{\\p}", r"{\\l}", particle_transport_homogeneous_solid(
-                req_binding, has_mult_bnd_states)) + r""", \end{align}"""
+                req_binding, has_mult_bnd_states, has_reaction_solid=has_reaction_solid)) + r""", \end{align}"""
         elif not has_binding:
             ret_term = r"""\begin{align}""" + re.sub(r"{\\p}", r"{\\l}", particle_transport_homogeneous_liquid(
-                has_binding, req_binding, has_mult_bnd_states)) + r""". \end{align}"""
+                has_binding, req_binding, has_mult_bnd_states, has_reaction_liquid=has_reaction_liquid)) + r""". \end{align}"""
         else:
             ret_term = particle_transport_homogeneous(
-                has_binding, req_binding, has_mult_bnd_states)
+                has_binding, req_binding, has_mult_bnd_states, has_reaction_liquid=has_reaction_liquid, has_reaction_solid=has_reaction_solid)
     else:
         ret_term = particle_transport_radial(
-            particle.geometry, has_surfDiff, has_binding, req_binding, has_mult_bnd_states)
+            particle.geometry, has_surfDiff, has_binding, req_binding, has_mult_bnd_states, has_reaction_liquid=has_reaction_liquid, has_reaction_solid=has_reaction_solid)
 
     if singleParticle:
         ret_term = re.sub(",j", "", ret_term)
@@ -328,7 +348,7 @@ def particle_transport(particle, singleParticle: bool, nonlimiting_filmDiff: boo
     return ret_term
 
 
-def particle_transport_homogeneous_liquid(has_binding: bool, req_binding: bool, has_mult_bnd_states: bool):
+def particle_transport_homogeneous_liquid(has_binding: bool, req_binding: bool, has_mult_bnd_states: bool, has_reaction_liquid:bool=False):
 
     bnd_term = r"f^{\mathrm{bind}}_{j,i} \left( \vec{c}^{\p}, \vec{c}^{\s} \right) "
 
@@ -347,6 +367,9 @@ def particle_transport_homogeneous_liquid(has_binding: bool, req_binding: bool, 
     elif has_binding:
         rhs_term += r"- \left( 1 - \varepsilon^{\mathrm{p}}_{j} \right) " + bnd_term
 
+    if has_reaction_liquid:
+        rhs_term += r" + " + particle_liquid_reaction_term(False)
+
     if has_binding and has_mult_bnd_states:  # add sum and bound state indices
         bnd_term = r"\sum_{k=1}^{N^{\mathrm{b}}_{i}}"
         lhs_term = re.sub("j,i", "j,i,k", lhs_term)
@@ -357,7 +380,7 @@ def particle_transport_homogeneous_liquid(has_binding: bool, req_binding: bool, 
           &=""" + rhs_term
 
 
-def particle_transport_homogeneous_solid(req_binding: bool, has_mult_bnd_states: bool):
+def particle_transport_homogeneous_solid(req_binding: bool, has_mult_bnd_states: bool, has_reaction_solid:bool=False):
 
     bnd_term = r"f^{\mathrm{bind}}_{j,i}\left( \vec{c}^{\p}, \vec{c}^{\s} \right)"
 
@@ -366,29 +389,31 @@ def particle_transport_homogeneous_solid(req_binding: bool, has_mult_bnd_states:
     else:
         lhs_term = r"\frac{\partial c^{\s}_{j,i}}{\partial t}"
 
+    react_term = ""
+    if has_reaction_solid:
+        react_term = r" + " + particle_solid_reaction_term(False)
+
     if has_mult_bnd_states:  # add bound state index
         lhs_term = re.sub("j,i", "j,i,k", lhs_term)
         bnd_term = re.sub("j,i", "j,i,k", bnd_term)
+        react_term = re.sub("j,i", "j,i,k", react_term)
 
     return r"""
           """ + lhs_term + r"""
-          &= """ + bnd_term
+          &= """ + bnd_term + react_term
 
 
-def particle_transport_homogeneous(has_binding: bool, req_binding: bool, has_mult_bnd_states: bool):
-
-    equation = particle_transport_homogeneous_liquid(
-        has_binding, req_binding, has_mult_bnd_states)
+def particle_transport_homogeneous(has_binding: bool, req_binding: bool, has_mult_bnd_states: bool, has_reaction_liquid:bool=False, has_reaction_solid:bool=False):
 
     return r"""
 \begin{align}
-""" + particle_transport_homogeneous_liquid(has_binding, req_binding, has_mult_bnd_states) + r""",\\
-""" + particle_transport_homogeneous_solid(req_binding, has_mult_bnd_states) + r""".
+""" + particle_transport_homogeneous_liquid(has_binding, req_binding, has_mult_bnd_states, has_reaction_liquid=has_reaction_liquid) + r""",\\
+""" + particle_transport_homogeneous_solid(req_binding, has_mult_bnd_states, has_reaction_solid=has_reaction_solid) + r""".
 \end{align}
 """
 
 
-def particle_transport_radial(geometry: str, has_surfDiff: bool, has_binding: bool, req_binding: bool, has_mult_bnd_states: bool):
+def particle_transport_radial(geometry: str, has_surfDiff: bool, has_binding: bool, req_binding: bool, has_mult_bnd_states: bool, has_reaction_liquid:bool=False, has_reaction_solid:bool=False):
 
     surfDiffTerm = ""
     binding_term = r"f^{\mathrm{bind}}_{j,i}\left( \vec{c}^{\p}, \vec{c}^{\s} \right) "
@@ -433,6 +458,11 @@ def particle_transport_radial(geometry: str, has_surfDiff: bool, has_binding: bo
                 
                 liquid_rhs += binding_term
 
+        if has_reaction_liquid:
+            liquid_rhs += r" + " + particle_liquid_reaction_term(False)
+        if has_reaction_solid and has_binding:
+            solid_rhs += r" + " + particle_solid_reaction_term(False)
+
         solid_eq = solid_lhs + r"&= " + solid_rhs
         liquid_eq = liquid_lhs + r"&= " + liquid_rhs
 
@@ -459,14 +489,17 @@ def particle_transport_radial(geometry: str, has_surfDiff: bool, has_binding: bo
         if has_surfDiff:
             surfDiffTerm = r"\left( 1 - \varepsilon^{\mathrm{p}}_{j} \right) \frac{1}{r} \frac{\partial }{\partial r} \left( r D_{j,i}^{\s} \frac{\partial c^{\s}_{j,i}}{\partial r} \right) + "
 
+        react_liq = r" + " + particle_liquid_reaction_term(False) if has_reaction_liquid else ""
+        react_sol = r" + " + particle_solid_reaction_term(False) if has_reaction_solid else ""
+
         return r"""
-\begin{align}    
+\begin{align}
 \varepsilon^{\mathrm{p}}_{j} \frac{\partial c^{\p}_{j,i}}{\partial t}
 &=
-\varepsilon^{\mathrm{p}}_{j} \frac{1}{r} \frac{\partial }{\partial r} \left( r D_{j,i}^{\p} \frac{\partial c^{\p}_{j,i}}{\partial r} \right) - \left( 1 - \varepsilon^{\mathrm{p}}_{j} \right) f^{\mathrm{bind}}_{j,i}\left( \vec{c}^{\p}, \vec{c}^{\s} \right), \\
+\varepsilon^{\mathrm{p}}_{j} \frac{1}{r} \frac{\partial }{\partial r} \left( r D_{j,i}^{\p} \frac{\partial c^{\p}_{j,i}}{\partial r} \right) - \left( 1 - \varepsilon^{\mathrm{p}}_{j} \right) f^{\mathrm{bind}}_{j,i}\left( \vec{c}^{\p}, \vec{c}^{\s} \right)""" + react_liq + r""", \\
      \left( 1 - \varepsilon^{\mathrm{p}}_{j} \right) \frac{\partial c^{\s}_{j,i}}{\partial t}
 &=
-""" + surfDiffTerm + r"""\left( 1 - \varepsilon^{\mathrm{p}}_{j} \right) f^{\mathrm{bind}}_{j,i}\left( \vec{c}^{\p}, \vec{c}^{\s} \right).
+""" + surfDiffTerm + r"""\left( 1 - \varepsilon^{\mathrm{p}}_{j} \right) f^{\mathrm{bind}}_{j,i}\left( \vec{c}^{\p}, \vec{c}^{\s} \right)""" + react_sol + r""".
 \end{align}
 """
     if geometry == "Slab":
@@ -474,14 +507,17 @@ def particle_transport_radial(geometry: str, has_surfDiff: bool, has_binding: bo
         if has_surfDiff:
             surfDiffTerm = r"\left( 1 - \varepsilon^{\mathrm{p}}_{j} \right) \frac{\partial }{\partial r} \left( D_{j,i}^{\s} \frac{\partial c^{\s}_{j,i}}{\partial r} \right) + "
 
+        react_liq = r" + " + particle_liquid_reaction_term(False) if has_reaction_liquid else ""
+        react_sol = r" + " + particle_solid_reaction_term(False) if has_reaction_solid else ""
+
         return r"""
-\begin{align}    
+\begin{align}
 \varepsilon^{\mathrm{p}}_{j} \frac{\partial c^{\p}_{j,i}}{\partial t}
 &=
-\varepsilon^{\mathrm{p}}_{j} \frac{\partial }{\partial r} \left( D_{j,i}^{\p} \frac{\partial c^{\p}_{j,i}}{\partial r} \right) - \left( 1 - \varepsilon^{\mathrm{p}}_{j} \right) f^{\mathrm{bind}}_{j,i}\left( \vec{c}^{\p}, \vec{c}^{\s} \right), \\
+\varepsilon^{\mathrm{p}}_{j} \frac{\partial }{\partial r} \left( D_{j,i}^{\p} \frac{\partial c^{\p}_{j,i}}{\partial r} \right) - \left( 1 - \varepsilon^{\mathrm{p}}_{j} \right) f^{\mathrm{bind}}_{j,i}\left( \vec{c}^{\p}, \vec{c}^{\s} \right)""" + react_liq + r""", \\
      \left( 1 - \varepsilon^{\mathrm{p}}_{j} \right) \frac{\partial c^{\s}_{j,i}}{\partial t}
 &=
-""" + surfDiffTerm + r"""\left( 1 - \varepsilon^{\mathrm{p}}_{j} \right) f^{\mathrm{bind}}_{j,i}\left( \vec{c}^{\p}, \vec{c}^{\s} \right).
+""" + surfDiffTerm + r"""\left( 1 - \varepsilon^{\mathrm{p}}_{j} \right) f^{\mathrm{bind}}_{j,i}\left( \vec{c}^{\p}, \vec{c}^{\s} \right)""" + react_sol + r""".
 \end{align}
 """
 
