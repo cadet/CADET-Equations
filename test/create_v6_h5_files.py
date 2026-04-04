@@ -1,6 +1,9 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
+SPDX-License-Identifier: GPL-3.0-only
+Copyright (c) 2026 Jan Michael Breuer
+See LICENSE file for details.
+
 Script to create v6-format HDF5 test files from existing v5 files.
 These files use the new CADET v6 interface:
 - UNIT_TYPE = COLUMN_MODEL_1D / COLUMN_MODEL_2D

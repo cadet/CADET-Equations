@@ -1,6 +1,10 @@
 # -*- coding: utf-8 -*-
 """
-Tests for dynamic reaction terms (issue #6).
+SPDX-License-Identifier: GPL-3.0-only
+Copyright (c) 2026 Jan Michael Breuer
+See LICENSE file for details.
+
+Tests for dynamic reaction terms
 """
 
 from streamlit.testing.v1 import AppTest
