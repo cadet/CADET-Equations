@@ -287,6 +287,11 @@ class Column:
                 self.has_angular_dispersion = st.sidebar.selectbox(
                     "Add angular Dispersion", ["Yes", "No"], key=r"has_angular_dispersion") == "Yes"
 
+        if advanced_mode_:
+            st.sidebar.write("Configure bulk reactions")
+            self.has_reaction_bulk = st.sidebar.selectbox(
+                "Add bulk liquid reaction", ["No", "Yes"], key=r"has_reaction_bulk") == "Yes"
+
         # Configure particle model
         st.sidebar.write("Configure particle model")
 
@@ -321,10 +326,10 @@ class Column:
                         geometry = st.sidebar.selectbox(f"Select geometry of particle type {j + 1}", [
                                                         "Sphere", "Cylinder", "Slab"], key=f"parType_{j+1}__geometry")
                     elif j == 0:
-                        resolution = re.search(r'\dD', st.sidebar.selectbox(f"Select spatial resolution of particles", [
+                        resolution = re.search(r'\dD', st.sidebar.selectbox("Select spatial resolution of particles", [
                                                "1D (radial coordinate)", "0D (homogeneous)"], key=r"particle_resolution")).group()
-                        has_core = st.sidebar.selectbox(f"Add impenetrable core-shell to particles (i.e. " + r"$R^\mathrm{pc} > 0$)", [
-                                                       "No", "Yes"], key=f"particle_has_core") == "Yes" if (resolution == "1D" and advanced_mode_) else False
+                        has_core = st.sidebar.selectbox("Add impenetrable core-shell to particles (i.e. " + r"$R^\mathrm{pc} > 0$)", [
+                                                       "No", "Yes"], key="particle_has_core") == "Yes" if (resolution == "1D" and advanced_mode_) else False
                         geometry = "Sphere"
 
                 with col2:
@@ -383,15 +388,15 @@ class Column:
         else:
             self.has_binding = False
 
-        if advanced_mode_:
-            st.sidebar.write("Configure reactions")
-            self.has_reaction_bulk = st.sidebar.selectbox(
-                "Add bulk liquid reaction", ["No", "Yes"], key=r"has_reaction_bulk") == "Yes"
-            if self.N_p > 0:
+        if advanced_mode_ and self.N_p > 0:
+            
+            st.sidebar.write("Configure particle reactions")
+            
+            if not self.nonlimiting_filmDiff:
                 self.has_reaction_particle_liquid = st.sidebar.selectbox(
                     "Add particle liquid reaction", ["No", "Yes"], key=r"has_reaction_particle_liquid") == "Yes"
-                self.has_reaction_particle_solid = st.sidebar.selectbox(
-                    "Add particle solid reaction", ["No", "Yes"], key=r"has_reaction_particle_solid") == "Yes"
+            self.has_reaction_particle_solid = st.sidebar.selectbox(
+                "Add particle solid reaction", ["No", "Yes"], key=r"has_reaction_particle_solid") == "Yes"
 
         self.vars_and_params()
 
