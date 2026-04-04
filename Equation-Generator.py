@@ -75,6 +75,7 @@ class Particle:
     interstitial_volume_resolution: str = None
     single_partype: bool = True
     PTD: bool = False
+    binding_model: str = "Arbitrary"
     has_reaction_liquid: bool = False
     has_reaction_solid: bool = False
     # volume fraction ?
@@ -128,11 +129,29 @@ class Particle:
         if self.has_binding:
             symbol_name_ = r"c^{\s}_{i}" if self.single_partype else r"c^{\s}_{j,i}"
             vars_and_params_.append({"Group" : 1, "Symbol": symbol_name_, "Description": r"particle solid concentration", "Unit": r"\frac{mol}{m^3}", "Dependence" : state_deps, "Domain" : eq.full_particle_conc_domain(column_resolution=self.interstitial_volume_resolution, particle_resolution=self.resolution, hasCore=self.has_core, with_par_index=False, with_time_domain=True)})
-            symbol_name_ = r"f^\mathrm{bind}_{j,i}" if self.PTD else r"f^\mathrm{bind}_{i}"
-            dep_ = r"\vec{c}^\mathrm{p}, \vec{c}^\mathrm{s}; j, i" if self.PTD else r"\vec{c}^\mathrm{p}, \vec{c}^\mathrm{s}; i"
-            vars_and_params_.append({"Group" : 10, "Symbol": symbol_name_, "Description": r"adsorption isotherm function", "Unit": r"\frac{1}{s}", "Dependence": dep_})
-            vars_and_params_.append({"Group" : 10.1, "Symbol": r"\vec{c}^\mathrm{p}", "Description": r"particle liquid components vector", "Unit": r"[\frac{mol}{m^3}]", "Dependence": state_deps})
-            vars_and_params_.append({"Group" : 10.1, "Symbol": r"\vec{c}^\mathrm{s}", "Description": r"particle solid components vector", "Unit": r"[\frac{mol}{m^3}]", "Dependence": state_deps})
+
+            if self.binding_model == "Arbitrary":
+                symbol_name_ = r"f^\mathrm{bind}_{j,i}" if self.PTD else r"f^\mathrm{bind}_{i}"
+                dep_ = r"\vec{c}^\mathrm{p}, \vec{c}^\mathrm{s}; j, i" if self.PTD else r"\vec{c}^\mathrm{p}, \vec{c}^\mathrm{s}; i"
+                vars_and_params_.append({"Group" : 10, "Symbol": symbol_name_, "Description": r"adsorption isotherm function", "Unit": r"\frac{1}{s}", "Dependence": dep_})
+                vars_and_params_.append({"Group" : 10.1, "Symbol": r"\vec{c}^\mathrm{p}", "Description": r"particle liquid components vector", "Unit": r"[\frac{mol}{m^3}]", "Dependence": state_deps})
+                vars_and_params_.append({"Group" : 10.1, "Symbol": r"\vec{c}^\mathrm{s}", "Description": r"particle solid components vector", "Unit": r"[\frac{mol}{m^3}]", "Dependence": state_deps})
+            else:
+                idx_ = "i" if self.single_partype else "j,i"
+                vars_and_params_.append({"Group" : 10, "Symbol": r"k^{\mathrm{a}}_{" + idx_ + r"}", "Description": r"adsorption rate constant", "Unit": r"\frac{m^3}{mol \cdot s}", "Dependence": idx_})
+                vars_and_params_.append({"Group" : 10, "Symbol": r"k^{\mathrm{d}}_{" + idx_ + r"}", "Description": r"desorption rate constant", "Unit": r"\frac{1}{s}", "Dependence": idx_})
+
+            if self.binding_model == "Langmuir":
+                idx_ = "i" if self.single_partype else "j,i"
+                vars_and_params_.append({"Group" : 10.1, "Symbol": r"q^{\mathrm{max}}_{" + idx_ + r"}", "Description": r"maximum binding capacity", "Unit": r"\frac{mol}{m^3}", "Dependence": idx_})
+
+            if self.binding_model == "SMA":
+                idx_ = "i" if self.single_partype else "j,i"
+                vars_and_params_.append({"Group" : 10.1, "Symbol": r"\nu_{" + idx_ + r"}", "Description": r"characteristic charge", "Unit": r"-", "Dependence": idx_})
+                vars_and_params_.append({"Group" : 10.1, "Symbol": r"\sigma_{" + idx_ + r"}", "Description": r"steric factor", "Unit": r"-", "Dependence": idx_})
+                vars_and_params_.append({"Group" : 10.1, "Symbol": r"\Lambda", "Description": r"ionic capacity (binding site concentration)", "Unit": r"\frac{mol}{m^3}", "Dependence": r"\text{constant}"})
+                vars_and_params_.append({"Group" : 10.1, "Symbol": r"q^{\mathrm{ref}}", "Description": r"reference solid phase concentration", "Unit": r"\frac{mol}{m^3}", "Dependence": r"\text{constant}"})
+                vars_and_params_.append({"Group" : 10.1, "Symbol": r"c^{\mathrm{ref}}", "Description": r"reference liquid phase concentration", "Unit": r"\frac{mol}{m^3}", "Dependence": r"\text{constant}"})
             
             if self.has_surfDiff:
                 symbol_name_ = r"D^\mathrm{s}_{i}" if self.single_partype else r"D^\mathrm{s}_{j,i}"
@@ -237,6 +256,8 @@ class Column:
 
     has_filter: bool = False
 
+    binding_model: str = "Arbitrary"
+
     has_reaction_bulk: bool = False
     has_reaction_particle_liquid: bool = False
     has_reaction_particle_solid: bool = False
@@ -340,9 +361,10 @@ class Column:
                         "Add binding", ["No", "Yes"], key=r"has_binding") == "Yes"
 
                     if self.has_binding:
-                        
+
                         self.req_binding = st.sidebar.selectbox("Binding kinetics mode", [
                                                                 "Kinetic", "Rapid-equilibrium"], key=r"req_binding") == "Rapid-equilibrium"
+                        self.binding_model = st.sidebar.selectbox("Binding model", eq.BINDING_MODELS, key=r"binding_model")
                         self.has_mult_bnd_states = st.sidebar.selectbox("Add multiple bound states", [
                                                                         "No", "Yes"], key=r"has_mult_bnd_states") == "Yes" if advanced_mode_ else False
                         self.has_surfDiff = st.sidebar.selectbox("Add surface diffusion", [
@@ -361,6 +383,7 @@ class Column:
                         interstitial_volume_resolution=self.resolution,
                         single_partype=(self.N_p == 1),
                         PTD=self.PTD,
+                        binding_model=self.binding_model,
                         has_reaction_liquid=self.has_reaction_particle_liquid,
                         has_reaction_solid=self.has_reaction_particle_solid
                     )
@@ -638,7 +661,8 @@ class Column:
 
             eqs[par_type] = eq.particle_transport(par_type, singleParticle=self.N_p == 1, nonlimiting_filmDiff=self.nonlimiting_filmDiff,
                                                   has_surfDiff=self.has_surfDiff, has_binding=self.has_binding, req_binding=self.req_binding, has_mult_bnd_states=self.has_mult_bnd_states, PTD=self.PTD,
-                                                  has_reaction_liquid=self.has_reaction_particle_liquid, has_reaction_solid=self.has_reaction_particle_solid)
+                                                  has_reaction_liquid=self.has_reaction_particle_liquid, has_reaction_solid=self.has_reaction_particle_solid,
+                                                  binding_model=self.binding_model)
             eqs[par_type] = eqs[par_type]
 
             boundary_conditions[par_type] = eq.particle_boundary(par_type, singleParticle=self.N_p == 1, nonlimiting_filmDiff=self.nonlimiting_filmDiff,
@@ -734,6 +758,10 @@ class Column:
         for idx in range(0, len(asmpts["General model assumptions"])):
             
             asmpts["General model assumptions"][idx] = rerender_variables(asmpts["General model assumptions"][idx], var_format_)
+            
+        if not self.binding_model == "Arbitrary":
+            
+            asmpts.update({"Binding model assumptions": eq.binding_model_assumptions(self.binding_model)})
             
         return asmpts
 
@@ -1040,11 +1068,13 @@ if column_model.N_p > 0:
         eq_type_ = "reaction" if column_model.particle_models[0].resolution == "0D" else "diffusion-reaction"
         
         tmp_str = r" and all particle sizes " + nPar_list if column_model.N_p > 1 else r""
+        
+        whatComp = eq.primary_binding_eq_what_comps(column_model.binding_model)
+        
         write_and_save(
-            "In the particles, mass transfer is governed by " + eq_type_ + " equations in " + eq.full_particle_conc_domain(column_model.resolution, par_type.resolution, par_type.has_core, with_par_index=False, with_time_domain=True) + r" and for all components" + tmp_str)
+            "In the particles, mass transfer is governed by " + eq_type_ + " equations in " + eq.full_particle_conc_domain(column_model.resolution, par_type.resolution, par_type.has_core, with_par_index=False, with_time_domain=True) + r" and for " + whatComp + " components" + tmp_str)
 
         write_and_save(particle_eq[par_type], as_latex=True)
-        cur_par_count += column_model.par_type_counts[par_type]
 
         if not particle_bc[par_type] == "":
             write_and_save("with boundary conditions")
@@ -1052,6 +1082,41 @@ if column_model.N_p > 0:
 
         if show_eq_description:
             write_and_save("Here, " + column_model.particle_models[0].vars_params_description())
+            
+            
+        # Some more complicated binding models require additional equations
+        if column_model.binding_model == "SMA" and column_model.has_binding: 
+            
+            PTD_ = column_model.PTD and column_model.N_p > 1
+            write_and_save(r"The number of available binding sites $\bar{q}_0$ is given by")
+            write_and_save(r"\begin{align}" + eq.sma_free_binding_sites(PTD=PTD_) + r".\end{align}", as_latex=True)
+            
+            write_and_save(
+                "For the salt component, mass transfer is governed by " + eq_type_ + " equations in " + eq.full_particle_conc_domain(column_model.resolution, par_type.resolution, par_type.has_core, with_par_index=False, with_time_domain=True) + tmp_str)
+            
+            # The salt component is in rapid equilibrium binding mode
+            tmpReqBnd = column_model.req_binding
+            column_model.req_binding = True
+            tmpBndModel = column_model.binding_model
+            column_model.binding_model = "SMA_salt"
+            particle_eq_salt, particle_bc_salt = column_model.particle_equations()
+            column_model.req_binding = tmpReqBnd
+            column_model.binding_model = tmpBndModel
+            
+            if PTD_:
+                write_and_save(re.sub(r"_{i}", r"_{0}", particle_eq_salt[par_type]), as_latex=True)
+                re.sub(r"_{i}", r"_{0}", particle_bc_salt[par_type])
+            else:
+                write_and_save(re.sub(r"_{j,i}", r"_{j,0}", particle_eq_salt[par_type]), as_latex=True)
+                re.sub(r"_{j,i}", r"_{j,0}", particle_bc_salt[par_type])
+            
+            if not particle_bc_salt[par_type] == "":
+                write_and_save("where the counter-ion concentration $c^{\s}_0$ satisfies the electroneutrality constraint. Boundary conditions are")
+                write_and_save(particle_bc_salt[par_type], as_latex=True)
+            else:
+               write_and_save("where the counter-ion concentration $c^{\s}_0$ satisfies the electroneutrality constraint.")
+                        
+        cur_par_count += column_model.par_type_counts[par_type]
 
 write_and_save("Consistent initial values for all solution variables (concentrations) are defined at $t = 0$.")
 
