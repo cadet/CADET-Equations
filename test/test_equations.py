@@ -666,3 +666,159 @@ def test_particle_transport_radial_reaction(geometry):
     assert r"f^{\mathrm{react},\p}" in with_react
     assert r"f^{\mathrm{react},\s}" in with_react
     assert r"f^{\mathrm{react}" not in without_react
+
+
+# %% Binding model terms
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+@pytest.mark.parametrize("PTD, expected_idx", [
+    (True, "j,i"),
+    (False, "i"),
+])
+def test_binding_term_arbitrary(PTD, expected_idx):
+    """Arbitrary binding term should use f^bind with correct indices."""
+    result = eq.binding_term_arbitrary(PTD=PTD)
+    assert r"f^{\mathrm{bind}}" in result
+    assert expected_idx in result
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+@pytest.mark.parametrize("PTD, expected_idx", [
+    (True, "j,i"),
+    (False, "i"),
+])
+def test_binding_term_linear(PTD, expected_idx):
+    """Linear binding term should contain k_a, k_d, c^p, and c^s."""
+    result = eq.binding_term_linear(PTD=PTD)
+    assert r"k^{\mathrm{a}}" in result
+    assert r"k^{\mathrm{d}}" in result
+    assert r"c^{\p}" in result
+    assert r"c^{\s}" in result
+    assert expected_idx in result
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+@pytest.mark.parametrize("PTD, expected_idx", [
+    (True, "j,i"),
+    (False, "i"),
+])
+def test_binding_term_langmuir(PTD, expected_idx):
+    """Langmuir binding term should contain k_a, k_d, q_max, and summation."""
+    result = eq.binding_term_langmuir(PTD=PTD)
+    assert r"k^{\mathrm{a}}" in result
+    assert r"k^{\mathrm{d}}" in result
+    assert r"q^{\mathrm{max}}" in result
+    assert r"\sum" in result
+    assert expected_idx in result
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+@pytest.mark.parametrize("PTD, expected_idx", [
+    (True, "j,i"),
+    (False, "i"),
+])
+def test_binding_term_sma(PTD, expected_idx):
+    """SMA binding term should contain k_a, k_d, nu, bar_q, and reference concentrations."""
+    result = eq.binding_term_sma(PTD=PTD)
+    assert r"k^{\mathrm{a}}" in result
+    assert r"k^{\mathrm{d}}" in result
+    assert r"\nu" in result
+    assert r"\bar{q}" in result
+    assert r"q^{\mathrm{ref}}" in result
+    assert r"c^{\mathrm{ref}}" in result
+    assert expected_idx in result
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+@pytest.mark.parametrize("PTD", [True, False])
+def test_sma_free_binding_sites(PTD):
+    """SMA free binding sites should contain Lambda, nu, sigma, and summation."""
+    result = eq.sma_free_binding_sites(PTD=PTD)
+    assert r"\bar{q}" in result
+    assert r"\Lambda" in result
+    assert r"\nu" in result
+    assert r"\sigma" in result
+    assert r"\sum" in result
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+@pytest.mark.parametrize("PTD", [True, False])
+def test_sma_electroneutrality(PTD):
+    """SMA electroneutrality should contain Lambda, nu, and summation."""
+    result = eq.sma_electroneutrality(PTD=PTD)
+    assert r"\Lambda" in result
+    assert r"\nu" in result
+    assert r"\sum" in result
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+@pytest.mark.parametrize("model", eq.BINDING_MODELS)
+def test_get_binding_term(model):
+    """get_binding_term should return a non-empty string for all known models."""
+    result = eq.get_binding_term(model, PTD=True)
+    assert isinstance(result, str)
+    assert len(result) > 0
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_get_binding_term_unknown_model_falls_back():
+    """Unknown binding model should fall back to arbitrary."""
+    result = eq.get_binding_term("UnknownModel", PTD=True)
+    assert r"f^{\mathrm{bind}}" in result
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+@pytest.mark.parametrize("binding_model, expected_fragment", [
+    ("Arbitrary", r"f^{\mathrm{bind}}"),
+    ("Linear", r"k^{\mathrm{a}}"),
+    ("Langmuir", r"q^{\mathrm{max}}"),
+    ("SMA", r"\bar{q}"),
+])
+def test_particle_transport_radial_binding_model(binding_model, expected_fragment):
+    """Radial transport should use correct binding term based on binding_model."""
+    result = eq.particle_transport_radial(
+        "Sphere", has_surfDiff=False, has_binding=True,
+        req_binding=False, has_mult_bnd_states=False,
+        binding_model=binding_model)
+    assert expected_fragment in result
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+@pytest.mark.parametrize("binding_model, expected_fragment", [
+    ("Arbitrary", r"f^{\mathrm{bind}}"),
+    ("Linear", r"k^{\mathrm{a}}"),
+    ("Langmuir", r"q^{\mathrm{max}}"),
+    ("SMA", r"\bar{q}"),
+])
+def test_particle_transport_homogeneous_binding_model(binding_model, expected_fragment):
+    """Homogeneous transport should use correct binding term based on binding_model."""
+    result = eq.particle_transport_homogeneous(
+        has_binding=True, req_binding=False, has_mult_bnd_states=False,
+        binding_model=binding_model)
+    assert expected_fragment in result
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+@pytest.mark.parametrize("binding_model, expected_fragment", [
+    ("Arbitrary", r"f^{\mathrm{bind}}"),
+    ("Linear", r"k^{\mathrm{d}}"),
+])
+def test_particle_transport_full_binding_model(binding_model, expected_fragment):
+    """particle_transport should pass binding_model through to sub-functions."""
+    particle = _make_particle(resolution="1D", geometry="Sphere")
+    result = eq.particle_transport(
+        particle, singleParticle=True, nonlimiting_filmDiff=False,
+        has_surfDiff=False, has_binding=True, req_binding=False,
+        has_mult_bnd_states=False, PTD=False, binding_model=binding_model)
+    assert expected_fragment in result

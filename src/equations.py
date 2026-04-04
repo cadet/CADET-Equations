@@ -124,6 +124,105 @@ def particle_asmpt(resolution: str, has_surfDiff: bool):
     elif resolution == "1D":
         return particle_1D_asmpt(has_surfDiff)
 
+# %% Binding model equations
+
+BINDING_MODELS = ["Arbitrary", "Linear", "Langmuir", "SMA"]
+
+
+def binding_term_arbitrary(PTD: bool = True):
+    """Return the arbitrary binding function f^bind (default behavior)."""
+    idx = "j,i" if PTD else "i"
+    return r"f^{\mathrm{bind}}_{" + idx + r"}\left( \vec{c}^{\p}, \vec{c}^{\s} \right)"
+
+
+def binding_term_linear(PTD: bool = True):
+    """Return the linear binding model equation: k_a * c^p - k_d * c^s."""
+    idx = "j,i" if PTD else "i"
+    return r"k^{\mathrm{a}}_{" + idx + r"} c^{\p}_{" + idx + r"} - k^{\mathrm{d}}_{" + idx + r"} c^{\s}_{" + idx + r"} "
+
+
+def binding_term_langmuir(PTD: bool = True):
+    """Return the multi-component Langmuir binding model equation."""
+    idx = "j,i" if PTD else "i"
+    idx_sum = "j,m" if PTD else "m"
+    return (r"k^{\mathrm{a}}_{" + idx + r"} c^{\p}_{" + idx + r"} q^{\mathrm{max}}_{" + idx + r"}"
+            r" \left( 1 - \sum_{m=0}^{N^{\mathrm{c}} - 1} \frac{c^{\s}_{" + idx_sum + r"}}{q^{\mathrm{max}}_{" + idx_sum + r"}} \right)"
+            r" - k^{\mathrm{d}}_{" + idx + r"} c^{\s}_{" + idx + r"} ")
+
+
+def binding_term_sma(PTD: bool = True):
+    """Return the steric mass action (SMA) binding model equation."""
+    idx = "j,i" if PTD else "i"
+    idx_0 = "j,0" if PTD else "0"
+    return (r"k^{\mathrm{a}}_{" + idx + r"} c^{\p}_{" + idx + r"}"
+            r" \left( \frac{\bar{q}_{" + idx_0 + r"}}{q^{\mathrm{ref}}} \right)^{\nu_{" + idx + r"}}"
+            r" - k^{\mathrm{d}}_{" + idx + r"} c^{\s}_{" + idx + r"}"
+            r" \left( \frac{c^{\p}_{" + idx_0 + r"}}{c^{\mathrm{ref}}} \right)^{\nu_{" + idx + r"}} ")
+
+
+def sma_free_binding_sites(PTD: bool = True):
+    """Return the SMA free binding sites equation (steric availability)."""
+    idx = "j,m" if PTD else "m"
+    idx_0 = "j,0" if PTD else "0"
+    return (r"\bar{q}_{" + idx_0 + r"} = \Lambda - \sum_{m=1}^{N^{\mathrm{c}} - 1}"
+            r" \left( \nu_{" + idx + r"} + \sigma_{" + idx + r"} \right) c^{\s}_{" + idx + r"}")
+
+
+def sma_electroneutrality(PTD: bool = True):
+    """Return the SMA counter-ion/electroneutrality constraint."""
+    idx = "j,m" if PTD else "m"
+    idx_0 = "j,0" if PTD else "0"
+    return (r"- c^{\s}_{" + idx_0 + r"} + \Lambda - \sum_{m=1}^{N^{\mathrm{c}} - 1}"
+            r" \nu_{" + idx + r"} c^{\s}_{" + idx + r"}")
+
+
+_BINDING_TERM_FUNCS = {
+    "Arbitrary": binding_term_arbitrary,
+    "Linear": binding_term_linear,
+    "Langmuir": binding_term_langmuir,
+    "SMA": binding_term_sma,
+    "SMA_salt": sma_electroneutrality,
+}
+
+def binding_model_assumptions(binding_model: str):
+    
+    if binding_model == "Arbitrary":
+        return ["No custom assumptions"]
+    elif binding_model in ["Linear"]:
+        return [
+            "each component binds independently, that is, there are no competitive effects;",
+            "the capacity of the resin is unbounded;",
+            r"for details see Guiochon, G., Shirazi, D. G., & Felinger, A. (2006). Fundamentals of preparative and nonlinear chromatography. Academic Press.",
+            ]
+    elif binding_model == "Langmuir":
+        return [
+            "there is a finite number of binding sites on the stationary phase. Adsorption therefore saturates as the available capacity is approached, and different components compete for the same sites;"
+            r"for the original source see Langmuir, Irving (1916-11). Solids and Liquids. Part I. Solids. Journal of the American Chemical Society. doi:10.1021/ja02268a002",
+            r"for further details see Guiochon, G., Shirazi, D. G., & Felinger, A. (2006). Fundamentals of preparative and nonlinear chromatography. Academic Press.",
+            ]
+    elif binding_model == "SMA":
+        return [
+            "charged species interact with charged ligands on the resin;",
+            "electroneutrality is enforced via displacing counter-ions;",
+            "steric sheilding of binding sites may take place;",
+            r"for the original source see Brooks, Clayton A. and Cramer, Steven M. (1992). Steric mass-action ion exchange: Displacement profiles and induced salt gradients. AIChE Journal. doi:10.1002/aic.690381212;",
+            r"for the extension to multiple bound states see Diedrich, Juliane and Heymann, William and Leweke, Samuel and Hunt, Stephen and Todd, Robert and Kunert, Christian and Johnson, Will and von Lieres, Eric. (2017). Multi-state steric mass action model and case study on complex high loading behavior of mAb on ion exchange tentacle resin. Journal of Chromatography A. doi:10.1016/j.chroma.2017.09.039;",
+            ]
+    else:
+        return None
+
+def get_binding_term(binding_model: str, PTD: bool = True):
+    """Get the binding term LaTeX string for the specified model."""
+    return _BINDING_TERM_FUNCS.get(binding_model, binding_term_arbitrary)(PTD)
+
+def primary_binding_eq_what_comps(binding_model: str):
+    """Determines for which components the primary binding equation holds"""
+    
+    if binding_model == "SMA":
+        return "all non-salt"
+    else:
+        return "all"
+    
 # %% Equation definitions
 
 
@@ -323,36 +422,36 @@ int_vol_vars = {
 # Particle transport terms
 
 
-def particle_transport(particle, singleParticle: bool, nonlimiting_filmDiff: bool, has_surfDiff: bool, has_binding: bool, req_binding: bool, has_mult_bnd_states: bool, PTD:bool=False, has_reaction_liquid:bool=False, has_reaction_solid:bool=False):
+def particle_transport(particle, singleParticle: bool, nonlimiting_filmDiff: bool, has_surfDiff: bool, has_binding: bool, req_binding: bool, has_mult_bnd_states: bool, PTD:bool=False, has_reaction_liquid:bool=False, has_reaction_solid:bool=False, binding_model:str="Arbitrary"):
 
     ret_term = ""
 
     if particle.resolution == "0D":
         if nonlimiting_filmDiff and has_binding:
             ret_term = r"""\begin{align}""" + re.sub(r"{\\p}", r"{\\l}", particle_transport_homogeneous_solid(
-                req_binding, has_mult_bnd_states, has_reaction_solid=has_reaction_solid)) + r""", \end{align}"""
+                req_binding, has_mult_bnd_states, has_reaction_solid=has_reaction_solid, binding_model=binding_model)) + r""", \end{align}"""
         elif not has_binding:
             ret_term = r"""\begin{align}""" + re.sub(r"{\\p}", r"{\\l}", particle_transport_homogeneous_liquid(
-                has_binding, req_binding, has_mult_bnd_states, has_reaction_liquid=has_reaction_liquid)) + r""". \end{align}"""
+                has_binding, req_binding, has_mult_bnd_states, has_reaction_liquid=has_reaction_liquid, binding_model=binding_model)) + r""". \end{align}"""
         else:
             ret_term = particle_transport_homogeneous(
-                has_binding, req_binding, has_mult_bnd_states, has_reaction_liquid=has_reaction_liquid, has_reaction_solid=has_reaction_solid)
+                has_binding, req_binding, has_mult_bnd_states, has_reaction_liquid=has_reaction_liquid, has_reaction_solid=has_reaction_solid, binding_model=binding_model)
     else:
         ret_term = particle_transport_radial(
-            particle.geometry, has_surfDiff, has_binding, req_binding, has_mult_bnd_states, has_reaction_liquid=has_reaction_liquid, has_reaction_solid=has_reaction_solid)
+            particle.geometry, has_surfDiff, has_binding, req_binding, has_mult_bnd_states, has_reaction_liquid=has_reaction_liquid, has_reaction_solid=has_reaction_solid, binding_model=binding_model)
 
     if singleParticle:
         ret_term = re.sub(",j", "", ret_term)
         ret_term = re.sub("j,", "", ret_term)
-    elif not PTD:
+    elif not PTD and binding_model == "Arbitrary":
         ret_term = re.sub(r"f\^\{\\mathrm\{bind\}\}_\{j,i\}", r"f^{\\mathrm{bind}}_{i}", ret_term)
 
     return ret_term
 
 
-def particle_transport_homogeneous_liquid(has_binding: bool, req_binding: bool, has_mult_bnd_states: bool, has_reaction_liquid:bool=False):
+def particle_transport_homogeneous_liquid(has_binding: bool, req_binding: bool, has_mult_bnd_states: bool, has_reaction_liquid:bool=False, binding_model:str="Arbitrary"):
 
-    bnd_term = r"f^{\mathrm{bind}}_{j,i} \left( \vec{c}^{\p}, \vec{c}^{\s} \right) "
+    bnd_term = get_binding_term(binding_model, PTD=True)
 
     lhs_term = r"\varepsilon^{\mathrm{p}}_{j}" if has_binding else ""
     lhs_term += r"\frac{\partial c^{\p}_{j,i}}{\partial t} "
@@ -364,6 +463,9 @@ def particle_transport_homogeneous_liquid(has_binding: bool, req_binding: bool, 
         else:
             bnd_term = r"\sum_{k=1}^{N^{\mathrm{b}}_{i}} " + bnd_term
 
+    if not binding_model == "Arbitrary":
+        bnd_term = r"\left(" + bnd_term + r"\right)"
+
     if has_binding and req_binding:
         lhs_term += r" + \left( 1 - \varepsilon^{\mathrm{p}}_{j}\right) \frac{\partial c^{\s}_{j,i}}{\partial t} "
     elif has_binding:
@@ -373,7 +475,6 @@ def particle_transport_homogeneous_liquid(has_binding: bool, req_binding: bool, 
         rhs_term += r" + " + particle_liquid_reaction_term(False)
 
     if has_binding and has_mult_bnd_states:  # add sum and bound state indices
-        bnd_term = r"\sum_{k=1}^{N^{\mathrm{b}}_{i}}"
         lhs_term = re.sub("j,i", "j,i,k", lhs_term)
         rhs_term = re.sub("j,i", "j,i,k", rhs_term)
 
@@ -382,9 +483,9 @@ def particle_transport_homogeneous_liquid(has_binding: bool, req_binding: bool, 
           &=""" + rhs_term
 
 
-def particle_transport_homogeneous_solid(req_binding: bool, has_mult_bnd_states: bool, has_reaction_solid:bool=False):
+def particle_transport_homogeneous_solid(req_binding: bool, has_mult_bnd_states: bool, has_reaction_solid:bool=False, binding_model:str="Arbitrary"):
 
-    bnd_term = r"f^{\mathrm{bind}}_{j,i}\left( \vec{c}^{\p}, \vec{c}^{\s} \right)"
+    bnd_term = get_binding_term(binding_model, PTD=True)
 
     if req_binding:
         lhs_term = r"0"
@@ -405,20 +506,20 @@ def particle_transport_homogeneous_solid(req_binding: bool, has_mult_bnd_states:
           &= """ + bnd_term + react_term
 
 
-def particle_transport_homogeneous(has_binding: bool, req_binding: bool, has_mult_bnd_states: bool, has_reaction_liquid:bool=False, has_reaction_solid:bool=False):
+def particle_transport_homogeneous(has_binding: bool, req_binding: bool, has_mult_bnd_states: bool, has_reaction_liquid:bool=False, has_reaction_solid:bool=False, binding_model:str="Arbitrary"):
 
     return r"""
 \begin{align}
-""" + particle_transport_homogeneous_liquid(has_binding, req_binding, has_mult_bnd_states, has_reaction_liquid=has_reaction_liquid) + r""",\\
-""" + particle_transport_homogeneous_solid(req_binding, has_mult_bnd_states, has_reaction_solid=has_reaction_solid) + r""".
+""" + particle_transport_homogeneous_liquid(has_binding, req_binding, has_mult_bnd_states, has_reaction_liquid=has_reaction_liquid, binding_model=binding_model) + r""",\\
+""" + particle_transport_homogeneous_solid(req_binding, has_mult_bnd_states, has_reaction_solid=has_reaction_solid, binding_model=binding_model) + r""".
 \end{align}
 """
 
 
-def particle_transport_radial(geometry: str, has_surfDiff: bool, has_binding: bool, req_binding: bool, has_mult_bnd_states: bool, has_reaction_liquid:bool=False, has_reaction_solid:bool=False):
+def particle_transport_radial(geometry: str, has_surfDiff: bool, has_binding: bool, req_binding: bool, has_mult_bnd_states: bool, has_reaction_liquid:bool=False, has_reaction_solid:bool=False, binding_model:str="Arbitrary"):
 
     surfDiffTerm = ""
-    binding_term = r"f^{\mathrm{bind}}_{j,i}\left( \vec{c}^{\p}, \vec{c}^{\s} \right) "
+    binding_term = get_binding_term(binding_model, PTD=True)
 
     if geometry == "Sphere":
 
@@ -458,7 +559,10 @@ def particle_transport_radial(geometry: str, has_surfDiff: bool, has_binding: bo
                 if has_mult_bnd_states:
                     liquid_rhs += r"\sum_{k=1}^{N^{\mathrm{b}}_{i}} "
                 
-                liquid_rhs += binding_term
+                if not binding_model == "Arbitrary":
+                    liquid_rhs += r"\left(" + binding_term + r"\right)"
+                else:
+                    liquid_rhs += binding_term
 
         if has_reaction_liquid:
             liquid_rhs += r" + " + particle_liquid_reaction_term(False)
@@ -498,10 +602,10 @@ def particle_transport_radial(geometry: str, has_surfDiff: bool, has_binding: bo
 \begin{align}
 \varepsilon^{\mathrm{p}}_{j} \frac{\partial c^{\p}_{j,i}}{\partial t}
 &=
-\varepsilon^{\mathrm{p}}_{j} \frac{1}{r} \frac{\partial }{\partial r} \left( r D_{j,i}^{\p} \frac{\partial c^{\p}_{j,i}}{\partial r} \right) - \left( 1 - \varepsilon^{\mathrm{p}}_{j} \right) f^{\mathrm{bind}}_{j,i}\left( \vec{c}^{\p}, \vec{c}^{\s} \right)""" + react_liq + r""", \\
+\varepsilon^{\mathrm{p}}_{j} \frac{1}{r} \frac{\partial }{\partial r} \left( r D_{j,i}^{\p} \frac{\partial c^{\p}_{j,i}}{\partial r} \right) - \left( 1 - \varepsilon^{\mathrm{p}}_{j} \right) """ + binding_term + react_liq + r""", \\
      \left( 1 - \varepsilon^{\mathrm{p}}_{j} \right) \frac{\partial c^{\s}_{j,i}}{\partial t}
 &=
-""" + surfDiffTerm + r"""\left( 1 - \varepsilon^{\mathrm{p}}_{j} \right) f^{\mathrm{bind}}_{j,i}\left( \vec{c}^{\p}, \vec{c}^{\s} \right)""" + react_sol + r""".
+""" + surfDiffTerm + r"""\left( 1 - \varepsilon^{\mathrm{p}}_{j} \right) """ + binding_term + react_sol + r""".
 \end{align}
 """
     if geometry == "Slab":
@@ -516,10 +620,10 @@ def particle_transport_radial(geometry: str, has_surfDiff: bool, has_binding: bo
 \begin{align}
 \varepsilon^{\mathrm{p}}_{j} \frac{\partial c^{\p}_{j,i}}{\partial t}
 &=
-\varepsilon^{\mathrm{p}}_{j} \frac{\partial }{\partial r} \left( D_{j,i}^{\p} \frac{\partial c^{\p}_{j,i}}{\partial r} \right) - \left( 1 - \varepsilon^{\mathrm{p}}_{j} \right) f^{\mathrm{bind}}_{j,i}\left( \vec{c}^{\p}, \vec{c}^{\s} \right)""" + react_liq + r""", \\
+\varepsilon^{\mathrm{p}}_{j} \frac{\partial }{\partial r} \left( D_{j,i}^{\p} \frac{\partial c^{\p}_{j,i}}{\partial r} \right) - \left( 1 - \varepsilon^{\mathrm{p}}_{j} \right) """ + binding_term + react_liq + r""", \\
      \left( 1 - \varepsilon^{\mathrm{p}}_{j} \right) \frac{\partial c^{\s}_{j,i}}{\partial t}
 &=
-""" + surfDiffTerm + r"""\left( 1 - \varepsilon^{\mathrm{p}}_{j} \right) f^{\mathrm{bind}}_{j,i}\left( \vec{c}^{\p}, \vec{c}^{\s} \right)""" + react_sol + r""".
+""" + surfDiffTerm + r"""\left( 1 - \varepsilon^{\mathrm{p}}_{j} \right) """ + binding_term + react_sol + r""".
 \end{align}
 """
 

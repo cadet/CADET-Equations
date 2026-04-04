@@ -10,6 +10,13 @@ import h5py
 
 import re
 
+CADET_binding_model_map = {
+    'LINEAR': 'Linear',
+    'MULTI_COMPONENT_LANGMUIR': 'Langmuir',
+    'STERIC_MASS_ACTION': 'SMA',
+}
+
+
 CADET_column_unit_types = [
                     'GENERAL_RATE_MODEL', 'LUMPED_RATE_MODEL_WITHOUT_PORES', 'LUMPED_RATE_MODEL_WITH_PORES',
                     'GENERAL_RATE_MODEL_DG', 'LUMPED_RATE_MODEL_WITHOUT_PORES_DG', 'LUMPED_RATE_MODEL_WITH_PORES_DG',
@@ -172,6 +179,7 @@ def extract_config_data_from_unit(unit_type, h5_unit_group):
         config.pop('has_radial_dispersion', None)
         config.pop('has_mult_bnd_states', None)
         config.pop('PTD', None)
+        config.pop('binding_model', None)
 
     return config
 
@@ -205,6 +213,7 @@ def _extract_v5_particle_config(config, unit_type, h5_unit_group, par_model):
         if binding_model != "NONE":
 
             config['has_binding'] = "Yes"
+
 
             config['has_mult_bnd_states'] = "No"
 
@@ -258,6 +267,7 @@ def _extract_v6_particle_config(config, h5_unit_group, par_model):
         if binding_model != "NONE":
 
             config['has_binding'] = "Yes"
+
 
             config['has_mult_bnd_states'] = "No"
 
