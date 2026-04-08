@@ -693,47 +693,50 @@ class Column:
     def model_name(self):
 
         if self.resolution == "0D":
-            
+
             if self.N_p > 0:
                 model_name = "Finite Bath"
-                
+
                 if self.particle_models[0].resolution == "0D":
                     model_name += " without Pores" if self.nonlimiting_filmDiff else " with Pores"
                 else:
                     model_name = "General " + model_name
-                
-                return model_name
             else:
                 return "Continuously Stirred Tank"
 
-        if self.has_angular_coordinate:
-            model_name = "3D "
-        elif self.has_radial_coordinate:
-            model_name = "2D "
-        # elif self.has_axial_coordinate: # default case, no name prefix !
         else:
-            model_name = ""
 
-        if self.N_p > 0:
-
-            if self.particle_models[0].resolution == "1D":
-                model_name += "General Rate Model"
-
+            if self.has_angular_coordinate:
+                model_name = "3D "
+            elif self.has_radial_coordinate:
+                model_name = "2D "
+            # elif self.has_axial_coordinate: # default case, no name prefix !
             else:
-                model_name += "Lumped Rate Model"
+                model_name = ""
 
-                model_name += " without Pores" if self.nonlimiting_filmDiff else " with Pores"
+            if self.N_p > 0:
 
-            if self.N_p > 1:
-                if not any(par.geometry != "Sphere" for par in self.particle_models):
-                    model_name += " with particle-size distribution"  # particle-size distribution
+                if self.particle_models[0].resolution == "1D":
+                    model_name += "General Rate Model"
+
                 else:
-                    # particle-type distribution # TODO use when different kinds of geometry or binding
-                    model_name += " with particle-type distribution"
-        else:
-            if self.has_axial_dispersion or self.has_radial_dispersion or self.has_angular_dispersion:
-                model_name += "Dispersive "
-            model_name += "Plug Flow"  # Reactor if we have reactions
+                    model_name += "Lumped Rate Model"
+
+                    model_name += " without Pores" if self.nonlimiting_filmDiff else " with Pores"
+
+                if self.N_p > 1:
+                    if not any(par.geometry != "Sphere" for par in self.particle_models):
+                        model_name += " with particle-size distribution"  # particle-size distribution
+                    else:
+                        # particle-type distribution # TODO use when different kinds of geometry or binding
+                        model_name += " with particle-type distribution"
+            else:
+                if self.has_axial_dispersion or self.has_radial_dispersion or self.has_angular_dispersion:
+                    model_name += "Dispersive "
+                model_name += "Plug Flow"  # Reactor if we have reactions
+
+        if self.has_binding and self.binding_model != "Arbitrary":
+            model_name += f" with {self.binding_model} binding"
 
         return model_name
 
