@@ -1046,10 +1046,10 @@ if column_model.N_p > 0:
                 re.sub(r"_{j,i}", r"_{j,0}", particle_bc_salt[par_type])
             
             if not particle_bc_salt[par_type] == "":
-                write_and_save("where the counter-ion concentration $c^{\s}_0$ satisfies the electroneutrality constraint. Boundary conditions are")
+                write_and_save(r"where the counter-ion concentration $c^{\s}_0$ satisfies the electroneutrality constraint. Boundary conditions are")
                 write_and_save(particle_bc_salt[par_type], as_latex=True)
             else:
-               write_and_save("where the counter-ion concentration $c^{\s}_0$ satisfies the electroneutrality constraint.")
+               write_and_save(r"where the counter-ion concentration $c^{\s}_0$ satisfies the electroneutrality constraint.")
                         
         cur_par_count += column_model.par_type_counts[par_type]
 
