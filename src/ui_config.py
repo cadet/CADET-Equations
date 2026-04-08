@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-SPDX-License-Identifier: GPL-3.0-only
-Copyright (c) 2026 Jan Michael Breuer
-See LICENSE file for details.
+This file defines the configuration of the user interface, i.e. which states exist and how they depend on each other.
 """
 
 

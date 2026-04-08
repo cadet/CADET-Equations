@@ -1,16 +1,15 @@
 # -*- coding: utf-8 -*-
 """
-SPDX-License-Identifier: GPL-3.0-only
-Copyright (c) 2026 Jan Michael Breuer
-See LICENSE file for details.
+Equation snippets and text bits used by the generator.
+
+This module contains functions that return small LaTeX snippets for
+modeling assumptions and equation terms.
 """
 
 import re
 
-# %% Model assumptions
-
-
 def HRM_asmpt(N_p: int, nonlimiting_filmDiff: bool, has_binding: bool, has_surfDiff: bool, column_resolution: str):
+    """Return a list of HRM assumptions as LaTeX strings."""
 
     if int(re.search("\\d", column_resolution).group()) == 0:
         device_str = "tank"

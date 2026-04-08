@@ -1,9 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-SPDX-License-Identifier: GPL-3.0-only
-Copyright (c) 2026 Jan Michael Breuer
-See LICENSE file for details.
-
 Unit tests for src/equations.py.
 Each function is tested in isolation with relevant parameter combinations.
 """

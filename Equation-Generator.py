@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-SPDX-License-Identifier: GPL-3.0-only
-Copyright (c) 2026 Jan Michael Breuer
-See LICENSE file for details.
+Main script for the Streamlit app that generates equations for packed-bed chromatography models based on user configuration.
+The app allows users to specify model parameters, assumptions, and configurations, and then generates the corresponding governing equations in LaTeX format.
+Users can also download the generated equations as a .tex file or a PDF, and export their configuration as a JSON file.
 """
 
 import streamlit as st
