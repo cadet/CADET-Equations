@@ -16,6 +16,7 @@ import pandas as pd
 
 from typing import List
 from typing import Literal
+from typing import Optional
 from collections import OrderedDict
 
 from src import equations as eq
@@ -88,7 +89,7 @@ class Particle:
     has_reaction_solid: bool = False
     # volume fraction ?
     # binding -> is_kinetic, nBound
-    vars_and_params = []
+    vars_and_params: List[dict] = field(default_factory=list, init=False, compare=False, hash=False)
 
     def __post_init__(self):
         valid_geometries = {"Sphere", "Cylinder", "Slab"}
@@ -247,7 +248,7 @@ class Column:
     # List[bool] = None # TODO make this possible per component and particle type in advanced mode
     nonlimiting_filmDiff: bool = False
 
-    particle_models: List[Particle] = None
+    particle_models: Optional[List[Particle]] = None
     # counts per unique particle type (geometry, has_core, resolution)
     par_type_counts: Counter[Particle] = field(default_factory=Counter)
     # puts particle types together that have a similar contribution to the interstitial volume equation and counts them
@@ -270,7 +271,7 @@ class Column:
     has_reaction_particle_liquid: bool = False
     has_reaction_particle_solid: bool = False
 
-    vars_and_params = List[dict]
+    vars_and_params: List[dict] = field(default_factory=list)
 
     def __post_init__(self):
 
