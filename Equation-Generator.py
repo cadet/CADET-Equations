@@ -22,50 +22,8 @@ from collections import OrderedDict
 from src import equations as eq
 from src import load_CADET_h5
 from src import ui_config
-
-# Precompile regex patterns used by `rerender_variables` for performance and clarity
-_CADET_PATTERNS = [
-    (re.compile(r"\\l(?![a-zA-Z])"), r"\\mathrm{\\ell}"),
-    (re.compile(r"\\b(?![a-zA-Z])"), r"\\mathrm{b}"),
-    (re.compile(r"\\p(?![a-zA-Z])"), r"\\mathrm{p}"),
-    (re.compile(r"\\s(?![a-zA-Z])"), r"\\mathrm{s}"),
-]
-
-_LEGACY_PATTERNS = [
-    (re.compile(r"c\^\{\\l\}(?![a-zA-Z])"), r"c"),
-    (re.compile(r"c\^\{\\b\}(?![a-zA-Z])"), r"c"),
-    (re.compile(r"V\^\{\\l\}(?![a-zA-Z])"), r"V^{\\mathrm{\\ell}}"),
-    (re.compile(r"V\^\{\\b\}(?![a-zA-Z])"), r"V^{\\mathrm{\\ell}}"),
-    (re.compile(r"c\^\{\\p\}_\\{i\\}(?![a-zA-Z])"), r"c_{\\mathrm{p},i}"),
-    (re.compile(r"c\^\{\\p\}_i(?![a-zA-Z])"), r"c_{\\mathrm{p},i}"),
-    (re.compile(r"c\^\{\\p\}_\\{j,i\\}(?![a-zA-Z])"), r"c_{\\mathrm{p},j,i}"),
-    (re.compile(r"c\^\{\\p\}(?![a-zA-Z])"), r"c_{\\mathrm{p}}"),
-    (re.compile(r"c\}\\^\{\\p\\}(?![a-zA-Z])"), r"c}_{\\mathrm{p}}"),
-    (re.compile(r"c\}\\^\{\\l\\}(?![a-zA-Z])"), r"c}"),
-    (re.compile(r"c\^\{\\s\}(?![a-zA-Z])"), r"q"),
-    (re.compile(r"c\}\\^\{\\s\\}(?![a-zA-Z])"), r"q}"),
-    (re.compile(r"\\p(?![a-zA-Z])"), r"\\mathrm{p}"),
-    (re.compile(r"\\s(?![a-zA-Z])"), r"\\mathrm{s}"),
-]
-
-def rerender_variables(input_str: str, var_format: str, mul_pars: bool = False):
-    """Render variable symbols according to the chosen format.
-
-    var_format must be either "CADET" or "Legacy".
-    """
-    if not isinstance(var_format, (str, int)):
-        raise ValueError(f"Format {var_format} is not supported. (expected 'CADET' or 'Legacy')")
-
-    if var_format == "CADET":
-        for patt, repl in _CADET_PATTERNS:
-            input_str = patt.sub(repl, input_str)
-    elif var_format == "Legacy":
-        for patt, repl in _LEGACY_PATTERNS:
-            input_str = patt.sub(repl, input_str)
-    else:
-        raise ValueError(f"Format {var_format} is not supported. (expected 'CADET' or 'Legacy')")
-
-    return input_str
+from src.utils import format_variables
+from src.renderer import availability_badge_html, write_and_save as renderer_write_and_save
 
 
 # immutable & hashable dataclass -> unique particle type counter
@@ -188,7 +146,7 @@ class Particle:
             vars_and_params_.append({"Group" : 1.9, "Symbol": r"d_j", "Description": r"particle type volume fraction", "Unit": r"-", "Dependence": r"particle type", "Property": r""})
 
         for var_ in vars_and_params_:
-            var_["Symbol"] = rerender_variables(var_["Symbol"], var_format_)
+            var_["Symbol"] = format_variables(var_["Symbol"], var_format_)
         
         vars_and_params_ = sorted(vars_and_params_, key=lambda x: x['Group'])
 
@@ -425,7 +383,7 @@ class Column:
                 self.has_reaction_particle_solid = st.sidebar.selectbox(
                     "Add particle solid reaction", ["No", "Yes"], key=r"has_reaction_particle_solid") == "Yes"
 
-        self.vars_and_params()
+        self.fill_vars_and_params()
 
     def available_CADET_Core(self):
         """
@@ -501,7 +459,7 @@ class Column:
         else:
             return core_availability
 
-    def vars_and_params(self):
+    def fill_vars_and_params(self):
 
         without_pores_ = self.nonlimiting_filmDiff and self.has_binding and self.particle_models[0].resolution == "0D"
 
@@ -573,7 +531,7 @@ class Column:
             self.vars_and_params.append({"Group" : 8.1, "Symbol": r"\vec{c}^{\b}", "Description": r"bulk liquid components vector", "Unit": r"[\frac{mol}{m^3}]", "Dependence": state_deps})
 
         for var_ in self.vars_and_params:
-            var_["Symbol"] = rerender_variables(var_["Symbol"], var_format_)
+            var_["Symbol"] = format_variables(var_["Symbol"], var_format_)
             
         self.vars_and_params = sorted(self.vars_and_params, key=lambda x: x['Group'])
 
@@ -768,11 +726,11 @@ class Column:
 
         for idx in range(0, len(asmpts["Specific model assumptions"])):
             
-            asmpts["Specific model assumptions"][idx] = rerender_variables(asmpts["Specific model assumptions"][idx], var_format_)
+            asmpts["Specific model assumptions"][idx] = format_variables(asmpts["Specific model assumptions"][idx], var_format_)
             
         for idx in range(0, len(asmpts["General model assumptions"])):
             
-            asmpts["General model assumptions"][idx] = rerender_variables(asmpts["General model assumptions"][idx], var_format_)
+            asmpts["General model assumptions"][idx] = format_variables(asmpts["General model assumptions"][idx], var_format_)
             
         if not self.binding_model == "Arbitrary":
             
@@ -807,35 +765,6 @@ class Column:
             idx_ += 1
                 
         return description_ + "."
-
-def availability_badge_html(name: str, available: bool):
-    
-    # model not available default
-    color_bg = "#fdecea"
-    color_fg = "#b71c1c"
-    icon = "not supported"
-    
-    if available == 1:
-        color_bg = "#e6f4ea"
-        color_fg = "#137333"
-        icon = "supported"
-    elif available == 0:
-        color_bg = "#fff4e5"
-        color_fg = "#b26a00"
-        icon = "approximation"
-
-    return (
-        f'<span style="'
-        f'background-color:{color_bg};'
-        f'color:{color_fg};'
-        f'padding:4px 10px;'
-        f'border-radius:12px;'
-        f'font-size:0.85em;'
-        f'margin-right:6px;'
-        f'display:inline-block;">'
-        f'{name}: {icon}'
-        f'</span>'
-    )
 
 # %% Streamlit UI
 
@@ -971,17 +900,8 @@ show_eq_description = st.toggle("Show equation description", key=r"show_eq_descr
 
 # The following function is used to both print the output and collect it to later generate and export output files
 def write_and_save(output: str, as_latex: bool = False):
-
-    output = rerender_variables(output, var_format_)
-
-    if output is not None:
-
-        file_content.append(output)
-
-        if as_latex:
-            st.latex(output)
-        else:
-            st.write(output)
+    
+    renderer_write_and_save(output, var_format_, file_content, as_latex)
 
 # Title
 st.write("### " + column_model.model_name())
