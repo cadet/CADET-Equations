@@ -1,8 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-SPDX-License-Identifier: GPL-3.0-only
-Copyright (c) 2026 Jan Michael Breuer
-See LICENSE file for details.
+Helpers to extract a generator configuration from CADET HDF5 files.
+
+This module provides minimal mapping functions used when a user
+uploads a CADET HDF5 file to pre-populate the generator UI.
 """
 
 import streamlit as st
@@ -26,8 +27,10 @@ CADET_column_unit_types = [
 
 
 def is_v6_interface(unit_type, h5_unit_group):
-    """Detect v6 interface. V6 uses COLUMN_MODEL_1D/2D unit types, or old unit type
-    names with particle_type_xxx subgroups when NPARTYPE >= 1."""
+    """Detect a v6-style CADET HDF5 unit group.
+
+    Returns True when the file structure matches the newer v6 layout.
+    """
     if unit_type in ['COLUMN_MODEL_1D', 'COLUMN_MODEL_2D']:
         return True
     nParType = get_h5_value(h5_unit_group, 'NPARTYPE')
@@ -37,6 +40,11 @@ def is_v6_interface(unit_type, h5_unit_group):
 
 
 def get_h5_value(unit_group, key:str, firstEntryIfList=True):
+    """Read a value from an HDF5 group and return a native Python type.
+
+    The function decodes bytes and returns the first element of array-like
+    values when appropriate.
+    """
 
     value = unit_group.get(key)
 
@@ -56,7 +64,9 @@ def get_h5_value(unit_group, key:str, firstEntryIfList=True):
 
     return value
 
+
 def map_unit_type_to_column_model(cadet_unit_type):
+    """Map a CADET unit type string to the generator's column resolution label."""
 
     if re.search("3D", cadet_unit_type):
         return "3D (axial, radial and angular coordinate)"
@@ -72,6 +82,7 @@ def map_unit_type_to_column_model(cadet_unit_type):
 
 
 def map_unit_to_particle_model(cadet_unit_type, h5_unit_group):
+    """Return a textual particle model mapping for a CADET unit type/group."""
 
     if is_v6_interface(cadet_unit_type, h5_unit_group):
         return _map_v6_particle_model(h5_unit_group)

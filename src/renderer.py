@@ -1,3 +1,10 @@
+"""Small rendering utilities for the Streamlit equation generator.
+
+This module provides helper functions used by the UI to display
+availability badges and formatted equation text. Documentation is
+kept concise and focused on public behaviour.
+"""
+
 import streamlit as st
 from typing import List
 
@@ -5,6 +12,20 @@ from src.utils import format_variables
 
 
 def availability_badge_html(name: str, available: int) -> str:
+    """Return an HTML badge indicating a model's availability.
+
+    Parameters
+    ----------
+    name:
+        Label shown on the badge.
+    available:
+        Availability flag: -1 (not present), 0 (approx.), 1 (present).
+
+    Returns
+    -------
+    str
+        HTML snippet suitable for inline display in Streamlit.
+    """
     # model not available default
     color_bg = "#fdecea"
     color_fg = "#b71c1c"
@@ -34,7 +55,12 @@ def availability_badge_html(name: str, available: int) -> str:
 
 
 def write_and_save(output: str, var_format: str, file_content: List[str], as_latex: bool = False):
-    """Render and display output using Streamlit and collect into file_content."""
+    """Format and render `output` while collecting it for export.
+
+    The function applies variable formatting, appends the formatted
+    string to ``file_content`` and writes it to the Streamlit app
+    as LaTeX or plain text.
+    """
     output = format_variables(output, var_format)
 
     if output is not None:

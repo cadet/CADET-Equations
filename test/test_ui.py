@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-SPDX-License-Identifier: GPL-3.0-only
-Copyright (c) 2026 Jan Michael Breuer
-See LICENSE file for details.
+This script implements tests iterating through all configurable states of the App and checking if an error is thrown
 """
 
 from streamlit.testing.v1 import AppTest

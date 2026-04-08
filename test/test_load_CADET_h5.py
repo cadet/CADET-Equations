@@ -1,9 +1,5 @@
 # -*- coding: utf-8 -*-
 """
-SPDX-License-Identifier: GPL-3.0-only
-Copyright (c) 2026 Jan Michael Breuer
-See LICENSE file for details.
-
 Unit tests for src/load_CADET_h5.py.
 Each public function is tested in isolation using mock HDF5 groups.
 """
