@@ -822,3 +822,46 @@ def test_particle_transport_full_binding_model(binding_model, expected_fragment)
         has_surfDiff=False, has_binding=True, req_binding=False,
         has_mult_bnd_states=False, PTD=False, binding_model=binding_model)
     assert expected_fragment in result
+
+
+# %% Binding model assumptions
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+@pytest.mark.parametrize("binding_model, expected_keyword", [
+    ("Arbitrary", "No custom assumptions"),
+    ("Linear", "independently"),
+    ("Langmuir", "finite number of binding sites"),
+    ("SMA", "electroneutrality"),
+])
+def test_binding_model_assumptions(binding_model, expected_keyword):
+    """Each binding model should return its characteristic assumptions."""
+    result = eq.binding_model_assumptions(binding_model)
+    assert result is not None
+    combined = " ".join(result)
+    assert expected_keyword in combined
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_binding_model_assumptions_unknown_returns_none():
+    """Unknown binding model should return None."""
+    result = eq.binding_model_assumptions("UnknownModel")
+    assert result is None
+
+
+# %% Surface diffusion for Cylinder and Slab geometries
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+@pytest.mark.parametrize("geometry, expected_frag", [
+    ("Cylinder", r"\frac{1}{r}"),
+    ("Slab", r"\frac{\partial }{\partial r}"),
+])
+def test_particle_transport_radial_surfDiff_cylinder_slab(geometry, expected_frag):
+    """Cylinder and Slab geometries with surface diffusion should include D^s term."""
+    result = eq.particle_transport_radial(
+        geometry, has_surfDiff=True, has_binding=True,
+        req_binding=False, has_mult_bnd_states=False)
+    assert r"D_{j,i}^{\s}" in result
+    assert expected_frag in result
