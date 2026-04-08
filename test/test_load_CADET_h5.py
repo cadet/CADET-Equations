@@ -373,3 +373,60 @@ def test_extract_v6_config_ptd_detection():
     assert config['PTD'] == "Yes"
     assert config['PSD'] == "Yes"
     assert config['advanced_mode'] == "On"
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_map_unit_type_to_column_model_3d():
+    """A 3D unit type should map to 3D resolution."""
+    assert map_unit_type_to_column_model('GENERAL_RATE_MODEL_3D') == "3D (axial, radial and angular coordinate)"
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_extract_config_0d_with_flow_filter():
+    """CSTR with FLOWRATE_FILTER > 0 should set has_filter to Yes."""
+    group = _make_h5_group({
+        'UNIT_TYPE': b'CSTR',
+        'NPARTYPE': 0,
+        'TOTAL_POROSITY': 1.0,
+        'FLOWRATE_FILTER': 1.0,
+    })
+    config = extract_config_data_from_unit('CSTR', group)
+    assert config['has_filter'] == "Yes"
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_extract_config_nbound_greater_than_one():
+    """NBOUND > 1 should set has_mult_bnd_states to Yes."""
+    ads_group = _make_h5_group({'IS_KINETIC': True})
+    pt_group = _make_h5_group(
+        {
+            'HAS_FILM_DIFFUSION': True,
+            'HAS_PORE_DIFFUSION': True,
+            'HAS_SURFACE_DIFFUSION': False,
+            'ADSORPTION_MODEL': b'LINEAR',
+            'NBOUND': 2,
+            'PAR_CORERADIUS': 0.001,
+        },
+        subgroups={'adsorption': ads_group},
+    )
+    group = _make_h5_group(
+        {
+            'NPARTYPE': 1,
+            'COL_POROSITY': 0.37,
+            'COL_DISPERSION': 5.75e-08,
+        },
+        subgroups={'particle_type_000': pt_group},
+    )
+    config = extract_config_data_from_unit('COLUMN_MODEL_1D', group)
+    assert config['has_mult_bnd_states'] == "Yes"
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_map_unit_to_particle_model_column_model_2d_no_particle():
+    """COLUMN_MODEL_2D without particles (NPARTYPE=0) should return None."""
+    group = _make_h5_group({'NPARTYPE': 0})
+    assert map_unit_to_particle_model('COLUMN_MODEL_2D', group) is None
