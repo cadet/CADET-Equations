@@ -22,41 +22,47 @@ from src import equations as eq
 from src import load_CADET_h5
 from src import ui_config
 
+# Precompile regex patterns used by `rerender_variables` for performance and clarity
+_CADET_PATTERNS = [
+    (re.compile(r"\\l(?![a-zA-Z])"), r"\\mathrm{\\ell}"),
+    (re.compile(r"\\b(?![a-zA-Z])"), r"\\mathrm{b}"),
+    (re.compile(r"\\p(?![a-zA-Z])"), r"\\mathrm{p}"),
+    (re.compile(r"\\s(?![a-zA-Z])"), r"\\mathrm{s}"),
+]
 
-def rerender_variables(input_str:str, var_format:int, mul_pars:bool=False):
+_LEGACY_PATTERNS = [
+    (re.compile(r"c\^\{\\l\}(?![a-zA-Z])"), r"c"),
+    (re.compile(r"c\^\{\\b\}(?![a-zA-Z])"), r"c"),
+    (re.compile(r"V\^\{\\l\}(?![a-zA-Z])"), r"V^{\\mathrm{\\ell}}"),
+    (re.compile(r"V\^\{\\b\}(?![a-zA-Z])"), r"V^{\\mathrm{\\ell}}"),
+    (re.compile(r"c\^\{\\p\}_\\{i\\}(?![a-zA-Z])"), r"c_{\\mathrm{p},i}"),
+    (re.compile(r"c\^\{\\p\}_i(?![a-zA-Z])"), r"c_{\\mathrm{p},i}"),
+    (re.compile(r"c\^\{\\p\}_\\{j,i\\}(?![a-zA-Z])"), r"c_{\\mathrm{p},j,i}"),
+    (re.compile(r"c\^\{\\p\}(?![a-zA-Z])"), r"c_{\\mathrm{p}}"),
+    (re.compile(r"c\}\\^\{\\p\\}(?![a-zA-Z])"), r"c}_{\\mathrm{p}}"),
+    (re.compile(r"c\}\\^\{\\l\\}(?![a-zA-Z])"), r"c}"),
+    (re.compile(r"c\^\{\\s\}(?![a-zA-Z])"), r"q"),
+    (re.compile(r"c\}\\^\{\\s\\}(?![a-zA-Z])"), r"q}"),
+    (re.compile(r"\\p(?![a-zA-Z])"), r"\\mathrm{p}"),
+    (re.compile(r"\\s(?![a-zA-Z])"), r"\\mathrm{s}"),
+]
+
+def rerender_variables(input_str: str, var_format: str, mul_pars: bool = False):
+    """Render variable symbols according to the chosen format.
+
+    var_format must be either "CADET" or "Legacy".
+    """
+    if not isinstance(var_format, (str, int)):
+        raise ValueError(f"Format {var_format} is not supported. (expected 'CADET' or 'Legacy')")
+
     if var_format == "CADET":
-        input_str = re.sub(r"\\l(?![a-zA-Z])", r"\\mathrm{\\ell}", input_str)
-        input_str = re.sub(r"\\b(?![a-zA-Z])", r"\\mathrm{b}", input_str)
-        input_str = re.sub(r"\\p(?![a-zA-Z])", r"\\mathrm{p}", input_str)
-        input_str = re.sub(r"\\s(?![a-zA-Z])", r"\\mathrm{s}", input_str)
+        for patt, repl in _CADET_PATTERNS:
+            input_str = patt.sub(repl, input_str)
     elif var_format == "Legacy":
-        input_str = re.sub(r"c\^\{\\l\}(?![a-zA-Z])", r"c", input_str)
-        input_str = re.sub(r"c\^\{\\b\}(?![a-zA-Z])", r"c", input_str)
-
-        input_str = re.sub(
-            r"V\^\{\\l\}(?![a-zA-Z])", r"V^{\\mathrm{\\ell}}", input_str)
-        input_str = re.sub(
-            r"V\^\{\\b\}(?![a-zA-Z])", r"V^{\\mathrm{\\ell}}", input_str)
-
-        input_str = re.sub(
-            r"c\^\{\\p\}_\{i\}(?![a-zA-Z])", r"c_{\\mathrm{p},i}", input_str)
-        input_str = re.sub(
-            r"c\^\{\\p\}_i(?![a-zA-Z])", r"c_{\\mathrm{p},i}", input_str)
-        input_str = re.sub(
-            r"c\^\{\\p\}_\{j,i\}(?![a-zA-Z])", r"c_{\\mathrm{p},j,i}", input_str)
-        input_str = re.sub(
-            r"c\^\{\\p\}(?![a-zA-Z])", r"c_{\\mathrm{p}}", input_str)
-        input_str = re.sub(
-            r"c\}\^\{\\p\}(?![a-zA-Z])", r"c}_{\\mathrm{p}}", input_str)
-        input_str = re.sub(r"c\}\^\{\\l\}(?![a-zA-Z])", r"c}", input_str)
-
-        input_str = re.sub(r"c\^\{\\s\}(?![a-zA-Z])", r"q", input_str)
-        input_str = re.sub(r"c\}\^\{\\s\}(?![a-zA-Z])", r"q}", input_str)
-
-        input_str = re.sub(r"\\p(?![a-zA-Z])", r"\\mathrm{p}", input_str)
-        input_str = re.sub(r"\\s(?![a-zA-Z])", r"\\mathrm{s}", input_str)
+        for patt, repl in _LEGACY_PATTERNS:
+            input_str = patt.sub(repl, input_str)
     else:
-        raise ValueError(f"Format {var_format} is not supported.")
+        raise ValueError(f"Format {var_format} is not supported. (expected 'CADET' or 'Legacy')")
 
     return input_str
 
