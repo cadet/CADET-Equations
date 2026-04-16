@@ -136,7 +136,7 @@ class Particle:
 
         if not self.single_partype:
             vars_and_params_.append({"Group" : -0.1, "Symbol": r"j", "Description": r"particle type index", "Unit": r"-", "Dependence": r"-", "Property": r""})
-            vars_and_params_.append({"Group" : 1.9, "Symbol": r"d_j", "Description": r"particle type volume fraction", "Unit": r"-", "Dependence": r"particle type", "Property": r""})
+            vars_and_params_.append({"Group" : 1.9, "Symbol": r"d_j", "Description": r"particle type volume fraction", "Unit": r"-", "Dependence": r"j", "Property": r""})
 
         for var_ in vars_and_params_:
             var_["Symbol"] = format_variables(var_["Symbol"], self.var_format)
