@@ -24,6 +24,7 @@ def setup_app_with_advanced_mode(add_particles="Yes", particle_resolution="1D (r
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_bulk_reaction_no_particles():
     at = setup_app_with_advanced_mode(add_particles="No")
     at.selectbox(key="has_reaction_bulk").set_value("Yes").run()
@@ -33,6 +34,7 @@ def test_bulk_reaction_no_particles():
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_bulk_reaction_with_particles():
     at = setup_app_with_advanced_mode()
     at.selectbox(key="has_reaction_bulk").set_value("Yes").run()
@@ -42,6 +44,7 @@ def test_bulk_reaction_with_particles():
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_particle_liquid_reaction_1D():
     at = setup_app_with_advanced_mode(particle_resolution="1D (radial coordinate)")
     at.selectbox(key="has_reaction_particle_liquid").set_value("Yes").run()
@@ -51,6 +54,7 @@ def test_particle_liquid_reaction_1D():
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_particle_solid_reaction_1D():
     at = setup_app_with_advanced_mode(particle_resolution="1D (radial coordinate)")
     at.selectbox(key="has_reaction_particle_solid").set_value("Yes").run()
@@ -60,6 +64,7 @@ def test_particle_solid_reaction_1D():
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_particle_liquid_reaction_0D():
     at = setup_app_with_advanced_mode(particle_resolution="0D (homogeneous)")
     at.selectbox(key="has_reaction_particle_liquid").set_value("Yes").run()
@@ -69,6 +74,7 @@ def test_particle_liquid_reaction_0D():
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_particle_solid_reaction_0D():
     at = setup_app_with_advanced_mode(particle_resolution="0D (homogeneous)")
     at.selectbox(key="has_reaction_particle_solid").set_value("Yes").run()
@@ -78,6 +84,7 @@ def test_particle_solid_reaction_0D():
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_all_reactions_enabled():
     at = setup_app_with_advanced_mode()
     at.selectbox(key="has_reaction_bulk").set_value("Yes").run()
@@ -91,6 +98,7 @@ def test_all_reactions_enabled():
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_no_reactions_by_default():
     at = setup_app_with_advanced_mode()
     assert not at.exception
@@ -99,6 +107,7 @@ def test_no_reactions_by_default():
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_reactions_only_in_advanced_mode():
     at = AppTest.from_file("../Equation-Generator.py")
     at.run()
@@ -108,6 +117,7 @@ def test_reactions_only_in_advanced_mode():
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_bulk_reaction_0D_tank():
     at = AppTest.from_file("../Equation-Generator.py")
     at.run()
@@ -123,6 +133,7 @@ def test_bulk_reaction_0D_tank():
 # === Rapid-equilibrium reaction unit tests ===
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_req_reaction_equation_functions():
     """Unit tests for rapid-equilibrium reaction equation snippet functions."""
     from src import equations as eq
@@ -161,6 +172,7 @@ def test_req_reaction_equation_functions():
 # === Rapid-equilibrium reaction integration tests ===
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_req_reaction_bulk():
     at = setup_app_with_advanced_mode()
     at.selectbox(key="has_reaction_bulk").set_value("Yes").run()
@@ -174,6 +186,7 @@ def test_req_reaction_bulk():
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_req_reaction_bulk_no_particles():
     at = setup_app_with_advanced_mode(add_particles="No")
     at.selectbox(key="has_reaction_bulk").set_value("Yes").run()
@@ -185,6 +198,7 @@ def test_req_reaction_bulk_no_particles():
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_req_reaction_particle_liquid_1D():
     at = setup_app_with_advanced_mode(particle_resolution="1D (radial coordinate)")
     at.selectbox(key="has_reaction_particle_liquid").set_value("Yes").run()
@@ -197,6 +211,7 @@ def test_req_reaction_particle_liquid_1D():
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_req_reaction_particle_solid_1D():
     at = setup_app_with_advanced_mode(particle_resolution="1D (radial coordinate)")
     at.selectbox(key="has_reaction_particle_solid").set_value("Yes").run()
@@ -209,6 +224,7 @@ def test_req_reaction_particle_solid_1D():
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_req_reaction_particle_liquid_0D():
     at = setup_app_with_advanced_mode(particle_resolution="0D (homogeneous)")
     at.selectbox(key="has_reaction_particle_liquid").set_value("Yes").run()
@@ -220,6 +236,7 @@ def test_req_reaction_particle_liquid_0D():
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_req_reaction_particle_solid_0D():
     at = setup_app_with_advanced_mode(particle_resolution="0D (homogeneous)")
     at.selectbox(key="has_reaction_particle_solid").set_value("Yes").run()
@@ -231,6 +248,7 @@ def test_req_reaction_particle_solid_0D():
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_req_reaction_all():
     at = setup_app_with_advanced_mode()
     at.selectbox(key="has_reaction_bulk").set_value("Yes").run()
@@ -248,6 +266,7 @@ def test_req_reaction_all():
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_req_reaction_kinetics_mode_not_shown_without_reaction():
     at = setup_app_with_advanced_mode()
     assert not at.exception
@@ -258,6 +277,7 @@ def test_req_reaction_kinetics_mode_not_shown_without_reaction():
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_req_reaction_assumptions():
     at = setup_app_with_advanced_mode()
     at.selectbox(key="has_reaction_bulk").set_value("Yes").run()
@@ -269,6 +289,7 @@ def test_req_reaction_assumptions():
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_mixed_kinetic_and_req_reactions():
     """Test that kinetic and rapid-equilibrium reactions can coexist in different phases."""
     at = setup_app_with_advanced_mode()
@@ -285,6 +306,7 @@ def test_mixed_kinetic_and_req_reactions():
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_req_reaction_bulk_0D_tank():
     """Test rapid-equilibrium bulk reaction in 0D tank model."""
     at = AppTest.from_file("../Equation-Generator.py")
@@ -302,6 +324,7 @@ def test_req_reaction_bulk_0D_tank():
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_req_reaction_with_psd():
     """Test rapid-equilibrium reactions with particle size distribution (N_p > 1)."""
     at = AppTest.from_file("../Equation-Generator.py")
@@ -324,6 +347,7 @@ def test_req_reaction_with_psd():
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_req_reaction_assumptions_multiple_phases():
     """Test assumptions text lists all phases with rapid-equilibrium reactions."""
     at = setup_app_with_advanced_mode()
@@ -340,6 +364,7 @@ def test_req_reaction_assumptions_multiple_phases():
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
 def test_req_reaction_symbol_table():
     """Test that symbol table contains rapid-equilibrium reaction symbols."""
     at = setup_app_with_advanced_mode()
