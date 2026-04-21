@@ -268,110 +268,220 @@ if column_model.has_reaction_bulk and column_model.req_reaction_bulk:
 
 if column_model.N_p > 0:
 
-    particle_eq, particle_bc = column_model.particle_equations()
+    component_groups = column_model.component_groups()
 
-    cur_par_count = 0
-    for par_type in column_model.par_type_counts.keys():
+    if component_groups is not None and len(component_groups) > 1:
+        # Per-component mode: generate separate equations for each group of components
+        # that share the same settings
+        for group in component_groups:
+            comp_set_str = column_model.format_component_set(group['components'])
 
-        # in this case, we dont have a particle model. this configuration is still allowed for educational purpose.
-        if not column_model.has_binding and column_model.nonlimiting_filmDiff and par_type.resolution == "0D":
-            break
+            cur_par_count = 0
+            for par_type in column_model.par_type_counts.keys():
 
-        if dev_mode_:
-            nPar_list = ', '.join(str(j) for j in range(cur_par_count, column_model.par_type_counts[par_type] + 1))
-        else:
-            nPar_list = r"$j\in\{1, \dots, N^{\mathrm{p}}\}$"
+                if not column_model.has_binding and group['nonlimiting_filmDiff'] and par_type.resolution == "0D":
+                    break
 
-        eq_type_ = "reaction" if column_model.particle_models[0].resolution == "0D" else "diffusion-reaction"
-        
-        tmp_str = r" and all particle sizes " + nPar_list if column_model.N_p > 1 else r""
-        
-        whatComp = eq.primary_binding_eq_what_comps(column_model.binding_model)
-        
-        write_and_save(
-            "In the particles, mass transfer is governed by " + eq_type_ + " equations in " + eq.full_particle_conc_domain(column_model.resolution, par_type.resolution, par_type.has_core, with_par_index=False, with_time_domain=True) + r" and for " + whatComp + " components" + tmp_str)
+                if dev_mode_:
+                    nPar_list = ', '.join(str(j) for j in range(cur_par_count, column_model.par_type_counts[par_type] + 1))
+                else:
+                    nPar_list = r"$j\in\{1, \dots, N^{\mathrm{p}}\}$"
 
-        write_and_save(particle_eq[par_type], as_latex=True)
+                eq_type_ = "reaction" if column_model.particle_models[0].resolution == "0D" else "diffusion-reaction"
+                tmp_str = r" and all particle sizes " + nPar_list if column_model.N_p > 1 else r""
 
-        if not particle_bc[par_type] == "":
-            write_and_save("with boundary conditions")
-            write_and_save(particle_bc[par_type], as_latex=True)
+                whatComp = eq.primary_binding_eq_what_comps(column_model.binding_model)
 
-        if show_eq_description:
-            write_and_save("Here, " + column_model.particle_models[0].vars_params_description())
+                write_and_save(
+                    "For component(s) " + comp_set_str + ", mass transfer in the particles is governed by " + eq_type_ + " equations in " + eq.full_particle_conc_domain(column_model.resolution, par_type.resolution, par_type.has_core, with_par_index=False, with_time_domain=True) + tmp_str)
 
-        # Rapid-equilibrium reactions in the particle phase
-        if column_model.has_reaction_particle_liquid and column_model.req_reaction_particle_liquid:
-            write_and_save(
-                r"The particle liquid phase reactions are in rapid equilibrium. "
-                r"The system is reduced through conserved moieties: "
-                r"$N^{\mathrm{react,eq},\p}$ algebraic equilibrium constraints")
-            write_and_save(r"""
+                group_eq, group_bc = column_model.particle_equations_for_group(group)
+
+                write_and_save(group_eq[par_type], as_latex=True)
+
+                if not group_bc[par_type] == "":
+                    write_and_save("with boundary conditions")
+                    write_and_save(group_bc[par_type], as_latex=True)
+
+                if show_eq_description:
+                    write_and_save("Here, " + column_model.particle_models[0].vars_params_description())
+
+                # Rapid-equilibrium reactions in the particle phase
+                if column_model.has_reaction_particle_liquid and column_model.req_reaction_particle_liquid:
+                    write_and_save(
+                        r"The particle liquid phase reactions are in rapid equilibrium. "
+                        r"The system is reduced through conserved moieties: "
+                        r"$N^{\mathrm{react,eq},\p}$ algebraic equilibrium constraints")
+                    write_and_save(r"""
 \begin{align}
 """ + eq.req_reaction_particle_liquid_constraint(column_model.N_p == 1) + r""", \quad k = 1, \ldots, N^{\mathrm{react,eq},\p}
 \end{align}
 """, as_latex=True)
-            write_and_save(
-                r"replace $N^{\mathrm{react,eq},\p}$ of the component equations. "
-                r"The remaining $N^{\mathrm{c}} - N^{\mathrm{react,eq},\p}$ equations are conserved moiety equations")
-            write_and_save(r"""
+                    write_and_save(
+                        r"replace $N^{\mathrm{react,eq},\p}$ of the component equations. "
+                        r"The remaining $N^{\mathrm{c}} - N^{\mathrm{react,eq},\p}$ equations are conserved moiety equations")
+                    write_and_save(r"""
 \begin{align}
 """ + eq.conserved_moiety_equation_particle_liquid(column_model.N_p == 1) + r""", \quad l = 1, \ldots, N^{\mathrm{c}} - N^{\mathrm{react,eq},\p}.
 \end{align}
 """, as_latex=True)
 
-        if column_model.has_reaction_particle_solid and column_model.req_reaction_particle_solid:
-            write_and_save(
-                r"The particle solid phase reactions are in rapid equilibrium. "
-                r"The system is reduced through conserved moieties: "
-                r"$N^{\mathrm{react,eq},\s}$ algebraic equilibrium constraints")
-            write_and_save(r"""
+                if column_model.has_reaction_particle_solid and column_model.req_reaction_particle_solid:
+                    write_and_save(
+                        r"The particle solid phase reactions are in rapid equilibrium. "
+                        r"The system is reduced through conserved moieties: "
+                        r"$N^{\mathrm{react,eq},\s}$ algebraic equilibrium constraints")
+                    write_and_save(r"""
 \begin{align}
 """ + eq.req_reaction_particle_solid_constraint(column_model.N_p == 1) + r""", \quad k = 1, \ldots, N^{\mathrm{react,eq},\s}
 \end{align}
 """, as_latex=True)
-            write_and_save(
-                r"replace $N^{\mathrm{react,eq},\s}$ of the component equations. "
-                r"The remaining $N^{\mathrm{c}} - N^{\mathrm{react,eq},\s}$ equations are conserved moiety equations")
-            write_and_save(r"""
+                    write_and_save(
+                        r"replace $N^{\mathrm{react,eq},\s}$ of the component equations. "
+                        r"The remaining $N^{\mathrm{c}} - N^{\mathrm{react,eq},\s}$ equations are conserved moiety equations")
+                    write_and_save(r"""
 \begin{align}
 """ + eq.conserved_moiety_equation_particle_solid(column_model.N_p == 1) + r""", \quad l = 1, \ldots, N^{\mathrm{c}} - N^{\mathrm{react,eq},\s}.
 \end{align}
 """, as_latex=True)
 
-        # Some more complicated binding models require additional equations
-        if column_model.binding_model == "SMA" and column_model.has_binding: 
-            
-            PTD_ = column_model.PTD and column_model.N_p > 1
-            write_and_save(r"The number of available binding sites $\bar{q}_0$ is given by")
-            write_and_save(r"\begin{align}" + eq.sma_free_binding_sites(PTD=PTD_) + r".\end{align}", as_latex=True)
-            
+                # SMA additional equations
+                if column_model.binding_model == "SMA" and column_model.has_binding:
+
+                    PTD_ = column_model.PTD and column_model.N_p > 1
+                    write_and_save(r"The number of available binding sites $\bar{q}_0$ is given by")
+                    write_and_save(r"\begin{align}" + eq.sma_free_binding_sites(PTD=PTD_) + r".\end{align}", as_latex=True)
+
+                    write_and_save(
+                        "For the salt component, mass transfer is governed by " + eq_type_ + " equations in " + eq.full_particle_conc_domain(column_model.resolution, par_type.resolution, par_type.has_core, with_par_index=False, with_time_domain=True) + tmp_str)
+
+                    # The salt component is in rapid equilibrium binding mode
+                    salt_group = dict(group)
+                    salt_group['req_binding'] = True
+                    tmpBndModel = column_model.binding_model
+                    column_model.binding_model = "SMA_salt"
+                    particle_eq_salt, particle_bc_salt = column_model.particle_equations_for_group(salt_group)
+                    column_model.binding_model = tmpBndModel
+
+                    if PTD_:
+                        write_and_save(re.sub(r"_{i}", r"_{0}", particle_eq_salt[par_type]), as_latex=True)
+                    else:
+                        write_and_save(re.sub(r"_{j,i}", r"_{j,0}", particle_eq_salt[par_type]), as_latex=True)
+
+                    if not particle_bc_salt[par_type] == "":
+                        write_and_save(r"where the counter-ion concentration $c^{\s}_0$ satisfies the electroneutrality constraint. Boundary conditions are")
+                        write_and_save(particle_bc_salt[par_type], as_latex=True)
+                    else:
+                        write_and_save(r"where the counter-ion concentration $c^{\s}_0$ satisfies the electroneutrality constraint.")
+
+                cur_par_count += column_model.par_type_counts[par_type]
+
+    else:
+        # Standard mode: single set of equations for all components
+        particle_eq, particle_bc = column_model.particle_equations()
+
+        cur_par_count = 0
+        for par_type in column_model.par_type_counts.keys():
+
+            # in this case, we dont have a particle model. this configuration is still allowed for educational purpose.
+            if not column_model.has_binding and column_model.nonlimiting_filmDiff and par_type.resolution == "0D":
+                break
+
+            if dev_mode_:
+                nPar_list = ', '.join(str(j) for j in range(cur_par_count, column_model.par_type_counts[par_type] + 1))
+            else:
+                nPar_list = r"$j\in\{1, \dots, N^{\mathrm{p}}\}$"
+
+            eq_type_ = "reaction" if column_model.particle_models[0].resolution == "0D" else "diffusion-reaction"
+
+            tmp_str = r" and all particle sizes " + nPar_list if column_model.N_p > 1 else r""
+
+            whatComp = eq.primary_binding_eq_what_comps(column_model.binding_model)
+
             write_and_save(
-                "For the salt component, mass transfer is governed by " + eq_type_ + " equations in " + eq.full_particle_conc_domain(column_model.resolution, par_type.resolution, par_type.has_core, with_par_index=False, with_time_domain=True) + tmp_str)
-            
-            # The salt component is in rapid equilibrium binding mode
-            tmpReqBnd = column_model.req_binding
-            column_model.req_binding = True
-            tmpBndModel = column_model.binding_model
-            column_model.binding_model = "SMA_salt"
-            particle_eq_salt, particle_bc_salt = column_model.particle_equations()
-            column_model.req_binding = tmpReqBnd
-            column_model.binding_model = tmpBndModel
-            
-            if PTD_:
-                write_and_save(re.sub(r"_{i}", r"_{0}", particle_eq_salt[par_type]), as_latex=True)
-                re.sub(r"_{i}", r"_{0}", particle_bc_salt[par_type])
-            else:
-                write_and_save(re.sub(r"_{j,i}", r"_{j,0}", particle_eq_salt[par_type]), as_latex=True)
-                re.sub(r"_{j,i}", r"_{j,0}", particle_bc_salt[par_type])
-            
-            if not particle_bc_salt[par_type] == "":
-                write_and_save(r"where the counter-ion concentration $c^{\s}_0$ satisfies the electroneutrality constraint. Boundary conditions are")
-                write_and_save(particle_bc_salt[par_type], as_latex=True)
-            else:
-               write_and_save(r"where the counter-ion concentration $c^{\s}_0$ satisfies the electroneutrality constraint.")
-                        
-        cur_par_count += column_model.par_type_counts[par_type]
+                "In the particles, mass transfer is governed by " + eq_type_ + " equations in " + eq.full_particle_conc_domain(column_model.resolution, par_type.resolution, par_type.has_core, with_par_index=False, with_time_domain=True) + r" and for " + whatComp + " components" + tmp_str)
+
+            write_and_save(particle_eq[par_type], as_latex=True)
+
+            if not particle_bc[par_type] == "":
+                write_and_save("with boundary conditions")
+                write_and_save(particle_bc[par_type], as_latex=True)
+
+            if show_eq_description:
+                write_and_save("Here, " + column_model.particle_models[0].vars_params_description())
+
+            # Rapid-equilibrium reactions in the particle phase
+            if column_model.has_reaction_particle_liquid and column_model.req_reaction_particle_liquid:
+                write_and_save(
+                    r"The particle liquid phase reactions are in rapid equilibrium. "
+                    r"The system is reduced through conserved moieties: "
+                    r"$N^{\mathrm{react,eq},\p}$ algebraic equilibrium constraints")
+                write_and_save(r"""
+\begin{align}
+""" + eq.req_reaction_particle_liquid_constraint(column_model.N_p == 1) + r""", \quad k = 1, \ldots, N^{\mathrm{react,eq},\p}
+\end{align}
+""", as_latex=True)
+                write_and_save(
+                    r"replace $N^{\mathrm{react,eq},\p}$ of the component equations. "
+                    r"The remaining $N^{\mathrm{c}} - N^{\mathrm{react,eq},\p}$ equations are conserved moiety equations")
+                write_and_save(r"""
+\begin{align}
+""" + eq.conserved_moiety_equation_particle_liquid(column_model.N_p == 1) + r""", \quad l = 1, \ldots, N^{\mathrm{c}} - N^{\mathrm{react,eq},\p}.
+\end{align}
+""", as_latex=True)
+
+            if column_model.has_reaction_particle_solid and column_model.req_reaction_particle_solid:
+                write_and_save(
+                    r"The particle solid phase reactions are in rapid equilibrium. "
+                    r"The system is reduced through conserved moieties: "
+                    r"$N^{\mathrm{react,eq},\s}$ algebraic equilibrium constraints")
+                write_and_save(r"""
+\begin{align}
+""" + eq.req_reaction_particle_solid_constraint(column_model.N_p == 1) + r""", \quad k = 1, \ldots, N^{\mathrm{react,eq},\s}
+\end{align}
+""", as_latex=True)
+                write_and_save(
+                    r"replace $N^{\mathrm{react,eq},\s}$ of the component equations. "
+                    r"The remaining $N^{\mathrm{c}} - N^{\mathrm{react,eq},\s}$ equations are conserved moiety equations")
+                write_and_save(r"""
+\begin{align}
+""" + eq.conserved_moiety_equation_particle_solid(column_model.N_p == 1) + r""", \quad l = 1, \ldots, N^{\mathrm{c}} - N^{\mathrm{react,eq},\s}.
+\end{align}
+""", as_latex=True)
+
+            # Some more complicated binding models require additional equations
+            if column_model.binding_model == "SMA" and column_model.has_binding:
+
+                PTD_ = column_model.PTD and column_model.N_p > 1
+                write_and_save(r"The number of available binding sites $\bar{q}_0$ is given by")
+                write_and_save(r"\begin{align}" + eq.sma_free_binding_sites(PTD=PTD_) + r".\end{align}", as_latex=True)
+
+                write_and_save(
+                    "For the salt component, mass transfer is governed by " + eq_type_ + " equations in " + eq.full_particle_conc_domain(column_model.resolution, par_type.resolution, par_type.has_core, with_par_index=False, with_time_domain=True) + tmp_str)
+
+                # The salt component is in rapid equilibrium binding mode
+                tmpReqBnd = column_model.req_binding
+                column_model.req_binding = True
+                tmpBndModel = column_model.binding_model
+                column_model.binding_model = "SMA_salt"
+                particle_eq_salt, particle_bc_salt = column_model.particle_equations()
+                column_model.req_binding = tmpReqBnd
+                column_model.binding_model = tmpBndModel
+
+                if PTD_:
+                    write_and_save(re.sub(r"_{i}", r"_{0}", particle_eq_salt[par_type]), as_latex=True)
+                    re.sub(r"_{i}", r"_{0}", particle_bc_salt[par_type])
+                else:
+                    write_and_save(re.sub(r"_{j,i}", r"_{j,0}", particle_eq_salt[par_type]), as_latex=True)
+                    re.sub(r"_{j,i}", r"_{j,0}", particle_bc_salt[par_type])
+
+                if not particle_bc_salt[par_type] == "":
+                    write_and_save(r"where the counter-ion concentration $c^{\s}_0$ satisfies the electroneutrality constraint. Boundary conditions are")
+                    write_and_save(particle_bc_salt[par_type], as_latex=True)
+                else:
+                   write_and_save(r"where the counter-ion concentration $c^{\s}_0$ satisfies the electroneutrality constraint.")
+
+            cur_par_count += column_model.par_type_counts[par_type]
 
 write_and_save("Consistent initial values for all solution variables (concentrations) are defined at $t = 0$.")
 

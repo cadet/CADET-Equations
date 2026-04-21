@@ -39,6 +39,12 @@ class Column:
     # List[bool] = None # TODO make this possible per component and particle type in advanced mode
     nonlimiting_filmDiff: bool = False
 
+    # Per-component configuration (used in advanced_mode when N_c > 0)
+    req_binding_per_comp: Optional[List[bool]] = None
+    nonlimiting_filmDiff_per_comp: Optional[List[bool]] = None
+    has_surfDiff_per_comp: Optional[List[bool]] = None
+    has_mult_bnd_states_per_comp: Optional[List[bool]] = None
+
     particle_models: Optional[List[Particle]] = None
     # counts per unique particle type (geometry, has_core, resolution)
     par_type_counts: Counter[Particle] = field(default_factory=Counter)
@@ -95,8 +101,17 @@ class Column:
             self.has_angular_coordinate = True
             self.has_angular_dispersion = True
 
-        self.N_c = st.sidebar.number_input(
-            "Number of components", key=r"N_c", min_value=1, step=1) if self.dev_mode else -1
+        if self.dev_mode:
+            self.N_c = st.sidebar.number_input(
+                "Number of components", key=r"N_c", min_value=1, step=1)
+        elif self.advanced_mode:
+            if st.sidebar.selectbox("Specify number of components", ["No", "Yes"], key=r"specify_N_c") == "Yes":
+                self.N_c = st.sidebar.number_input(
+                    "Number of components", key=r"N_c", min_value=1, step=1)
+            else:
+                self.N_c = -1
+        else:
+            self.N_c = -1
 
         if self.has_axial_coordinate:
             with col2:
@@ -172,6 +187,39 @@ class Column:
                                                                         "No", "Yes"], key=r"has_mult_bnd_states") == "Yes" if self.advanced_mode else False
                         self.has_surfDiff = st.sidebar.selectbox("Add surface diffusion", [
                                                                  "No", "Yes"], key=r"has_surfDiff") == "Yes" if resolution == "1D" else False
+
+                        # Per-component configuration in advanced mode
+                        if self.advanced_mode and self.N_c > 0:
+                            st.sidebar.write("Per-component configuration")
+                            self.req_binding_per_comp = []
+                            self.nonlimiting_filmDiff_per_comp = []
+                            self.has_surfDiff_per_comp = []
+                            self.has_mult_bnd_states_per_comp = []
+                            for comp_i in range(self.N_c):
+                                with st.sidebar.expander(f"Component {comp_i + 1}"):
+                                    self.req_binding_per_comp.append(
+                                        st.selectbox(f"Binding kinetics mode",
+                                                     ["Kinetic", "Rapid-equilibrium"],
+                                                     key=f"req_binding_comp_{comp_i}") == "Rapid-equilibrium"
+                                    )
+                                    self.nonlimiting_filmDiff_per_comp.append(
+                                        st.selectbox(f"Non-limiting film diffusion",
+                                                     ["No", "Yes"],
+                                                     key=f"nonlimiting_filmDiff_comp_{comp_i}") == "Yes"
+                                    )
+                                    if resolution == "1D":
+                                        self.has_surfDiff_per_comp.append(
+                                            st.selectbox(f"Surface diffusion",
+                                                         ["No", "Yes"],
+                                                         key=f"has_surfDiff_comp_{comp_i}") == "Yes"
+                                        )
+                                    else:
+                                        self.has_surfDiff_per_comp.append(False)
+                                    self.has_mult_bnd_states_per_comp.append(
+                                        st.selectbox(f"Multiple bound states",
+                                                     ["No", "Yes"],
+                                                     key=f"has_mult_bnd_states_comp_{comp_i}") == "Yes"
+                                    )
 
                 self.particle_models.append(
                     Particle(
@@ -518,6 +566,86 @@ class Column:
                 boundary_conditions[par_type] = re.sub("_{j}", "", boundary_conditions[par_type])
 
         return eqs, boundary_conditions
+
+    def has_per_component_config(self):
+        """Return True if per-component configuration is active and settings differ across components."""
+        return self.req_binding_per_comp is not None and self.N_c > 0
+
+    def component_groups(self):
+        """Group components by their shared per-component settings.
+
+        Returns a list of dicts, each containing:
+          - 'components': list of 1-based component indices
+          - 'req_binding', 'nonlimiting_filmDiff', 'has_surfDiff', 'has_mult_bnd_states': the shared settings
+        """
+        if not self.has_per_component_config():
+            return None
+
+        groups = {}
+        for i in range(self.N_c):
+            key = (
+                self.req_binding_per_comp[i],
+                self.nonlimiting_filmDiff_per_comp[i],
+                self.has_surfDiff_per_comp[i],
+                self.has_mult_bnd_states_per_comp[i],
+            )
+            groups.setdefault(key, []).append(i + 1)  # 1-based index
+
+        result = []
+        for (req_b, nlf, sd, mbs), comps in groups.items():
+            result.append({
+                'components': comps,
+                'req_binding': req_b,
+                'nonlimiting_filmDiff': nlf,
+                'has_surfDiff': sd,
+                'has_mult_bnd_states': mbs,
+            })
+        return result
+
+    def particle_equations_for_group(self, group):
+        """Generate particle equations using per-component group settings."""
+        eqs = {}
+        boundary_conditions = {}
+
+        for par_type in self.par_type_counts.keys():
+
+            eqs[par_type] = eq.particle_transport(
+                par_type, singleParticle=self.N_p == 1,
+                nonlimiting_filmDiff=group['nonlimiting_filmDiff'],
+                has_surfDiff=group['has_surfDiff'],
+                has_binding=self.has_binding,
+                req_binding=group['req_binding'],
+                has_mult_bnd_states=group['has_mult_bnd_states'],
+                PTD=self.PTD,
+                has_reaction_liquid=self.has_reaction_particle_liquid,
+                has_reaction_solid=self.has_reaction_particle_solid,
+                binding_model=self.binding_model)
+
+            boundary_conditions[par_type] = eq.particle_boundary(
+                par_type, singleParticle=self.N_p == 1,
+                nonlimiting_filmDiff=group['nonlimiting_filmDiff'],
+                has_surfDiff=group['has_surfDiff'],
+                has_binding=self.has_binding,
+                req_binding=group['req_binding'],
+                has_mult_bnd_states=group['has_mult_bnd_states'])
+
+            if self.N_p == 1:
+                eqs[par_type] = re.sub(",j", "", eqs[par_type])
+                eqs[par_type] = re.sub("j,", "", eqs[par_type])
+                eqs[par_type] = re.sub("_{j}", "", eqs[par_type])
+                boundary_conditions[par_type] = re.sub(",j", "", boundary_conditions[par_type])
+                boundary_conditions[par_type] = re.sub("j,", "", boundary_conditions[par_type])
+                boundary_conditions[par_type] = re.sub("_{j}", "", boundary_conditions[par_type])
+
+        return eqs, boundary_conditions
+
+    @staticmethod
+    def format_component_set(components):
+        """Format a list of component indices as a LaTeX set string."""
+        if len(components) == 1:
+            return r"$i = " + str(components[0]) + r"$"
+        else:
+            return r"$i \in \{" + ", ".join(str(c) for c in components) + r"\}$"
 
     def domain_interstitial(self, with_time_domain=True):
         return r"$" + eq.int_vol_domain(self.resolution, with_time_domain=with_time_domain) + r"$"
