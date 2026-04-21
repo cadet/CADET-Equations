@@ -73,21 +73,29 @@ def int_vol_0DContinuum_asmpt(N_p: int, nonlimiting_filmDiff: bool):
     return [r"the tank is spatially homogeneous (i.e., the spatial position inside the " + volume_string + " does not matter);"]
 
 
-def int_vol_continuum_asmpt(resolution: str, N_p: int, nonlimiting_filmDiff: bool):
+def int_vol_continuum_asmpt(resolution: str, N_p: int, nonlimiting_filmDiff: bool, column_type: str = "Axial"):
 
     asmpts = []
-    if int(re.search(r'\d?', resolution).group()) > 0:
+
+    if column_type == "Radial" and resolution != "0D":
+        asmpts.append(
+            r"the fluid only flows in the radial direction of the column (i.e., there is no flow in the axial and angular direction);")
+        asmpts.append(
+            r"the column is a hollow cylinder with inner radius $R^{\mathrm{in}}$ and outer radius $R^{\mathrm{out}}$;")
+    elif column_type == "Frustum" and resolution != "0D":
         asmpts.append(
             r"the fluid only flows in the axial direction of the column (i.e., there is no flow in the radial and angular direction);")
+        asmpts.append(
+            r"the column has a conical frustum shape with linearly varying radius $r(z) = r_0 + \frac{z}{L}(r_L - r_0)$;")
 
     if resolution == "3D":
-        return int_vol_3DContinuum_asmpt(N_p, nonlimiting_filmDiff)
+        return asmpts + int_vol_3DContinuum_asmpt(N_p, nonlimiting_filmDiff)
     elif resolution == "2D":
-        return int_vol_2DContinuum_asmpt(N_p, nonlimiting_filmDiff)
+        return asmpts + int_vol_2DContinuum_asmpt(N_p, nonlimiting_filmDiff)
     elif resolution == "1D":
-        return int_vol_1DContinuum_asmpt(N_p, nonlimiting_filmDiff)
+        return asmpts + int_vol_1DContinuum_asmpt(N_p, nonlimiting_filmDiff)
     elif resolution == "0D":
-        return int_vol_0DContinuum_asmpt(N_p, nonlimiting_filmDiff)
+        return asmpts + int_vol_0DContinuum_asmpt(N_p, nonlimiting_filmDiff)
 
 
 def particle_asmpts():
@@ -258,6 +266,32 @@ def angular_dispersion(eps:str=None):
         return r"\frac{1}{\rho} \frac{\partial}{\partial \varphi} \left( " + eps + r" D^{\mathrm{ang}}_{i}  \frac{\partial c^{\b}_i}{\partial \varphi} \right)"
 
 
+# Radial flow column transport terms (primary transport in radial direction)
+def radial_flow_convection(eps:str=None):
+    if eps is None:
+        return r"- \frac{u}{\rho} \frac{\partial c^{\b}_i}{\partial \rho}"
+    else:
+        return r"- \frac{u}{\rho} \frac{\partial \left( " + eps + r" c^{\b}_i \right)}{\partial \rho}"
+def radial_flow_dispersion(eps:str=None):
+    if eps is None:
+        return r"\frac{1}{\rho} \frac{\partial}{\partial \rho} \left( \rho D^{\mathrm{ax}}_{i} \frac{\partial c^{\b}_i}{\partial \rho} \right)"
+    else:
+        return r"\frac{1}{\rho} \frac{\partial}{\partial \rho} \left( \rho " + eps + r" D^{\mathrm{ax}}_{i} \frac{\partial c^{\b}_i}{\partial \rho} \right)"
+
+
+# Frustum (conical) column transport terms (axial transport with varying cross-section)
+def frustum_convection(eps:str=None):
+    if eps is None:
+        return r"- \frac{u}{r(z)^2} \frac{\partial c^{\b}_i}{\partial z}"
+    else:
+        return r"- \frac{u}{r(z)^2} \frac{\partial \left( " + eps + r" c^{\b}_i \right)}{\partial z}"
+def frustum_dispersion(eps:str=None):
+    if eps is None:
+        return r"\frac{1}{r(z)^2} \frac{\partial}{\partial z} \left( r(z)^2 D^{\mathrm{ax}}_{i} \frac{\partial c^{\b}_i}{\partial z} \right)"
+    else:
+        return r"\frac{1}{r(z)^2} \frac{\partial}{\partial z} \left( r(z)^2 " + eps + r" D^{\mathrm{ax}}_{i} \frac{\partial c^{\b}_i}{\partial z} \right)"
+
+
 # Film diffusion in the interstitial volume
 def int_filmDiff_term(particle, numIdxBegin, numIdxEnd, singleParticle:bool, nonLimitingFilmDiff:bool, hasSurfDiff:bool):
 
@@ -355,7 +389,7 @@ def conserved_moiety_equation_particle_solid(singleParticle: bool):
 # Boundary conditions of the interstitial volume equations
 
 
-def int_vol_BC(resolution: str, hasAxialDispersion: bool):
+def int_vol_BC(resolution: str, hasAxialDispersion: bool, column_type: str = "Axial"):
 
     # handle domain the BC is defined on
     ax_bc_domain = r"(0, T^{\mathrm{end}})"
@@ -371,32 +405,57 @@ def int_vol_BC(resolution: str, hasAxialDispersion: bool):
         rad_bc_domain = r"(0, T^{\mathrm{end}}) \times (0, L) \times [0,2\pi)"
         ang_bc_domain = r"(0, T^{\mathrm{end}}) \times (0, L) \times (0, R^{\mathrm{c}})"
 
-    # define single equations
-    ax_diff_term = r"- D^{\mathrm{ax}}_{i} \frac{\partial c^{\b}_i}{\partial z}" if hasAxialDispersion else ""
-    inflow_bc = r"u c_{\mathrm{in},i} &= \left.\left( u c^{\b}_i " + \
-        ax_diff_term + \
-        r"\right)\right|_{z=0} & &\qquad\text{on }" + ax_bc_domain
-    outflow_bc = r"0 &= - D^{\mathrm{ax}}_{i} \left. \frac{\partial c^{\b}_i}{\partial z} \right|_{z=L} & &\qquad\text{on }" + ax_bc_domain
+    if column_type == "Radial":
+        # Radial flow: transport in rho direction, domain (R_in, R_out)
+        radflow_bc_domain = r"(0, T^{\mathrm{end}})"
+        diff_term = r"- D^{\mathrm{ax}}_{i} \frac{\partial c^{\b}_i}{\partial \rho}" if hasAxialDispersion else ""
+        inflow_bc = r"u c_{\mathrm{in},i} &= \left.\left( u c^{\b}_i " + \
+            diff_term + \
+            r"\right)\right|_{\rho=R^{\mathrm{in}}} & &\qquad\text{on }" + radflow_bc_domain
+        outflow_bc = r"0 &= - D^{\mathrm{ax}}_{i} \left. \frac{\partial c^{\b}_i}{\partial \rho} \right|_{\rho=R^{\mathrm{out}}} & &\qquad\text{on }" + radflow_bc_domain
 
-    rad_wall_bc = r"0 &= - \left(D^{\mathrm{rad}}_{i} \left. \frac{\partial c^{\b}_i}{\partial \rho} \right) \right|_{\rho=R^{\mathrm{c}}} & &\qquad\text{on }" + rad_bc_domain
-    rad_inner_bc = r"0 &= - \left(D^{\mathrm{rad}}_{i} \left. \frac{\partial c^{\b}_i}{\partial \rho} \right) \right|_{\rho=0} & &\qquad\text{on }" + rad_bc_domain
-
-    ang_periodic_bc = r"0 &= D^{\mathrm{ang}}_{i} \, c^{\b}_i \Big|_{\varphi=0} - D^{\mathrm{ang}}_{i} \, c^{\b}_i \Big|_{\varphi=2\pi} & &\quad \text{on }" + ang_bc_domain
-
-    # collect the required equations for full BC
-    boundary_conditions = inflow_bc
-
-    if hasAxialDispersion:
-        boundary_conditions += r""",\\
+        boundary_conditions = inflow_bc
+        if hasAxialDispersion:
+            boundary_conditions += r""",\\
                """ + outflow_bc
 
-    if resolution in ["2D", "3D"]:
-        boundary_conditions += r""",\\
+    elif column_type == "Frustum":
+        # Frustum: transport in z direction with varying cross-section
+        diff_term = r"- D^{\mathrm{ax}}_{i} \frac{\partial c^{\b}_i}{\partial z}" if hasAxialDispersion else ""
+        inflow_bc = r"\frac{u}{r(z)^2} c_{\mathrm{in},i} &= \left.\left( \frac{u}{r(z)^2} c^{\b}_i " + \
+            diff_term + \
+            r"\right)\right|_{z=0} & &\qquad\text{on }" + ax_bc_domain
+        outflow_bc = r"0 &= - D^{\mathrm{ax}}_{i} \left. \frac{\partial c^{\b}_i}{\partial z} \right|_{z=L} & &\qquad\text{on }" + ax_bc_domain
+
+        boundary_conditions = inflow_bc
+        if hasAxialDispersion:
+            boundary_conditions += r""",\\
+               """ + outflow_bc
+
+    else:
+        # Axial (default): standard cylindrical column
+        ax_diff_term = r"- D^{\mathrm{ax}}_{i} \frac{\partial c^{\b}_i}{\partial z}" if hasAxialDispersion else ""
+        inflow_bc = r"u c_{\mathrm{in},i} &= \left.\left( u c^{\b}_i " + \
+            ax_diff_term + \
+            r"\right)\right|_{z=0} & &\qquad\text{on }" + ax_bc_domain
+        outflow_bc = r"0 &= - D^{\mathrm{ax}}_{i} \left. \frac{\partial c^{\b}_i}{\partial z} \right|_{z=L} & &\qquad\text{on }" + ax_bc_domain
+
+        boundary_conditions = inflow_bc
+
+        if hasAxialDispersion:
+            boundary_conditions += r""",\\
+               """ + outflow_bc
+
+        if resolution in ["2D", "3D"]:
+            rad_wall_bc = r"0 &= - \left(D^{\mathrm{rad}}_{i} \left. \frac{\partial c^{\b}_i}{\partial \rho} \right) \right|_{\rho=R^{\mathrm{c}}} & &\qquad\text{on }" + rad_bc_domain
+            rad_inner_bc = r"0 &= - \left(D^{\mathrm{rad}}_{i} \left. \frac{\partial c^{\b}_i}{\partial \rho} \right) \right|_{\rho=0} & &\qquad\text{on }" + rad_bc_domain
+            boundary_conditions += r""",\\
 """ + rad_wall_bc + r""",\\
 """ + rad_inner_bc
 
-    if resolution == "3D":
-        boundary_conditions += r""",\\
+        if resolution == "3D":
+            ang_periodic_bc = r"0 &= D^{\mathrm{ang}}_{i} \, c^{\b}_i \Big|_{\varphi=0} - D^{\mathrm{ang}}_{i} \, c^{\b}_i \Big|_{\varphi=2\pi} & &\quad \text{on }" + ang_bc_domain
+            boundary_conditions += r""",\\
 """ + ang_periodic_bc
 
     return r"""
@@ -437,12 +496,15 @@ def int_vol_initial(resolution: str, includeParLiquid: bool):
     return equation
 
 
-def int_vol_domain(resolution:str, with_time_domain=True):
+def int_vol_domain(resolution:str, with_time_domain=True, column_type:str="Axial"):
 
     domain_ = r"(0, T^\mathrm{end})" if with_time_domain else ""
 
     if int(re.search("\\d", resolution).group()) > 0:
-        domain_ += r"\times (0, L)" if with_time_domain else r"(0, L)"
+        if column_type == "Radial":
+            domain_ += r"\times (R^\mathrm{in}, R^\mathrm{out})" if with_time_domain else r"(R^\mathrm{in}, R^\mathrm{out})"
+        else:
+            domain_ += r"\times (0, L)" if with_time_domain else r"(0, L)"
     if int(re.search("\\d", resolution).group()) > 1:
         domain_ += r"\times (0, R^\mathrm{c})"
     if int(re.search("\\d", resolution).group()) > 2:
