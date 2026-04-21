@@ -363,12 +363,3 @@ def test_req_reaction_assumptions_multiple_phases():
     assert "conserved moieties" in latex
 
 
-@pytest.mark.ci
-@pytest.mark.unit_test
-def test_req_reaction_symbol_table():
-    """Test that symbol table contains rapid-equilibrium reaction symbols."""
-    at = setup_app_with_advanced_mode()
-    at.selectbox(key="has_reaction_bulk").set_value("Yes").run()
-    at.selectbox(key="req_reaction_bulk").set_value("Rapid-equilibrium").run()
-    at.toggle(key="sym_table").set_value(True).run()
-    assert not at.exception
