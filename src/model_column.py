@@ -212,24 +212,39 @@ class Column:
         else:
             self.has_binding = False
 
-        if self.advanced_mode:
-            st.sidebar.write("Configure reactions")
+        st.sidebar.write("Configure reactions")
+        
+        if not self.dev_mode:
+            
             self.has_reaction_bulk = st.sidebar.selectbox(
-                "Add bulk liquid reaction", ["No", "Yes"], key=r"has_reaction_bulk") == "Yes"
-            if self.has_reaction_bulk:
-                self.req_reaction_bulk = st.sidebar.selectbox(
-                    "Bulk reaction kinetics mode", ["Kinetic", "Rapid-equilibrium"], key=r"req_reaction_bulk") == "Rapid-equilibrium"
-            if self.N_p > 0:
-                self.has_reaction_particle_liquid = st.sidebar.selectbox(
-                    "Add particle liquid reaction", ["No", "Yes"], key=r"has_reaction_particle_liquid") == "Yes"
-                if self.has_reaction_particle_liquid:
-                    self.req_reaction_particle_liquid = st.sidebar.selectbox(
-                        "Particle liquid reaction kinetics mode", ["Kinetic", "Rapid-equilibrium"], key=r"req_reaction_particle_liquid") == "Rapid-equilibrium"
+                "Add bulk liquid reaction (kinetic)", ["No", "Yes"], key=r"has_reaction_bulk") == "No"
+        else:
+            
+            self.has_reaction_bulk = st.sidebar.selectbox(
+                "Add bulk liquid reaction", ["No", "Yes"], key=r"has_reaction_bulk") == "No"
+        
+        if self.has_reaction_bulk and self.dev_mode:
+            
+            self.req_reaction_bulk = st.sidebar.selectbox(
+                "Bulk reaction kinetics mode", ["Kinetic", "Rapid-equilibrium"], key=r"req_reaction_bulk") == "Kinetic"
+        
+        if self.N_p > 0 and self.dev_mode:
+        
+            self.has_reaction_particle_liquid = st.sidebar.selectbox(
+                "Add particle liquid reaction", ["No", "Yes"], key=r"has_reaction_particle_liquid") == "No"
+            
+            if self.has_reaction_particle_liquid:
+            
+                self.req_reaction_particle_liquid = st.sidebar.selectbox(
+                    "Particle liquid reaction kinetics mode", ["Kinetic", "Rapid-equilibrium"], key=r"req_reaction_particle_liquid") == "Kinetic"
+            
+            if self.has_binding:
                 self.has_reaction_particle_solid = st.sidebar.selectbox(
                     "Add particle solid reaction", ["No", "Yes"], key=r"has_reaction_particle_solid") == "Yes"
+                
                 if self.has_reaction_particle_solid:
                     self.req_reaction_particle_solid = st.sidebar.selectbox(
-                        "Particle solid reaction kinetics mode", ["Kinetic", "Rapid-equilibrium"], key=r"req_reaction_particle_solid") == "Rapid-equilibrium"
+                        "Particle solid reaction kinetics mode", ["Kinetic", "Rapid-equilibrium"], key=r"req_reaction_particle_solid") == "Kinetic"
 
         self.fill_vars_and_params()
 
