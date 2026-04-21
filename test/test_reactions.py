@@ -118,3 +118,129 @@ def test_bulk_reaction_0D_tank():
     assert not at.exception
     latex = at.session_state.latex_string
     assert r"f^{\mathrm{react}" in latex
+
+
+# === Rapid-equilibrium reaction tests ===
+
+@pytest.mark.ci
+def test_req_reaction_bulk():
+    at = setup_app_with_advanced_mode()
+    at.selectbox(key="has_reaction_bulk").set_value("Yes").run()
+    at.selectbox(key="req_reaction_bulk").set_value("Rapid-equilibrium").run()
+    assert not at.exception
+    latex = at.session_state.latex_string
+    # Should have equilibrium constraint, not kinetic reaction term
+    assert r"g^{\mathrm{react,eq}" in latex
+    assert r"M^{\mathrm{b}}" in latex
+    assert r"f^{\mathrm{react},\mathrm{b}}" not in latex
+
+
+@pytest.mark.ci
+def test_req_reaction_bulk_no_particles():
+    at = setup_app_with_advanced_mode(add_particles="No")
+    at.selectbox(key="has_reaction_bulk").set_value("Yes").run()
+    at.selectbox(key="req_reaction_bulk").set_value("Rapid-equilibrium").run()
+    assert not at.exception
+    latex = at.session_state.latex_string
+    assert r"g^{\mathrm{react,eq},\mathrm{b}}" in latex
+    assert r"M^{\mathrm{b}}" in latex
+
+
+@pytest.mark.ci
+def test_req_reaction_particle_liquid_1D():
+    at = setup_app_with_advanced_mode(particle_resolution="1D (radial coordinate)")
+    at.selectbox(key="has_reaction_particle_liquid").set_value("Yes").run()
+    at.selectbox(key="req_reaction_particle_liquid").set_value("Rapid-equilibrium").run()
+    assert not at.exception
+    latex = at.session_state.latex_string
+    assert r"g^{\mathrm{react,eq},\mathrm{p}}" in latex
+    assert r"M^{\mathrm{p}}" in latex
+    assert r"f^{\mathrm{react},\mathrm{p}}" not in latex
+
+
+@pytest.mark.ci
+def test_req_reaction_particle_solid_1D():
+    at = setup_app_with_advanced_mode(particle_resolution="1D (radial coordinate)")
+    at.selectbox(key="has_reaction_particle_solid").set_value("Yes").run()
+    at.selectbox(key="req_reaction_particle_solid").set_value("Rapid-equilibrium").run()
+    assert not at.exception
+    latex = at.session_state.latex_string
+    assert r"g^{\mathrm{react,eq},\mathrm{s}}" in latex
+    assert r"M^{\mathrm{s}}" in latex
+    assert r"f^{\mathrm{react},\mathrm{s}}" not in latex
+
+
+@pytest.mark.ci
+def test_req_reaction_particle_liquid_0D():
+    at = setup_app_with_advanced_mode(particle_resolution="0D (homogeneous)")
+    at.selectbox(key="has_reaction_particle_liquid").set_value("Yes").run()
+    at.selectbox(key="req_reaction_particle_liquid").set_value("Rapid-equilibrium").run()
+    assert not at.exception
+    latex = at.session_state.latex_string
+    assert r"g^{\mathrm{react,eq},\mathrm{p}}" in latex
+    assert r"M^{\mathrm{p}}" in latex
+
+
+@pytest.mark.ci
+def test_req_reaction_particle_solid_0D():
+    at = setup_app_with_advanced_mode(particle_resolution="0D (homogeneous)")
+    at.selectbox(key="has_reaction_particle_solid").set_value("Yes").run()
+    at.selectbox(key="req_reaction_particle_solid").set_value("Rapid-equilibrium").run()
+    assert not at.exception
+    latex = at.session_state.latex_string
+    assert r"g^{\mathrm{react,eq},\mathrm{s}}" in latex
+    assert r"M^{\mathrm{s}}" in latex
+
+
+@pytest.mark.ci
+def test_req_reaction_all():
+    at = setup_app_with_advanced_mode()
+    at.selectbox(key="has_reaction_bulk").set_value("Yes").run()
+    at.selectbox(key="req_reaction_bulk").set_value("Rapid-equilibrium").run()
+    at.selectbox(key="has_reaction_particle_liquid").set_value("Yes").run()
+    at.selectbox(key="req_reaction_particle_liquid").set_value("Rapid-equilibrium").run()
+    at.selectbox(key="has_reaction_particle_solid").set_value("Yes").run()
+    at.selectbox(key="req_reaction_particle_solid").set_value("Rapid-equilibrium").run()
+    assert not at.exception
+    latex = at.session_state.latex_string
+    assert r"g^{\mathrm{react,eq},\mathrm{b}}" in latex
+    assert r"g^{\mathrm{react,eq},\mathrm{p}}" in latex
+    assert r"g^{\mathrm{react,eq},\mathrm{s}}" in latex
+    assert r"f^{\mathrm{react}" not in latex
+
+
+@pytest.mark.ci
+def test_req_reaction_kinetics_mode_not_shown_without_reaction():
+    at = setup_app_with_advanced_mode()
+    assert not at.exception
+    selectbox_keys = [box.key for box in at.selectbox]
+    assert "req_reaction_bulk" not in selectbox_keys
+    assert "req_reaction_particle_liquid" not in selectbox_keys
+    assert "req_reaction_particle_solid" not in selectbox_keys
+
+
+@pytest.mark.ci
+def test_req_reaction_assumptions():
+    at = setup_app_with_advanced_mode()
+    at.selectbox(key="has_reaction_bulk").set_value("Yes").run()
+    at.selectbox(key="req_reaction_bulk").set_value("Rapid-equilibrium").run()
+    at.toggle(key="model_assumptions").set_value(True).run()
+    assert not at.exception
+    latex = at.session_state.latex_string
+    assert "conserved moieties" in latex
+
+
+@pytest.mark.ci
+def test_mixed_kinetic_and_req_reactions():
+    """Test that kinetic and rapid-equilibrium reactions can coexist in different phases."""
+    at = setup_app_with_advanced_mode()
+    at.selectbox(key="has_reaction_bulk").set_value("Yes").run()
+    # bulk stays kinetic (default)
+    at.selectbox(key="has_reaction_particle_liquid").set_value("Yes").run()
+    at.selectbox(key="req_reaction_particle_liquid").set_value("Rapid-equilibrium").run()
+    assert not at.exception
+    latex = at.session_state.latex_string
+    # Bulk should have kinetic reaction term
+    assert r"f^{\mathrm{react}" in latex
+    # Particle liquid should have equilibrium constraint
+    assert r"g^{\mathrm{react,eq},\mathrm{p}}" in latex

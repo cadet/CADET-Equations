@@ -38,6 +38,8 @@ class Particle:
     binding_model: str = "Arbitrary"
     has_reaction_liquid: bool = False
     has_reaction_solid: bool = False
+    req_reaction_liquid: bool = False
+    req_reaction_solid: bool = False
     # volume fraction ?
     # binding -> is_kinetic, nBound
     vars_and_params: List[dict] = field(default_factory=list, init=False, compare=False, hash=False)
@@ -124,15 +126,29 @@ class Particle:
             if self.has_core:
                 self.vars_and_params.append({"Group" : 0.1, "Symbol": r"R^\mathrm{pc}", "Description": r"particle core radius", "Unit": r"-", "Dependence": r"-", "Property": r"\in (0, R^\mathrm{p})"})
 
-        if self.has_reaction_liquid:
+        if self.has_reaction_liquid and not self.req_reaction_liquid:
             symbol_name_ = r"f^{\mathrm{react},\p}_{i}" if self.single_partype else r"f^{\mathrm{react},\p}_{j,i}"
             dep_ = r"\vec{c}^{\p}, \vec{c}^{\s}; i" if self.single_partype else r"\vec{c}^{\p}, \vec{c}^{\s}; j, i"
             vars_and_params_.append({"Group" : 10.2, "Symbol": symbol_name_, "Description": r"particle liquid phase reaction function", "Unit": r"\frac{mol}{m^3 \cdot s}", "Dependence": dep_})
 
-        if self.has_reaction_solid:
+        if self.has_reaction_liquid and self.req_reaction_liquid:
+            symbol_name_ = r"g^{\mathrm{react,eq},\p}_{k}" if self.single_partype else r"g^{\mathrm{react,eq},\p}_{j,k}"
+            dep_ = r"\vec{c}^{\p}, \vec{c}^{\s}; k" if self.single_partype else r"\vec{c}^{\p}, \vec{c}^{\s}; j, k"
+            vars_and_params_.append({"Group" : 10.2, "Symbol": symbol_name_, "Description": r"particle liquid phase equilibrium constraint function", "Unit": r"\frac{mol}{m^3}", "Dependence": dep_})
+            vars_and_params_.append({"Group" : 10.21, "Symbol": r"N^{\mathrm{react,eq},\p}", "Description": r"number of rapid-equilibrium particle liquid reactions", "Unit": r"-", "Dependence": r"-"})
+            vars_and_params_.append({"Group" : 10.21, "Symbol": r"M^{\p}", "Description": r"conserved moiety matrix for particle liquid reactions", "Unit": r"-", "Dependence": r"-"})
+
+        if self.has_reaction_solid and not self.req_reaction_solid:
             symbol_name_ = r"f^{\mathrm{react},\s}_{i}" if self.single_partype else r"f^{\mathrm{react},\s}_{j,i}"
             dep_ = r"\vec{c}^{\p}, \vec{c}^{\s}; i" if self.single_partype else r"\vec{c}^{\p}, \vec{c}^{\s}; j, i"
             vars_and_params_.append({"Group" : 10.3, "Symbol": symbol_name_, "Description": r"particle solid phase reaction function", "Unit": r"\frac{mol}{m^3 \cdot s}", "Dependence": dep_})
+
+        if self.has_reaction_solid and self.req_reaction_solid:
+            symbol_name_ = r"g^{\mathrm{react,eq},\s}_{k}" if self.single_partype else r"g^{\mathrm{react,eq},\s}_{j,k}"
+            dep_ = r"\vec{c}^{\p}, \vec{c}^{\s}; k" if self.single_partype else r"\vec{c}^{\p}, \vec{c}^{\s}; j, k"
+            vars_and_params_.append({"Group" : 10.3, "Symbol": symbol_name_, "Description": r"particle solid phase equilibrium constraint function", "Unit": r"\frac{mol}{m^3}", "Dependence": dep_})
+            vars_and_params_.append({"Group" : 10.31, "Symbol": r"N^{\mathrm{react,eq},\s}", "Description": r"number of rapid-equilibrium particle solid reactions", "Unit": r"-", "Dependence": r"-"})
+            vars_and_params_.append({"Group" : 10.31, "Symbol": r"M^{\s}", "Description": r"conserved moiety matrix for particle solid reactions", "Unit": r"-", "Dependence": r"-"})
 
         if not self.single_partype:
             vars_and_params_.append({"Group" : -0.1, "Symbol": r"j", "Description": r"particle type index", "Unit": r"-", "Dependence": r"-", "Property": r""})

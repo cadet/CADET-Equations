@@ -61,6 +61,9 @@ class Column:
     has_reaction_bulk: bool = False
     has_reaction_particle_liquid: bool = False
     has_reaction_particle_solid: bool = False
+    req_reaction_bulk: bool = False
+    req_reaction_particle_liquid: bool = False
+    req_reaction_particle_solid: bool = False
 
     vars_and_params: List[dict] = field(default_factory=list)
 
@@ -186,7 +189,9 @@ class Column:
                         PTD=self.PTD,
                         binding_model=self.binding_model,
                         has_reaction_liquid=self.has_reaction_particle_liquid,
-                        has_reaction_solid=self.has_reaction_particle_solid
+                        has_reaction_solid=self.has_reaction_particle_solid,
+                        req_reaction_liquid=self.req_reaction_particle_liquid,
+                        req_reaction_solid=self.req_reaction_particle_solid
                     )
                 )
 
@@ -211,11 +216,20 @@ class Column:
             st.sidebar.write("Configure reactions")
             self.has_reaction_bulk = st.sidebar.selectbox(
                 "Add bulk liquid reaction", ["No", "Yes"], key=r"has_reaction_bulk") == "Yes"
+            if self.has_reaction_bulk:
+                self.req_reaction_bulk = st.sidebar.selectbox(
+                    "Bulk reaction kinetics mode", ["Kinetic", "Rapid-equilibrium"], key=r"req_reaction_bulk") == "Rapid-equilibrium"
             if self.N_p > 0:
                 self.has_reaction_particle_liquid = st.sidebar.selectbox(
                     "Add particle liquid reaction", ["No", "Yes"], key=r"has_reaction_particle_liquid") == "Yes"
+                if self.has_reaction_particle_liquid:
+                    self.req_reaction_particle_liquid = st.sidebar.selectbox(
+                        "Particle liquid reaction kinetics mode", ["Kinetic", "Rapid-equilibrium"], key=r"req_reaction_particle_liquid") == "Rapid-equilibrium"
                 self.has_reaction_particle_solid = st.sidebar.selectbox(
                     "Add particle solid reaction", ["No", "Yes"], key=r"has_reaction_particle_solid") == "Yes"
+                if self.has_reaction_particle_solid:
+                    self.req_reaction_particle_solid = st.sidebar.selectbox(
+                        "Particle solid reaction kinetics mode", ["Kinetic", "Rapid-equilibrium"], key=r"req_reaction_particle_solid") == "Rapid-equilibrium"
 
         self.fill_vars_and_params()
 
@@ -360,8 +374,14 @@ class Column:
                 symbol_name_ = r"k^\mathrm{f}_{i}" if self.N_p<=1 else r"k^\mathrm{f}_{j,i}"
                 self.vars_and_params.append({"Group" : 7, "Symbol": symbol_name_, "Description": r"film diffusion coefficient", "Unit": r"\frac{m}{s}", "Dependence": r"i" if self.N_p<=1 else r"j,i", "Property": r"\geq 0"})
 
-        if self.has_reaction_bulk:
+        if self.has_reaction_bulk and not self.req_reaction_bulk:
             self.vars_and_params.append({"Group" : 8, "Symbol": r"f^{\mathrm{react},\b}_{i}", "Description": r"bulk liquid phase reaction function", "Unit": r"\frac{mol}{m^3 \cdot s}", "Dependence": r"\vec{c}^{\b}; i"})
+            self.vars_and_params.append({"Group" : 8.1, "Symbol": r"\vec{c}^{\b}", "Description": r"bulk liquid components vector", "Unit": r"[\frac{mol}{m^3}]", "Dependence": state_deps})
+
+        if self.has_reaction_bulk and self.req_reaction_bulk:
+            self.vars_and_params.append({"Group" : 8, "Symbol": r"g^{\mathrm{react,eq},\b}_{k}", "Description": r"bulk liquid phase equilibrium constraint function", "Unit": r"\frac{mol}{m^3}", "Dependence": r"\vec{c}^{\b}; k"})
+            self.vars_and_params.append({"Group" : 8.1, "Symbol": r"N^{\mathrm{react,eq},\b}", "Description": r"number of rapid-equilibrium bulk reactions", "Unit": r"-", "Dependence": r"-"})
+            self.vars_and_params.append({"Group" : 8.1, "Symbol": r"M^{\b}", "Description": r"conserved moiety matrix for bulk reactions", "Unit": r"-", "Dependence": r"-"})
             self.vars_and_params.append({"Group" : 8.1, "Symbol": r"\vec{c}^{\b}", "Description": r"bulk liquid components vector", "Unit": r"[\frac{mol}{m^3}]", "Dependence": state_deps})
 
         for var_ in self.vars_and_params:
@@ -392,7 +412,7 @@ class Column:
             if self.nonlimiting_filmDiff and self.has_binding and self.particle_models[0].resolution == "0D" and not self.req_binding:
                 equation += r" - V^{\p} \left( 1 - \varepsilon^{\mathrm{p}} \right) \frac{\partial c^{\s}_i}{\partial t}"
 
-            if self.has_reaction_bulk:
+            if self.has_reaction_bulk and not self.req_reaction_bulk:
                 equation += " + " + eq.bulk_reaction_term()
 
         else:
@@ -437,7 +457,7 @@ class Column:
 
             par_added += self.par_unique_intV_contribution_counts[par_uniq]
 
-        if self.has_reaction_bulk and self.resolution != "0D":
+        if self.has_reaction_bulk and not self.req_reaction_bulk and self.resolution != "0D":
             equation += " + " + eq.bulk_reaction_term()
 
         if self.resolution == "0D":
@@ -465,7 +485,8 @@ class Column:
 
             eqs[par_type] = eq.particle_transport(par_type, singleParticle=self.N_p == 1, nonlimiting_filmDiff=self.nonlimiting_filmDiff,
                                                   has_surfDiff=self.has_surfDiff, has_binding=self.has_binding, req_binding=self.req_binding, has_mult_bnd_states=self.has_mult_bnd_states, PTD=self.PTD,
-                                                  has_reaction_liquid=self.has_reaction_particle_liquid, has_reaction_solid=self.has_reaction_particle_solid,
+                                                  has_reaction_liquid=self.has_reaction_particle_liquid and not self.req_reaction_particle_liquid,
+                                                  has_reaction_solid=self.has_reaction_particle_solid and not self.req_reaction_particle_solid,
                                                   binding_model=self.binding_model)
             eqs[par_type] = eqs[par_type]
 
@@ -557,6 +578,17 @@ class Column:
         if self.req_binding:
             asmpts["Specific model assumptions"].append(
                 r"adsorption and desorption happen on a much faster time scale than the other mass transfer processes (e.g., convection, diffusion). Hence, we consider them to be equilibrated instantly, that is, to always be in (local) equilibrium")
+
+        if self.req_reaction_bulk or self.req_reaction_particle_liquid or self.req_reaction_particle_solid:
+            phases = []
+            if self.req_reaction_bulk:
+                phases.append("bulk liquid")
+            if self.req_reaction_particle_liquid:
+                phases.append("particle liquid")
+            if self.req_reaction_particle_solid:
+                phases.append("particle solid")
+            asmpts["Specific model assumptions"].append(
+                r"reactions in the " + ", ".join(phases) + r" phase happen on a much faster time scale than the other mass transfer processes (e.g., convection, diffusion). Hence, the reaction equilibria are attained instantaneously and the system is reduced through conserved moieties")
 
         for idx in range(0, len(asmpts["Specific model assumptions"])):
             
