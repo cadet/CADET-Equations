@@ -355,11 +355,14 @@ def test_req_reaction_assumptions_multiple_phases():
     at.selectbox(key="req_reaction_bulk").set_value("Rapid-equilibrium").run()
     at.selectbox(key="has_reaction_particle_liquid").set_value("Yes").run()
     at.selectbox(key="req_reaction_particle_liquid").set_value("Rapid-equilibrium").run()
+    at.selectbox(key="has_reaction_particle_solid").set_value("Yes").run()
+    at.selectbox(key="req_reaction_particle_solid").set_value("Rapid-equilibrium").run()
     at.toggle(key="model_assumptions").set_value(True).run()
     assert not at.exception
     latex = at.session_state.latex_string
     assert "bulk liquid" in latex
     assert "particle liquid" in latex
+    assert "particle solid" in latex
     assert "conserved moieties" in latex
 
 
