@@ -589,3 +589,103 @@ class TestColumnReactions:
         )
         assert hasattr(col, 'has_reaction_particle_solid')
         assert isinstance(col.has_reaction_particle_solid, bool)
+
+
+class TestPerComponentConfiguration:
+    """Test per-component parameterization in advanced mode."""
+
+    @pytest.mark.unit_test
+    def test_per_component_attributes_default_none(self):
+        """Test that per-component lists default to None."""
+        col = Column(
+            dev_mode=False,
+            advanced_mode=False,
+            var_format="CADET",
+        )
+        assert col.req_binding_per_comp is None
+        assert col.nonlimiting_filmDiff_per_comp is None
+        assert col.has_surfDiff_per_comp is None
+        assert col.has_mult_bnd_states_per_comp is None
+
+    @pytest.mark.unit_test
+    def test_has_per_component_config_false_by_default(self):
+        """Test that per-component config is inactive by default."""
+        col = Column(
+            dev_mode=False,
+            advanced_mode=False,
+            var_format="CADET",
+        )
+        assert col.has_per_component_config() is False
+
+    @pytest.mark.unit_test
+    def test_component_groups_returns_none_without_config(self):
+        """Test that component_groups returns None without per-component config."""
+        col = Column(
+            dev_mode=False,
+            advanced_mode=False,
+            var_format="CADET",
+        )
+        assert col.component_groups() is None
+
+    @pytest.mark.unit_test
+    def test_format_component_set_single(self):
+        """Test formatting a single component index."""
+        result = Column.format_component_set([1])
+        assert result == r"$i = 1$"
+
+    @pytest.mark.unit_test
+    def test_format_component_set_multiple(self):
+        """Test formatting multiple component indices."""
+        result = Column.format_component_set([1, 3, 5])
+        assert result == r"$i \in \{1, 3, 5\}$"
+
+    @pytest.mark.unit_test
+    def test_has_per_component_config_true_when_set(self):
+        """Test that has_per_component_config returns True when lists are set."""
+        col = Column(
+            dev_mode=False,
+            advanced_mode=False,
+            var_format="CADET",
+        )
+        col.N_c = 2
+        col.req_binding_per_comp = [False, True]
+        assert col.has_per_component_config() is True
+
+    @pytest.mark.unit_test
+    def test_component_groups_single_group(self):
+        """Test component_groups when all components share the same settings."""
+        col = Column(
+            dev_mode=False,
+            advanced_mode=False,
+            var_format="CADET",
+        )
+        col.N_c = 2
+        col.req_binding_per_comp = [False, False]
+        col.nonlimiting_filmDiff_per_comp = [False, False]
+        col.has_surfDiff_per_comp = [False, False]
+        col.has_mult_bnd_states_per_comp = [False, False]
+        groups = col.component_groups()
+        assert groups is not None
+        assert len(groups) == 1
+        assert groups[0]['components'] == [1, 2]
+
+    @pytest.mark.unit_test
+    def test_component_groups_two_groups(self):
+        """Test component_groups when settings differ across components."""
+        col = Column(
+            dev_mode=False,
+            advanced_mode=False,
+            var_format="CADET",
+        )
+        col.N_c = 3
+        col.req_binding_per_comp = [False, True, False]
+        col.nonlimiting_filmDiff_per_comp = [False, False, False]
+        col.has_surfDiff_per_comp = [False, False, False]
+        col.has_mult_bnd_states_per_comp = [False, False, False]
+        groups = col.component_groups()
+        assert groups is not None
+        assert len(groups) == 2
+        # Components 1 and 3 share kinetic binding, component 2 has rapid-equilibrium
+        comp_sets = [sorted(g['components']) for g in groups]
+        assert [1, 3] in comp_sets
+        assert [2] in comp_sets
