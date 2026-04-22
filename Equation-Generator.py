@@ -244,6 +244,28 @@ else:
 if show_eq_description:
     write_and_save("Here, " + column_model.vars_params_description())
 
+if column_model.has_reaction_bulk and column_model.req_reaction_bulk:
+    write_and_save(
+        r"The bulk liquid phase reactions are in rapid equilibrium. "
+        r"The resulting overdetermined system of $N^{\mathrm{c}}$ component transport equations is reduced through conserved moieties. "
+        r"Specifically, $N^{\mathrm{react,eq},\b}$ of the component equations are replaced by algebraic equilibrium constraints")
+    write_and_save(r"""
+\begin{align}
+""" + eq.req_reaction_bulk_constraint() + r""", \quad k = 1, \ldots, N^{\mathrm{react,eq},\b}.
+\end{align}
+""", as_latex=True)
+    write_and_save(
+        r"The remaining $N^{\mathrm{c}} - N^{\mathrm{react,eq},\b}$ equations are replaced by conserved moiety equations, "
+        r"obtained by left-multiplying the component transport equations with the conserved moiety matrix "
+        r"$M^{\b} \in \mathbb{R}^{(N^{\mathrm{c}} - N^{\mathrm{react,eq},\b}) \times N^{\mathrm{c}}}$, "
+        r"whose rows span the left null space of the stoichiometric matrix")
+    write_and_save(r"""
+\begin{align}
+""" + eq.conserved_moiety_equation_bulk() + r""", \quad l = 1, \ldots, N^{\mathrm{c}} - N^{\mathrm{react,eq},\b}.
+\end{align}
+""", as_latex=True)
+    write_and_save(r"By construction, the reaction terms cancel in the conserved moiety equations.")
+
 if column_model.N_p > 0:
 
     particle_eq, particle_bc = column_model.particle_equations()
@@ -277,8 +299,46 @@ if column_model.N_p > 0:
 
         if show_eq_description:
             write_and_save("Here, " + column_model.particle_models[0].vars_params_description())
-            
-            
+
+        # Rapid-equilibrium reactions in the particle phase
+        if column_model.has_reaction_particle_liquid and column_model.req_reaction_particle_liquid:
+            write_and_save(
+                r"The particle liquid phase reactions are in rapid equilibrium. "
+                r"The system is reduced through conserved moieties: "
+                r"$N^{\mathrm{react,eq},\p}$ algebraic equilibrium constraints")
+            write_and_save(r"""
+\begin{align}
+""" + eq.req_reaction_particle_liquid_constraint(column_model.N_p == 1) + r""", \quad k = 1, \ldots, N^{\mathrm{react,eq},\p}
+\end{align}
+""", as_latex=True)
+            write_and_save(
+                r"replace $N^{\mathrm{react,eq},\p}$ of the component equations. "
+                r"The remaining $N^{\mathrm{c}} - N^{\mathrm{react,eq},\p}$ equations are conserved moiety equations")
+            write_and_save(r"""
+\begin{align}
+""" + eq.conserved_moiety_equation_particle_liquid(column_model.N_p == 1) + r""", \quad l = 1, \ldots, N^{\mathrm{c}} - N^{\mathrm{react,eq},\p}.
+\end{align}
+""", as_latex=True)
+
+        if column_model.has_reaction_particle_solid and column_model.req_reaction_particle_solid:
+            write_and_save(
+                r"The particle solid phase reactions are in rapid equilibrium. "
+                r"The system is reduced through conserved moieties: "
+                r"$N^{\mathrm{react,eq},\s}$ algebraic equilibrium constraints")
+            write_and_save(r"""
+\begin{align}
+""" + eq.req_reaction_particle_solid_constraint(column_model.N_p == 1) + r""", \quad k = 1, \ldots, N^{\mathrm{react,eq},\s}
+\end{align}
+""", as_latex=True)
+            write_and_save(
+                r"replace $N^{\mathrm{react,eq},\s}$ of the component equations. "
+                r"The remaining $N^{\mathrm{c}} - N^{\mathrm{react,eq},\s}$ equations are conserved moiety equations")
+            write_and_save(r"""
+\begin{align}
+""" + eq.conserved_moiety_equation_particle_solid(column_model.N_p == 1) + r""", \quad l = 1, \ldots, N^{\mathrm{c}} - N^{\mathrm{react,eq},\s}.
+\end{align}
+""", as_latex=True)
+
         # Some more complicated binding models require additional equations
         if column_model.binding_model == "SMA" and column_model.has_binding: 
             

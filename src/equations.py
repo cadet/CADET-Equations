@@ -308,6 +308,50 @@ def particle_solid_reaction_term(singleParticle: bool):
         return r"f^{\mathrm{react},\s}_{j,i}\left( \vec{c}^{\p}, \vec{c}^{\s} \right)"
 
 
+# Rapid-equilibrium reaction terms
+
+def req_reaction_bulk_constraint():
+    """Return the algebraic equilibrium constraint for bulk rapid-equilibrium reactions."""
+    return r"0 = g^{\mathrm{react,eq},\b}_{k}\left( \vec{c}^{\b} \right)"
+
+
+def req_reaction_particle_liquid_constraint(singleParticle: bool):
+    """Return the algebraic equilibrium constraint for particle liquid rapid-equilibrium reactions."""
+    if singleParticle:
+        return r"0 = g^{\mathrm{react,eq},\p}_{k}\left( \vec{c}^{\p}, \vec{c}^{\s} \right)"
+    else:
+        return r"0 = g^{\mathrm{react,eq},\p}_{j,k}\left( \vec{c}^{\p}, \vec{c}^{\s} \right)"
+
+
+def req_reaction_particle_solid_constraint(singleParticle: bool):
+    """Return the algebraic equilibrium constraint for particle solid rapid-equilibrium reactions."""
+    if singleParticle:
+        return r"0 = g^{\mathrm{react,eq},\s}_{k}\left( \vec{c}^{\p}, \vec{c}^{\s} \right)"
+    else:
+        return r"0 = g^{\mathrm{react,eq},\s}_{j,k}\left( \vec{c}^{\p}, \vec{c}^{\s} \right)"
+
+
+def conserved_moiety_equation_bulk():
+    """Return the conserved moiety transport equation for bulk rapid-equilibrium reactions."""
+    return r"""\sum_{i=0}^{N^{\mathrm{c}}-1} M^{\b}_{l,i} \left[ \text{transport equation of component } i \right] = 0"""
+
+
+def conserved_moiety_equation_particle_liquid(singleParticle: bool):
+    """Return the conserved moiety transport equation for particle liquid rapid-equilibrium reactions."""
+    if singleParticle:
+        return r"""\sum_{i=0}^{N^{\mathrm{c}}-1} M^{\p}_{l,i} \left[ \text{transport equation of component } i \right] = 0"""
+    else:
+        return r"""\sum_{i=0}^{N^{\mathrm{c}}-1} M^{\p}_{j,l,i} \left[ \text{transport equation of component } i \right] = 0"""
+
+
+def conserved_moiety_equation_particle_solid(singleParticle: bool):
+    """Return the conserved moiety transport equation for particle solid rapid-equilibrium reactions."""
+    if singleParticle:
+        return r"""\sum_{i=0}^{N^{\mathrm{c}}-1} M^{\s}_{l,i} \left[ \text{transport equation of component } i \right] = 0"""
+    else:
+        return r"""\sum_{i=0}^{N^{\mathrm{c}}-1} M^{\s}_{j,l,i} \left[ \text{transport equation of component } i \right] = 0"""
+
+
 # Boundary conditions of the interstitial volume equations
 
 

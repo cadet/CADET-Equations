@@ -412,6 +412,7 @@ class TestParticleParallelParticleDistribution:
 class TestParticleReactions:
     """Test particle with reaction configurations."""
 
+    @pytest.mark.ci
     @pytest.mark.unit_test
     def test_particle_with_liquid_reaction(self):
         """Test particle with liquid phase reaction."""
@@ -427,6 +428,7 @@ class TestParticleReactions:
         )
         assert particle.has_reaction_liquid is True
 
+    @pytest.mark.ci
     @pytest.mark.unit_test
     def test_particle_with_solid_reaction(self):
         """Test particle with solid phase reaction."""
@@ -442,6 +444,7 @@ class TestParticleReactions:
         )
         assert particle.has_reaction_solid is True
 
+    @pytest.mark.ci
     @pytest.mark.unit_test
     def test_particle_with_both_reactions(self):
         """Test particle with both liquid and solid phase reactions."""
@@ -458,6 +461,110 @@ class TestParticleReactions:
         )
         assert particle.has_reaction_liquid is True
         assert particle.has_reaction_solid is True
+
+    @pytest.mark.ci
+    @pytest.mark.unit_test
+    def test_particle_with_req_reaction_liquid(self):
+        """Test particle with rapid-equilibrium liquid reaction."""
+        particle = Particle(
+            geometry="Sphere",
+            has_core=False,
+            var_format="CADET",
+            resolution="1D",
+            has_binding=True,
+            has_reaction_liquid=True,
+            req_reaction_liquid=True,
+            nonlimiting_filmDiff=False,
+            interstitial_volume_resolution="1D",
+        )
+        symbols = [v["Symbol"] for v in particle.vars_and_params]
+        assert any("g^{\\mathrm{react,eq}" in s for s in symbols)
+        assert any("M^{\\mathrm{p}}" in s for s in symbols)
+        assert not any("f^{\\mathrm{react},\\mathrm{p}}" in s for s in symbols)
+
+    @pytest.mark.ci
+    @pytest.mark.unit_test
+    def test_particle_with_req_reaction_solid(self):
+        """Test particle with rapid-equilibrium solid reaction."""
+        particle = Particle(
+            geometry="Sphere",
+            has_core=False,
+            var_format="CADET",
+            resolution="1D",
+            has_binding=True,
+            has_reaction_solid=True,
+            req_reaction_solid=True,
+            nonlimiting_filmDiff=False,
+            interstitial_volume_resolution="1D",
+        )
+        symbols = [v["Symbol"] for v in particle.vars_and_params]
+        assert any("g^{\\mathrm{react,eq}" in s for s in symbols)
+        assert any("M^{\\mathrm{s}}" in s for s in symbols)
+        assert not any("f^{\\mathrm{react},\\mathrm{s}}" in s for s in symbols)
+
+    @pytest.mark.ci
+    @pytest.mark.unit_test
+    def test_particle_with_req_reaction_both(self):
+        """Test particle with rapid-equilibrium reactions in both phases."""
+        particle = Particle(
+            geometry="Sphere",
+            has_core=False,
+            var_format="CADET",
+            resolution="1D",
+            has_binding=True,
+            has_reaction_liquid=True,
+            req_reaction_liquid=True,
+            has_reaction_solid=True,
+            req_reaction_solid=True,
+            nonlimiting_filmDiff=False,
+            interstitial_volume_resolution="1D",
+        )
+        symbols = [v["Symbol"] for v in particle.vars_and_params]
+        assert any("M^{\\mathrm{p}}" in s for s in symbols)
+        assert any("M^{\\mathrm{s}}" in s for s in symbols)
+
+    @pytest.mark.ci
+    @pytest.mark.unit_test
+    def test_particle_with_req_reaction_multi_partype(self):
+        """Test particle with rapid-equilibrium reactions and multiple particle types."""
+        particle = Particle(
+            geometry="Sphere",
+            has_core=False,
+            var_format="CADET",
+            resolution="1D",
+            has_binding=True,
+            has_reaction_liquid=True,
+            req_reaction_liquid=True,
+            has_reaction_solid=True,
+            req_reaction_solid=True,
+            single_partype=False,
+            nonlimiting_filmDiff=False,
+            interstitial_volume_resolution="1D",
+        )
+        symbols = [v["Symbol"] for v in particle.vars_and_params]
+        # Multi-partype should have j index in constraint symbols
+        assert any("j,k" in s for s in symbols)
+
+    @pytest.mark.ci
+    @pytest.mark.unit_test
+    def test_particle_kinetic_reaction_vars(self):
+        """Test that kinetic reaction keeps f^react symbols."""
+        particle = Particle(
+            geometry="Sphere",
+            has_core=False,
+            var_format="CADET",
+            resolution="1D",
+            has_binding=True,
+            has_reaction_liquid=True,
+            req_reaction_liquid=False,
+            has_reaction_solid=True,
+            req_reaction_solid=False,
+            nonlimiting_filmDiff=False,
+            interstitial_volume_resolution="1D",
+        )
+        symbols = [v["Symbol"] for v in particle.vars_and_params]
+        assert any("f^{\\mathrm{react},\\mathrm{p}}" in s for s in symbols)
+        assert any("f^{\\mathrm{react},\\mathrm{s}}" in s for s in symbols)
 
 
 class TestParticleVarsParamsDescription:
