@@ -7,17 +7,20 @@ from streamlit.testing.v1 import AppTest
 import pytest
 
 
-def setup_app_with_advanced_mode(add_particles="Yes", particle_resolution="1D (radial coordinate)", has_binding="Yes"):
+def setup_app_with_dev_mode(add_particles="Yes", particle_resolution="1D (radial coordinate)", has_binding="Yes"):
     at = AppTest.from_file("../Equation-Generator.py")
     at.run()
     assert not at.exception
 
     at.selectbox(key="advanced_mode").set_value("On").run()
+    at.selectbox(key="dev_mode").set_value("On").run()
     assert not at.exception
 
     if add_particles == "Yes":
         at.selectbox(key="add_particles").set_value("Yes").run()
-        at.selectbox(key="particle_resolution").set_value(particle_resolution).run()
+        # dev_mode overrides N_p with a number_input (defaults to 0)
+        at.number_input(key=r"N^\mathrm{p}").set_value(1).run()
+        at.selectbox(key="parType_1_resolution").set_value(particle_resolution).run()
         at.selectbox(key="has_binding").set_value(has_binding).run()
 
     return at
@@ -26,7 +29,7 @@ def setup_app_with_advanced_mode(add_particles="Yes", particle_resolution="1D (r
 @pytest.mark.ci
 @pytest.mark.unit_test
 def test_bulk_reaction_no_particles():
-    at = setup_app_with_advanced_mode(add_particles="No")
+    at = setup_app_with_dev_mode(add_particles="No")
     at.selectbox(key="has_reaction_bulk").set_value("Yes").run()
     assert not at.exception
     latex = at.session_state.latex_string
@@ -36,7 +39,7 @@ def test_bulk_reaction_no_particles():
 @pytest.mark.ci
 @pytest.mark.unit_test
 def test_bulk_reaction_with_particles():
-    at = setup_app_with_advanced_mode()
+    at = setup_app_with_dev_mode()
     at.selectbox(key="has_reaction_bulk").set_value("Yes").run()
     assert not at.exception
     latex = at.session_state.latex_string
@@ -46,7 +49,7 @@ def test_bulk_reaction_with_particles():
 @pytest.mark.ci
 @pytest.mark.unit_test
 def test_particle_liquid_reaction_1D():
-    at = setup_app_with_advanced_mode(particle_resolution="1D (radial coordinate)")
+    at = setup_app_with_dev_mode(particle_resolution="1D (radial coordinate)")
     at.selectbox(key="has_reaction_particle_liquid").set_value("Yes").run()
     assert not at.exception
     latex = at.session_state.latex_string
@@ -56,7 +59,7 @@ def test_particle_liquid_reaction_1D():
 @pytest.mark.ci
 @pytest.mark.unit_test
 def test_particle_solid_reaction_1D():
-    at = setup_app_with_advanced_mode(particle_resolution="1D (radial coordinate)")
+    at = setup_app_with_dev_mode(particle_resolution="1D (radial coordinate)")
     at.selectbox(key="has_reaction_particle_solid").set_value("Yes").run()
     assert not at.exception
     latex = at.session_state.latex_string
@@ -66,7 +69,7 @@ def test_particle_solid_reaction_1D():
 @pytest.mark.ci
 @pytest.mark.unit_test
 def test_particle_liquid_reaction_0D():
-    at = setup_app_with_advanced_mode(particle_resolution="0D (homogeneous)")
+    at = setup_app_with_dev_mode(particle_resolution="0D (homogeneous)")
     at.selectbox(key="has_reaction_particle_liquid").set_value("Yes").run()
     assert not at.exception
     latex = at.session_state.latex_string
@@ -76,7 +79,7 @@ def test_particle_liquid_reaction_0D():
 @pytest.mark.ci
 @pytest.mark.unit_test
 def test_particle_solid_reaction_0D():
-    at = setup_app_with_advanced_mode(particle_resolution="0D (homogeneous)")
+    at = setup_app_with_dev_mode(particle_resolution="0D (homogeneous)")
     at.selectbox(key="has_reaction_particle_solid").set_value("Yes").run()
     assert not at.exception
     latex = at.session_state.latex_string
@@ -86,7 +89,7 @@ def test_particle_solid_reaction_0D():
 @pytest.mark.ci
 @pytest.mark.unit_test
 def test_all_reactions_enabled():
-    at = setup_app_with_advanced_mode()
+    at = setup_app_with_dev_mode()
     at.selectbox(key="has_reaction_bulk").set_value("Yes").run()
     at.selectbox(key="has_reaction_particle_liquid").set_value("Yes").run()
     at.selectbox(key="has_reaction_particle_solid").set_value("Yes").run()
@@ -100,7 +103,7 @@ def test_all_reactions_enabled():
 @pytest.mark.ci
 @pytest.mark.unit_test
 def test_no_reactions_by_default():
-    at = setup_app_with_advanced_mode()
+    at = setup_app_with_dev_mode()
     assert not at.exception
     latex = at.session_state.latex_string
     assert r"f^{\mathrm{react}" not in latex
@@ -108,12 +111,17 @@ def test_no_reactions_by_default():
 
 @pytest.mark.ci
 @pytest.mark.unit_test
-def test_reactions_only_in_advanced_mode():
+def test_req_reactions_only_in_dev_mode():
+    """Rapid-equilibrium and particle reaction selectboxes should not appear without dev_mode."""
     at = AppTest.from_file("../Equation-Generator.py")
     at.run()
     assert not at.exception
+    at.selectbox(key="advanced_mode").set_value("On").run()
+    at.selectbox(key="has_reaction_bulk").set_value("Yes").run()
+    assert not at.exception
     selectbox_keys = [box.key for box in at.selectbox]
-    assert "has_reaction_bulk" not in selectbox_keys
+    assert "req_reaction_bulk" not in selectbox_keys
+    assert "has_reaction_particle_liquid" not in selectbox_keys
 
 
 @pytest.mark.ci
@@ -123,6 +131,7 @@ def test_bulk_reaction_0D_tank():
     at.run()
     assert not at.exception
     at.selectbox(key="advanced_mode").set_value("On").run()
+    at.selectbox(key="dev_mode").set_value("On").run()
     at.selectbox(key="column_resolution").set_value("0D (Homogeneous Tank)").run()
     at.selectbox(key="has_reaction_bulk").set_value("Yes").run()
     assert not at.exception
@@ -174,7 +183,7 @@ def test_req_reaction_equation_functions():
 @pytest.mark.ci
 @pytest.mark.unit_test
 def test_req_reaction_bulk():
-    at = setup_app_with_advanced_mode()
+    at = setup_app_with_dev_mode()
     at.selectbox(key="has_reaction_bulk").set_value("Yes").run()
     at.selectbox(key="req_reaction_bulk").set_value("Rapid-equilibrium").run()
     assert not at.exception
@@ -188,7 +197,7 @@ def test_req_reaction_bulk():
 @pytest.mark.ci
 @pytest.mark.unit_test
 def test_req_reaction_bulk_no_particles():
-    at = setup_app_with_advanced_mode(add_particles="No")
+    at = setup_app_with_dev_mode(add_particles="No")
     at.selectbox(key="has_reaction_bulk").set_value("Yes").run()
     at.selectbox(key="req_reaction_bulk").set_value("Rapid-equilibrium").run()
     assert not at.exception
@@ -200,7 +209,7 @@ def test_req_reaction_bulk_no_particles():
 @pytest.mark.ci
 @pytest.mark.unit_test
 def test_req_reaction_particle_liquid_1D():
-    at = setup_app_with_advanced_mode(particle_resolution="1D (radial coordinate)")
+    at = setup_app_with_dev_mode(particle_resolution="1D (radial coordinate)")
     at.selectbox(key="has_reaction_particle_liquid").set_value("Yes").run()
     at.selectbox(key="req_reaction_particle_liquid").set_value("Rapid-equilibrium").run()
     assert not at.exception
@@ -213,7 +222,7 @@ def test_req_reaction_particle_liquid_1D():
 @pytest.mark.ci
 @pytest.mark.unit_test
 def test_req_reaction_particle_solid_1D():
-    at = setup_app_with_advanced_mode(particle_resolution="1D (radial coordinate)")
+    at = setup_app_with_dev_mode(particle_resolution="1D (radial coordinate)")
     at.selectbox(key="has_reaction_particle_solid").set_value("Yes").run()
     at.selectbox(key="req_reaction_particle_solid").set_value("Rapid-equilibrium").run()
     assert not at.exception
@@ -226,7 +235,7 @@ def test_req_reaction_particle_solid_1D():
 @pytest.mark.ci
 @pytest.mark.unit_test
 def test_req_reaction_particle_liquid_0D():
-    at = setup_app_with_advanced_mode(particle_resolution="0D (homogeneous)")
+    at = setup_app_with_dev_mode(particle_resolution="0D (homogeneous)")
     at.selectbox(key="has_reaction_particle_liquid").set_value("Yes").run()
     at.selectbox(key="req_reaction_particle_liquid").set_value("Rapid-equilibrium").run()
     assert not at.exception
@@ -238,7 +247,7 @@ def test_req_reaction_particle_liquid_0D():
 @pytest.mark.ci
 @pytest.mark.unit_test
 def test_req_reaction_particle_solid_0D():
-    at = setup_app_with_advanced_mode(particle_resolution="0D (homogeneous)")
+    at = setup_app_with_dev_mode(particle_resolution="0D (homogeneous)")
     at.selectbox(key="has_reaction_particle_solid").set_value("Yes").run()
     at.selectbox(key="req_reaction_particle_solid").set_value("Rapid-equilibrium").run()
     assert not at.exception
@@ -250,7 +259,7 @@ def test_req_reaction_particle_solid_0D():
 @pytest.mark.ci
 @pytest.mark.unit_test
 def test_req_reaction_all():
-    at = setup_app_with_advanced_mode()
+    at = setup_app_with_dev_mode()
     at.selectbox(key="has_reaction_bulk").set_value("Yes").run()
     at.selectbox(key="req_reaction_bulk").set_value("Rapid-equilibrium").run()
     at.selectbox(key="has_reaction_particle_liquid").set_value("Yes").run()
@@ -268,7 +277,7 @@ def test_req_reaction_all():
 @pytest.mark.ci
 @pytest.mark.unit_test
 def test_req_reaction_kinetics_mode_not_shown_without_reaction():
-    at = setup_app_with_advanced_mode()
+    at = setup_app_with_dev_mode()
     assert not at.exception
     selectbox_keys = [box.key for box in at.selectbox]
     assert "req_reaction_bulk" not in selectbox_keys
@@ -279,7 +288,7 @@ def test_req_reaction_kinetics_mode_not_shown_without_reaction():
 @pytest.mark.ci
 @pytest.mark.unit_test
 def test_req_reaction_assumptions():
-    at = setup_app_with_advanced_mode()
+    at = setup_app_with_dev_mode()
     at.selectbox(key="has_reaction_bulk").set_value("Yes").run()
     at.selectbox(key="req_reaction_bulk").set_value("Rapid-equilibrium").run()
     at.toggle(key="model_assumptions").set_value(True).run()
@@ -292,7 +301,7 @@ def test_req_reaction_assumptions():
 @pytest.mark.unit_test
 def test_mixed_kinetic_and_req_reactions():
     """Test that kinetic and rapid-equilibrium reactions can coexist in different phases."""
-    at = setup_app_with_advanced_mode()
+    at = setup_app_with_dev_mode()
     at.selectbox(key="has_reaction_bulk").set_value("Yes").run()
     # bulk stays kinetic (default)
     at.selectbox(key="has_reaction_particle_liquid").set_value("Yes").run()
@@ -313,6 +322,7 @@ def test_req_reaction_bulk_0D_tank():
     at.run()
     assert not at.exception
     at.selectbox(key="advanced_mode").set_value("On").run()
+    at.selectbox(key="dev_mode").set_value("On").run()
     at.selectbox(key="column_resolution").set_value("0D (Homogeneous Tank)").run()
     at.selectbox(key="has_reaction_bulk").set_value("Yes").run()
     at.selectbox(key="req_reaction_bulk").set_value("Rapid-equilibrium").run()
@@ -331,8 +341,10 @@ def test_req_reaction_with_psd():
     at.run()
     assert not at.exception
     at.selectbox(key="advanced_mode").set_value("On").run()
+    at.selectbox(key="dev_mode").set_value("On").run()
     at.selectbox(key="add_particles").set_value("Yes").run()
-    at.selectbox(key="PSD").set_value("Yes").run()
+    # dev_mode uses number_input for N_p instead of PSD selectbox
+    at.number_input(key=r"N^\mathrm{p}").set_value(2).run()
     at.selectbox(key="has_binding").set_value("Yes").run()
     at.selectbox(key="has_reaction_particle_liquid").set_value("Yes").run()
     at.selectbox(key="req_reaction_particle_liquid").set_value("Rapid-equilibrium").run()
@@ -350,7 +362,7 @@ def test_req_reaction_with_psd():
 @pytest.mark.unit_test
 def test_req_reaction_assumptions_multiple_phases():
     """Test assumptions text lists all phases with rapid-equilibrium reactions."""
-    at = setup_app_with_advanced_mode()
+    at = setup_app_with_dev_mode()
     at.selectbox(key="has_reaction_bulk").set_value("Yes").run()
     at.selectbox(key="req_reaction_bulk").set_value("Rapid-equilibrium").run()
     at.selectbox(key="has_reaction_particle_liquid").set_value("Yes").run()
@@ -364,5 +376,3 @@ def test_req_reaction_assumptions_multiple_phases():
     assert "particle liquid" in latex
     assert "particle solid" in latex
     assert "conserved moieties" in latex
-
-
