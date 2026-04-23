@@ -817,10 +817,14 @@ def particle_domain(particle_resolution: str, hasCore: bool, with_par_index=Fals
     return par1D_domain
 
 
-def full_particle_conc_domain(column_resolution: str, particle_resolution: str, hasCore: bool, with_par_index=False, with_time_domain=True):
-    
+def full_particle_conc_domain(column_resolution: str, particle_resolution: str, hasCore: bool, with_par_index=False, with_time_domain=True, column_type: str="Axial"):
+
     if not column_resolution == "0D":
-        domain = r"$(0, T^\mathrm{end}) \times (0, L)" if with_time_domain else r"$\times (0, L)"
+        if column_type == "Radial":
+            spatial = r"(R^\mathrm{in}, R^\mathrm{out})"
+        else:
+            spatial = r"(0, L)"
+        domain = r"$(0, T^\mathrm{end}) \times " + spatial if with_time_domain else r"$\times " + spatial
     else:
         domain = r"$(0, T^\mathrm{end})" if with_time_domain else r"$"
     

@@ -46,10 +46,10 @@ v c_{\mathrm{in},i} &= \left.\left( v c^{\mathrm{b}}_i - D^{\mathrm{rad}}_{i} \f
                0 &= - D^{\mathrm{rad}}_{i} \left. \frac{\partial c^{\mathrm{b}}_i}{\partial \rho} \right|_{\rho=R^{\mathrm{out}}} & &\qquad\text{on }(0, T^{\mathrm{end}}).
 \end{alignat}
 Here, $t\in (0, T^{\mathrm{end}})$ is the time coordinate, $\rho\in (R^{\mathrm{in}}, R^{\mathrm{out}})$ is the radial coordinate, $c^{\mathrm{b}}_i\colon (0, T^\mathrm{end})\times (R^\mathrm{in}, R^\mathrm{out}) \mapsto \mathbb{R}$ is the bulk liquid concentration, $\varepsilon^{\mathrm{t}}\in (0, 1)$ is the total porosity, $v> 0$ is the velocity coefficient, $v = \frac{Q}{2 \pi L}$, and $\tilde{D}^\mathrm{rad}_i\geq 0$ is the apparent radial dispersion coefficient.
-In the particles, mass transfer is governed by reaction equations in $(0, T^\mathrm{end}) \times (0, L)$ and for all components
+In the particles, mass transfer is governed by reaction equations in $(0, T^\mathrm{end}) \times (R^\mathrm{in}, R^\mathrm{out})$ and for all components
 \begin{align}
           \frac{\partial c^{\mathrm{s}}_{i}}{\partial t}
           &= f^{\mathrm{bind}}_{i}\left( \vec{c}^{\mathrm{\ell}}, \vec{c}^{\mathrm{s}} \right), \end{align}
-Here, $c^{\mathrm{s}}_{i}\colon (0, T^\mathrm{end}) \times (0, L) \mapsto \mathbb{R}$ is the particle solid concentration, $f^\mathrm{bind}_{i}$ is the adsorption isotherm function, $\vec{c}^\mathrm{p}$ is the particle liquid components vector, and $\vec{c}^\mathrm{s}$ is the particle solid components vector.
+Here, $c^{\mathrm{s}}_{i}\colon (0, T^\mathrm{end}) \times (R^\mathrm{in}, R^\mathrm{out}) \mapsto \mathbb{R}$ is the particle solid concentration, $f^\mathrm{bind}_{i}$ is the adsorption isotherm function, $\vec{c}^\mathrm{p}$ is the particle liquid components vector, and $\vec{c}^\mathrm{s}$ is the particle solid components vector.
 Consistent initial values for all solution variables (concentrations) are defined at $t = 0$.
 \end{document}

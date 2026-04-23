@@ -250,6 +250,7 @@ class Column:
                         has_surfDiff=self.has_surfDiff,
                         nonlimiting_filmDiff=self.nonlimiting_filmDiff,
                         interstitial_volume_resolution=self.resolution,
+                        column_type=self.column_type,
                         single_partype=(self.N_p == 1),
                         PTD=self.PTD,
                         binding_model=self.binding_model,
@@ -708,7 +709,7 @@ class Column:
 
     def domain_particle(self):
         if self.N_p > 0:
-            return eq.full_particle_conc_domain(self.resolution, self.particle_models[0].resolution, self.particle_models[0].has_core, False, False)
+            return eq.full_particle_conc_domain(self.resolution, self.particle_models[0].resolution, self.particle_models[0].has_core, False, False, column_type=self.column_type)
         else:
             return ""
         
