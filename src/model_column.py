@@ -39,7 +39,7 @@ class Column:
     # List[bool] = None # TODO make this possible per component and particle type in advanced mode
     nonlimiting_filmDiff: bool = False
 
-    # Per-component configuration (used in advanced_mode when N_c > 0)
+    # Per-component configuration (used in dev_mode when N_c > 0)
     req_binding_per_comp: Optional[List[bool]] = None
     nonlimiting_filmDiff_per_comp: Optional[List[bool]] = None
     has_surfDiff_per_comp: Optional[List[bool]] = None
@@ -102,9 +102,6 @@ class Column:
             self.has_angular_dispersion = True
 
         if self.dev_mode:
-            self.N_c = st.sidebar.number_input(
-                "Number of components", key=r"N_c", min_value=1, step=1)
-        elif self.advanced_mode:
             n_c_choice = st.sidebar.selectbox(
                 "Number of components (enables per-component configuration)",
                 ["Arbitrary"] + list(range(1, 11)),
@@ -191,24 +188,25 @@ class Column:
                             self.has_surfDiff = st.sidebar.selectbox("Add surface diffusion", [
                                                                      "No", "Yes"], key=r"has_surfDiff") == "Yes" if resolution == "1D" else False
 
-                        # Per-component configuration in advanced mode
-                        if self.advanced_mode and self.N_c > 0:
-                            st.sidebar.write("Per-component configuration")
-                            self.req_binding_per_comp = []
-                            self.nonlimiting_filmDiff_per_comp = []
-                            self.has_surfDiff_per_comp = []
-                            self.has_mult_bnd_states_per_comp = []
-                            for comp_i in range(self.N_c):
-                                with st.sidebar.expander(f"Component {comp_i + 1}"):
+                    # Per-component configuration (independent of binding)
+                    if self.dev_mode and self.N_c > 0:
+                        st.sidebar.write("Per-component configuration")
+                        self.req_binding_per_comp = []
+                        self.nonlimiting_filmDiff_per_comp = []
+                        self.has_surfDiff_per_comp = []
+                        self.has_mult_bnd_states_per_comp = []
+                        for comp_i in range(self.N_c):
+                            with st.sidebar.expander(f"Component {comp_i + 1}"):
+                                self.nonlimiting_filmDiff_per_comp.append(
+                                    st.selectbox(f"Non-limiting film diffusion",
+                                                 ["No", "Yes"],
+                                                 key=f"nonlimiting_filmDiff_comp_{comp_i}") == "Yes"
+                                )
+                                if self.has_binding:
                                     self.req_binding_per_comp.append(
                                         st.selectbox(f"Binding kinetics mode",
                                                      ["Kinetic", "Rapid-equilibrium"],
                                                      key=f"req_binding_comp_{comp_i}") == "Rapid-equilibrium"
-                                    )
-                                    self.nonlimiting_filmDiff_per_comp.append(
-                                        st.selectbox(f"Non-limiting film diffusion",
-                                                     ["No", "Yes"],
-                                                     key=f"nonlimiting_filmDiff_comp_{comp_i}") == "Yes"
                                     )
                                     if resolution == "1D":
                                         self.has_surfDiff_per_comp.append(
@@ -223,6 +221,10 @@ class Column:
                                                      ["No", "Yes"],
                                                      key=f"has_mult_bnd_states_comp_{comp_i}") == "Yes"
                                     )
+                                else:
+                                    self.req_binding_per_comp.append(False)
+                                    self.has_surfDiff_per_comp.append(False)
+                                    self.has_mult_bnd_states_per_comp.append(False)
 
                 self.particle_models.append(
                     Particle(

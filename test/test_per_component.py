@@ -22,9 +22,11 @@ def setup_grm_with_per_component(at, n_comp, per_comp_settings):
         'req_binding', 'nonlimiting_filmDiff', 'has_surfDiff', 'has_mult_bnd_states'
     """
     at.selectbox(key="advanced_mode").set_value("On").run()
+    at.selectbox(key="dev_mode").set_value("On").run()
     at.selectbox(key="N_c_choice").set_value(n_comp).run()
     at.selectbox(key="add_particles").set_value("Yes").run()
-    at.selectbox(key="particle_resolution").set_value("1D (radial coordinate)").run()
+    at.number_input(key=r"N^\mathrm{p}").set_value(1).run()
+    at.selectbox(key="parType_1_resolution").set_value("1D (radial coordinate)").run()
     at.selectbox(key="has_binding").set_value("Yes").run()
 
     for i, settings in enumerate(per_comp_settings):
@@ -129,9 +131,11 @@ def test_per_component_0d_particle_resolution():
     assert not at.exception
 
     at.selectbox(key="advanced_mode").set_value("On").run()
+    at.selectbox(key="dev_mode").set_value("On").run()
     at.selectbox(key="N_c_choice").set_value(2).run()
     at.selectbox(key="add_particles").set_value("Yes").run()
-    at.selectbox(key="particle_resolution").set_value("0D (homogeneous)").run()
+    at.number_input(key=r"N^\mathrm{p}").set_value(1).run()
+    at.selectbox(key="parType_1_resolution").set_value("0D (homogeneous)").run()
     at.selectbox(key="has_binding").set_value("Yes").run()
 
     at.selectbox(key=f"req_binding_comp_0").set_value("Kinetic").run()
@@ -156,8 +160,10 @@ def test_arbitrary_n_c_no_per_component():
     assert not at.exception
 
     at.selectbox(key="advanced_mode").set_value("On").run()
+    at.selectbox(key="dev_mode").set_value("On").run()
     at.selectbox(key="N_c_choice").set_value("Arbitrary").run()
     at.selectbox(key="add_particles").set_value("Yes").run()
+    at.number_input(key=r"N^\mathrm{p}").set_value(1).run()
     at.selectbox(key="has_binding").set_value("Yes").run()
 
     assert not at.exception
