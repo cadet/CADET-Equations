@@ -123,8 +123,9 @@ class Column:
 
         if self.has_axial_coordinate:
             with col2:
+                dispersion_label = "Add radial Dispersion" if self.column_type == "Radial" else "Add axial Dispersion"
                 self.has_axial_dispersion = st.sidebar.selectbox(
-                    "Add axial Dispersion", ["No", "Yes"], key=r"has_axial_dispersion") == "Yes"
+                    dispersion_label, ["No", "Yes"], key=r"has_axial_dispersion") == "Yes"
 
         if self.dev_mode:
             if self.has_radial_coordinate:
@@ -419,10 +420,20 @@ class Column:
             ]
 
         if self.has_axial_dispersion:
-            if not without_pores_:
-                self.vars_and_params.append({"Group" : 6, "Symbol": r"D^\mathrm{ax}_i", "Description": r"axial dispersion coefficient", "Unit": r"\frac{m^2}{s}", "Dependence": param_deps_comp, "Property": r"\geq 0"})
+            if self.column_type == "Radial":
+                disp_symbol = r"D^\mathrm{rad}_i"
+                disp_desc = r"radial dispersion coefficient"
+                disp_symbol_apparent = r"\tilde{D}^\mathrm{rad}_i"
+                disp_desc_apparent = r"apparent radial dispersion coefficient"
             else:
-                self.vars_and_params.append({"Group" : 6, "Symbol": r"\tilde{D}^\mathrm{ax}_i", "Description": r"apparent axial dispersion coefficient", "Unit": r"\frac{m^2}{s}", "Dependence": param_deps_comp, "Property": r"\geq 0"})
+                disp_symbol = r"D^\mathrm{ax}_i"
+                disp_desc = r"axial dispersion coefficient"
+                disp_symbol_apparent = r"\tilde{D}^\mathrm{ax}_i"
+                disp_desc_apparent = r"apparent axial dispersion coefficient"
+            if not without_pores_:
+                self.vars_and_params.append({"Group" : 6, "Symbol": disp_symbol, "Description": disp_desc, "Unit": r"\frac{m^2}{s}", "Dependence": param_deps_comp, "Property": r"\geq 0"})
+            else:
+                self.vars_and_params.append({"Group" : 6, "Symbol": disp_symbol_apparent, "Description": disp_desc_apparent, "Unit": r"\frac{m^2}{s}", "Dependence": param_deps_comp, "Property": r"\geq 0"})
         if self.has_radial_dispersion:
             self.vars_and_params.append({"Group" : 6, "Symbol": r"D^\mathrm{rad}_i", "Description": r"radial dispersion coefficient", "Unit": r"\frac{m^2}{s}", "Dependence": param_deps_comp, "Property": r"\geq 0"})
         if self.has_angular_dispersion:

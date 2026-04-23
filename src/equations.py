@@ -274,9 +274,9 @@ def radial_flow_convection(eps:str=None):
         return r"- \frac{v}{\rho} \frac{\partial \left( " + eps + r" c^{\b}_i \right)}{\partial \rho}"
 def radial_flow_dispersion(eps:str=None):
     if eps is None:
-        return r"\frac{1}{\rho} \frac{\partial}{\partial \rho} \left( \rho D^{\mathrm{ax}}_{i} \frac{\partial c^{\b}_i}{\partial \rho} \right)"
+        return r"\frac{1}{\rho} \frac{\partial}{\partial \rho} \left( \rho D^{\mathrm{rad}}_{i} \frac{\partial c^{\b}_i}{\partial \rho} \right)"
     else:
-        return r"\frac{1}{\rho} \frac{\partial}{\partial \rho} \left( \rho " + eps + r" D^{\mathrm{ax}}_{i} \frac{\partial c^{\b}_i}{\partial \rho} \right)"
+        return r"\frac{1}{\rho} \frac{\partial}{\partial \rho} \left( \rho " + eps + r" D^{\mathrm{rad}}_{i} \frac{\partial c^{\b}_i}{\partial \rho} \right)"
 
 
 # Frustum (conical) column transport terms (axial transport with varying cross-section)
@@ -408,11 +408,11 @@ def int_vol_BC(resolution: str, hasAxialDispersion: bool, column_type: str = "Ax
     if column_type == "Radial":
         # Radial flow: transport in rho direction, domain (R_in, R_out)
         radflow_bc_domain = r"(0, T^{\mathrm{end}})"
-        diff_term = r"- D^{\mathrm{ax}}_{i} \frac{\partial c^{\b}_i}{\partial \rho}" if hasAxialDispersion else ""
+        diff_term = r"- D^{\mathrm{rad}}_{i} \frac{\partial c^{\b}_i}{\partial \rho}" if hasAxialDispersion else ""
         inflow_bc = r"v c_{\mathrm{in},i} &= \left.\left( v c^{\b}_i " + \
             diff_term + \
             r"\right)\right|_{\rho=R^{\mathrm{in}}} & &\qquad\text{on }" + radflow_bc_domain
-        outflow_bc = r"0 &= - D^{\mathrm{ax}}_{i} \left. \frac{\partial c^{\b}_i}{\partial \rho} \right|_{\rho=R^{\mathrm{out}}} & &\qquad\text{on }" + radflow_bc_domain
+        outflow_bc = r"0 &= - D^{\mathrm{rad}}_{i} \left. \frac{\partial c^{\b}_i}{\partial \rho} \right|_{\rho=R^{\mathrm{out}}} & &\qquad\text{on }" + radflow_bc_domain
 
         boundary_conditions = inflow_bc
         if hasAxialDispersion:
