@@ -22,11 +22,10 @@ def setup_grm_with_per_component(at, n_comp, per_comp_settings):
         'req_binding', 'nonlimiting_filmDiff', 'has_surfDiff', 'has_mult_bnd_states'
     """
     at.selectbox(key="advanced_mode").set_value("On").run()
+    at.selectbox(key="N_c_choice").set_value(n_comp).run()
     at.selectbox(key="add_particles").set_value("Yes").run()
     at.selectbox(key="particle_resolution").set_value("1D (radial coordinate)").run()
     at.selectbox(key="has_binding").set_value("Yes").run()
-    at.selectbox(key="specify_N_c").set_value("Yes").run()
-    at.number_input(key="N_c").set_value(n_comp).run()
 
     for i, settings in enumerate(per_comp_settings):
         at.selectbox(key=f"req_binding_comp_{i}").set_value(settings['req_binding']).run()
@@ -130,11 +129,10 @@ def test_per_component_0d_particle_resolution():
     assert not at.exception
 
     at.selectbox(key="advanced_mode").set_value("On").run()
+    at.selectbox(key="N_c_choice").set_value(2).run()
     at.selectbox(key="add_particles").set_value("Yes").run()
     at.selectbox(key="particle_resolution").set_value("0D (homogeneous)").run()
     at.selectbox(key="has_binding").set_value("Yes").run()
-    at.selectbox(key="specify_N_c").set_value("Yes").run()
-    at.number_input(key="N_c").set_value(2).run()
 
     at.selectbox(key=f"req_binding_comp_0").set_value("Kinetic").run()
     at.selectbox(key=f"nonlimiting_filmDiff_comp_0").set_value("No").run()
@@ -151,16 +149,16 @@ def test_per_component_0d_particle_resolution():
 
 @pytest.mark.ci
 @pytest.mark.reference
-def test_specify_n_c_off_no_per_component():
-    """Test that specify_N_c = No does not enable per-component config."""
+def test_arbitrary_n_c_no_per_component():
+    """Test that N_c_choice = Arbitrary does not enable per-component config."""
     at = AppTest.from_file("../Equation-Generator.py")
     at.run()
     assert not at.exception
 
     at.selectbox(key="advanced_mode").set_value("On").run()
+    at.selectbox(key="N_c_choice").set_value("Arbitrary").run()
     at.selectbox(key="add_particles").set_value("Yes").run()
     at.selectbox(key="has_binding").set_value("Yes").run()
-    at.selectbox(key="specify_N_c").set_value("No").run()
 
     assert not at.exception
     latex = at.session_state.latex_string

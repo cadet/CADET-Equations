@@ -6,7 +6,7 @@ This script implements tests iterating through all configurable states of the Ap
 from streamlit.testing.v1 import AppTest
 import pytest
 
-untested_variables = ["dev_mode", "advanced_mode", "var_format", "sym_table", "show_eq_description", "PSD", "PTD", "has_filter", "binding_model", "has_reaction_bulk", "has_reaction_particle_liquid", "has_reaction_particle_solid", "specify_N_c"]
+untested_variables = ["dev_mode", "advanced_mode", "var_format", "sym_table", "show_eq_description", "PSD", "PTD", "has_filter", "binding_model", "has_reaction_bulk", "has_reaction_particle_liquid", "has_reaction_particle_solid", "N_c_choice"]
 # dev_mode is not tested, TODO: test the advanced_mode (which includes PSD, PTD). test filter
 
 # Some boxes are conditional, e.g. film_diffusion can only be configured when particles are present.

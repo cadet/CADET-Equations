@@ -105,11 +105,11 @@ class Column:
             self.N_c = st.sidebar.number_input(
                 "Number of components", key=r"N_c", min_value=1, step=1)
         elif self.advanced_mode:
-            if st.sidebar.selectbox("Specify number of components", ["No", "Yes"], key=r"specify_N_c") == "Yes":
-                self.N_c = st.sidebar.number_input(
-                    "Number of components", key=r"N_c", min_value=1, step=1)
-            else:
-                self.N_c = -1
+            n_c_choice = st.sidebar.selectbox(
+                "Number of components (enables per-component configuration)",
+                ["Arbitrary"] + list(range(1, 11)),
+                key=r"N_c_choice")
+            self.N_c = -1 if n_c_choice == "Arbitrary" else int(n_c_choice)
         else:
             self.N_c = -1
 
@@ -167,7 +167,7 @@ class Column:
                         geometry = "Sphere"
 
                 with col2:
-                    if j == 0:  # todo make this configurable for every particle type
+                    if j == 0 and self.N_c <= 0:  # global film diffusion (hidden when per-component is active)
                         self.nonlimiting_filmDiff = st.sidebar.selectbox(
                             "Non-limiting film diffusion", ["No", "Yes"], key=r"nonlimiting_filmDiff") == "Yes"
 
@@ -180,13 +180,16 @@ class Column:
 
                     if self.has_binding:
 
-                        self.req_binding = st.sidebar.selectbox("Binding kinetics mode", [
-                                                                "Kinetic", "Rapid-equilibrium"], key=r"req_binding") == "Rapid-equilibrium"
+                        if self.N_c <= 0:
+                            # Global options (shown when per-component is not active)
+                            self.req_binding = st.sidebar.selectbox("Binding kinetics mode", [
+                                                                    "Kinetic", "Rapid-equilibrium"], key=r"req_binding") == "Rapid-equilibrium"
                         self.binding_model = st.sidebar.selectbox("Binding model", eq.BINDING_MODELS, key=r"binding_model")
-                        self.has_mult_bnd_states = st.sidebar.selectbox("Add multiple bound states", [
-                                                                        "No", "Yes"], key=r"has_mult_bnd_states") == "Yes" if self.advanced_mode else False
-                        self.has_surfDiff = st.sidebar.selectbox("Add surface diffusion", [
-                                                                 "No", "Yes"], key=r"has_surfDiff") == "Yes" if resolution == "1D" else False
+                        if self.N_c <= 0:
+                            self.has_mult_bnd_states = st.sidebar.selectbox("Add multiple bound states", [
+                                                                            "No", "Yes"], key=r"has_mult_bnd_states") == "Yes" if self.advanced_mode else False
+                            self.has_surfDiff = st.sidebar.selectbox("Add surface diffusion", [
+                                                                     "No", "Yes"], key=r"has_surfDiff") == "Yes" if resolution == "1D" else False
 
                         # Per-component configuration in advanced mode
                         if self.advanced_mode and self.N_c > 0:
