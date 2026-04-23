@@ -82,8 +82,17 @@ class Column:
         col1, col2 = st.columns(2)
 
         with col1:
-            self.resolution = re.search(r'\dD', st.sidebar.selectbox("Column resolution", [
-                                        "1D (axial coordinate)", "0D (Homogeneous Tank)", "2D (axial and radial coordinate)", "3D (axial, radial and angular coordinate)"], key=r"column_resolution")).group()
+            column_type_label = st.sidebar.selectbox("Column geometry", [
+                "Axial flow cylinder", "Radial flow cylinder", "Frustum"], key=r"column_type")
+            self.column_type = {"Axial flow cylinder": "Axial", "Radial flow cylinder": "Radial", "Frustum": "Frustum"}[column_type_label]
+
+            resolution_options = {
+                "Axial": ["1D (axial coordinate)", "0D (Homogeneous Tank)", "2D (axial and radial coordinate)", "3D (axial, radial and angular coordinate)"],
+                "Radial": ["1D (radial coordinate)"],
+                "Frustum": ["1D (axial coordinate)"],
+            }
+            self.resolution = re.search(r'\dD', st.sidebar.selectbox("Column resolution",
+                                        resolution_options[self.column_type], key=r"column_resolution")).group()
 
         valid_resolutions = {"3D", "2D", "1D", "0D"}
 
@@ -93,9 +102,6 @@ class Column:
         if int(re.search("\\d", self.resolution).group()) == 0:
             self.has_filter = st.sidebar.selectbox(
                     "Add flow rate filter", ["No", "Yes"], key=r"has_filter") == "Yes"
-        if int(re.search("\\d", self.resolution).group()) > 0:
-            column_type_options = ["Axial", "Radial", "Frustum"] if self.resolution == "1D" else ["Axial"]
-            self.column_type = st.sidebar.selectbox("Column geometry", column_type_options, key=r"column_type")
         if int(re.search("\\d", self.resolution).group()) > 0:
             self.has_axial_coordinate = True
             self.has_axial_dispersion = True
@@ -320,9 +326,6 @@ class Column:
         if self.has_angular_coordinate:
             return -1
 
-        if self.column_type in ["Radial", "Frustum"]:
-            return -1
-
         availability = 1
 
         par1D = None
@@ -376,10 +379,13 @@ class Column:
         
         if self.N_p > 1:
             return -1
-        
+
         if self.has_radial_coordinate:
             return -1
-        
+
+        if self.column_type in ["Radial", "Frustum"]:
+            return -1
+
         else:
             return core_availability
 
@@ -431,20 +437,14 @@ class Column:
             self.vars_and_params.append({"Group" : 0, "Symbol": r"\rho", "Description": r"radial coordinate", "Unit": r"m", "Dependence": r"\text{independent variable}", "Property": r"\in (R^{\mathrm{in}}, R^{\mathrm{out}})"})
             self.vars_and_params.append({"Group" : -1, "Symbol": r"R^{\mathrm{in}}", "Description": r"inner cylinder radius", "Unit": r"m", "Dependence": r"\text{constant}", "Property": r" > 0"})
             self.vars_and_params.append({"Group" : -1, "Symbol": r"R^{\mathrm{out}}", "Description": r"outer cylinder radius", "Unit": r"m", "Dependence": r"\text{constant}", "Property": r" > R^{\mathrm{in}}"})
-            if not without_pores_:
-                self.vars_and_params.append({"Group" : 5, "Symbol": r"u", "Description": r"interstitial velocity", "Unit": r"\frac{m}{s}", "Dependence": param_deps, "Property": r"> 0"})
-            else:
-                self.vars_and_params.append({"Group" : 5, "Symbol": r"\tilde{u}", "Description": r"apparent interstitial velocity", "Unit": r"\frac{m}{s}", "Dependence": param_deps, "Property": r"> 0"})
+            self.vars_and_params.append({"Group" : 5, "Symbol": r"v", "Description": r"velocity coefficient, $v = \frac{Q}{2 \pi L}$", "Unit": r"\frac{m^2}{s}", "Dependence": r"\text{constant}", "Property": r"> 0"})
         elif self.column_type == "Frustum":
             self.vars_and_params.append({"Group" : 0, "Symbol": r"z", "Description": r"axial coordinate", "Unit": r"m", "Dependence": r"\text{independent variable}", "Property": r"\in (0, L)"})
             self.vars_and_params.append({"Group" : -1, "Symbol": r"L", "Description": r"length of column", "Unit": r"m", "Dependence": r"\text{constant}", "Property": r" > 0"})
-            self.vars_and_params.append({"Group" : -1, "Symbol": r"r_0", "Description": r"column radius at inlet", "Unit": r"m", "Dependence": r"\text{constant}", "Property": r" > 0"})
-            self.vars_and_params.append({"Group" : -1, "Symbol": r"r_L", "Description": r"column radius at outlet", "Unit": r"m", "Dependence": r"\text{constant}", "Property": r" > 0"})
-            self.vars_and_params.append({"Group" : 3, "Symbol": r"r(z)", "Description": r"column radius function, $r(z) = r_0 + \frac{z}{L}(r_L - r_0)$", "Unit": r"m", "Dependence": r"z"})
-            if not without_pores_:
-                self.vars_and_params.append({"Group" : 5, "Symbol": r"u", "Description": r"interstitial velocity", "Unit": r"\frac{m}{s}", "Dependence": param_deps, "Property": r"> 0"})
-            else:
-                self.vars_and_params.append({"Group" : 5, "Symbol": r"\tilde{u}", "Description": r"apparent interstitial velocity", "Unit": r"\frac{m}{s}", "Dependence": param_deps, "Property": r"> 0"})
+            self.vars_and_params.append({"Group" : -1, "Symbol": r"R^0", "Description": r"column radius at inlet", "Unit": r"m", "Dependence": r"\text{constant}", "Property": r" > 0"})
+            self.vars_and_params.append({"Group" : -1, "Symbol": r"R^L", "Description": r"column radius at outlet", "Unit": r"m", "Dependence": r"\text{constant}", "Property": r" > 0"})
+            self.vars_and_params.append({"Group" : 3, "Symbol": r"r(z)", "Description": r"column radius function, $r(z) = R^0 + \frac{z}{L}(R^L - R^0)$", "Unit": r"m", "Dependence": r"z"})
+            self.vars_and_params.append({"Group" : 5, "Symbol": r"v", "Description": r"velocity coefficient, $v = \frac{Q}{\pi}$", "Unit": r"\frac{m^3}{s}", "Dependence": r"\text{constant}", "Property": r"> 0"})
         else:
             self.vars_and_params.append({"Group" : 0, "Symbol": r"z", "Description": r"axial cylinder coordinate", "Unit": r"m", "Dependence": r"\text{independent variable}", "Property": r"\in (0, L)"})
             self.vars_and_params.append({"Group" : -1, "Symbol": r"L", "Description": r"length of cylinder", "Unit": r"m", "Dependence": r"\text{constant}", "Property": r" > 0"})
@@ -725,12 +725,12 @@ class Column:
             else:
                 model_name = ""
 
-            if self.column_type == "Radial":
-                model_name += "Radial Flow "
-            elif self.column_type == "Frustum":
-                model_name += "Frustum "
-
             if self.N_p > 0:
+
+                if self.column_type == "Radial":
+                    model_name += "Radial Flow "
+                elif self.column_type == "Frustum":
+                    model_name += "Frustum "
 
                 if self.particle_models[0].resolution == "1D":
                     model_name += "General Rate Model"
@@ -747,6 +747,10 @@ class Column:
                         # particle-type distribution # TODO use when different kinds of geometry or binding
                         model_name += " with particle-type distribution"
             else:
+                if self.column_type == "Radial":
+                    model_name += "Radial "
+                elif self.column_type == "Frustum":
+                    model_name += "Frustum "
                 if self.has_axial_dispersion or self.has_radial_dispersion or self.has_angular_dispersion:
                     model_name += "Dispersive "
                 model_name += "Plug Flow"  # Reactor if we have reactions

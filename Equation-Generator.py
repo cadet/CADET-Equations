@@ -185,6 +185,10 @@ st.markdown(html, unsafe_allow_html=True)
 
 if column_model.resolution == "0D":
     intro_str = r"Consider a continuously stirred tank "
+elif column_model.column_type == "Radial":
+    intro_str = r"Consider a hollow cylindrical column with inner radius $R^{\mathrm{in}} > 0$ and outer radius $R^{\mathrm{out}} > R^{\mathrm{in}}$ "
+elif column_model.column_type == "Frustum":
+    intro_str = r"Consider a conical frustum column of length $L > 0$ with inlet radius $R^0 > 0$ and outlet radius $R^L > 0$ "
 else:
     intro_str = r"Consider a cylindrical column of length $L > 0$ "
     if column_model.resolution == "2D" or column_model.resolution == "3D":

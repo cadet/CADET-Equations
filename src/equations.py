@@ -86,7 +86,7 @@ def int_vol_continuum_asmpt(resolution: str, N_p: int, nonlimiting_filmDiff: boo
         asmpts.append(
             r"the fluid only flows in the axial direction of the column (i.e., there is no flow in the radial and angular direction);")
         asmpts.append(
-            r"the column has a conical frustum shape with linearly varying radius $r(z) = r_0 + \frac{z}{L}(r_L - r_0)$;")
+            r"the column has a conical frustum shape with linearly varying radius $r(z) = R^0 + \frac{z}{L}(R^L - R^0)$;")
 
     if resolution == "3D":
         return asmpts + int_vol_3DContinuum_asmpt(N_p, nonlimiting_filmDiff)
@@ -269,9 +269,9 @@ def angular_dispersion(eps:str=None):
 # Radial flow column transport terms (primary transport in radial direction)
 def radial_flow_convection(eps:str=None):
     if eps is None:
-        return r"- \frac{u}{\rho} \frac{\partial c^{\b}_i}{\partial \rho}"
+        return r"- \frac{v}{\rho} \frac{\partial c^{\b}_i}{\partial \rho}"
     else:
-        return r"- \frac{u}{\rho} \frac{\partial \left( " + eps + r" c^{\b}_i \right)}{\partial \rho}"
+        return r"- \frac{v}{\rho} \frac{\partial \left( " + eps + r" c^{\b}_i \right)}{\partial \rho}"
 def radial_flow_dispersion(eps:str=None):
     if eps is None:
         return r"\frac{1}{\rho} \frac{\partial}{\partial \rho} \left( \rho D^{\mathrm{ax}}_{i} \frac{\partial c^{\b}_i}{\partial \rho} \right)"
@@ -282,9 +282,9 @@ def radial_flow_dispersion(eps:str=None):
 # Frustum (conical) column transport terms (axial transport with varying cross-section)
 def frustum_convection(eps:str=None):
     if eps is None:
-        return r"- \frac{u}{r(z)^2} \frac{\partial c^{\b}_i}{\partial z}"
+        return r"- \frac{v}{r(z)^2} \frac{\partial c^{\b}_i}{\partial z}"
     else:
-        return r"- \frac{u}{r(z)^2} \frac{\partial \left( " + eps + r" c^{\b}_i \right)}{\partial z}"
+        return r"- \frac{v}{r(z)^2} \frac{\partial \left( " + eps + r" c^{\b}_i \right)}{\partial z}"
 def frustum_dispersion(eps:str=None):
     if eps is None:
         return r"\frac{1}{r(z)^2} \frac{\partial}{\partial z} \left( r(z)^2 D^{\mathrm{ax}}_{i} \frac{\partial c^{\b}_i}{\partial z} \right)"
@@ -409,7 +409,7 @@ def int_vol_BC(resolution: str, hasAxialDispersion: bool, column_type: str = "Ax
         # Radial flow: transport in rho direction, domain (R_in, R_out)
         radflow_bc_domain = r"(0, T^{\mathrm{end}})"
         diff_term = r"- D^{\mathrm{ax}}_{i} \frac{\partial c^{\b}_i}{\partial \rho}" if hasAxialDispersion else ""
-        inflow_bc = r"u c_{\mathrm{in},i} &= \left.\left( u c^{\b}_i " + \
+        inflow_bc = r"v c_{\mathrm{in},i} &= \left.\left( v c^{\b}_i " + \
             diff_term + \
             r"\right)\right|_{\rho=R^{\mathrm{in}}} & &\qquad\text{on }" + radflow_bc_domain
         outflow_bc = r"0 &= - D^{\mathrm{ax}}_{i} \left. \frac{\partial c^{\b}_i}{\partial \rho} \right|_{\rho=R^{\mathrm{out}}} & &\qquad\text{on }" + radflow_bc_domain
@@ -422,7 +422,7 @@ def int_vol_BC(resolution: str, hasAxialDispersion: bool, column_type: str = "Ax
     elif column_type == "Frustum":
         # Frustum: transport in z direction with varying cross-section
         diff_term = r"- D^{\mathrm{ax}}_{i} \frac{\partial c^{\b}_i}{\partial z}" if hasAxialDispersion else ""
-        inflow_bc = r"\frac{u}{r(z)^2} c_{\mathrm{in},i} &= \left.\left( \frac{u}{r(z)^2} c^{\b}_i " + \
+        inflow_bc = r"\frac{v}{r(z)^2} c_{\mathrm{in},i} &= \left.\left( \frac{v}{r(z)^2} c^{\b}_i " + \
             diff_term + \
             r"\right)\right|_{z=0} & &\qquad\text{on }" + ax_bc_domain
         outflow_bc = r"0 &= - D^{\mathrm{ax}}_{i} \left. \frac{\partial c^{\b}_i}{\partial z} \right|_{z=L} & &\qquad\text{on }" + ax_bc_domain
