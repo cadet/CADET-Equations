@@ -97,8 +97,6 @@ if uploaded_file is not None:
             st.session_state[key] = value
 
         st.sidebar.success("Uploaded configuration applied!")
-    else:
-        st.sidebar.error("Uploaded configuration could not be read!")
 
 # User configuration of the model
 
