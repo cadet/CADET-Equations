@@ -458,7 +458,7 @@ class Column:
             self.vars_and_params.append({"Group" : -1, "Symbol": r"L", "Description": r"length of column", "Unit": r"m", "Dependence": r"\text{constant}", "Property": r" > 0"})
             self.vars_and_params.append({"Group" : -1, "Symbol": r"R^0", "Description": r"column radius at inlet", "Unit": r"m", "Dependence": r"\text{constant}", "Property": r" > 0"})
             self.vars_and_params.append({"Group" : -1, "Symbol": r"R^L", "Description": r"column radius at outlet", "Unit": r"m", "Dependence": r"\text{constant}", "Property": r" > 0"})
-            self.vars_and_params.append({"Group" : 3, "Symbol": r"r(x)", "Description": r"column radius function", "Unit": r"m", "Dependence": r"x"})
+            self.vars_and_params.append({"Group" : 3, "Symbol": r"r(x) = R^0 + \frac{R^L - R^0}{L} x", "Description": r"column radius function", "Unit": r"m", "Dependence": r"x"})
             self.vars_and_params.append({"Group" : 2, "Symbol": r"Q", "Description": r"volumetric flow rate", "Unit": r"\frac{m^3}{s}", "Dependence": r"\text{constant}", "Property": r"> 0"})
             self.vars_and_params.append({"Group" : 5, "Symbol": r"v", "Description": r"velocity coefficient", "Unit": r"\frac{m^3}{s}", "Dependence": r"\text{constant}", "Property": r":= \frac{Q}{\pi}"})
         else:

@@ -86,7 +86,7 @@ def int_vol_continuum_asmpt(resolution: str, N_p: int, nonlimiting_filmDiff: boo
         asmpts.append(
             r"the fluid only flows in the axial direction of the column (i.e., there is no flow in the radial and angular direction);")
         asmpts.append(
-            r"the column has a conical frustum shape where $r(x) = R^0 + \frac{R^L - R^0}{L} x$ is the column radius function;")
+            r"the column has a conical frustum shape with linearly varying radius;")
 
     if resolution == "3D":
         return asmpts + int_vol_3DContinuum_asmpt(N_p, nonlimiting_filmDiff)
