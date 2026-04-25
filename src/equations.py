@@ -86,7 +86,7 @@ def int_vol_continuum_asmpt(resolution: str, N_p: int, nonlimiting_filmDiff: boo
         asmpts.append(
             r"the fluid only flows in the axial direction of the column (i.e., there is no flow in the radial and angular direction);")
         asmpts.append(
-            r"the column has a conical frustum shape with linearly varying radius $r(z) = R^0 + \frac{z}{L}(R^L - R^0)$;")
+            r"the column has a conical frustum shape with linearly varying radius;")
 
     if resolution == "3D":
         return asmpts + int_vol_3DContinuum_asmpt(N_p, nonlimiting_filmDiff)
@@ -282,14 +282,14 @@ def radial_flow_dispersion(eps:str=None):
 # Frustum (conical) column transport terms (axial transport with varying cross-section)
 def frustum_convection(eps:str=None):
     if eps is None:
-        return r"- \frac{v}{r(z)^2} \frac{\partial c^{\b}_i}{\partial z}"
+        return r"- \frac{v}{r(x)^2} \frac{\partial c^{\b}_i}{\partial x}"
     else:
-        return r"- \frac{v}{r(z)^2} \frac{\partial \left( " + eps + r" c^{\b}_i \right)}{\partial z}"
+        return r"- \frac{v}{r(x)^2} \frac{\partial \left( " + eps + r" c^{\b}_i \right)}{\partial x}"
 def frustum_dispersion(eps:str=None):
     if eps is None:
-        return r"\frac{1}{r(z)^2} \frac{\partial}{\partial z} \left( r(z)^2 D^{\mathrm{ax}}_{i} \frac{\partial c^{\b}_i}{\partial z} \right)"
+        return r"\frac{1}{r(x)^2} \frac{\partial}{\partial x} \left( r(x)^2 D^{\mathrm{ax}}_{i} \frac{\partial c^{\b}_i}{\partial x} \right)"
     else:
-        return r"\frac{1}{r(z)^2} \frac{\partial}{\partial z} \left( r(z)^2 " + eps + r" D^{\mathrm{ax}}_{i} \frac{\partial c^{\b}_i}{\partial z} \right)"
+        return r"\frac{1}{r(x)^2} \frac{\partial}{\partial x} \left( r(x)^2 " + eps + r" D^{\mathrm{ax}}_{i} \frac{\partial c^{\b}_i}{\partial x} \right)"
 
 
 # Film diffusion in the interstitial volume
@@ -420,12 +420,12 @@ def int_vol_BC(resolution: str, hasAxialDispersion: bool, column_type: str = "Ax
                """ + outflow_bc
 
     elif column_type == "Frustum":
-        # Frustum: transport in z direction with varying cross-section
-        diff_term = r"- D^{\mathrm{ax}}_{i} \frac{\partial c^{\b}_i}{\partial z}" if hasAxialDispersion else ""
-        inflow_bc = r"\frac{v}{r(z)^2} c_{\mathrm{in},i} &= \left.\left( \frac{v}{r(z)^2} c^{\b}_i " + \
+        # Frustum: transport in x direction with varying cross-section
+        diff_term = r"- D^{\mathrm{ax}}_{i} \frac{\partial c^{\b}_i}{\partial x}" if hasAxialDispersion else ""
+        inflow_bc = r"\frac{v}{r(x)^2} c_{\mathrm{in},i} &= \left.\left( \frac{v}{r(x)^2} c^{\b}_i " + \
             diff_term + \
-            r"\right)\right|_{z=0} & &\qquad\text{on }" + ax_bc_domain
-        outflow_bc = r"0 &= - D^{\mathrm{ax}}_{i} \left. \frac{\partial c^{\b}_i}{\partial z} \right|_{z=L} & &\qquad\text{on }" + ax_bc_domain
+            r"\right)\right|_{x=0} & &\qquad\text{on }" + ax_bc_domain
+        outflow_bc = r"0 &= - D^{\mathrm{ax}}_{i} \left. \frac{\partial c^{\b}_i}{\partial x} \right|_{x=L} & &\qquad\text{on }" + ax_bc_domain
 
         boundary_conditions = inflow_bc
         if hasAxialDispersion:

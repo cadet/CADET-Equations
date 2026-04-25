@@ -400,6 +400,8 @@ class Column:
         if self.resolution == "1D":
             if self.column_type == "Radial":
                 state_deps = r"t, \rho"
+            elif self.column_type == "Frustum":
+                state_deps = r"t, x"
             else:
                 state_deps = r"t, z"
         if self.resolution == "2D":
@@ -449,14 +451,16 @@ class Column:
             self.vars_and_params.append({"Group" : 0, "Symbol": r"\rho", "Description": r"radial coordinate", "Unit": r"m", "Dependence": r"\text{independent variable}", "Property": r"\in (R^{\mathrm{in}}, R^{\mathrm{out}})"})
             self.vars_and_params.append({"Group" : -1, "Symbol": r"R^{\mathrm{in}}", "Description": r"inner cylinder radius", "Unit": r"m", "Dependence": r"\text{constant}", "Property": r" > 0"})
             self.vars_and_params.append({"Group" : -1, "Symbol": r"R^{\mathrm{out}}", "Description": r"outer cylinder radius", "Unit": r"m", "Dependence": r"\text{constant}", "Property": r" > R^{\mathrm{in}}"})
-            self.vars_and_params.append({"Group" : 5, "Symbol": r"v", "Description": r"velocity coefficient, $v = \frac{Q}{2 \pi L}$", "Unit": r"\frac{m^2}{s}", "Dependence": r"\text{constant}", "Property": r"> 0"})
+            self.vars_and_params.append({"Group" : 2, "Symbol": r"Q", "Description": r"volumetric flow rate", "Unit": r"\frac{m^3}{s}", "Dependence": r"\text{constant}", "Property": r"> 0"})
+            self.vars_and_params.append({"Group" : 5, "Symbol": r"v", "Description": r"velocity coefficient", "Unit": r"\frac{m^2}{s}", "Dependence": r"\text{constant}", "Property": r":= \frac{Q}{2 \pi L}"})
         elif self.column_type == "Frustum":
-            self.vars_and_params.append({"Group" : 0, "Symbol": r"z", "Description": r"axial coordinate", "Unit": r"m", "Dependence": r"\text{independent variable}", "Property": r"\in (0, L)"})
+            self.vars_and_params.append({"Group" : 0, "Symbol": r"x", "Description": r"axial coordinate", "Unit": r"m", "Dependence": r"\text{independent variable}", "Property": r"\in (0, L)"})
             self.vars_and_params.append({"Group" : -1, "Symbol": r"L", "Description": r"length of column", "Unit": r"m", "Dependence": r"\text{constant}", "Property": r" > 0"})
             self.vars_and_params.append({"Group" : -1, "Symbol": r"R^0", "Description": r"column radius at inlet", "Unit": r"m", "Dependence": r"\text{constant}", "Property": r" > 0"})
             self.vars_and_params.append({"Group" : -1, "Symbol": r"R^L", "Description": r"column radius at outlet", "Unit": r"m", "Dependence": r"\text{constant}", "Property": r" > 0"})
-            self.vars_and_params.append({"Group" : 3, "Symbol": r"r(z)", "Description": r"column radius function, $r(z) = R^0 + \frac{z}{L}(R^L - R^0)$", "Unit": r"m", "Dependence": r"z"})
-            self.vars_and_params.append({"Group" : 5, "Symbol": r"v", "Description": r"velocity coefficient, $v = \frac{Q}{\pi}$", "Unit": r"\frac{m^3}{s}", "Dependence": r"\text{constant}", "Property": r"> 0"})
+            self.vars_and_params.append({"Group" : 3, "Symbol": r"r(x)", "Description": r"column radius function, $r(x) = R^0 + \frac{R^L - R^0}{L} x$", "Unit": r"m", "Dependence": r"x"})
+            self.vars_and_params.append({"Group" : 2, "Symbol": r"Q", "Description": r"volumetric flow rate", "Unit": r"\frac{m^3}{s}", "Dependence": r"\text{constant}", "Property": r"> 0"})
+            self.vars_and_params.append({"Group" : 5, "Symbol": r"v", "Description": r"velocity coefficient", "Unit": r"\frac{m^3}{s}", "Dependence": r"\text{constant}", "Property": r":= \frac{Q}{\pi}"})
         else:
             self.vars_and_params.append({"Group" : 0, "Symbol": r"z", "Description": r"axial cylinder coordinate", "Unit": r"m", "Dependence": r"\text{independent variable}", "Property": r"\in (0, L)"})
             self.vars_and_params.append({"Group" : -1, "Symbol": r"L", "Description": r"length of cylinder", "Unit": r"m", "Dependence": r"\text{constant}", "Property": r" > 0"})

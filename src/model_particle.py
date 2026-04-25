@@ -67,7 +67,12 @@ class Particle:
         
         state_deps = r"t"
         if self.interstitial_volume_resolution == "1D":
-            state_deps = r"t, \rho" if self.column_type == "Radial" else r"t, z"
+            if self.column_type == "Radial":
+                state_deps = r"t, \rho"
+            elif self.column_type == "Frustum":
+                state_deps = r"t, x"
+            else:
+                state_deps = r"t, z"
         if self.interstitial_volume_resolution == "2D":
             state_deps = r"t, z, \rho"
         if self.interstitial_volume_resolution == "3D":
