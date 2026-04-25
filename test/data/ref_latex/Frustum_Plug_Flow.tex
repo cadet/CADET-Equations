@@ -18,7 +18,7 @@ General model assumptions:
 Specific model assumptions:
 \begin{itemize}
 \item the fluid only flows in the axial direction of the column (i.e., there is no flow in the radial and angular direction);
-\item the column has a conical frustum shape with linearly varying radius;
+\item the column has a conical frustum shape where $r(x) = R^0 + \frac{R^L - R^0}{L} x$ is the column radius function;
 \item the column is radially symmetric and homogeneous (i.e., concentration profiles and parameters only depend on the axial position);
 \end{itemize}
 
@@ -34,6 +34,6 @@ with boundary conditions
 \begin{alignat}{2}
 \frac{v}{r(x)^2} c_{\mathrm{in},i} &= \left.\left( \frac{v}{r(x)^2} c^{\mathrm{b}}_i \right)\right|_{x=0} & &\qquad\text{on }(0, T^{\mathrm{end}}).
 \end{alignat}
-Here, $t\in (0, T^{\mathrm{end}})$ is the time coordinate, $x\in (0, L)$ is the axial coordinate, $c^{\mathrm{b}}_i\colon (0, T^\mathrm{end})\times (0, L) \mapsto \mathbb{R}$ is the bulk liquid concentration, $Q> 0$ is the volumetric flow rate, $r(x)$ is the column radius function, $r(x) = R^0 + \frac{R^L - R^0}{L} x$, and $v:= \frac{Q}{\pi}$ is the velocity coefficient.
+Here, $t\in (0, T^{\mathrm{end}})$ is the time coordinate, $x\in (0, L)$ is the axial coordinate, $c^{\mathrm{b}}_i\colon (0, T^\mathrm{end})\times (0, L) \mapsto \mathbb{R}$ is the bulk liquid concentration, $Q> 0$ is the volumetric flow rate, $r(x)$ is the column radius function, and $v:= \frac{Q}{\pi}$ is the velocity coefficient.
 Consistent initial values for all solution variables (concentrations) are defined at $t = 0$.
 \end{document}
