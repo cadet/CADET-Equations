@@ -185,6 +185,10 @@ st.markdown(html, unsafe_allow_html=True)
 
 if column_model.resolution == "0D":
     intro_str = r"Consider a continuously stirred tank "
+elif column_model.column_type == "Radial":
+    intro_str = r"Consider a hollow cylindrical column with inner radius $R^{\mathrm{in}} > 0$ and outer radius $R^{\mathrm{out}} > R^{\mathrm{in}}$ "
+elif column_model.column_type == "Frustum":
+    intro_str = r"Consider a conical frustum column of length $L > 0$ with inlet radius $R^0 > 0$ and outlet radius $R^L > 0$ "
 else:
     intro_str = r"Consider a cylindrical column of length $L > 0$ "
     if column_model.resolution == "2D" or column_model.resolution == "3D":
@@ -293,7 +297,7 @@ if column_model.N_p > 0:
                 whatComp = eq.primary_binding_eq_what_comps(column_model.binding_model)
 
                 write_and_save(
-                    "For component(s) " + comp_set_str + ", mass transfer in the particles is governed by " + eq_type_ + " equations in " + eq.full_particle_conc_domain(column_model.resolution, par_type.resolution, par_type.has_core, with_par_index=False, with_time_domain=True) + tmp_str)
+                    "For component(s) " + comp_set_str + ", mass transfer in the particles is governed by " + eq_type_ + " equations in " + eq.full_particle_conc_domain(column_model.resolution, par_type.resolution, par_type.has_core, with_par_index=False, with_time_domain=True, column_type=column_model.column_type) + tmp_str)
 
                 group_eq, group_bc = column_model.particle_equations_for_group(group)
 
@@ -353,7 +357,7 @@ if column_model.N_p > 0:
                     write_and_save(r"\begin{align}" + eq.sma_free_binding_sites(PTD=PTD_) + r".\end{align}", as_latex=True)
 
                     write_and_save(
-                        "For the salt component, mass transfer is governed by " + eq_type_ + " equations in " + eq.full_particle_conc_domain(column_model.resolution, par_type.resolution, par_type.has_core, with_par_index=False, with_time_domain=True) + tmp_str)
+                        "For the salt component, mass transfer is governed by " + eq_type_ + " equations in " + eq.full_particle_conc_domain(column_model.resolution, par_type.resolution, par_type.has_core, with_par_index=False, with_time_domain=True, column_type=column_model.column_type) + tmp_str)
 
                     # The salt component is in rapid equilibrium binding mode
                     salt_group = dict(group)
@@ -399,7 +403,7 @@ if column_model.N_p > 0:
             whatComp = eq.primary_binding_eq_what_comps(column_model.binding_model)
 
             write_and_save(
-                "In the particles, mass transfer is governed by " + eq_type_ + " equations in " + eq.full_particle_conc_domain(column_model.resolution, par_type.resolution, par_type.has_core, with_par_index=False, with_time_domain=True) + r" and for " + whatComp + " components" + tmp_str)
+                "In the particles, mass transfer is governed by " + eq_type_ + " equations in " + eq.full_particle_conc_domain(column_model.resolution, par_type.resolution, par_type.has_core, with_par_index=False, with_time_domain=True, column_type=column_model.column_type) + r" and for " + whatComp + " components" + tmp_str)
 
             write_and_save(particle_eq[par_type], as_latex=True)
 
@@ -457,7 +461,7 @@ if column_model.N_p > 0:
                 write_and_save(r"\begin{align}" + eq.sma_free_binding_sites(PTD=PTD_) + r".\end{align}", as_latex=True)
 
                 write_and_save(
-                    "For the salt component, mass transfer is governed by " + eq_type_ + " equations in " + eq.full_particle_conc_domain(column_model.resolution, par_type.resolution, par_type.has_core, with_par_index=False, with_time_domain=True) + tmp_str)
+                    "For the salt component, mass transfer is governed by " + eq_type_ + " equations in " + eq.full_particle_conc_domain(column_model.resolution, par_type.resolution, par_type.has_core, with_par_index=False, with_time_domain=True, column_type=column_model.column_type) + tmp_str)
 
                 # The salt component is in rapid equilibrium binding mode
                 tmpReqBnd = column_model.req_binding

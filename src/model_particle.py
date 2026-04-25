@@ -33,6 +33,7 @@ class Particle:
     nonlimiting_filmDiff: bool = None
     surface_volume_ratio: float = None
     interstitial_volume_resolution: str = None
+    column_type: str = "Axial"
     single_partype: bool = True
     PTD: bool = False
     binding_model: str = "Arbitrary"
@@ -66,7 +67,12 @@ class Particle:
         
         state_deps = r"t"
         if self.interstitial_volume_resolution == "1D":
-            state_deps = r"t, z"
+            if self.column_type == "Radial":
+                state_deps = r"t, \rho"
+            elif self.column_type == "Frustum":
+                state_deps = r"t, x"
+            else:
+                state_deps = r"t, z"
         if self.interstitial_volume_resolution == "2D":
             state_deps = r"t, z, \rho"
         if self.interstitial_volume_resolution == "3D":
@@ -78,7 +84,7 @@ class Particle:
 
         if not (self.nonlimiting_filmDiff and self.resolution == "0D"):
             symbol_name_ = r"c^{\p}_{i}" if self.single_partype else r"c^{\p}_{j,i}"
-            vars_and_params_.append({"Group" : 1, "Symbol": symbol_name_, "Description": r"particle liquid concentration", "Unit": r"\frac{mol}{m^3}", "Dependence" : state_deps, "Domain" : eq.full_particle_conc_domain(column_resolution=self.interstitial_volume_resolution, particle_resolution=self.resolution, hasCore=self.has_core, with_par_index=False, with_time_domain=True)})
+            vars_and_params_.append({"Group" : 1, "Symbol": symbol_name_, "Description": r"particle liquid concentration", "Unit": r"\frac{mol}{m^3}", "Dependence" : state_deps, "Domain" : eq.full_particle_conc_domain(column_resolution=self.interstitial_volume_resolution, particle_resolution=self.resolution, hasCore=self.has_core, with_par_index=False, with_time_domain=True, column_type=self.column_type)})
             
         if self.resolution == "1D":
             vars_and_params_.append({"Group" : 0, "Symbol": r"r", "Description": r"radial particle coordinate", "Unit": r"m", "Dependence": r"\text{independent variable}", "Property": r""})
@@ -90,7 +96,7 @@ class Particle:
 
         if self.has_binding:
             symbol_name_ = r"c^{\s}_{i}" if self.single_partype else r"c^{\s}_{j,i}"
-            vars_and_params_.append({"Group" : 1, "Symbol": symbol_name_, "Description": r"particle solid concentration", "Unit": r"\frac{mol}{m^3}", "Dependence" : state_deps, "Domain" : eq.full_particle_conc_domain(column_resolution=self.interstitial_volume_resolution, particle_resolution=self.resolution, hasCore=self.has_core, with_par_index=False, with_time_domain=True)})
+            vars_and_params_.append({"Group" : 1, "Symbol": symbol_name_, "Description": r"particle solid concentration", "Unit": r"\frac{mol}{m^3}", "Dependence" : state_deps, "Domain" : eq.full_particle_conc_domain(column_resolution=self.interstitial_volume_resolution, particle_resolution=self.resolution, hasCore=self.has_core, with_par_index=False, with_time_domain=True, column_type=self.column_type)})
 
             if self.binding_model == "Arbitrary":
                 symbol_name_ = r"f^\mathrm{bind}_{j,i}" if self.PTD else r"f^\mathrm{bind}_{i}"

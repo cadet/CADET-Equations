@@ -1,0 +1,10 @@
+{
+    "advanced_mode": "Off",
+    "column_type": "Radial flow cylinder",
+    "column_resolution": "1D (radial coordinate)",
+    "add_particles": "No",
+    "has_axial_dispersion": "Yes",
+    "model_assumptions": true,
+    "show_eq_description": true,
+    "var_format": "CADET"
+}

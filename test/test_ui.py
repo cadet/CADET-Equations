@@ -13,7 +13,7 @@ untested_variables = ["dev_mode", "advanced_mode", "var_format", "sym_table", "s
 # We thus first identify the boxes that change the number of boxes and thus combinations (critical_variables).
 # We then start the recursion for every combination of the aforementioned critical keys.
 # Sometimes, only specific options can be critical (e.g. 0D tank). Such options can be added here and handled independently later
-critical_variables = untested_variables + ["add_particles", "has_binding", "particle_resolution", "0D (Homogeneous Tank)"]
+critical_variables = untested_variables + ["add_particles", "has_binding", "particle_resolution", "0D (Homogeneous Tank)", "column_type"]
 
 # We test every configuration by recursively iteratiing through all combinations
 def config_recursion(at, widgies, counter, test_file_generator_buttons:bool):

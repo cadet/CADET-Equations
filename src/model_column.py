@@ -29,6 +29,8 @@ class Column:
     N_c: int = -1
     N_p: int = -1
 
+    column_type: Literal["Axial", "Radial", "Frustum"] = "Axial"
+
     has_axial_coordinate: bool = False
     has_radial_coordinate: bool = False
     has_angular_coordinate: bool = False
@@ -80,8 +82,17 @@ class Column:
         col1, col2 = st.columns(2)
 
         with col1:
-            self.resolution = re.search(r'\dD', st.sidebar.selectbox("Column resolution", [
-                                        "1D (axial coordinate)", "0D (Homogeneous Tank)", "2D (axial and radial coordinate)", "3D (axial, radial and angular coordinate)"], key=r"column_resolution")).group()
+            column_type_label = st.sidebar.selectbox("Column geometry", [
+                "Axial flow cylinder", "Radial flow cylinder", "Frustum"], key=r"column_type")
+            self.column_type = {"Axial flow cylinder": "Axial", "Radial flow cylinder": "Radial", "Frustum": "Frustum"}[column_type_label]
+
+            resolution_options = {
+                "Axial": ["1D (axial coordinate)", "0D (Homogeneous Tank)", "2D (axial and radial coordinate)", "3D (axial, radial and angular coordinate)"],
+                "Radial": ["1D (radial coordinate)"],
+                "Frustum": ["1D (axial coordinate)"],
+            }
+            self.resolution = re.search(r'\dD', st.sidebar.selectbox("Column resolution",
+                                        resolution_options[self.column_type], key=r"column_resolution")).group()
 
         valid_resolutions = {"3D", "2D", "1D", "0D"}
 
@@ -112,8 +123,9 @@ class Column:
 
         if self.has_axial_coordinate:
             with col2:
+                dispersion_label = "Add radial Dispersion" if self.column_type == "Radial" else "Add axial Dispersion"
                 self.has_axial_dispersion = st.sidebar.selectbox(
-                    "Add axial Dispersion", ["No", "Yes"], key=r"has_axial_dispersion") == "Yes"
+                    dispersion_label, ["No", "Yes"], key=r"has_axial_dispersion") == "Yes"
 
         if self.dev_mode:
             if self.has_radial_coordinate:
@@ -238,6 +250,7 @@ class Column:
                         has_surfDiff=self.has_surfDiff,
                         nonlimiting_filmDiff=self.nonlimiting_filmDiff,
                         interstitial_volume_resolution=self.resolution,
+                        column_type=self.column_type,
                         single_partype=(self.N_p == 1),
                         PTD=self.PTD,
                         binding_model=self.binding_model,
@@ -368,10 +381,13 @@ class Column:
         
         if self.N_p > 1:
             return -1
-        
+
         if self.has_radial_coordinate:
             return -1
-        
+
+        if self.column_type in ["Radial", "Frustum"]:
+            return -1
+
         else:
             return core_availability
 
@@ -382,7 +398,12 @@ class Column:
         state_deps = r"t"
         param_deps = r"\text{constant}"
         if self.resolution == "1D":
-            state_deps = r"t, z"
+            if self.column_type == "Radial":
+                state_deps = r"t, \rho"
+            elif self.column_type == "Frustum":
+                state_deps = r"t, x"
+            else:
+                state_deps = r"t, z"
         if self.resolution == "2D":
             state_deps = r"t, z, \rho"
             param_deps = r"\rho"
@@ -395,17 +416,27 @@ class Column:
 
         self.vars_and_params = [
             {"Group" : 0, "Symbol": r"t", "Description": r"time coordinate", "Unit": r"s", "Dependence": r"\text{independent variable}", "Property": r"\in (0, T^{\mathrm{end}})"},
-            {"Group" : 1, "Symbol": r"c^{\b}_i", "Description": r"bulk liquid concentration", "Unit": r"\frac{mol}{m^3}", "Dependence" : state_deps, "Domain": eq.int_vol_domain(self.resolution)},
+            {"Group" : 1, "Symbol": r"c^{\b}_i", "Description": r"bulk liquid concentration", "Unit": r"\frac{mol}{m^3}", "Dependence" : state_deps, "Domain": eq.int_vol_domain(self.resolution, column_type=self.column_type)},
             {"Group" : -1, "Symbol": r"T^{\mathrm{end}}", "Description": r"process end time", "Unit": r"s", "Dependence": r"\text{constant}", "Property": r" > 0"},
             {"Group" : -0.2, "Symbol": r"N^\mathrm{c}", "Description": r"number of components", "Unit": r"-", "Dependence": r"-", "Property": r"\in \mathbb{N}"},
             {"Group" : -0.1, "Symbol": r"i", "Description": r"component index", "Unit": r"s", "Dependence": r"-", "Property": r"-"},
             ]
 
         if self.has_axial_dispersion:
-            if not without_pores_:
-                self.vars_and_params.append({"Group" : 6, "Symbol": r"D^\mathrm{ax}_i", "Description": r"axial dispersion coefficient", "Unit": r"\frac{m^2}{s}", "Dependence": param_deps_comp, "Property": r"\geq 0"})
+            if self.column_type == "Radial":
+                disp_symbol = r"D^\mathrm{rad}_i"
+                disp_desc = r"radial dispersion coefficient"
+                disp_symbol_apparent = r"\tilde{D}^\mathrm{rad}_i"
+                disp_desc_apparent = r"apparent radial dispersion coefficient"
             else:
-                self.vars_and_params.append({"Group" : 6, "Symbol": r"\tilde{D}^\mathrm{ax}_i", "Description": r"apparent axial dispersion coefficient", "Unit": r"\frac{m^2}{s}", "Dependence": param_deps_comp, "Property": r"\geq 0"})
+                disp_symbol = r"D^\mathrm{ax}_i"
+                disp_desc = r"axial dispersion coefficient"
+                disp_symbol_apparent = r"\tilde{D}^\mathrm{ax}_i"
+                disp_desc_apparent = r"apparent axial dispersion coefficient"
+            if not without_pores_:
+                self.vars_and_params.append({"Group" : 6, "Symbol": disp_symbol, "Description": disp_desc, "Unit": r"\frac{m^2}{s}", "Dependence": param_deps_comp, "Property": r"\geq 0"})
+            else:
+                self.vars_and_params.append({"Group" : 6, "Symbol": disp_symbol_apparent, "Description": disp_desc_apparent, "Unit": r"\frac{m^2}{s}", "Dependence": param_deps_comp, "Property": r"\geq 0"})
         if self.has_radial_dispersion:
             self.vars_and_params.append({"Group" : 6, "Symbol": r"D^\mathrm{rad}_i", "Description": r"radial dispersion coefficient", "Unit": r"\frac{m^2}{s}", "Dependence": param_deps_comp, "Property": r"\geq 0"})
         if self.has_angular_dispersion:
@@ -416,6 +447,20 @@ class Column:
             self.vars_and_params.append({"Group" : 2, "Symbol": r"Q^\mathrm{out}", "Description": r"volumetric flow rate out of the tank", "Unit": r"\frac{m^3}{s}", "Dependence": r"\text{constant}", "Property": r"\geq 0"})
             if self.has_filter:
                 self.vars_and_params.append({"Group" : 2, "Symbol": r"Q^\mathrm{filter}", "Description": r"volumetric flow rate out of the tank (solvent only)", "Unit": r"\frac{m^3}{s}", "Dependence": r"\text{constant}", "Property": r"\geq 0"})
+        elif self.column_type == "Radial":
+            self.vars_and_params.append({"Group" : 0, "Symbol": r"\rho", "Description": r"radial coordinate", "Unit": r"m", "Dependence": r"\text{independent variable}", "Property": r"\in (R^{\mathrm{in}}, R^{\mathrm{out}})"})
+            self.vars_and_params.append({"Group" : -1, "Symbol": r"R^{\mathrm{in}}", "Description": r"inner cylinder radius", "Unit": r"m", "Dependence": r"\text{constant}", "Property": r" > 0"})
+            self.vars_and_params.append({"Group" : -1, "Symbol": r"R^{\mathrm{out}}", "Description": r"outer cylinder radius", "Unit": r"m", "Dependence": r"\text{constant}", "Property": r" > R^{\mathrm{in}}"})
+            self.vars_and_params.append({"Group" : 2, "Symbol": r"Q", "Description": r"volumetric flow rate", "Unit": r"\frac{m^3}{s}", "Dependence": r"\text{constant}", "Property": r"> 0"})
+            self.vars_and_params.append({"Group" : 5, "Symbol": r"v", "Description": r"velocity coefficient", "Unit": r"\frac{m^2}{s}", "Dependence": r"\text{constant}", "Property": r":= \frac{Q}{2 \pi L}"})
+        elif self.column_type == "Frustum":
+            self.vars_and_params.append({"Group" : 0, "Symbol": r"x", "Description": r"axial coordinate", "Unit": r"m", "Dependence": r"\text{independent variable}", "Property": r"\in (0, L)"})
+            self.vars_and_params.append({"Group" : -1, "Symbol": r"L", "Description": r"length of column", "Unit": r"m", "Dependence": r"\text{constant}", "Property": r" > 0"})
+            self.vars_and_params.append({"Group" : -1, "Symbol": r"R^0", "Description": r"column radius at inlet", "Unit": r"m", "Dependence": r"\text{constant}", "Property": r" > 0"})
+            self.vars_and_params.append({"Group" : -1, "Symbol": r"R^L", "Description": r"column radius at outlet", "Unit": r"m", "Dependence": r"\text{constant}", "Property": r" > 0"})
+            self.vars_and_params.append({"Group" : 3, "Symbol": r"R", "Description": r"column radius function", "Unit": r"m", "Dependence": r"x", "Property": r"(x) = R^0 + \frac{R^L - R^0}{L} x"})
+            self.vars_and_params.append({"Group" : 2, "Symbol": r"Q", "Description": r"volumetric flow rate", "Unit": r"\frac{m^3}{s}", "Dependence": r"\text{constant}", "Property": r"> 0"})
+            self.vars_and_params.append({"Group" : 5, "Symbol": r"v", "Description": r"velocity coefficient", "Unit": r"\frac{m^3}{s}", "Dependence": r"\text{constant}", "Property": r":= \frac{Q}{\pi}"})
         else:
             self.vars_and_params.append({"Group" : 0, "Symbol": r"z", "Description": r"axial cylinder coordinate", "Unit": r"m", "Dependence": r"\text{independent variable}", "Property": r"\in (0, L)"})
             self.vars_and_params.append({"Group" : -1, "Symbol": r"L", "Description": r"length of cylinder", "Unit": r"m", "Dependence": r"\text{constant}", "Property": r" > 0"})
@@ -491,10 +536,21 @@ class Column:
             needs_linebreak = self.has_radial_dispersion or self.has_angular_dispersion
             eq_sign = " &= " if needs_linebreak else " = "
 
-            equation += eq_sign + eq.axial_convection() if without_pores_ else eq_sign + eq.axial_convection(r"\varepsilon^{\mathrm{c}}")
+            # Select convection and dispersion terms based on column geometry
+            if self.column_type == "Radial":
+                convection_func = eq.radial_flow_convection
+                dispersion_func = eq.radial_flow_dispersion
+            elif self.column_type == "Frustum":
+                convection_func = eq.frustum_convection
+                dispersion_func = eq.frustum_dispersion
+            else:
+                convection_func = eq.axial_convection
+                dispersion_func = eq.axial_dispersion
+
+            equation += eq_sign + convection_func() if without_pores_ else eq_sign + convection_func(r"\varepsilon^{\mathrm{c}}")
 
             if self.has_axial_dispersion:
-                equation += " + " + eq.axial_dispersion(r"\varepsilon^{\mathrm{c}}")
+                equation += " + " + dispersion_func(r"\varepsilon^{\mathrm{c}}")
             if self.has_radial_dispersion:
                 equation += r" \nonumber \\ & + " + eq.radial_dispersion(r"\varepsilon^{\mathrm{c}}")
             if self.has_angular_dispersion:
@@ -540,7 +596,7 @@ class Column:
 
     def interstitial_volume_bc(self):
         if not self.resolution == "0D":
-            return eq.int_vol_BC(self.resolution, self.has_axial_dispersion)
+            return eq.int_vol_BC(self.resolution, self.has_axial_dispersion, self.column_type)
         else:
             return None
 
@@ -653,11 +709,11 @@ class Column:
             return r"$i \in \{" + ", ".join(str(c) for c in components) + r"\}$"
 
     def domain_interstitial(self, with_time_domain=True):
-        return r"$" + eq.int_vol_domain(self.resolution, with_time_domain=with_time_domain) + r"$"
+        return r"$" + eq.int_vol_domain(self.resolution, with_time_domain=with_time_domain, column_type=self.column_type) + r"$"
 
     def domain_particle(self):
         if self.N_p > 0:
-            return eq.full_particle_conc_domain(self.resolution, self.particle_models[0].resolution, self.particle_models[0].has_core, False, False)
+            return eq.full_particle_conc_domain(self.resolution, self.particle_models[0].resolution, self.particle_models[0].has_core, False, False, column_type=self.column_type)
         else:
             return ""
         
@@ -687,6 +743,11 @@ class Column:
 
             if self.N_p > 0:
 
+                if self.column_type == "Radial":
+                    model_name += "Radial Flow "
+                elif self.column_type == "Frustum":
+                    model_name += "Frustum "
+
                 if self.particle_models[0].resolution == "1D":
                     model_name += "General Rate Model"
 
@@ -702,6 +763,10 @@ class Column:
                         # particle-type distribution # TODO use when different kinds of geometry or binding
                         model_name += " with particle-type distribution"
             else:
+                if self.column_type == "Radial":
+                    model_name += "Radial "
+                elif self.column_type == "Frustum":
+                    model_name += "Frustum "
                 if self.has_axial_dispersion or self.has_radial_dispersion or self.has_angular_dispersion:
                     model_name += "Dispersive "
                 model_name += "Plug Flow"  # Reactor if we have reactions
@@ -715,7 +780,7 @@ class Column:
 
         asmpts = {
             "General model assumptions": eq.HRM_asmpt(self.N_p, self.nonlimiting_filmDiff, self.has_binding, self.has_surfDiff, self.resolution),
-            "Specific model assumptions": eq.int_vol_continuum_asmpt(self.resolution, self.N_p, self.nonlimiting_filmDiff) +
+            "Specific model assumptions": eq.int_vol_continuum_asmpt(self.resolution, self.N_p, self.nonlimiting_filmDiff, self.column_type) +
             (eq.particle_asmpt(
                 self.particle_models[0].resolution, self.has_surfDiff) if self.N_p > 0 else [])
         }
