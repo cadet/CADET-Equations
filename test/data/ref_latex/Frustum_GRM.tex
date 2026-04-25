@@ -44,7 +44,7 @@ with boundary conditions
 \frac{v}{r(x)^2} c_{\mathrm{in},i} &= \left.\left( \frac{v}{r(x)^2} c^{\mathrm{b}}_i - D^{\mathrm{ax}}_{i} \frac{\partial c^{\mathrm{b}}_i}{\partial x}\right)\right|_{x=0} & &\qquad\text{on }(0, T^{\mathrm{end}}),\\
                0 &= - D^{\mathrm{ax}}_{i} \left. \frac{\partial c^{\mathrm{b}}_i}{\partial x} \right|_{x=L} & &\qquad\text{on }(0, T^{\mathrm{end}}).
 \end{alignat}
-Here, $t\in (0, T^{\mathrm{end}})$ is the time coordinate, $x\in (0, L)$ is the axial coordinate, $R^\mathrm{p}> 0$ is the particle radius, $c^{\mathrm{b}}_i\colon (0, T^\mathrm{end})\times (0, L) \mapsto \mathbb{R}$ is the bulk liquid concentration, $Q> 0$ is the volumetric flow rate, $r(x) = R^0 + \frac{R^L - R^0}{L} x$ is the column radius function, $\varepsilon^{\mathrm{c}}\in (0, 1)$ is the column porosity, $v:= \frac{Q}{\pi}$ is the velocity coefficient, $D^\mathrm{ax}_i\geq 0$ is the axial dispersion coefficient, and $k^\mathrm{f}_{i}\geq 0$ is the film diffusion coefficient.
+Here, $t\in (0, T^{\mathrm{end}})$ is the time coordinate, $x\in (0, L)$ is the axial coordinate, $R^\mathrm{p}> 0$ is the particle radius, $c^{\mathrm{b}}_i\colon (0, T^\mathrm{end})\times (0, L) \mapsto \mathbb{R}$ is the bulk liquid concentration, $Q> 0$ is the volumetric flow rate, $R(x) = R^0 + \frac{R^L - R^0}{L} x$ is the column radius function, $\varepsilon^{\mathrm{c}}\in (0, 1)$ is the column porosity, $v:= \frac{Q}{\pi}$ is the velocity coefficient, $D^\mathrm{ax}_i\geq 0$ is the axial dispersion coefficient, and $k^\mathrm{f}_{i}\geq 0$ is the film diffusion coefficient.
 In the particles, mass transfer is governed by diffusion-reaction equations in $(0, T^\mathrm{end}) \times (0, L)\times (0, R^{\mathrm{p}})$ and for all components
 
 \begin{align}
