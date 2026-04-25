@@ -384,11 +384,14 @@ if column_model.N_p > 0:
         # Standard mode: single set of equations for all components
         particle_eq, particle_bc = column_model.particle_equations()
 
+        partype_idx = column_model.partype_indices() if column_model.N_p > 1 else {}
+        has_mixed_partypes = len(column_model.par_type_counts) > 1 and not dev_mode_
+
         cur_par_count = 0
         for par_type in column_model.par_type_counts.keys():
 
             # in this case, we dont have a particle model. this configuration is still allowed for educational purpose.
-            if not column_model.has_binding and column_model.nonlimiting_filmDiff and par_type.resolution == "0D":
+            if not column_model.has_binding and par_type.nonlimiting_filmDiff and par_type.resolution == "0D":
                 break
 
             if dev_mode_:
@@ -398,7 +401,13 @@ if column_model.N_p > 0:
 
             eq_type_ = "reaction" if column_model.particle_models[0].resolution == "0D" else "diffusion-reaction"
 
-            tmp_str = r" and all particle sizes " + nPar_list if column_model.N_p > 1 else r""
+            if has_mixed_partypes:
+                par_set_str = column_model.format_partype_set(partype_idx[par_type])
+                tmp_str = r" and particle type(s) " + par_set_str
+            elif column_model.N_p > 1:
+                tmp_str = r" and all particle sizes " + nPar_list
+            else:
+                tmp_str = r""
 
             whatComp = eq.primary_binding_eq_what_comps(column_model.binding_model)
 
