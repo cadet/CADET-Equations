@@ -42,7 +42,20 @@ def apply_model_from_config(at, model_config):
 
 @pytest.mark.ci
 @pytest.mark.reference
-@pytest.mark.parametrize("model_name", ["CSTR", "Plug_Flow", "LRM", "LRMP", "GRMsd", "GRM", "GRMsd_PSD", "GRMsd2D", "GRMsd_nonLimFD_parCore", "GRMsd_nonLimFD_reqBnd", "GeneralFiniteBath", "Radial_Plug_Flow", "Radial_Dispersive_Plug_Flow", "Radial_GRM", "Radial_LRM", "Radial_LRMP", "Frustum_Plug_Flow", "Frustum_GRM"])
+@pytest.mark.parametrize("model_name", [
+    # 0D (Tank) models
+    "CSTR", "CSTR_filter", "FiniteBath_wo_pores", "FiniteBath_w_pores", "GeneralFiniteBath",
+    # 1D Axial models
+    "Plug_Flow", "Dispersive_Plug_Flow", "LRM", "LRM_reqBnd", "LRMP", "GRM", "GRM_reqBnd",
+    "GRMsd", "GRMsd_PSD", "GRMsd_PSD_PTD", "GRMsd_parCore", "GRMsd_multBndStates",
+    "GRMsd_nonLimFD_parCore", "GRMsd_nonLimFD_reqBnd",
+    # 2D models
+    "2D_Plug_Flow", "2D_LRM", "2D_LRMP", "GRMsd2D",
+    # Radial flow models
+    "Radial_Plug_Flow", "Radial_Dispersive_Plug_Flow", "Radial_GRM", "Radial_LRM", "Radial_LRMP",
+    # Frustum models
+    "Frustum_Plug_Flow", "Frustum_Dispersive_Plug_Flow", "Frustum_GRM", "Frustum_LRM", "Frustum_LRMP",
+])
 def test_json_config_output_against_latex_reference(model_name, test_dir):
 
     at = AppTest.from_file("../Equation-Generator.py")
