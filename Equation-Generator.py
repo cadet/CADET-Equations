@@ -384,11 +384,14 @@ if column_model.N_p > 0:
         # Standard mode: single set of equations for all components
         particle_eq, particle_bc = column_model.particle_equations()
 
+        # Build per-particle-type index mapping for display
+        has_mixed_partypes = column_model.has_per_partype_config() and len(column_model.par_type_counts) > 1
+
         cur_par_count = 0
         for par_type in column_model.par_type_counts.keys():
 
             # in this case, we dont have a particle model. this configuration is still allowed for educational purpose.
-            if not column_model.has_binding and column_model.nonlimiting_filmDiff and par_type.resolution == "0D":
+            if not column_model.has_binding and par_type.nonlimiting_filmDiff and par_type.resolution == "0D":
                 break
 
             if dev_mode_:
@@ -400,10 +403,16 @@ if column_model.N_p > 0:
 
             tmp_str = r" and all particle sizes " + nPar_list if column_model.N_p > 1 else r""
 
+            # Add per-particle-type label when particle types have different settings
+            partype_label = ""
+            if has_mixed_partypes:
+                partype_indices = column_model.partype_indices(par_type)
+                partype_label = " for particle type(s) " + column_model.format_partype_set(partype_indices)
+
             whatComp = eq.primary_binding_eq_what_comps(column_model.binding_model)
 
             write_and_save(
-                "In the particles, mass transfer is governed by " + eq_type_ + " equations in " + eq.full_particle_conc_domain(column_model.resolution, par_type.resolution, par_type.has_core, with_par_index=False, with_time_domain=True, column_type=column_model.column_type) + r" and for " + whatComp + " components" + tmp_str)
+                "In the particles, mass transfer is governed by " + eq_type_ + " equations in " + eq.full_particle_conc_domain(column_model.resolution, par_type.resolution, par_type.has_core, with_par_index=False, with_time_domain=True, column_type=column_model.column_type) + r" and for " + whatComp + " components" + tmp_str + partype_label)
 
             write_and_save(particle_eq[par_type], as_latex=True)
 
