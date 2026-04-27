@@ -150,65 +150,67 @@ class Column:
                 
         if self.N_p > 0:
 
+          with st.sidebar.expander("Particle configuration", expanded=True):
+
             self.particle_models = []
 
             for j in range(self.N_p):
 
                 if self.N_p > 1 and self.dev_mode:
-                    st.sidebar.write(f"Configure particle type {j + 1}")
+                    st.write(f"Configure particle type {j + 1}")
 
                 col1, col2 = st.columns(2)
 
                 with col1:
 
                     if self.dev_mode:  # multiple particle types
-                        resolution = re.search(r'\dD', st.sidebar.selectbox(f"Select spatial resolution of particle type {j + 1}", [
+                        resolution = re.search(r'\dD', st.selectbox(f"Select spatial resolution of particle type {j + 1}", [
                                                "1D (radial coordinate)", "0D (homogeneous)"], key=f"parType_{j+1}_resolution")).group()
-                        has_core = st.sidebar.selectbox(f"Choose if particle type {j + 1} is a core-shell particle (i.e. " + r"$R^\mathrm{pc} > 0$)", [
+                        has_core = st.selectbox(f"Choose if particle type {j + 1} is a core-shell particle (i.e. " + r"$R^\mathrm{pc} > 0$)", [
                                                        "No core-shell", "Has core-shell"], key=f"parType_{j+1}_has_core") == "Has core-shell"
-                        geometry = st.sidebar.selectbox(f"Select geometry of particle type {j + 1}", [
+                        geometry = st.selectbox(f"Select geometry of particle type {j + 1}", [
                                                         "Sphere", "Cylinder", "Slab"], key=f"parType_{j+1}__geometry")
                     elif j == 0:
-                        resolution = re.search(r'\dD', st.sidebar.selectbox(f"Select spatial resolution of particles", [
+                        resolution = re.search(r'\dD', st.selectbox(f"Select spatial resolution of particles", [
                                                "1D (radial coordinate)", "0D (homogeneous)"], key=r"particle_resolution")).group()
-                        has_core = st.sidebar.selectbox(f"Add impenetrable core-shell to particles (i.e. " + r"$R^\mathrm{pc} > 0$)", [
+                        has_core = st.selectbox(f"Add impenetrable core-shell to particles (i.e. " + r"$R^\mathrm{pc} > 0$)", [
                                                        "No", "Yes"], key=f"particle_has_core") == "Yes" if (resolution == "1D" and self.advanced_mode) else False
                         geometry = "Sphere"
 
                 with col2:
                     if j == 0 and self.N_c <= 0:  # global film diffusion (hidden when per-component is active)
-                        self.nonlimiting_filmDiff = st.sidebar.selectbox(
+                        self.nonlimiting_filmDiff = st.selectbox(
                             "Non-limiting film diffusion", ["No", "Yes"], key=r"nonlimiting_filmDiff") == "Yes"
 
                 if j == 0:  # todo make this configurable for every particle type
                     # Configure binding model
-                    st.sidebar.write("Configure binding model")
+                    st.write("Configure binding model")
 
-                    self.has_binding = st.sidebar.selectbox(
+                    self.has_binding = st.selectbox(
                         "Add binding", ["No", "Yes"], key=r"has_binding") == "Yes"
 
                     if self.has_binding:
 
                         if self.N_c <= 0:
                             # Global options (shown when per-component is not active)
-                            self.req_binding = st.sidebar.selectbox("Binding kinetics mode", [
+                            self.req_binding = st.selectbox("Binding kinetics mode", [
                                                                     "Kinetic", "Rapid-equilibrium"], key=r"req_binding") == "Rapid-equilibrium"
-                        self.binding_model = st.sidebar.selectbox("Binding model", eq.BINDING_MODELS, key=r"binding_model")
+                        self.binding_model = st.selectbox("Binding model", eq.BINDING_MODELS, key=r"binding_model")
                         if self.N_c <= 0:
-                            self.has_mult_bnd_states = st.sidebar.selectbox("Add multiple bound states", [
+                            self.has_mult_bnd_states = st.selectbox("Add multiple bound states", [
                                                                             "No", "Yes"], key=r"has_mult_bnd_states") == "Yes" if self.advanced_mode else False
-                            self.has_surfDiff = st.sidebar.selectbox("Add surface diffusion", [
+                            self.has_surfDiff = st.selectbox("Add surface diffusion", [
                                                                      "No", "Yes"], key=r"has_surfDiff") == "Yes" if resolution == "1D" else False
 
                     # Per-component configuration (independent of binding)
                     if self.dev_mode and self.N_c > 0:
-                        st.sidebar.write("Per-component configuration")
+                        st.write("Per-component configuration")
                         self.req_binding_per_comp = []
                         self.nonlimiting_filmDiff_per_comp = []
                         self.has_surfDiff_per_comp = []
                         self.has_mult_bnd_states_per_comp = []
                         for comp_i in range(self.N_c):
-                            with st.sidebar.expander(f"Component {comp_i + 1}"):
+                            with st.expander(f"Component {comp_i + 1}"):
                                 self.nonlimiting_filmDiff_per_comp.append(
                                     st.selectbox(f"Non-limiting film diffusion",
                                                  ["No", "Yes"],
