@@ -102,13 +102,13 @@ if uploaded_file is not None:
 
 # User configuration of the model
 
-var_format_ = st.sidebar.selectbox("Select format (e.g. $c^s$ or $q$ as the solid phase concentration)", [
+var_format_ = st.sidebar.selectbox("Select parameter format", [
                                    "CADET", "Legacy"], key=r"var_format")
 
-advanced_mode_ = st.sidebar.selectbox("Advanced setup options (enables e.g. particle size distribution)", [
+advanced_mode_ = st.sidebar.selectbox("Advanced options (enables e.g. particle size distribution)", [
                                       "Off", "On"], key=r"advanced_mode") == "On"
 if advanced_mode_:
-    dev_mode_ = st.sidebar.selectbox("Developer setup options (not tested! Enables e.g. particle type distribution)", [
+    dev_mode_ = st.sidebar.selectbox("Developer options (not tested! Enables e.g. particle type distribution)", [
                                      "Off", "On"], key=r"dev_mode") == "On"
     if dev_mode_:
         advanced_mode_ = True
