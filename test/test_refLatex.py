@@ -27,9 +27,20 @@ def read_tex_file(file_path):
         print(f"An error occurred: {e}")
         return None
 
+def _config_key_order(key):
+    """Sort config keys so that dependent widgets are set after their parents."""
+    order = {
+        "advanced_mode": 0, "dev_mode": 1,
+        "column_type": 1.5, "column_resolution": 2,
+        "add_particles": 3, "PSD": 3, "particle_resolution": 3.5,
+        "has_binding": 4,
+    }
+    return order.get(key, 10)
+
+
 def apply_model_from_config(at, model_config):
 
-    for config in model_config.keys():
+    for config in sorted(model_config.keys(), key=_config_key_order):
 
         if config in [box.key for box in at.toggle]:
             at.toggle(key=config).set_value(model_config[config]).run()

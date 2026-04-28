@@ -546,10 +546,14 @@ if st.button("Generate configuration file", key=r"generate_config"):
             return 0
         elif key == "dev_mode":
             return 1
+        elif key == "column_type":
+            return 1.5
         elif key == "column_resolution":
             return 2
-        elif key == "add_particles":
+        elif key in ("add_particles", "PSD"):
             return 3
+        elif key == "particle_resolution":
+            return 3.5
         elif key == "has_binding":
             return 4
         return 10

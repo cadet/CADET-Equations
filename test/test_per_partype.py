@@ -17,15 +17,14 @@ def setup_grm_psd(at, per_partype_settings):
         'nonlimiting_filmDiff', 'has_surfDiff'
     """
     at.selectbox(key="advanced_mode").set_value("On").run()
-    at.selectbox(key="add_particles").set_value("Yes").run()
-    at.selectbox(key="PSD").set_value("Yes").run()
+    at.selectbox(key="PSD").set_value("Particle size distribution").run()
     at.selectbox(key="particle_resolution").set_value("1D (radial coordinate)").run()
     at.selectbox(key="has_binding").set_value("Yes").run()
 
     for jj, settings in enumerate(per_partype_settings):
-        at.selectbox(key=f"nonlimiting_filmDiff_partype_{jj}").set_value(settings['nonlimiting_filmDiff']).run()
+        at.selectbox(key=f"parType_{jj+1}_nonlimiting_filmDiff").set_value(settings['nonlimiting_filmDiff']).run()
         if 'has_surfDiff' in settings:
-            at.selectbox(key=f"has_surfDiff_partype_{jj}").set_value(settings['has_surfDiff']).run()
+            at.selectbox(key=f"parType_{jj+1}_has_surfDiff").set_value(settings['has_surfDiff']).run()
 
 
 @pytest.mark.ci
@@ -109,12 +108,11 @@ def test_single_particle_unchanged():
     assert not at.exception
 
     at.selectbox(key="advanced_mode").set_value("On").run()
-    at.selectbox(key="add_particles").set_value("Yes").run()
-    at.selectbox(key="PSD").set_value("No").run()
+    at.selectbox(key="PSD").set_value("Yes").run()
     at.selectbox(key="particle_resolution").set_value("1D (radial coordinate)").run()
-    at.selectbox(key="nonlimiting_filmDiff").set_value("No").run()
+    at.selectbox(key="particle_nonlimiting_filmDiff").set_value("No").run()
     at.selectbox(key="has_binding").set_value("Yes").run()
-    at.selectbox(key="has_surfDiff").set_value("Yes").run()
+    at.selectbox(key="particle_has_surfDiff").set_value("Yes").run()
 
     assert not at.exception
     latex = at.session_state.latex_string

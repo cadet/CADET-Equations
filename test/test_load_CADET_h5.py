@@ -331,11 +331,11 @@ def test_extract_v6_config_grm_with_surface_diff_and_core():
 
     config = extract_config_data_from_unit('COLUMN_MODEL_1D', group)
 
-    assert config['add_particles'] == "Yes"
+    assert config['PSD'] == "Yes"
     assert config['particle_resolution'] == "1D (radial coordinate)"
-    assert config['nonlimiting_filmDiff'] == "No"
+    assert config['particle_nonlimiting_filmDiff'] == "No"
     assert config['has_binding'] == "Yes"
-    assert config['has_surfDiff'] == "Yes"
+    assert config['particle_has_surfDiff'] == "Yes"
     assert config['particle_has_core'] == "Yes"
     assert config['advanced_mode'] == "On"
 
@@ -366,8 +366,7 @@ def test_extract_v6_config_ptd_detection():
 
     config = extract_config_data_from_unit('COLUMN_MODEL_1D', group)
 
-    assert config['PTD'] == "Yes"
-    assert config['PSD'] == "Yes"
+    assert config['PSD'] == "Particle size distribution"
     assert config['advanced_mode'] == "On"
 
 

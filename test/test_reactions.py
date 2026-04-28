@@ -17,10 +17,9 @@ def setup_app_with_dev_mode(add_particles="Yes", particle_resolution="1D (radial
     assert not at.exception
 
     if add_particles == "Yes":
-        at.selectbox(key="add_particles").set_value("Yes").run()
-        # dev_mode overrides N_p with a number_input (defaults to 0)
+        # dev_mode uses number_input for N_p
         at.number_input(key=r"N^\mathrm{p}").set_value(1).run()
-        at.selectbox(key="parType_1_resolution").set_value(particle_resolution).run()
+        at.selectbox(key="particle_resolution").set_value(particle_resolution).run()
         at.selectbox(key="has_binding").set_value(has_binding).run()
 
     return at
@@ -342,8 +341,7 @@ def test_req_reaction_with_psd():
     assert not at.exception
     at.selectbox(key="advanced_mode").set_value("On").run()
     at.selectbox(key="dev_mode").set_value("On").run()
-    at.selectbox(key="add_particles").set_value("Yes").run()
-    # dev_mode uses number_input for N_p instead of PSD selectbox
+    # dev_mode uses number_input for N_p
     at.number_input(key=r"N^\mathrm{p}").set_value(2).run()
     at.selectbox(key="has_binding").set_value("Yes").run()
     at.selectbox(key="has_reaction_particle_liquid").set_value("Yes").run()

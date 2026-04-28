@@ -13,7 +13,7 @@ untested_variables = ["dev_mode", "advanced_mode", "var_format", "sym_table", "s
 # We thus first identify the boxes that change the number of boxes and thus combinations (critical_variables).
 # We then start the recursion for every combination of the aforementioned critical keys.
 # Sometimes, only specific options can be critical (e.g. 0D tank). Such options can be added here and handled independently later
-critical_variables = untested_variables + ["add_particles", "has_binding", "particle_resolution", "0D (Homogeneous Tank)", "column_type"]
+critical_variables = untested_variables + ["PSD", "has_binding", "particle_resolution", "0D (Homogeneous Tank)", "column_type"]
 
 # We test every configuration by recursively iteratiing through all combinations
 def config_recursion(at, widgies, counter, test_file_generator_buttons:bool):
@@ -85,9 +85,9 @@ def getInputToBeTested(at):
 @pytest.mark.ci
 @pytest.mark.all_config_runs
 def test_streamlit_app():
-    
+
     at = AppTest.from_file("../Equation-Generator.py")
-    
+
     at.run()
     assert not at.exception
 
@@ -99,29 +99,29 @@ def test_streamlit_app():
     at.selectbox(key="advanced_mode").set_value("On").run()
     assert at.selectbox(key="dev_mode").value == "Off"
 
-    # 1) test all configs with add_particles = "No" -> no has_binding and no particle_resolution
-    assert at.selectbox(key="add_particles").value == "No"
-    run_configs(at, {"add_particles" : "No"}, getInputToBeTested(at), 6 * 2 + 9) # Note: 3 * 2 + 3 repetitive configs due to the setup of the recursion
+    # 1) test all configs with PSD = "No" -> no has_binding and no particle_resolution
+    assert at.selectbox(key="PSD").value == "No"
+    run_configs(at, {"PSD" : "No"}, getInputToBeTested(at), 6 * 2 + 9) # Note: 3 * 2 + 3 repetitive configs due to the setup of the recursion
 
-    # 2) test all configs with "add_particles": "Yes", "particle_resolution": "1D (radial coordinate)", "has_binding": "No"
-    preSet = {"add_particles": "Yes", "particle_resolution": "1D (radial coordinate)", "has_binding": "No"}
-    at.selectbox(key="add_particles").set_value("Yes").run()
+    # 2) test all configs with "PSD": "Yes", "particle_resolution": "1D (radial coordinate)", "has_binding": "No"
+    preSet = {"PSD": "Yes", "particle_resolution": "1D (radial coordinate)", "has_binding": "No"}
+    at.selectbox(key="PSD").set_value("Yes").run()
     assert at.selectbox(key="particle_resolution").value == "1D (radial coordinate)"
     assert at.selectbox(key="has_binding").value == "No"
     run_configs(at, preSet, getInputToBeTested(at), 45 * 2 + 3) # Note: some repetitive configs due to the setup of the recursion
 
-    # 3) test all configs with add_particles = "Yes", "particle_resolution" = "0D (homogeneous)", "has_binding" = "No"
-    preSet = {"add_particles": "Yes", "particle_resolution": "0D (homogeneous)", "has_binding": "No"}
+    # 3) test all configs with PSD = "Yes", "particle_resolution" = "0D (homogeneous)", "has_binding" = "No"
+    preSet = {"PSD": "Yes", "particle_resolution": "0D (homogeneous)", "has_binding": "No"}
     at.selectbox(key="particle_resolution").set_value("0D (homogeneous)").run()
     run_configs(at, preSet, getInputToBeTested(at), 21 * 2 + 3) # Note: nine repetitive configs due to the setup of the recursion
 
-    # 4) test all configs with add_particles = "Yes", "particle_resolution" = "0D (homogeneous)", "has_binding" = "Yes"
-    preSet = {"add_particles": "Yes", "particle_resolution": "0D (homogeneous)", "has_binding": "Yes"}
+    # 4) test all configs with PSD = "Yes", "particle_resolution" = "0D (homogeneous)", "has_binding" = "Yes"
+    preSet = {"PSD": "Yes", "particle_resolution": "0D (homogeneous)", "has_binding": "Yes"}
     at.selectbox(key="has_binding").set_value("Yes").run()
     run_configs(at, preSet, getInputToBeTested(at), 90 * 2 + 9) # Note: some repetitive configs due to the setup of the recursion
 
-    # 5) test all configs with add_particles = "Yes", "particle_resolution" = "1D (radial coordinate)", "has_binding" = "Yes"
-    preSet = {"add_particles": "Yes", "particle_resolution": "1D (radial coordinate)", "has_binding": "Yes"}
+    # 5) test all configs with PSD = "Yes", "particle_resolution" = "1D (radial coordinate)", "has_binding" = "Yes"
+    preSet = {"PSD": "Yes", "particle_resolution": "1D (radial coordinate)", "has_binding": "Yes"}
     at.selectbox(key="particle_resolution").set_value("1D (radial coordinate)").run()
     run_configs(at, preSet, getInputToBeTested(at), 765) # Note: some repetitive configs due to the setup of the recursion
 
@@ -132,25 +132,24 @@ def test_streamlit_app():
     at.selectbox(key="column_resolution").set_value("0D (Homogeneous Tank)").run()
 
     # reset variables
-    at.selectbox(key="add_particles").set_value("No").run()
+    at.selectbox(key="PSD").set_value("No").run()
 
-    # 6a) test all configs with add_particles = "Yes", "particle_resolution" = "1D (radial coordinate)", "has_binding" = "No"
-    preSet = {"add_particles": "Yes", "particle_resolution": "1D (radial coordinate)", "has_binding": "No"}
-    at.selectbox(key="add_particles").set_value("Yes").run()
+    # 6a) test all configs with PSD = "Yes", "particle_resolution" = "1D (radial coordinate)", "has_binding" = "No"
+    preSet = {"PSD": "Yes", "particle_resolution": "1D (radial coordinate)", "has_binding": "No"}
+    at.selectbox(key="PSD").set_value("Yes").run()
     run_configs(at, preSet, getInputToBeTested(at), 14) # Note: some repetitive configs due to the setup of the recursion
 
-    # 6b) test all configs with add_particles = "Yes", "particle_resolution" = "0D (homogeneous)", "has_binding" = "No"
-    preSet = {"add_particles": "Yes", "particle_resolution": "0D (homogeneous)", "has_binding": "No"}
+    # 6b) test all configs with PSD = "Yes", "particle_resolution" = "0D (homogeneous)", "has_binding" = "No"
+    preSet = {"PSD": "Yes", "particle_resolution": "0D (homogeneous)", "has_binding": "No"}
     at.selectbox(key="particle_resolution").set_value("0D (homogeneous)").run()
     run_configs(at, preSet, getInputToBeTested(at), 4 + 2) # Note: some repetitive configs due to the setup of the recursion
 
-    # 6c) test all configs with add_particles = "Yes", "particle_resolution" = "0D (homogeneous)", "has_binding" = "Yes"
-    preSet = {"add_particles": "Yes", "particle_resolution": "0D (homogeneous)", "has_binding": "Yes"}
+    # 6c) test all configs with PSD = "Yes", "particle_resolution" = "0D (homogeneous)", "has_binding" = "Yes"
+    preSet = {"PSD": "Yes", "particle_resolution": "0D (homogeneous)", "has_binding": "Yes"}
     at.selectbox(key="has_binding").set_value("Yes").run()
     run_configs(at, preSet, getInputToBeTested(at), 30) # Note: some repetitive configs due to the setup of the recursion
 
-    # 6d) test all configs with add_particles = "Yes", "particle_resolution" = "1D (radial coordinate)", "has_binding" = "Yes"
-    preSet = {"add_particles": "Yes", "particle_resolution": "1D (radial coordinate)", "has_binding": "Yes"}
+    # 6d) test all configs with PSD = "Yes", "particle_resolution" = "1D (radial coordinate)", "has_binding" = "Yes"
+    preSet = {"PSD": "Yes", "particle_resolution": "1D (radial coordinate)", "has_binding": "Yes"}
     at.selectbox(key="particle_resolution").set_value("1D (radial coordinate)").run()
     run_configs(at, preSet, getInputToBeTested(at), 126) # Note: some repetitive configs due to the setup of the recursion
-    

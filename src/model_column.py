@@ -64,6 +64,7 @@ class Column:
     # nCompKin: int
     # noPoresButReqBinding: bool
 
+    PTD: bool = False  # Particle Type Distribution (different binding per particle type)
     has_filter: bool = False
 
     binding_model: str = "Arbitrary"
@@ -153,30 +154,31 @@ class Column:
 
             self.particle_models = []
 
-            if self.N_p == 1 or not self.dev_mode:
-                
-                configure_particle_type(typeCounter=-1)
-                
-            else:
-                for j in range(self.N_p):
-                    
-                    st.expander(f"Configure particle type {j + 1}")
-                    
-                    configure_particle_type(typeCounter=j)
+            for j in range(self.N_p):
+                if self.N_p == 1:
+                    self.configure_particle_type(typeCounter=-1)
+                elif self.dev_mode:
+                    with st.expander(f"Particle type {j + 1}"):
+                        self.configure_particle_type(typeCounter=j)
+                else:
+                    self.configure_particle_type(typeCounter=j)
 
-            # We need to count and thus sort particle_models:
-            #  Particle types need individual particle equations, which is why we count them
-            #  Only specific differences lead to changes in the interstitial volume equations: geometry if kinetic film diffusion. else geometry + resolution
-            #  Sorting by (geometry, resolution, nonlimiting_filmDiff, has_surfDiff) ensures we are using the same indices across the interstitial volume and particle equations.
-            self.particle_models = sorted(self.particle_models, key=lambda particle: (
-                particle.geometry, particle.resolution, particle.nonlimiting_filmDiff, particle.has_surfDiff))
-            self.par_type_counts = Counter(self.particle_models)
-            if self.nonlimiting_filmDiff:
-                self.par_unique_intV_contribution_counts = Counter(
-                    (particle.geometry, particle.resolution, particle.nonlimiting_filmDiff) for particle in self.particle_models)
+            if self.N_p > 0:
+                # We need to count and thus sort particle_models:
+                #  Particle types need individual particle equations, which is why we count them
+                #  Only specific differences lead to changes in the interstitial volume equations: geometry if kinetic film diffusion. else geometry + resolution
+                #  Sorting by (geometry, resolution, nonlimiting_filmDiff, has_surfDiff) ensures we are using the same indices across the interstitial volume and particle equations.
+                self.particle_models = sorted(self.particle_models, key=lambda particle: (
+                    particle.geometry, particle.resolution, particle.nonlimiting_filmDiff, particle.has_surfDiff))
+                self.par_type_counts = Counter(self.particle_models)
+                if self.nonlimiting_filmDiff:
+                    self.par_unique_intV_contribution_counts = Counter(
+                        (particle.geometry, particle.resolution, particle.nonlimiting_filmDiff) for particle in self.particle_models)
+                else:
+                    self.par_unique_intV_contribution_counts = Counter(
+                        (particle.geometry, particle.nonlimiting_filmDiff) for particle in self.particle_models)
             else:
-                self.par_unique_intV_contribution_counts = Counter(
-                    (particle.geometry, particle.nonlimiting_filmDiff) for particle in self.particle_models)
+                self.has_binding = False
                 
 
         with st.sidebar.expander("Configure reactions"):
@@ -216,132 +218,99 @@ class Column:
         self.fill_vars_and_params()
 
     def configure_particle_type(self, typeCounter):
+        """Configure a single particle type's UI widgets and append to particle_models.
+
+        Parameters
+        ----------
+        typeCounter : int
+            -1 for shared/single particle config, >= 0 for per-particle-type config.
+        """
 
         typeDiff = typeCounter >= 0
         j = typeCounter
 
-        keyPrefix = "parType_{j+1}_" if typeDiff else "particle_"
+        # Transport settings (film diff, surf diff) are per-type when typeDiff
+        transportPrefix = f"parType_{j+1}_" if typeDiff else "particle_"
+        # Geometry settings (resolution, core, geometry) are per-type only in dev_mode
+        geoPrefix = f"parType_{j+1}_" if (typeDiff and self.dev_mode) else "particle_"
+        # Show geometry widgets only on first call (or always in dev_mode)
+        showGeo = (not typeDiff) or j == 0 or self.dev_mode
 
         col1, col2 = st.columns(2)
 
         with col1:
+            if showGeo:
+                resolution = re.search(r'\dD', st.selectbox("Spatial resolution", [
+                                       "1D (radial coordinate)", "0D (homogeneous)"], key=geoPrefix + "resolution")).group()
 
-            resolution = re.search(r'\dD', st.selectbox(f"Spatial resolution", [
-                                   "1D (radial coordinate)", "0D (homogeneous)"], key=keyPrefix+"resolution")).group()
-            
-            has_core = st.selectbox(f"Add impenetrable core-shell to particles (i.e. " + r"$R^\mathrm{pc} > 0$)", [
-                                           "No", "Yes"], key=keyPrefix+r"has_core") == "Yes" if (resolution == "1D" and self.advanced_mode) else False
-            
-            if self.dev_mode:
-                geometry = st.selectbox(
-                    f"Geometry", ["Sphere", "Cylinder", "Slab"], key=keyPrefix+r"geometry"
-                    )
+                has_core = st.selectbox("Add impenetrable core-shell (i.e. " + r"$R^\mathrm{pc} > 0$)", [
+                                               "No", "Yes"], key=geoPrefix + "has_core") == "Yes" if (resolution == "1D" and self.advanced_mode) else False
+
+                if self.dev_mode:
+                    geometry = st.selectbox(
+                        "Geometry", ["Sphere", "Cylinder", "Slab"], key=geoPrefix + "geometry"
+                        )
+                else:
+                    geometry = "Sphere"
             else:
-                geometry = "Sphere"
+                # Reuse shared geometry settings from the first particle type
+                resolution = self.particle_models[0].resolution
+                has_core = self.particle_models[0].has_core
+                geometry = self.particle_models[0].geometry
 
         with col2:
-            if self.N_c <= 0:  # particle film diffusion (hidden when per-component is active)
-                self.nonlimiting_filmDiff = st.selectbox(
-                    "Infinite film diffusion rate", ["No", "Yes"], key=keyPrefix+r"nonlimiting_filmDiff") == "Yes"
-            # else: Todo : here goes the per-component config of film diffusion
+            nonlimiting_filmDiff_j = st.selectbox(
+                "Infinite film diffusion rate", ["No", "Yes"], key=transportPrefix + "nonlimiting_filmDiff") == "Yes"
+            self.nonlimiting_filmDiff = nonlimiting_filmDiff_j
 
-        # todo: continue from here
+        # Configure binding model (shared across particle types, only on first call)
+        if not typeDiff or j == 0:
+            st.write("Configure binding model")
 
-        # # Configure binding model
-        # st.write("Configure binding model")
+            self.has_binding = st.selectbox(
+                "Add binding", ["No", "Yes"], key=r"has_binding") == "Yes"
 
-        # self.has_binding = st.selectbox(
-        #     "Add binding", ["No", "Yes"], key=r"has_binding") == "Yes"
+            if self.has_binding:
 
-        # if self.has_binding:
+                if self.N_c <= 0:
+                    self.req_binding = st.selectbox("Binding kinetics mode", [
+                                                            "Kinetic", "Rapid-equilibrium"], key=r"req_binding") == "Rapid-equilibrium"
+                self.binding_model = st.selectbox("Binding model", eq.BINDING_MODELS, key=r"binding_model")
+                if self.N_c <= 0:
+                    self.has_mult_bnd_states = st.selectbox("Add multiple bound states", [
+                                                                    "No", "Yes"], key=r"has_mult_bnd_states") == "Yes" if self.advanced_mode else False
 
-        #     if self.N_c <= 0:
-        #         # Global options (shown when per-component is not active)
-        #         self.req_binding = st.selectbox("Binding kinetics mode", [
-        #                                                 "Kinetic", "Rapid-equilibrium"], key=r"req_binding") == "Rapid-equilibrium"
-        #     self.binding_model = st.selectbox("Binding model", eq.BINDING_MODELS, key=r"binding_model")
-        #     if self.N_c <= 0:
-        #         self.has_mult_bnd_states = st.selectbox("Add multiple bound states", [
-        #                                                         "No", "Yes"], key=r"has_mult_bnd_states") == "Yes" if self.advanced_mode else False
-        #         if self.N_p <= 1:
-        #             self.has_surfDiff = st.selectbox("Add surface diffusion", [
-        #                                                      "No", "Yes"], key=r"has_surfDiff") == "Yes" if resolution == "1D" else False
+        # Surface diffusion (per particle type)
+        has_surfDiff_j = st.selectbox("Add surface diffusion", [
+                                             "No", "Yes"], key=transportPrefix + "has_surfDiff") == "Yes" if (self.has_binding and resolution == "1D") else False
+        self.has_surfDiff = has_surfDiff_j
 
-        # # Per-particle-type film diffusion and surface diffusion
-        # if self.N_p > 1:
-        #     self.nonlimiting_filmDiff_per_partype = []
-        #     self.has_surfDiff_per_partype = []
-        #     for jj in range(self.N_p):
-        #         with st.expander(f"Particle type {jj + 1}"):
-        #             self.nonlimiting_filmDiff_per_partype.append(
-        #                 st.selectbox("Infinite film diffusion rate",
-        #                              ["No", "Yes"],
-        #                              key=f"nonlimiting_filmDiff_partype_{jj}") == "Yes"
-        #             )
-        #             if self.has_binding and resolution == "1D":
-        #                 self.has_surfDiff_per_partype.append(
-        #                     st.selectbox("Surface diffusion",
-        #                                  ["No", "Yes"],
-        #                                  key=f"has_surfDiff_partype_{jj}") == "Yes"
-        #                 )
-        #             else:
-        #                 self.has_surfDiff_per_partype.append(False)
-        #     self.nonlimiting_filmDiff = all(self.nonlimiting_filmDiff_per_partype)
-        #     self.has_surfDiff = any(self.has_surfDiff_per_partype)
-
-        # # Per-component configuration (independent of binding)
-        # # When N_p > 1, film diffusion and surface diffusion are handled
-        # # per particle type above; per-component only configures binding settings
-        # if self.dev_mode and self.N_c > 0:
-        #     st.write("Per-component configuration")
-        #     self.req_binding_per_comp = []
-        #     self.nonlimiting_filmDiff_per_comp = []
-        #     self.has_surfDiff_per_comp = []
-        #     self.has_mult_bnd_states_per_comp = []
-        #     for comp_i in range(self.N_c):
-        #         with st.expander(f"Component {comp_i + 1}"):
-        #             if self.N_p <= 1:
-        #                 self.nonlimiting_filmDiff_per_comp.append(
-        #                     st.selectbox(f"Infinite film diffusion rate",
-        #                                  ["No", "Yes"],
-        #                                  key=f"nonlimiting_filmDiff_comp_{comp_i}") == "Yes"
-        #                 )
-        #             else:
-        #                 self.nonlimiting_filmDiff_per_comp.append(self.nonlimiting_filmDiff)
-        #             if self.has_binding:
-        #                 self.req_binding_per_comp.append(
-        #                     st.selectbox(f"Binding kinetics mode",
-        #                                  ["Kinetic", "Rapid-equilibrium"],
-        #                                  key=f"req_binding_comp_{comp_i}") == "Rapid-equilibrium"
-        #                 )
-        #                 if self.N_p <= 1 and resolution == "1D":
-        #                     self.has_surfDiff_per_comp.append(
-        #                         st.selectbox(f"Surface diffusion",
-        #                                      ["No", "Yes"],
-        #                                      key=f"has_surfDiff_comp_{comp_i}") == "Yes"
-        #                     )
-        #                 else:
-        #                     self.has_surfDiff_per_comp.append(self.has_surfDiff if self.N_p > 1 else False)
-        #                 self.has_mult_bnd_states_per_comp.append(
-        #                     st.selectbox(f"Multiple bound states",
-        #                                  ["No", "Yes"],
-        #                                  key=f"has_mult_bnd_states_comp_{comp_i}") == "Yes"
-        #                 )
-        #             else:
-        #                 self.req_binding_per_comp.append(False)
-        #                 self.has_surfDiff_per_comp.append(False)
-        #                 self.has_mult_bnd_states_per_comp.append(False)
-
-        # nonlimiting_filmDiff_j = (
-        #     self.nonlimiting_filmDiff_per_partype[j]
-        #     if self.nonlimiting_filmDiff_per_partype is not None
-        #     else self.nonlimiting_filmDiff
-        # )
-        # has_surfDiff_j = (
-        #     self.has_surfDiff_per_partype[j]
-        #     if self.has_surfDiff_per_partype is not None
-        #     else self.has_surfDiff
-        # )
+        # Per-component configuration
+        if self.dev_mode and self.N_c > 0 and (not typeDiff or j == 0):
+            st.write("Per-component configuration")
+            self.req_binding_per_comp = []
+            self.nonlimiting_filmDiff_per_comp = []
+            self.has_surfDiff_per_comp = []
+            self.has_mult_bnd_states_per_comp = []
+            for comp_i in range(self.N_c):
+                with st.expander(f"Component {comp_i + 1}"):
+                    self.nonlimiting_filmDiff_per_comp.append(self.nonlimiting_filmDiff)
+                    if self.has_binding:
+                        self.req_binding_per_comp.append(
+                            st.selectbox("Binding kinetics mode",
+                                         ["Kinetic", "Rapid-equilibrium"],
+                                         key=f"req_binding_comp_{comp_i}") == "Rapid-equilibrium"
+                        )
+                        self.has_surfDiff_per_comp.append(self.has_surfDiff)
+                        self.has_mult_bnd_states_per_comp.append(
+                            st.selectbox("Multiple bound states",
+                                         ["No", "Yes"],
+                                         key=f"has_mult_bnd_states_comp_{comp_i}") == "Yes"
+                        )
+                    else:
+                        self.req_binding_per_comp.append(False)
+                        self.has_surfDiff_per_comp.append(False)
+                        self.has_mult_bnd_states_per_comp.append(False)
 
         self.particle_models.append(
             Particle(
