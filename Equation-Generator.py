@@ -287,12 +287,13 @@ if column_model.N_p > 0:
                     break
 
                 if dev_mode_:
-                    nPar_list = ', '.join(str(j) for j in range(cur_par_count, column_model.par_type_counts[par_type] + 1))
+                    par_indices = list(range(cur_par_count + 1, cur_par_count + column_model.par_type_counts[par_type] + 1))
+                    nPar_list = r"$j\in\{" + ', '.join(str(j) for j in par_indices) + r"\}$" if len(par_indices) > 1 else r"$j = " + str(par_indices[0]) + r"$"
                 else:
                     nPar_list = r"$j\in\{1, \dots, N^{\mathrm{p}}\}$"
 
                 eq_type_ = "reaction" if column_model.particle_models[0].resolution == "0D" else "diffusion-reaction"
-                tmp_str = r" and all particle sizes " + nPar_list if column_model.N_p > 1 else r""
+                tmp_str = r" and all particle types " + nPar_list if column_model.N_p > 1 else r""
 
                 whatComp = eq.primary_binding_eq_what_comps(column_model.binding_model)
 
@@ -395,13 +396,14 @@ if column_model.N_p > 0:
                 break
 
             if dev_mode_:
-                nPar_list = ', '.join(str(j) for j in range(cur_par_count, column_model.par_type_counts[par_type] + 1))
+                par_indices = list(range(cur_par_count + 1, cur_par_count + column_model.par_type_counts[par_type] + 1))
+                nPar_list = r"$j\in\{" + ', '.join(str(j) for j in par_indices) + r"\}$" if len(par_indices) > 1 else r"$j = " + str(par_indices[0]) + r"$"
             else:
                 nPar_list = r"$j\in\{1, \dots, N^{\mathrm{p}}\}$"
 
             eq_type_ = "reaction" if column_model.particle_models[0].resolution == "0D" else "diffusion-reaction"
 
-            tmp_str = r" and all particle sizes " + nPar_list if column_model.N_p > 1 else r""
+            tmp_str = r" and all particle types " + nPar_list if column_model.N_p > 1 else r""
 
             # Add per-particle-type label when particle types have different settings
             partype_label = ""
