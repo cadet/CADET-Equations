@@ -185,14 +185,10 @@ def extract_config_data_from_unit(unit_type, h5_unit_group):
         config['add_particles'] = "No"
 
     if config['advanced_mode'] == "On":
-        # In advanced mode, the UI uses a single PSD selectbox instead of add_particles
+        # In advanced mode, add_particles stays and PSD is a separate Yes/No
         if config.get('add_particles') == "Yes":
             if 'PSD' not in config:
-                config['PSD'] = "Yes"
-            config.pop('add_particles', None)
-        elif config.get('add_particles') == "No":
-            config['PSD'] = "No"
-            config.pop('add_particles', None)
+                config['PSD'] = "No"
     else:
         config.pop('dev_mode', None)
         config.pop('particle_has_core', None)
@@ -213,7 +209,7 @@ def _extract_v5_particle_config(config, unit_type, h5_unit_group, par_model):
 
     if nParType > 1:
         config['advanced_mode'] = "On"
-        config['PSD'] = "Particle size distribution"
+        config['PSD'] = "Yes"
 
     config['particle_nonlimiting_filmDiff'] = "Yes" if nonlimiting else "No"
 
@@ -260,7 +256,7 @@ def _extract_v6_particle_config(config, h5_unit_group, par_model):
 
     if nParType > 1:
         config['advanced_mode'] = "On"
-        config['PSD'] = "Particle size distribution"
+        config['PSD'] = "Yes"
 
     pt_group = h5_unit_group['particle_type_000']
 

@@ -113,7 +113,8 @@ def test_psd_shared_config():
     assert not at.exception
 
     at.selectbox(key="advanced_mode").set_value("On").run()
-    at.selectbox(key="PSD").set_value("Particle size distribution").run()
+    at.selectbox(key="add_particles").set_value("Yes").run()
+    at.selectbox(key="PSD").set_value("Yes").run()
     at.selectbox(key="particle_resolution").set_value("1D (radial coordinate)").run()
     at.selectbox(key="particle_nonlimiting_filmDiff").set_value("No").run()
     at.selectbox(key="has_binding").set_value("Yes").run()
@@ -133,7 +134,7 @@ def test_single_particle_unchanged():
     assert not at.exception
 
     at.selectbox(key="advanced_mode").set_value("On").run()
-    at.selectbox(key="PSD").set_value("Yes").run()
+    at.selectbox(key="add_particles").set_value("Yes").run()
     at.selectbox(key="particle_resolution").set_value("1D (radial coordinate)").run()
     at.selectbox(key="particle_nonlimiting_filmDiff").set_value("No").run()
     at.selectbox(key="has_binding").set_value("Yes").run()

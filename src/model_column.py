@@ -145,8 +145,12 @@ class Column:
                 self.N_p = st.number_input("Number of particle types", key=r"N^\mathrm{p}", min_value=0, step=1)
 
             elif self.advanced_mode:
-                par_config = st.selectbox("Add particles", ["No", "Yes", "Particle size distribution"], key=r"PSD")
-                self.N_p = 1 if par_config == "Yes" else 0 if par_config == "No" else 2
+                has_particles = st.selectbox("Add particles", ["No", "Yes"], key=r"add_particles") == "Yes"
+                if has_particles:
+                    has_psd = st.selectbox("Particle size distribution", ["No", "Yes"], key=r"PSD") == "Yes"
+                    self.N_p = 2 if has_psd else 1
+                else:
+                    self.N_p = 0
 
             else:
                 self.N_p = int(st.selectbox("Add particles", ["No", "Yes"], key=r"add_particles") == "Yes")

@@ -15,7 +15,7 @@ def setup_app_with_binding(binding_model="Arbitrary", particle_resolution="1D (r
     at.selectbox(key="advanced_mode").set_value("On").run()
     assert not at.exception
 
-    at.selectbox(key="PSD").set_value("Yes").run()
+    at.selectbox(key="add_particles").set_value("Yes").run()
     at.selectbox(key="particle_resolution").set_value(particle_resolution).run()
     at.selectbox(key="has_binding").set_value("Yes").run()
     assert not at.exception
@@ -110,7 +110,7 @@ def test_binding_model_not_shown_without_binding():
     at = AppTest.from_file("../Equation-Generator.py")
     at.run()
     at.selectbox(key="advanced_mode").set_value("On").run()
-    at.selectbox(key="PSD").set_value("Yes").run()
+    at.selectbox(key="add_particles").set_value("Yes").run()
     at.selectbox(key="has_binding").set_value("No").run()
     assert not at.exception
     selectbox_keys = [box.key for box in at.selectbox]

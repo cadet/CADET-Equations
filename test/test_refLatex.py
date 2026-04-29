@@ -32,7 +32,7 @@ def _config_key_order(key):
     order = {
         "advanced_mode": 0, "dev_mode": 1,
         "column_type": 1.5, "column_resolution": 2,
-        "add_particles": 3, "PSD": 3, "particle_resolution": 3.5,
+        "add_particles": 3, "PSD": 3.2, "particle_resolution": 3.5,
         "has_binding": 4,
     }
     return order.get(key, 10)
