@@ -9,11 +9,9 @@
     "PSD": "Particle size distribution",
     "particle_resolution": "1D (radial coordinate)",
     "particle_has_core": "No",
-    "parType_1_nonlimiting_filmDiff": "No",
-    "parType_2_nonlimiting_filmDiff": "No",
+    "particle_nonlimiting_filmDiff": "No",
     "has_binding": "Yes",
     "has_mult_bnd_states": "No",
     "req_binding": "Kinetic",
-    "parType_1_has_surfDiff": "Yes",
-    "parType_2_has_surfDiff": "Yes"
+    "particle_has_surfDiff": "Yes"
 }

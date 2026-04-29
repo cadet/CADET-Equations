@@ -429,8 +429,8 @@ def test_map_unit_to_particle_model_column_model_2d_no_particle():
 
 @pytest.mark.ci
 @pytest.mark.unit_test
-def test_extract_v6_config_psd_missing_partype_subgroup():
-    """V6 PSD config where a particle_type subgroup is missing should default to No for surfDiff."""
+def test_extract_v6_config_psd_shared_surfDiff():
+    """V6 PSD config should use shared surfDiff key (not per-type) since PSD uses shared config."""
     ads_group = _make_h5_group({'IS_KINETIC': True})
     pt0_group = _make_h5_group(
         {
@@ -442,7 +442,6 @@ def test_extract_v6_config_psd_missing_partype_subgroup():
         },
         subgroups={'adsorption': ads_group},
     )
-    # Only particle_type_000 exists; particle_type_001 is missing
     group = _make_h5_group(
         {
             'NPARTYPE': 2,
@@ -455,5 +454,5 @@ def test_extract_v6_config_psd_missing_partype_subgroup():
     config = extract_config_data_from_unit('COLUMN_MODEL_1D', group)
 
     assert config['PSD'] == "Particle size distribution"
-    assert config['parType_1_has_surfDiff'] == "Yes"
-    assert config['parType_2_has_surfDiff'] == "No"  # fallback for missing subgroup
+    assert config['particle_has_surfDiff'] == "Yes"
+    assert 'parType_1_has_surfDiff' not in config  # shared config, not per-type

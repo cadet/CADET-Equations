@@ -154,14 +154,16 @@ class Column:
             # Collect per-particle-type transport configs
             particle_configs = []
 
-            for j in range(self.N_p):
-                if self.N_p == 1:
-                    particle_configs.append(self.configure_particle_type(typeCounter=-1))
-                elif self.dev_mode:
-                    with st.expander(f"Particle type {j + 1}"):
-                        particle_configs.append(self.configure_particle_type(typeCounter=j))
+            if self.N_p > 0:
+                if self.dev_mode and self.N_p > 1:
+                    # Dev mode (PTD): per-particle-type config
+                    for j in range(self.N_p):
+                        with st.expander(f"Particle type {j + 1}"):
+                            particle_configs.append(self.configure_particle_type(typeCounter=j))
                 else:
-                    particle_configs.append(self.configure_particle_type(typeCounter=j))
+                    # Single particle or PSD in advanced mode: shared config
+                    shared_config = self.configure_particle_type(typeCounter=-1)
+                    particle_configs = [shared_config.copy() for _ in range(self.N_p)]
 
         # Configure binding model (separate section)
         if self.N_p > 0:
@@ -177,6 +179,21 @@ class Column:
                     if self.N_c <= 0:
                         self.has_mult_bnd_states = st.selectbox("Add multiple bound states", [
                                                                         "No", "Yes"], key=r"has_mult_bnd_states") == "Yes" if self.advanced_mode else False
+
+                    # Surface diffusion (only with binding and 1D particles)
+                    if particle_configs[0]['resolution'] == "1D":
+                        if self.dev_mode and self.N_p > 1:
+                            for j in range(self.N_p):
+                                has_surfDiff_j = st.selectbox("Surface diffusion" + f" (particle type {j+1})", [
+                                    "No", "Yes"], key=f"parType_{j+1}_has_surfDiff") == "Yes"
+                                particle_configs[j]['has_surfDiff'] = has_surfDiff_j
+                                self.has_surfDiff = self.has_surfDiff or has_surfDiff_j
+                        else:
+                            has_surfDiff = st.selectbox("Add surface diffusion", [
+                                "No", "Yes"], key=r"particle_has_surfDiff") == "Yes"
+                            for cfg in particle_configs:
+                                cfg['has_surfDiff'] = has_surfDiff
+                            self.has_surfDiff = has_surfDiff
 
                 # Per-component configuration
                 if self.dev_mode and self.N_c > 0:
@@ -325,17 +342,12 @@ class Column:
             "Infinite film diffusion rate", ["No", "Yes"], key=transportPrefix + "nonlimiting_filmDiff") == "Yes"
         self.nonlimiting_filmDiff = nonlimiting_filmDiff_j
 
-        # Surface diffusion (per particle type)
-        has_surfDiff_j = st.selectbox("Add surface diffusion", [
-                                             "No", "Yes"], key=transportPrefix + "has_surfDiff") == "Yes" if resolution == "1D" else False
-        self.has_surfDiff = has_surfDiff_j
-
         config = {
             'geometry': geometry,
             'resolution': resolution,
             'has_core': has_core,
             'nonlimiting_filmDiff': nonlimiting_filmDiff_j,
-            'has_surfDiff': has_surfDiff_j,
+            'has_surfDiff': False,
         }
 
         # Store first particle config for reuse by subsequent particle types
