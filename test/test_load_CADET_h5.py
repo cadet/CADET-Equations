@@ -425,3 +425,35 @@ def test_map_unit_to_particle_model_column_model_2d_no_particle():
     """COLUMN_MODEL_2D without particles (NPARTYPE=0) should return None."""
     group = _make_h5_group({'NPARTYPE': 0})
     assert map_unit_to_particle_model('COLUMN_MODEL_2D', group) is None
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_extract_v6_config_psd_missing_partype_subgroup():
+    """V6 PSD config where a particle_type subgroup is missing should default to No for surfDiff."""
+    ads_group = _make_h5_group({'IS_KINETIC': True})
+    pt0_group = _make_h5_group(
+        {
+            'HAS_FILM_DIFFUSION': True,
+            'HAS_PORE_DIFFUSION': True,
+            'HAS_SURFACE_DIFFUSION': True,
+            'ADSORPTION_MODEL': b'LINEAR',
+            'NBOUND': np.array([1]),
+        },
+        subgroups={'adsorption': ads_group},
+    )
+    # Only particle_type_000 exists; particle_type_001 is missing
+    group = _make_h5_group(
+        {
+            'NPARTYPE': 2,
+            'COL_POROSITY': 0.37,
+            'COL_DISPERSION': 5.75e-08,
+        },
+        subgroups={'particle_type_000': pt0_group},
+    )
+
+    config = extract_config_data_from_unit('COLUMN_MODEL_1D', group)
+
+    assert config['PSD'] == "Particle size distribution"
+    assert config['parType_1_has_surfDiff'] == "Yes"
+    assert config['parType_2_has_surfDiff'] == "No"  # fallback for missing subgroup

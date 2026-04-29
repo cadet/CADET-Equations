@@ -46,6 +46,21 @@ def test_psd_uniform_settings():
 
 
 @pytest.mark.ci
+@pytest.mark.unit_test
+def test_format_partype_set_single():
+    """format_partype_set with a single index."""
+    from src.model_column import Column
+    assert Column.format_partype_set([1]) == r"$j = 1$"
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_format_partype_set_multiple():
+    """format_partype_set with multiple indices."""
+    from src.model_column import Column
+    assert Column.format_partype_set([1, 3]) == r"$j \in \{1, 3\}$"
+
+@pytest.mark.ci
 def test_psd_different_film_diffusion():
     """PSD with different film diffusion settings per particle type."""
     at = AppTest.from_file("../Equation-Generator.py")
