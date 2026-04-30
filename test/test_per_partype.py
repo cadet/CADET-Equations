@@ -30,6 +30,7 @@ def setup_grm_ptd(at, per_partype_settings):
 
 
 @pytest.mark.ci
+@pytest.mark.reference
 def test_ptd_uniform_settings():
     """PTD with uniform per-partype settings should produce consistent equations."""
     at = AppTest.from_file("../Equation-Generator.py")
@@ -48,6 +49,7 @@ def test_ptd_uniform_settings():
 
 
 @pytest.mark.ci
+@pytest.mark.reference
 def test_ptd_different_film_diffusion():
     """PTD with different film diffusion settings per particle type should show per-type labels."""
     at = AppTest.from_file("../Equation-Generator.py")
@@ -67,6 +69,7 @@ def test_ptd_different_film_diffusion():
 
 
 @pytest.mark.ci
+@pytest.mark.reference
 def test_ptd_different_surface_diffusion():
     """PTD with different surface diffusion settings per particle type."""
     at = AppTest.from_file("../Equation-Generator.py")
@@ -84,6 +87,7 @@ def test_ptd_different_surface_diffusion():
 
 
 @pytest.mark.ci
+@pytest.mark.reference
 def test_ptd_all_nonlimiting():
     """PTD where all particle types have non-limiting film diffusion."""
     at = AppTest.from_file("../Equation-Generator.py")
@@ -103,6 +107,7 @@ def test_ptd_all_nonlimiting():
 
 
 @pytest.mark.ci
+@pytest.mark.reference
 def test_psd_shared_config():
     """PSD in advanced mode should use shared config for all particle types."""
     at = AppTest.from_file("../Equation-Generator.py")
@@ -123,6 +128,7 @@ def test_psd_shared_config():
 
 
 @pytest.mark.ci
+@pytest.mark.reference
 def test_single_particle_unchanged():
     """Single particle type should still use global settings."""
     at = AppTest.from_file("../Equation-Generator.py")
@@ -143,6 +149,7 @@ def test_single_particle_unchanged():
 
 
 @pytest.mark.ci
+@pytest.mark.reference
 def test_ptd_different_binding_models():
     """PTD with different binding models per particle type."""
     at = AppTest.from_file("../Equation-Generator.py")
@@ -173,6 +180,7 @@ def test_ptd_different_binding_models():
 
 
 @pytest.mark.ci
+@pytest.mark.reference
 def test_ptd_sma_binding():
     """PTD with SMA binding should produce SMA-specific equations for all particle types."""
     at = AppTest.from_file("../Equation-Generator.py")
@@ -198,6 +206,7 @@ def test_ptd_sma_binding():
 
 
 @pytest.mark.ci
+@pytest.mark.reference
 def test_ptd_mixed_binding_and_arbitrary():
     """PTD where one particle has explicit binding, another has arbitrary."""
     at = AppTest.from_file("../Equation-Generator.py")

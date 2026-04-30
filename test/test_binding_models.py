@@ -28,6 +28,7 @@ def setup_app_with_binding(binding_model="Arbitrary", particle_resolution="1D (r
 
 
 @pytest.mark.ci
+@pytest.mark.reference
 def test_arbitrary_binding_default():
     """Default binding model should produce f^bind."""
     at = setup_app_with_binding("Arbitrary")
@@ -36,6 +37,7 @@ def test_arbitrary_binding_default():
 
 
 @pytest.mark.ci
+@pytest.mark.reference
 def test_linear_binding_1D():
     """Linear binding model should produce k_a and k_d terms."""
     at = setup_app_with_binding("Linear")
@@ -46,6 +48,7 @@ def test_linear_binding_1D():
 
 
 @pytest.mark.ci
+@pytest.mark.reference
 def test_langmuir_binding_1D():
     """Langmuir binding model should produce q_max and summation."""
     at = setup_app_with_binding("Langmuir")
@@ -56,6 +59,7 @@ def test_langmuir_binding_1D():
 
 
 @pytest.mark.ci
+@pytest.mark.reference
 def test_sma_binding_1D():
     """SMA binding model should produce nu, sigma, Lambda, and auxiliary equations."""
     at = setup_app_with_binding("SMA")
@@ -69,6 +73,7 @@ def test_sma_binding_1D():
 
 
 @pytest.mark.ci
+@pytest.mark.reference
 def test_linear_binding_0D():
     """Linear binding should work with 0D (homogeneous) particles."""
     at = setup_app_with_binding("Linear", particle_resolution="0D (homogeneous)")
@@ -78,6 +83,7 @@ def test_linear_binding_0D():
 
 
 @pytest.mark.ci
+@pytest.mark.reference
 def test_langmuir_binding_0D():
     """Langmuir binding should work with 0D (homogeneous) particles."""
     at = setup_app_with_binding("Langmuir", particle_resolution="0D (homogeneous)")
@@ -86,6 +92,7 @@ def test_langmuir_binding_0D():
 
 
 @pytest.mark.ci
+@pytest.mark.reference
 def test_sma_binding_rapid_equilibrium():
     """SMA binding with rapid equilibrium should still produce SMA terms."""
     at = setup_app_with_binding("SMA", req_binding="Rapid-equilibrium")
@@ -95,6 +102,7 @@ def test_sma_binding_rapid_equilibrium():
 
 
 @pytest.mark.ci
+@pytest.mark.reference
 def test_binding_model_not_shown_without_advanced_mode():
     """Binding model selector should not appear without advanced mode."""
     at = AppTest.from_file("../Equation-Generator.py")
@@ -105,6 +113,7 @@ def test_binding_model_not_shown_without_advanced_mode():
 
 
 @pytest.mark.ci
+@pytest.mark.reference
 def test_binding_model_not_shown_without_binding():
     """Binding model selector should not appear when binding is disabled."""
     at = AppTest.from_file("../Equation-Generator.py")
