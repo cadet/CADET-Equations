@@ -403,13 +403,16 @@ if column_model.N_p > 0:
 
             eq_type_ = "reaction" if column_model.particle_models[0].resolution == "0D" else "diffusion-reaction"
 
-            tmp_str = r" and all particle types " + nPar_list if column_model.N_p > 1 else r""
-
             # Add per-particle-type label when particle types have different settings
             partype_label = ""
             if has_mixed_partypes:
                 partype_indices = column_model.partype_indices(par_type)
                 partype_label = " for particle type(s) " + column_model.format_partype_set(partype_indices)
+                tmp_str = ""
+            elif column_model.N_p > 1:
+                tmp_str = r" and all particle types " + nPar_list
+            else:
+                tmp_str = ""
 
             whatComp = eq.primary_binding_eq_what_comps(par_type.binding_model)
 
