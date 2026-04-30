@@ -185,12 +185,18 @@ def extract_config_data_from_unit(unit_type, h5_unit_group):
         config['add_particles'] = "No"
 
     if config['advanced_mode'] == "On":
-        # In advanced mode, add_particles stays and PSD is a separate Yes/No
-        if config.get('add_particles') == "Yes":
-            if 'PSD' not in config:
-                config['PSD'] = "No"
+        # Advanced mode uses single PSD selectbox with 3 options
+        add_par = config.pop('add_particles', "No")
+        if add_par == "Yes":
+            if config.get('PSD') == "Yes":
+                config['PSD'] = "Particle size distribution"
+            else:
+                config['PSD'] = "Yes"
+        else:
+            config['PSD'] = "No"
     else:
         config.pop('dev_mode', None)
+        config.pop('PSD', None)
         config.pop('particle_has_core', None)
         config.pop('has_radial_dispersion', None)
         config.pop('has_mult_bnd_states', None)

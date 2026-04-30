@@ -20,16 +20,13 @@ def setup_grm_ptd(at, per_partype_settings):
     at.selectbox(key="dev_mode").set_value("On").run()
     n_p = len(per_partype_settings)
     at.number_input(key=r"N^\mathrm{p}").set_value(n_p).run()
+    at.selectbox(key="has_binding").set_value("Yes").run()
 
     for jj in range(n_p):
         at.selectbox(key=f"parType_{jj+1}_resolution").set_value("1D (radial coordinate)").run()
         at.selectbox(key=f"parType_{jj+1}_nonlimiting_filmDiff").set_value(per_partype_settings[jj]['nonlimiting_filmDiff']).run()
-
-    at.selectbox(key="has_binding").set_value("Yes").run()
-
-    for jj, settings in enumerate(per_partype_settings):
-        if 'has_surfDiff' in settings:
-            at.selectbox(key=f"parType_{jj+1}_has_surfDiff").set_value(settings['has_surfDiff']).run()
+        if 'has_surfDiff' in per_partype_settings[jj]:
+            at.selectbox(key=f"parType_{jj+1}_has_surfDiff").set_value(per_partype_settings[jj]['has_surfDiff']).run()
 
 
 @pytest.mark.ci
@@ -113,11 +110,10 @@ def test_psd_shared_config():
     assert not at.exception
 
     at.selectbox(key="advanced_mode").set_value("On").run()
-    at.selectbox(key="add_particles").set_value("Yes").run()
-    at.selectbox(key="PSD").set_value("Yes").run()
+    at.selectbox(key="PSD").set_value("Particle size distribution").run()
+    at.selectbox(key="has_binding").set_value("Yes").run()
     at.selectbox(key="particle_resolution").set_value("1D (radial coordinate)").run()
     at.selectbox(key="particle_nonlimiting_filmDiff").set_value("No").run()
-    at.selectbox(key="has_binding").set_value("Yes").run()
     at.selectbox(key="particle_has_surfDiff").set_value("Yes").run()
 
     assert not at.exception
@@ -134,16 +130,71 @@ def test_single_particle_unchanged():
     assert not at.exception
 
     at.selectbox(key="advanced_mode").set_value("On").run()
-    at.selectbox(key="add_particles").set_value("Yes").run()
+    at.selectbox(key="PSD").set_value("Yes").run()
+    at.selectbox(key="has_binding").set_value("Yes").run()
     at.selectbox(key="particle_resolution").set_value("1D (radial coordinate)").run()
     at.selectbox(key="particle_nonlimiting_filmDiff").set_value("No").run()
-    at.selectbox(key="has_binding").set_value("Yes").run()
     at.selectbox(key="particle_has_surfDiff").set_value("Yes").run()
 
     assert not at.exception
     latex = at.session_state.latex_string
     assert r"\begin{align}" in latex
     assert r"k^{\mathrm{f}}" in latex
+
+
+@pytest.mark.ci
+def test_ptd_different_binding_models():
+    """PTD with different binding models per particle type."""
+    at = AppTest.from_file("../Equation-Generator.py")
+    at.run()
+    assert not at.exception
+
+    at.selectbox(key="advanced_mode").set_value("On").run()
+    at.selectbox(key="dev_mode").set_value("On").run()
+    at.number_input(key=r"N^\mathrm{p}").set_value(2).run()
+    at.selectbox(key="has_binding").set_value("Yes").run()
+
+    for jj in range(2):
+        at.selectbox(key=f"parType_{jj+1}_resolution").set_value("1D (radial coordinate)").run()
+        at.selectbox(key=f"parType_{jj+1}_nonlimiting_filmDiff").set_value("No").run()
+
+    # Set different binding models per particle type
+    at.selectbox(key="parType_1_binding_model").set_value("Linear").run()
+    at.selectbox(key="parType_2_binding_model").set_value("Langmuir").run()
+
+    assert not at.exception
+    latex = at.session_state.latex_string
+    assert r"\begin{align}" in latex
+    # Linear binding produces k_a
+    assert r"k^{\mathrm{a}}" in latex
+    # Langmuir binding produces q_max
+    assert r"q^{\mathrm{max}}" in latex
+
+
+@pytest.mark.ci
+def test_ptd_mixed_binding_and_arbitrary():
+    """PTD where one particle has explicit binding, another has arbitrary."""
+    at = AppTest.from_file("../Equation-Generator.py")
+    at.run()
+    assert not at.exception
+
+    at.selectbox(key="advanced_mode").set_value("On").run()
+    at.selectbox(key="dev_mode").set_value("On").run()
+    at.number_input(key=r"N^\mathrm{p}").set_value(2).run()
+    at.selectbox(key="has_binding").set_value("Yes").run()
+
+    for jj in range(2):
+        at.selectbox(key=f"parType_{jj+1}_resolution").set_value("1D (radial coordinate)").run()
+        at.selectbox(key=f"parType_{jj+1}_nonlimiting_filmDiff").set_value("No").run()
+
+    at.selectbox(key="parType_1_binding_model").set_value("Linear").run()
+    at.selectbox(key="parType_2_binding_model").set_value("Arbitrary").run()
+
+    assert not at.exception
+    latex = at.session_state.latex_string
+    assert r"\begin{align}" in latex
+    assert r"k^{\mathrm{a}}" in latex
+    assert r"f^{\mathrm{bind}}" in latex
 
 
 @pytest.mark.ci

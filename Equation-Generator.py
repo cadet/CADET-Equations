@@ -411,7 +411,7 @@ if column_model.N_p > 0:
                 partype_indices = column_model.partype_indices(par_type)
                 partype_label = " for particle type(s) " + column_model.format_partype_set(partype_indices)
 
-            whatComp = eq.primary_binding_eq_what_comps(column_model.binding_model)
+            whatComp = eq.primary_binding_eq_what_comps(par_type.binding_model)
 
             write_and_save(
                 "In the particles, mass transfer is governed by " + eq_type_ + " equations in " + eq.full_particle_conc_domain(column_model.resolution, par_type.resolution, par_type.has_core, with_par_index=False, with_time_domain=True, column_type=column_model.column_type) + r" and for " + whatComp + " components" + tmp_str + partype_label)
@@ -465,7 +465,7 @@ if column_model.N_p > 0:
 """, as_latex=True)
 
             # Some more complicated binding models require additional equations
-            if column_model.binding_model == "SMA" and column_model.has_binding:
+            if par_type.binding_model == "SMA" and par_type.has_binding:
 
                 PTD_ = column_model.PTD and column_model.N_p > 1
                 write_and_save(r"The number of available binding sites $\bar{q}_0$ is given by")
@@ -475,24 +475,16 @@ if column_model.N_p > 0:
                     "For the salt component, mass transfer is governed by " + eq_type_ + " equations in " + eq.full_particle_conc_domain(column_model.resolution, par_type.resolution, par_type.has_core, with_par_index=False, with_time_domain=True, column_type=column_model.column_type) + tmp_str)
 
                 # The salt component is in rapid equilibrium binding mode
-                tmpReqBnd = column_model.req_binding
-                column_model.req_binding = True
-                tmpBndModel = column_model.binding_model
-                column_model.binding_model = "SMA_salt"
-                particle_eq_salt, particle_bc_salt = column_model.particle_equations()
-                column_model.req_binding = tmpReqBnd
-                column_model.binding_model = tmpBndModel
+                salt_eq, salt_bc = column_model.particle_salt_equations(par_type)
 
                 if PTD_:
-                    write_and_save(re.sub(r"_{i}", r"_{0}", particle_eq_salt[par_type]), as_latex=True)
-                    re.sub(r"_{i}", r"_{0}", particle_bc_salt[par_type])
+                    write_and_save(re.sub(r"_{i}", r"_{0}", salt_eq), as_latex=True)
                 else:
-                    write_and_save(re.sub(r"_{j,i}", r"_{j,0}", particle_eq_salt[par_type]), as_latex=True)
-                    re.sub(r"_{j,i}", r"_{j,0}", particle_bc_salt[par_type])
+                    write_and_save(re.sub(r"_{j,i}", r"_{j,0}", salt_eq), as_latex=True)
 
-                if not particle_bc_salt[par_type] == "":
+                if salt_bc != "":
                     write_and_save(r"where the counter-ion concentration $c^{\s}_0$ satisfies the electroneutrality constraint. Boundary conditions are")
-                    write_and_save(particle_bc_salt[par_type], as_latex=True)
+                    write_and_save(salt_bc, as_latex=True)
                 else:
                    write_and_save(r"where the counter-ion concentration $c^{\s}_0$ satisfies the electroneutrality constraint.")
 
@@ -554,10 +546,10 @@ if st.button("Generate configuration file", key=r"generate_config"):
             return 2
         elif key in ("add_particles", "PSD"):
             return 3
+        elif key == "has_binding":
+            return 3.3
         elif key == "particle_resolution":
             return 3.5
-        elif key == "has_binding":
-            return 4
         return 10
 
     # Create a temporary directory

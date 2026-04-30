@@ -145,12 +145,8 @@ class Column:
                 self.N_p = st.number_input("Number of particle types", key=r"N^\mathrm{p}", min_value=0, step=1)
 
             elif self.advanced_mode:
-                has_particles = st.selectbox("Add particles", ["No", "Yes"], key=r"add_particles") == "Yes"
-                if has_particles:
-                    has_psd = st.selectbox("Particle size distribution", ["No", "Yes"], key=r"PSD") == "Yes"
-                    self.N_p = 2 if has_psd else 1
-                else:
-                    self.N_p = 0
+                par_config = st.selectbox("Add particles", ["No", "Yes", "Particle size distribution"], key=r"PSD")
+                self.N_p = 1 if par_config == "Yes" else 0 if par_config == "No" else 2
 
             else:
                 self.N_p = int(st.selectbox("Add particles", ["No", "Yes"], key=r"add_particles") == "Yes")
@@ -159,6 +155,9 @@ class Column:
             particle_configs = []
 
             if self.N_p > 0:
+                self.has_binding = st.selectbox(
+                    "Add binding", ["No", "Yes"], key=r"has_binding") == "Yes"
+
                 if self.dev_mode and self.N_p > 1:
                     # Dev mode (PTD): per-particle-type config
                     for j in range(self.N_p):
@@ -170,12 +169,24 @@ class Column:
                     particle_configs = [shared_config.copy() for _ in range(self.N_p)]
 
         # Configure binding model (separate section)
-        if self.N_p > 0:
+        if self.N_p > 0 and self.has_binding:
             with st.sidebar.expander("Configure binding", expanded=True):
-                self.has_binding = st.selectbox(
-                    "Add binding", ["No", "Yes"], key=r"has_binding") == "Yes"
-
-                if self.has_binding:
+                if self.dev_mode and self.N_p > 1 and self.N_c <= 0:
+                    # Per-particle-type binding config
+                    self._binding_per_partype = []
+                    for j in range(self.N_p):
+                        with st.expander(f"Particle type {j + 1}"):
+                            bnd_model_j = st.selectbox("Binding model", eq.BINDING_MODELS, key=f"parType_{j+1}_binding_model")
+                            req_bnd_j = st.selectbox("Binding kinetics mode", [
+                                "Kinetic", "Rapid-equilibrium"], key=f"parType_{j+1}_req_binding") == "Rapid-equilibrium"
+                            mult_bnd_j = st.selectbox("Add multiple bound states", [
+                                "No", "Yes"], key=f"parType_{j+1}_has_mult_bnd_states") == "Yes"
+                            self._binding_per_partype.append({
+                                'binding_model': bnd_model_j,
+                                'req_binding': req_bnd_j,
+                                'has_mult_bnd_states': mult_bnd_j,
+                            })
+                else:
                     if self.N_c <= 0:
                         self.req_binding = st.selectbox("Binding kinetics mode", [
                                                                 "Kinetic", "Rapid-equilibrium"], key=r"req_binding") == "Rapid-equilibrium"
@@ -183,21 +194,6 @@ class Column:
                     if self.N_c <= 0:
                         self.has_mult_bnd_states = st.selectbox("Add multiple bound states", [
                                                                         "No", "Yes"], key=r"has_mult_bnd_states") == "Yes" if self.advanced_mode else False
-
-                    # Surface diffusion (only with binding and 1D particles)
-                    if particle_configs[0]['resolution'] == "1D":
-                        if self.dev_mode and self.N_p > 1:
-                            for j in range(self.N_p):
-                                has_surfDiff_j = st.selectbox("Surface diffusion" + f" (particle type {j+1})", [
-                                    "No", "Yes"], key=f"parType_{j+1}_has_surfDiff") == "Yes"
-                                particle_configs[j]['has_surfDiff'] = has_surfDiff_j
-                                self.has_surfDiff = self.has_surfDiff or has_surfDiff_j
-                        else:
-                            has_surfDiff = st.selectbox("Add surface diffusion", [
-                                "No", "Yes"], key=r"particle_has_surfDiff") == "Yes"
-                            for cfg in particle_configs:
-                                cfg['has_surfDiff'] = has_surfDiff
-                            self.has_surfDiff = has_surfDiff
 
                 # Per-component configuration
                 if self.dev_mode and self.N_c > 0:
@@ -226,7 +222,15 @@ class Column:
                                 self.has_surfDiff_per_comp.append(False)
                                 self.has_mult_bnd_states_per_comp.append(False)
 
-            # Build Particle objects now that binding is known
+        # Merge per-particle-type binding settings into particle configs
+        if self.N_p > 0 and hasattr(self, '_binding_per_partype'):
+            for j, cfg in enumerate(particle_configs):
+                cfg['binding_model'] = self._binding_per_partype[j]['binding_model']
+                cfg['req_binding'] = self._binding_per_partype[j]['req_binding']
+                cfg['has_mult_bnd_states'] = self._binding_per_partype[j]['has_mult_bnd_states']
+
+        # Build Particle objects now that binding is known
+        if self.N_p > 0:
             self.particle_models = []
             for cfg in particle_configs:
                 self.particle_models.append(
@@ -236,14 +240,14 @@ class Column:
                         resolution=cfg['resolution'],
                         has_core=cfg['has_core'],
                         has_binding=self.has_binding,
-                        req_binding=self.req_binding,
-                        has_mult_bnd_states=self.has_mult_bnd_states,
+                        req_binding=cfg.get('req_binding', self.req_binding),
+                        has_mult_bnd_states=cfg.get('has_mult_bnd_states', self.has_mult_bnd_states),
                         has_surfDiff=cfg['has_surfDiff'],
                         nonlimiting_filmDiff=cfg['nonlimiting_filmDiff'],
                         interstitial_volume_resolution=self.resolution,
                         column_type=self.column_type,
                         single_partype=(self.N_p == 1),
-                        binding_model=self.binding_model,
+                        binding_model=cfg.get('binding_model', self.binding_model),
                         has_reaction_liquid=self.has_reaction_particle_liquid,
                         has_reaction_solid=self.has_reaction_particle_solid,
                         req_reaction_liquid=self.req_reaction_particle_liquid,
@@ -346,12 +350,19 @@ class Column:
             "Infinite film diffusion rate", ["No", "Yes"], key=transportPrefix + "nonlimiting_filmDiff") == "Yes"
         self.nonlimiting_filmDiff = nonlimiting_filmDiff_j
 
+        has_surfDiff_j = False
+        if self.has_binding and resolution == "1D":
+            has_surfDiff_j = st.selectbox(
+                "Add surface diffusion", ["No", "Yes"],
+                key=transportPrefix + "has_surfDiff") == "Yes"
+            self.has_surfDiff = has_surfDiff_j
+
         config = {
             'geometry': geometry,
             'resolution': resolution,
             'has_core': has_core,
             'nonlimiting_filmDiff': nonlimiting_filmDiff_j,
-            'has_surfDiff': False,
+            'has_surfDiff': has_surfDiff_j,
         }
 
         # Store first particle config for reuse by subsequent particle types
@@ -653,13 +664,13 @@ class Column:
         for par_type in self.par_type_counts.keys():
 
             eqs[par_type] = eq.particle_transport(par_type, singleParticle=self.N_p == 1, nonlimiting_filmDiff=par_type.nonlimiting_filmDiff,
-                                                  has_surfDiff=par_type.has_surfDiff, has_binding=self.has_binding, req_binding=self.req_binding, has_mult_bnd_states=self.has_mult_bnd_states,
+                                                  has_surfDiff=par_type.has_surfDiff, has_binding=par_type.has_binding, req_binding=par_type.req_binding, has_mult_bnd_states=par_type.has_mult_bnd_states,
                                                   has_reaction_liquid=self.has_reaction_particle_liquid and not self.req_reaction_particle_liquid,
                                                   has_reaction_solid=self.has_reaction_particle_solid and not self.req_reaction_particle_solid,
-                                                  binding_model=self.binding_model)
+                                                  binding_model=par_type.binding_model)
 
             boundary_conditions[par_type] = eq.particle_boundary(par_type, singleParticle=self.N_p == 1, nonlimiting_filmDiff=par_type.nonlimiting_filmDiff,
-                                                                 has_surfDiff=par_type.has_surfDiff, has_binding=self.has_binding, req_binding=self.req_binding, has_mult_bnd_states=self.has_mult_bnd_states)
+                                                                 has_surfDiff=par_type.has_surfDiff, has_binding=par_type.has_binding, req_binding=par_type.req_binding, has_mult_bnd_states=par_type.has_mult_bnd_states)
 
             if self.N_p == 1:
                 eqs[par_type] = re.sub(",j", "", eqs[par_type])
@@ -670,6 +681,28 @@ class Column:
                 boundary_conditions[par_type] = re.sub("_{j}", "", boundary_conditions[par_type])
 
         return eqs, boundary_conditions
+
+    def particle_salt_equations(self, par_type):
+        """Generate SMA salt component equations for a specific particle type."""
+        salt_eq = eq.particle_transport(par_type, singleParticle=self.N_p == 1,
+                                        nonlimiting_filmDiff=par_type.nonlimiting_filmDiff,
+                                        has_surfDiff=par_type.has_surfDiff, has_binding=True, req_binding=True,
+                                        has_mult_bnd_states=par_type.has_mult_bnd_states,
+                                        has_reaction_liquid=self.has_reaction_particle_liquid and not self.req_reaction_particle_liquid,
+                                        has_reaction_solid=self.has_reaction_particle_solid and not self.req_reaction_particle_solid,
+                                        binding_model="SMA_salt")
+        salt_bc = eq.particle_boundary(par_type, singleParticle=self.N_p == 1,
+                                       nonlimiting_filmDiff=par_type.nonlimiting_filmDiff,
+                                       has_surfDiff=par_type.has_surfDiff, has_binding=True, req_binding=True,
+                                       has_mult_bnd_states=par_type.has_mult_bnd_states)
+        if self.N_p == 1:
+            salt_eq = re.sub(",j", "", salt_eq)
+            salt_eq = re.sub("j,", "", salt_eq)
+            salt_eq = re.sub("_{j}", "", salt_eq)
+            salt_bc = re.sub(",j", "", salt_bc)
+            salt_bc = re.sub("j,", "", salt_bc)
+            salt_bc = re.sub("_{j}", "", salt_bc)
+        return salt_eq, salt_bc
 
     def has_per_component_config(self):
         """Return True if per-component configuration is active and settings differ across components."""
@@ -829,8 +862,12 @@ class Column:
                     model_name += "Dispersive "
                 model_name += "Plug Flow"  # Reactor if we have reactions
 
-        if self.has_binding and self.binding_model != "Arbitrary":
-            model_name += f" with {self.binding_model} binding"
+        if self.has_binding:
+            unique_models = set(p.binding_model for p in self.particle_models if p.binding_model != "Arbitrary")
+            if len(unique_models) == 1:
+                model_name += f" with {unique_models.pop()} binding"
+            elif len(unique_models) > 1:
+                model_name += " with " + "/".join(sorted(unique_models)) + " binding"
 
         return model_name
 
@@ -869,10 +906,13 @@ class Column:
             
             asmpts["General model assumptions"][idx] = format_variables(asmpts["General model assumptions"][idx], self.var_format)
             
-        if not self.binding_model == "Arbitrary":
-            
+        if self.N_p > 0:
+            unique_models = set(p.binding_model for p in self.particle_models if p.binding_model != "Arbitrary")
+            for bm in sorted(unique_models):
+                asmpts.update({f"{bm} binding model assumptions": eq.binding_model_assumptions(bm)})
+        elif self.binding_model != "Arbitrary":
             asmpts.update({"Binding model assumptions": eq.binding_model_assumptions(self.binding_model)})
-            
+
         return asmpts
 
     def vars_params_description(self):

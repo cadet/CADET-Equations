@@ -6,7 +6,7 @@
     "model_assumptions": true,
     "show_eq_description": true,
     "var_format": "CADET",
-    "add_particles": "Yes",
+    "PSD": "Yes",
     "particle_resolution": "1D (radial coordinate)",
     "particle_has_core": "Yes",
     "particle_nonlimiting_filmDiff": "Yes",
