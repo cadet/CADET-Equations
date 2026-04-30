@@ -457,3 +457,32 @@ def test_extract_v6_config_psd_shared_surfDiff():
     assert config['PSD'] == "Particle size distribution"
     assert config['particle_has_surfDiff'] == "Yes"
     assert 'parType_1_has_surfDiff' not in config  # shared config, not per-type
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_extract_v6_config_single_particle_no_binding():
+    """V6 single particle without binding should set has_binding to No."""
+    pt_group = _make_h5_group(
+        {
+            'HAS_FILM_DIFFUSION': True,
+            'HAS_PORE_DIFFUSION': True,
+            'HAS_SURFACE_DIFFUSION': False,
+            'ADSORPTION_MODEL': b'NONE',
+        },
+        subgroups={},
+    )
+    group = _make_h5_group(
+        {
+            'NPARTYPE': 1,
+            'COL_POROSITY': 0.37,
+            'COL_DISPERSION': 5.75e-08,
+        },
+        subgroups={'particle_type_000': pt_group},
+    )
+
+    config = extract_config_data_from_unit('COLUMN_MODEL_1D', group)
+
+    assert config['add_particles'] == "Yes"
+    assert config['has_binding'] == "No"
+    assert 'particle_has_surfDiff' not in config

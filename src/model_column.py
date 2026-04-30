@@ -255,6 +255,11 @@ class Column:
                     )
                 )
 
+            # Track per-particle-type transport config for rendering labels
+            if self.dev_mode and self.N_p > 1:
+                self.nonlimiting_filmDiff_per_partype = [p.nonlimiting_filmDiff for p in self.particle_models]
+                self.has_surfDiff_per_partype = [p.has_surfDiff for p in self.particle_models]
+
             # Sort and count particle types
             self.particle_models = sorted(self.particle_models, key=lambda particle: (
                 particle.geometry, particle.resolution, particle.nonlimiting_filmDiff, particle.has_surfDiff))
@@ -324,27 +329,18 @@ class Column:
         transportPrefix = f"parType_{j+1}_" if typeDiff else "particle_"
         # Geometry settings (resolution, core, geometry) are per-type only in dev_mode
         geoPrefix = f"parType_{j+1}_" if (typeDiff and self.dev_mode) else "particle_"
-        # Show geometry widgets only on first call (or always in dev_mode)
-        showGeo = (not typeDiff) or j == 0 or self.dev_mode
+        resolution = re.search(r'\dD', st.selectbox("Spatial resolution", [
+                               "1D (radial coordinate)", "0D (homogeneous)"], key=geoPrefix + "resolution")).group()
 
-        if showGeo:
-            resolution = re.search(r'\dD', st.selectbox("Spatial resolution", [
-                                   "1D (radial coordinate)", "0D (homogeneous)"], key=geoPrefix + "resolution")).group()
+        has_core = st.selectbox("Add impenetrable core-shell (i.e. " + r"$R^\mathrm{pc} > 0$)", [
+                                       "No", "Yes"], key=geoPrefix + "has_core") == "Yes" if (resolution == "1D" and self.advanced_mode) else False
 
-            has_core = st.selectbox("Add impenetrable core-shell (i.e. " + r"$R^\mathrm{pc} > 0$)", [
-                                           "No", "Yes"], key=geoPrefix + "has_core") == "Yes" if (resolution == "1D" and self.advanced_mode) else False
-
-            if self.dev_mode:
-                geometry = st.selectbox(
-                    "Geometry", ["Sphere", "Cylinder", "Slab"], key=geoPrefix + "geometry"
-                    )
-            else:
-                geometry = "Sphere"
+        if self.dev_mode:
+            geometry = st.selectbox(
+                "Geometry", ["Sphere", "Cylinder", "Slab"], key=geoPrefix + "geometry"
+                )
         else:
-            # Reuse shared geometry settings from the first particle type
-            resolution = self._first_particle_config['resolution']
-            has_core = self._first_particle_config['has_core']
-            geometry = self._first_particle_config['geometry']
+            geometry = "Sphere"
 
         nonlimiting_filmDiff_j = st.selectbox(
             "Infinite film diffusion rate", ["No", "Yes"], key=transportPrefix + "nonlimiting_filmDiff") == "Yes"
@@ -364,10 +360,6 @@ class Column:
             'nonlimiting_filmDiff': nonlimiting_filmDiff_j,
             'has_surfDiff': has_surfDiff_j,
         }
-
-        # Store first particle config for reuse by subsequent particle types
-        if not typeDiff or j == 0:
-            self._first_particle_config = config
 
         return config
 

@@ -49,7 +49,7 @@ def test_ptd_uniform_settings():
 
 @pytest.mark.ci
 def test_ptd_different_film_diffusion():
-    """PTD with different film diffusion settings per particle type."""
+    """PTD with different film diffusion settings per particle type should show per-type labels."""
     at = AppTest.from_file("../Equation-Generator.py")
     at.run()
     assert not at.exception
@@ -63,7 +63,7 @@ def test_ptd_different_film_diffusion():
     latex = at.session_state.latex_string
     assert r"\begin{align}" in latex
     # Should have particle type labels since types differ
-    assert "particle type" in latex.lower() or r"j = " in latex
+    assert r"j = " in latex
 
 
 @pytest.mark.ci
@@ -149,6 +149,7 @@ def test_ptd_different_binding_models():
     at.run()
     assert not at.exception
 
+    at.toggle(key="model_assumptions").set_value(True).run()
     at.selectbox(key="advanced_mode").set_value("On").run()
     at.selectbox(key="dev_mode").set_value("On").run()
     at.number_input(key=r"N^\mathrm{p}").set_value(2).run()
@@ -169,6 +170,31 @@ def test_ptd_different_binding_models():
     assert r"k^{\mathrm{a}}" in latex
     # Langmuir binding produces q_max
     assert r"q^{\mathrm{max}}" in latex
+
+
+@pytest.mark.ci
+def test_ptd_sma_binding():
+    """PTD with SMA binding should produce SMA-specific equations for all particle types."""
+    at = AppTest.from_file("../Equation-Generator.py")
+    at.run()
+    assert not at.exception
+
+    at.toggle(key="model_assumptions").set_value(True).run()
+    at.selectbox(key="advanced_mode").set_value("On").run()
+    at.selectbox(key="dev_mode").set_value("On").run()
+    at.number_input(key=r"N^\mathrm{p}").set_value(2).run()
+    at.selectbox(key="has_binding").set_value("Yes").run()
+
+    for jj in range(2):
+        at.selectbox(key=f"parType_{jj+1}_resolution").set_value("1D (radial coordinate)").run()
+        at.selectbox(key=f"parType_{jj+1}_nonlimiting_filmDiff").set_value("No").run()
+        at.selectbox(key=f"parType_{jj+1}_binding_model").set_value("SMA").run()
+
+    assert not at.exception
+    latex = at.session_state.latex_string
+    assert r"\begin{align}" in latex
+    assert r"\Lambda" in latex
+    assert r"\bar{q}" in latex
 
 
 @pytest.mark.ci
