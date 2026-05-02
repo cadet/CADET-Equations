@@ -184,12 +184,22 @@ def extract_config_data_from_unit(unit_type, h5_unit_group):
 
         config['add_particles'] = "No"
 
-    if not config['advanced_mode'] == "On":
+    if config['advanced_mode'] == "On":
+        # Advanced mode uses single PSD selectbox with 3 options
+        add_par = config.pop('add_particles', "No")
+        if add_par == "Yes":
+            if config.get('PSD') == "Yes":
+                config['PSD'] = "Particle size distribution"
+            else:
+                config['PSD'] = "Yes"
+        else:
+            config['PSD'] = "No"
+    else:
         config.pop('dev_mode', None)
+        config.pop('PSD', None)
         config.pop('particle_has_core', None)
         config.pop('has_radial_dispersion', None)
         config.pop('has_mult_bnd_states', None)
-        config.pop('PTD', None)
         config.pop('binding_model', None)
 
     return config
@@ -198,7 +208,7 @@ def extract_config_data_from_unit(unit_type, h5_unit_group):
 def _extract_v5_particle_config(config, unit_type, h5_unit_group, par_model):
     """Extract particle configuration from v5 interface (particle info at unit level)."""
 
-    config['nonlimiting_filmDiff'] = "Yes" if re.search("WITHOUT_PORES", unit_type) else "No"
+    nonlimiting = bool(re.search("WITHOUT_PORES", unit_type))
 
     nParType = get_h5_value(h5_unit_group, 'NPARTYPE')
     nParType = 1 if nParType is None else nParType
@@ -207,18 +217,16 @@ def _extract_v5_particle_config(config, unit_type, h5_unit_group, par_model):
         config['advanced_mode'] = "On"
         config['PSD'] = "Yes"
 
+    config['particle_nonlimiting_filmDiff'] = "Yes" if nonlimiting else "No"
+
     binding_model = get_h5_value(h5_unit_group, 'ADSORPTION_MODEL', firstEntryIfList=False)
 
     config['has_binding'] = "No"
 
     if binding_model is not None:
 
-        config['PTD'] = "No"
         if not isinstance(binding_model, str):
             if len(binding_model) > 1:
-                return binding_model
-                if len(set(binding_model)) > 1:
-                    config['PTD'] = "Yes"
                 binding_model = binding_model[0]
 
         if binding_model != "NONE":
@@ -239,12 +247,11 @@ def _extract_v5_particle_config(config, unit_type, h5_unit_group, par_model):
 
             if par_model == "1D (radial coordinate)":
 
-                config['has_surfDiff'] = "No"
                 surfDiff = get_h5_value(h5_unit_group, 'PAR_SURFDIFFUSION')
-                if surfDiff is not None:
-                    config['has_surfDiff'] = "Yes" if surfDiff > 0.0 else "No"
+                config['particle_has_surfDiff'] = "Yes" if surfDiff is not None and surfDiff > 0.0 else "No"
 
-                _extract_particle_core_config(config, h5_unit_group)
+    if par_model == "1D (radial coordinate)":
+        _extract_particle_core_config(config, h5_unit_group)
 
 
 def _extract_v6_particle_config(config, h5_unit_group, par_model):
@@ -260,7 +267,7 @@ def _extract_v6_particle_config(config, h5_unit_group, par_model):
     pt_group = h5_unit_group['particle_type_000']
 
     has_film_diff = get_h5_value(pt_group, 'HAS_FILM_DIFFUSION')
-    config['nonlimiting_filmDiff'] = "No" if has_film_diff else "Yes"
+    config['particle_nonlimiting_filmDiff'] = "No" if has_film_diff else "Yes"
 
     binding_model = get_h5_value(pt_group, 'ADSORPTION_MODEL', firstEntryIfList=False)
 
@@ -268,11 +275,8 @@ def _extract_v6_particle_config(config, h5_unit_group, par_model):
 
     if binding_model is not None:
 
-        config['PTD'] = "No"
         if not isinstance(binding_model, str):
             if len(binding_model) > 1:
-                if len(set(binding_model)) > 1:
-                    config['PTD'] = "Yes"
                 binding_model = binding_model[0]
 
         if binding_model != "NONE":
@@ -288,11 +292,11 @@ def _extract_v6_particle_config(config, h5_unit_group, par_model):
                 config['has_mult_bnd_states'] = "Yes" if get_h5_value(pt_group, 'NBOUND') > 1 else "No"
 
             if par_model == "1D (radial coordinate)":
-
                 has_surf_diff = get_h5_value(pt_group, 'HAS_SURFACE_DIFFUSION')
-                config['has_surfDiff'] = "Yes" if has_surf_diff else "No"
+                config['particle_has_surfDiff'] = "Yes" if has_surf_diff else "No"
 
-                _extract_particle_core_config(config, pt_group)
+    if par_model == "1D (radial coordinate)":
+        _extract_particle_core_config(config, pt_group)
 
 
 def _extract_particle_core_config(config, group):

@@ -102,13 +102,13 @@ if uploaded_file is not None:
 
 # User configuration of the model
 
-var_format_ = st.sidebar.selectbox("Select format (e.g. $c^s$ or $q$ as the solid phase concentration)", [
+var_format_ = st.sidebar.selectbox("Select parameter format", [
                                    "CADET", "Legacy"], key=r"var_format")
 
-advanced_mode_ = st.sidebar.selectbox("Advanced setup options (enables e.g. particle size distribution)", [
+advanced_mode_ = st.sidebar.selectbox("Advanced options (enables e.g. particle size distribution)", [
                                       "Off", "On"], key=r"advanced_mode") == "On"
 if advanced_mode_:
-    dev_mode_ = st.sidebar.selectbox("Developer setup options (not tested! Enables e.g. particle type distribution)", [
+    dev_mode_ = st.sidebar.selectbox("Developer options (not tested! Enables e.g. particle type distribution)", [
                                      "Off", "On"], key=r"dev_mode") == "On"
     if dev_mode_:
         advanced_mode_ = True
@@ -280,19 +280,19 @@ if column_model.N_p > 0:
         for group in component_groups:
             comp_set_str = column_model.format_component_set(group['components'])
 
-            cur_par_count = 0
             for par_type in column_model.par_type_counts.keys():
 
                 if not column_model.has_binding and group['nonlimiting_filmDiff'] and par_type.resolution == "0D":
                     break
 
                 if dev_mode_:
-                    nPar_list = ', '.join(str(j) for j in range(cur_par_count, column_model.par_type_counts[par_type] + 1))
+                    par_indices = column_model.partype_indices(par_type)
+                    nPar_list = column_model.format_partype_set(par_indices)
                 else:
                     nPar_list = r"$j\in\{1, \dots, N^{\mathrm{p}}\}$"
 
                 eq_type_ = "reaction" if column_model.particle_models[0].resolution == "0D" else "diffusion-reaction"
-                tmp_str = r" and all particle sizes " + nPar_list if column_model.N_p > 1 else r""
+                tmp_str = r" and all particle types " + nPar_list if column_model.N_p > 1 else r""
 
                 whatComp = eq.primary_binding_eq_what_comps(column_model.binding_model)
 
@@ -378,32 +378,42 @@ if column_model.N_p > 0:
                     else:
                         write_and_save(r"where the counter-ion concentration $c^{\s}_0$ satisfies the electroneutrality constraint.")
 
-                cur_par_count += column_model.par_type_counts[par_type]
 
     else:
         # Standard mode: single set of equations for all components
         particle_eq, particle_bc = column_model.particle_equations()
 
-        cur_par_count = 0
+        # Build per-particle-type index mapping for display
+        has_mixed_partypes = column_model.has_per_partype_config() and len(column_model.par_type_counts) > 1
+
         for par_type in column_model.par_type_counts.keys():
 
             # in this case, we dont have a particle model. this configuration is still allowed for educational purpose.
-            if not column_model.has_binding and column_model.nonlimiting_filmDiff and par_type.resolution == "0D":
+            if not column_model.has_binding and par_type.nonlimiting_filmDiff and par_type.resolution == "0D":
                 break
 
             if dev_mode_:
-                nPar_list = ', '.join(str(j) for j in range(cur_par_count, column_model.par_type_counts[par_type] + 1))
+                par_indices = column_model.partype_indices(par_type)
+                nPar_list = column_model.format_partype_set(par_indices)
             else:
                 nPar_list = r"$j\in\{1, \dots, N^{\mathrm{p}}\}$"
 
             eq_type_ = "reaction" if column_model.particle_models[0].resolution == "0D" else "diffusion-reaction"
 
-            tmp_str = r" and all particle sizes " + nPar_list if column_model.N_p > 1 else r""
+            # Add per-particle-type label when particle types have different settings
+            partype_label = ""
+            if has_mixed_partypes:
+                partype_label = " for particle type(s) " + nPar_list
+                tmp_str = ""
+            elif column_model.N_p > 1:
+                tmp_str = r" and all particle types " + nPar_list
+            else:
+                tmp_str = ""
 
-            whatComp = eq.primary_binding_eq_what_comps(column_model.binding_model)
+            whatComp = eq.primary_binding_eq_what_comps(par_type.binding_model)
 
             write_and_save(
-                "In the particles, mass transfer is governed by " + eq_type_ + " equations in " + eq.full_particle_conc_domain(column_model.resolution, par_type.resolution, par_type.has_core, with_par_index=False, with_time_domain=True, column_type=column_model.column_type) + r" and for " + whatComp + " components" + tmp_str)
+                "In the particles, mass transfer is governed by " + eq_type_ + " equations in " + eq.full_particle_conc_domain(column_model.resolution, par_type.resolution, par_type.has_core, with_par_index=False, with_time_domain=True, column_type=column_model.column_type) + r" and for " + whatComp + " components" + tmp_str + partype_label)
 
             write_and_save(particle_eq[par_type], as_latex=True)
 
@@ -454,7 +464,7 @@ if column_model.N_p > 0:
 """, as_latex=True)
 
             # Some more complicated binding models require additional equations
-            if column_model.binding_model == "SMA" and column_model.has_binding:
+            if par_type.binding_model == "SMA" and par_type.has_binding:
 
                 PTD_ = column_model.PTD and column_model.N_p > 1
                 write_and_save(r"The number of available binding sites $\bar{q}_0$ is given by")
@@ -464,28 +474,19 @@ if column_model.N_p > 0:
                     "For the salt component, mass transfer is governed by " + eq_type_ + " equations in " + eq.full_particle_conc_domain(column_model.resolution, par_type.resolution, par_type.has_core, with_par_index=False, with_time_domain=True, column_type=column_model.column_type) + tmp_str)
 
                 # The salt component is in rapid equilibrium binding mode
-                tmpReqBnd = column_model.req_binding
-                column_model.req_binding = True
-                tmpBndModel = column_model.binding_model
-                column_model.binding_model = "SMA_salt"
-                particle_eq_salt, particle_bc_salt = column_model.particle_equations()
-                column_model.req_binding = tmpReqBnd
-                column_model.binding_model = tmpBndModel
+                salt_eq, salt_bc = column_model.particle_salt_equations(par_type)
 
                 if PTD_:
-                    write_and_save(re.sub(r"_{i}", r"_{0}", particle_eq_salt[par_type]), as_latex=True)
-                    re.sub(r"_{i}", r"_{0}", particle_bc_salt[par_type])
+                    write_and_save(re.sub(r"_{i}", r"_{0}", salt_eq), as_latex=True)
                 else:
-                    write_and_save(re.sub(r"_{j,i}", r"_{j,0}", particle_eq_salt[par_type]), as_latex=True)
-                    re.sub(r"_{j,i}", r"_{j,0}", particle_bc_salt[par_type])
+                    write_and_save(re.sub(r"_{j,i}", r"_{j,0}", salt_eq), as_latex=True)
 
-                if not particle_bc_salt[par_type] == "":
+                if salt_bc != "":
                     write_and_save(r"where the counter-ion concentration $c^{\s}_0$ satisfies the electroneutrality constraint. Boundary conditions are")
-                    write_and_save(particle_bc_salt[par_type], as_latex=True)
+                    write_and_save(salt_bc, as_latex=True)
                 else:
                    write_and_save(r"where the counter-ion concentration $c^{\s}_0$ satisfies the electroneutrality constraint.")
 
-            cur_par_count += column_model.par_type_counts[par_type]
 
 write_and_save("Consistent initial values for all solution variables (concentrations) are defined at $t = 0$.")
 
@@ -537,12 +538,16 @@ if st.button("Generate configuration file", key=r"generate_config"):
             return 0
         elif key == "dev_mode":
             return 1
+        elif key == "column_type":
+            return 1.5
         elif key == "column_resolution":
             return 2
-        elif key == "add_particles":
+        elif key in ("add_particles", "PSD"):
             return 3
         elif key == "has_binding":
-            return 4
+            return 3.3
+        elif key == "particle_resolution":
+            return 3.5
         return 10
 
     # Create a temporary directory

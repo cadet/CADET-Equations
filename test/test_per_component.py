@@ -24,15 +24,12 @@ def setup_grm_with_per_component(at, n_comp, per_comp_settings):
     at.selectbox(key="advanced_mode").set_value("On").run()
     at.selectbox(key="dev_mode").set_value("On").run()
     at.selectbox(key="N_c_choice").set_value(n_comp).run()
-    at.selectbox(key="add_particles").set_value("Yes").run()
     at.number_input(key=r"N^\mathrm{p}").set_value(1).run()
-    at.selectbox(key="parType_1_resolution").set_value("1D (radial coordinate)").run()
+    at.selectbox(key="particle_resolution").set_value("1D (radial coordinate)").run()
     at.selectbox(key="has_binding").set_value("Yes").run()
 
     for i, settings in enumerate(per_comp_settings):
         at.selectbox(key=f"req_binding_comp_{i}").set_value(settings['req_binding']).run()
-        at.selectbox(key=f"nonlimiting_filmDiff_comp_{i}").set_value(settings['nonlimiting_filmDiff']).run()
-        at.selectbox(key=f"has_surfDiff_comp_{i}").set_value(settings['has_surfDiff']).run()
         at.selectbox(key=f"has_mult_bnd_states_comp_{i}").set_value(settings['has_mult_bnd_states']).run()
 
 
@@ -105,14 +102,14 @@ def test_per_component_three_components_two_groups():
 
 @pytest.mark.ci
 @pytest.mark.reference
-def test_per_component_different_surface_diffusion():
-    """Test per-component with mixed surface diffusion settings."""
+def test_per_component_different_mult_bnd_states():
+    """Test per-component with mixed multiple bound states settings."""
     at = AppTest.from_file("../Equation-Generator.py")
     at.run()
     assert not at.exception
 
     settings = [
-        {'req_binding': 'Kinetic', 'nonlimiting_filmDiff': 'No', 'has_surfDiff': 'Yes', 'has_mult_bnd_states': 'No'},
+        {'req_binding': 'Kinetic', 'nonlimiting_filmDiff': 'No', 'has_surfDiff': 'No', 'has_mult_bnd_states': 'Yes'},
         {'req_binding': 'Kinetic', 'nonlimiting_filmDiff': 'No', 'has_surfDiff': 'No', 'has_mult_bnd_states': 'No'},
     ]
     setup_grm_with_per_component(at, 2, settings)
@@ -133,17 +130,14 @@ def test_per_component_0d_particle_resolution():
     at.selectbox(key="advanced_mode").set_value("On").run()
     at.selectbox(key="dev_mode").set_value("On").run()
     at.selectbox(key="N_c_choice").set_value(2).run()
-    at.selectbox(key="add_particles").set_value("Yes").run()
     at.number_input(key=r"N^\mathrm{p}").set_value(1).run()
-    at.selectbox(key="parType_1_resolution").set_value("0D (homogeneous)").run()
+    at.selectbox(key="particle_resolution").set_value("0D (homogeneous)").run()
     at.selectbox(key="has_binding").set_value("Yes").run()
 
     at.selectbox(key=f"req_binding_comp_0").set_value("Kinetic").run()
-    at.selectbox(key=f"nonlimiting_filmDiff_comp_0").set_value("No").run()
     at.selectbox(key=f"has_mult_bnd_states_comp_0").set_value("No").run()
 
     at.selectbox(key=f"req_binding_comp_1").set_value("Rapid-equilibrium").run()
-    at.selectbox(key=f"nonlimiting_filmDiff_comp_1").set_value("No").run()
     at.selectbox(key=f"has_mult_bnd_states_comp_1").set_value("No").run()
 
     assert not at.exception
@@ -162,7 +156,6 @@ def test_arbitrary_n_c_no_per_component():
     at.selectbox(key="advanced_mode").set_value("On").run()
     at.selectbox(key="dev_mode").set_value("On").run()
     at.selectbox(key="N_c_choice").set_value("Arbitrary").run()
-    at.selectbox(key="add_particles").set_value("Yes").run()
     at.number_input(key=r"N^\mathrm{p}").set_value(1).run()
     at.selectbox(key="has_binding").set_value("Yes").run()
 

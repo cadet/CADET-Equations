@@ -6,9 +6,9 @@
     "has_binding": "Yes",
     "has_axial_dispersion": "Yes",
     "model_assumptions": true,
-    "nonlimiting_filmDiff": "No",
     "particle_resolution": "0D (homogeneous)",
     "req_binding": "Kinetic",
     "show_eq_description": true,
-    "var_format": "CADET"
+    "var_format": "CADET",
+    "particle_nonlimiting_filmDiff": "No"
 }

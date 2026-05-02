@@ -5,8 +5,8 @@
     "has_binding": "No",
     "has_filter": "No",
     "model_assumptions": false,
-    "nonlimiting_filmDiff": "No",
     "particle_resolution": "1D (radial coordinate)",
     "show_eq_description": true,
-    "var_format": "CADET"
+    "var_format": "CADET",
+    "particle_nonlimiting_filmDiff": "No"
 }
