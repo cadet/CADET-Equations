@@ -1,0 +1,13 @@
+{
+    "advanced_mode": "Off",
+    "column_resolution": "0D (Homogeneous Tank)",
+    "add_particles": "Yes",
+    "has_binding": "Yes",
+    "has_filter": "No",
+    "model_assumptions": true,
+    "nonlimiting_filmDiff": "No",
+    "particle_resolution": "0D (homogeneous)",
+    "req_binding": "Kinetic",
+    "show_eq_description": true,
+    "var_format": "CADET"
+}

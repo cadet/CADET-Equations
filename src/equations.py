@@ -582,6 +582,10 @@ def particle_transport_homogeneous_liquid(has_binding: bool, req_binding: bool, 
     if has_binding and has_mult_bnd_states:  # add sum and bound state indices
         lhs_term = re.sub("j,i", "j,i,k", lhs_term)
         rhs_term = re.sub("j,i", "j,i,k", rhs_term)
+        # Undo substitution for particle liquid phase terms (c^p, k^f)
+        lhs_term = lhs_term.replace(r"c^{\p}_{j,i,k}", r"c^{\p}_{j,i}")
+        rhs_term = rhs_term.replace(r"c^{\p}_{j,i,k}", r"c^{\p}_{j,i}")
+        rhs_term = rhs_term.replace(r"k^\mathrm{f}_{j,i,k}", r"k^\mathrm{f}_{j,i}")
 
     return r"""
           """ + lhs_term + r"""
@@ -679,7 +683,11 @@ def particle_transport_radial(geometry: str, has_surfDiff: bool, has_binding: bo
 
         if has_mult_bnd_states:
             solid_eq = re.sub("j,i", "j,i,k", solid_eq)
+            # Only add k index to solid phase and binding terms in liquid eq,
+            # not to particle liquid phase terms (c^p, D^p)
             liquid_eq = re.sub("j,i", "j,i,k", liquid_eq)
+            liquid_eq = liquid_eq.replace(r"c^{\p}_{j,i,k}", r"c^{\p}_{j,i}")
+            liquid_eq = liquid_eq.replace(r"D_{j,i,k}^{\p}", r"D_{j,i}^{\p}")
 
         if has_binding:
             return r"""
@@ -742,12 +750,11 @@ def particle_boundary(particle, singleParticle: bool, nonlimiting_filmDiff: bool
         outerLiquidBC = r"\left. c^{\p}_{j,i} \right|_{r = R^{\mathrm{p}}_{j}} &= c^{\b}_i"
     else:
         
-        outerLiquidBC = r"\varepsilon^{\mathrm{p}}"
-        if not req_binding:
-            outerLiquidBC += r""" \left. \left( D^{\p}_{j,i} \frac{\partial c^{\p}_{j,i}}{\partial r} \right)\right|_{r = R^{\mathrm{p}}_{j}}
+        if req_binding and has_surfDiff:
+            outerLiquidBC = r"""\left. \left( \varepsilon^{\mathrm{p}} D^{\p}_{j,i} \frac{\partial c^{\p}_{j,i}}{\partial r} + (1 - \varepsilon^{\mathrm{p}} ) D^{\s}_{j,i} \frac{\partial c^{\s}_{j,i}}{\partial r} \right)\right|_{r = R^{\mathrm{p}}_{j}}
                &= k^{\mathrm{f}}_{j,i} \left. \left( c^{\b}_i - c^{\p}_{j,i} \right|_{r = R^{\mathrm{p}}_{j}} \right)"""
         else:
-            outerLiquidBC += r""" \left. \left( \varepsilon^{\mathrm{p}}  D^{\p}_{j,i} \frac{\partial c^{\p}_{j,i}}{\partial r} + (1 - \varepsilon^{\mathrm{p}} ) D^{\s}_{j,i} \frac{\partial c^{\s}_{j,i}}{\partial r} \right)\right|_{r = R^{\mathrm{p}}_{j}}
+            outerLiquidBC = r"""\varepsilon^{\mathrm{p}} \left. \left( D^{\p}_{j,i} \frac{\partial c^{\p}_{j,i}}{\partial r} \right)\right|_{r = R^{\mathrm{p}}_{j}}
                &= k^{\mathrm{f}}_{j,i} \left. \left( c^{\b}_i - c^{\p}_{j,i} \right|_{r = R^{\mathrm{p}}_{j}} \right)"""
 
     inner_boundary = r"R^{\mathrm{pc}}_{j}" if particle.has_core else r"0"
