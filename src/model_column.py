@@ -260,6 +260,11 @@ class Column:
                 self.nonlimiting_filmDiff_per_partype = [p.nonlimiting_filmDiff for p in self.particle_models]
                 self.has_surfDiff_per_partype = [p.has_surfDiff for p in self.particle_models]
 
+            # Record original indices before sorting (1-based)
+            self._original_partype_indices = {}
+            for j, p in enumerate(self.particle_models):
+                self._original_partype_indices.setdefault(p, []).append(j + 1)
+
             # Sort and count particle types
             self.particle_models = sorted(self.particle_models, key=lambda particle: (
                 particle.geometry, particle.resolution, particle.nonlimiting_filmDiff, particle.has_surfDiff))
@@ -780,8 +785,8 @@ class Column:
         return self.nonlimiting_filmDiff_per_partype is not None and self.N_p > 1
 
     def partype_indices(self, par_type):
-        """Return 1-based indices of particle types matching the given Particle."""
-        return [j + 1 for j, p in enumerate(self.particle_models) if p == par_type]
+        """Return original 1-based indices of particle types matching the given Particle."""
+        return self._original_partype_indices.get(par_type, [])
 
     @staticmethod
     def format_partype_set(indices):

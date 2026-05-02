@@ -280,15 +280,14 @@ if column_model.N_p > 0:
         for group in component_groups:
             comp_set_str = column_model.format_component_set(group['components'])
 
-            cur_par_count = 0
             for par_type in column_model.par_type_counts.keys():
 
                 if not column_model.has_binding and group['nonlimiting_filmDiff'] and par_type.resolution == "0D":
                     break
 
                 if dev_mode_:
-                    par_indices = list(range(cur_par_count + 1, cur_par_count + column_model.par_type_counts[par_type] + 1))
-                    nPar_list = r"$j\in\{" + ', '.join(str(j) for j in par_indices) + r"\}$" if len(par_indices) > 1 else r"$j = " + str(par_indices[0]) + r"$"
+                    par_indices = column_model.partype_indices(par_type)
+                    nPar_list = column_model.format_partype_set(par_indices)
                 else:
                     nPar_list = r"$j\in\{1, \dots, N^{\mathrm{p}}\}$"
 
@@ -379,7 +378,6 @@ if column_model.N_p > 0:
                     else:
                         write_and_save(r"where the counter-ion concentration $c^{\s}_0$ satisfies the electroneutrality constraint.")
 
-                cur_par_count += column_model.par_type_counts[par_type]
 
     else:
         # Standard mode: single set of equations for all components
@@ -388,7 +386,6 @@ if column_model.N_p > 0:
         # Build per-particle-type index mapping for display
         has_mixed_partypes = column_model.has_per_partype_config() and len(column_model.par_type_counts) > 1
 
-        cur_par_count = 0
         for par_type in column_model.par_type_counts.keys():
 
             # in this case, we dont have a particle model. this configuration is still allowed for educational purpose.
@@ -396,8 +393,8 @@ if column_model.N_p > 0:
                 break
 
             if dev_mode_:
-                par_indices = list(range(cur_par_count + 1, cur_par_count + column_model.par_type_counts[par_type] + 1))
-                nPar_list = r"$j\in\{" + ', '.join(str(j) for j in par_indices) + r"\}$" if len(par_indices) > 1 else r"$j = " + str(par_indices[0]) + r"$"
+                par_indices = column_model.partype_indices(par_type)
+                nPar_list = column_model.format_partype_set(par_indices)
             else:
                 nPar_list = r"$j\in\{1, \dots, N^{\mathrm{p}}\}$"
 
@@ -406,8 +403,7 @@ if column_model.N_p > 0:
             # Add per-particle-type label when particle types have different settings
             partype_label = ""
             if has_mixed_partypes:
-                partype_indices = column_model.partype_indices(par_type)
-                partype_label = " for particle type(s) " + column_model.format_partype_set(partype_indices)
+                partype_label = " for particle type(s) " + nPar_list
                 tmp_str = ""
             elif column_model.N_p > 1:
                 tmp_str = r" and all particle types " + nPar_list
@@ -491,7 +487,6 @@ if column_model.N_p > 0:
                 else:
                    write_and_save(r"where the counter-ion concentration $c^{\s}_0$ satisfies the electroneutrality constraint.")
 
-            cur_par_count += column_model.par_type_counts[par_type]
 
 write_and_save("Consistent initial values for all solution variables (concentrations) are defined at $t = 0$.")
 
