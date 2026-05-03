@@ -29,7 +29,11 @@ def setup_grm_with_per_component(at, n_comp, per_comp_settings):
     at.selectbox(key="has_binding").set_value("Yes").run()
 
     for i, settings in enumerate(per_comp_settings):
+        film_diff = "Non-limiting" if settings.get('nonlimiting_filmDiff', False) else "Limiting"
+        at.selectbox(key=f"nonlimiting_filmDiff_comp_{i}").set_value(film_diff).run()
         at.selectbox(key=f"req_binding_comp_{i}").set_value(settings['req_binding']).run()
+        surf_diff = "Yes" if settings.get('has_surfDiff', False) else "No"
+        at.selectbox(key=f"has_surfDiff_comp_{i}").set_value(surf_diff).run()
         at.selectbox(key=f"has_mult_bnd_states_comp_{i}").set_value(settings['has_mult_bnd_states']).run()
 
 
@@ -42,8 +46,8 @@ def test_per_component_uniform_settings():
     assert not at.exception
 
     settings = [
-        {'req_binding': 'Kinetic', 'nonlimiting_filmDiff': 'No', 'has_surfDiff': 'Yes', 'has_mult_bnd_states': 'No'},
-        {'req_binding': 'Kinetic', 'nonlimiting_filmDiff': 'No', 'has_surfDiff': 'Yes', 'has_mult_bnd_states': 'No'},
+        {'req_binding': 'Kinetic', 'nonlimiting_filmDiff': False, 'has_surfDiff': True, 'has_mult_bnd_states': 'No'},
+        {'req_binding': 'Kinetic', 'nonlimiting_filmDiff': False, 'has_surfDiff': True, 'has_mult_bnd_states': 'No'},
     ]
     setup_grm_with_per_component(at, 2, settings)
 
@@ -63,8 +67,8 @@ def test_per_component_different_binding_kinetics():
     assert not at.exception
 
     settings = [
-        {'req_binding': 'Kinetic', 'nonlimiting_filmDiff': 'No', 'has_surfDiff': 'No', 'has_mult_bnd_states': 'No'},
-        {'req_binding': 'Rapid-equilibrium', 'nonlimiting_filmDiff': 'No', 'has_surfDiff': 'No', 'has_mult_bnd_states': 'No'},
+        {'req_binding': 'Kinetic', 'nonlimiting_filmDiff': False, 'has_surfDiff': False, 'has_mult_bnd_states': 'No'},
+        {'req_binding': 'Rapid-equilibrium', 'nonlimiting_filmDiff': False, 'has_surfDiff': False, 'has_mult_bnd_states': 'No'},
     ]
     setup_grm_with_per_component(at, 2, settings)
 
@@ -85,9 +89,9 @@ def test_per_component_three_components_two_groups():
     assert not at.exception
 
     settings = [
-        {'req_binding': 'Kinetic', 'nonlimiting_filmDiff': 'No', 'has_surfDiff': 'No', 'has_mult_bnd_states': 'No'},
-        {'req_binding': 'Rapid-equilibrium', 'nonlimiting_filmDiff': 'No', 'has_surfDiff': 'No', 'has_mult_bnd_states': 'No'},
-        {'req_binding': 'Kinetic', 'nonlimiting_filmDiff': 'No', 'has_surfDiff': 'No', 'has_mult_bnd_states': 'No'},
+        {'req_binding': 'Kinetic', 'nonlimiting_filmDiff': False, 'has_surfDiff': False, 'has_mult_bnd_states': 'No'},
+        {'req_binding': 'Rapid-equilibrium', 'nonlimiting_filmDiff': False, 'has_surfDiff': False, 'has_mult_bnd_states': 'No'},
+        {'req_binding': 'Kinetic', 'nonlimiting_filmDiff': False, 'has_surfDiff': False, 'has_mult_bnd_states': 'No'},
     ]
     setup_grm_with_per_component(at, 3, settings)
 
@@ -109,8 +113,8 @@ def test_per_component_different_mult_bnd_states():
     assert not at.exception
 
     settings = [
-        {'req_binding': 'Kinetic', 'nonlimiting_filmDiff': 'No', 'has_surfDiff': 'No', 'has_mult_bnd_states': 'Yes'},
-        {'req_binding': 'Kinetic', 'nonlimiting_filmDiff': 'No', 'has_surfDiff': 'No', 'has_mult_bnd_states': 'No'},
+        {'req_binding': 'Kinetic', 'nonlimiting_filmDiff': False, 'has_surfDiff': False, 'has_mult_bnd_states': 'Yes'},
+        {'req_binding': 'Kinetic', 'nonlimiting_filmDiff': False, 'has_surfDiff': False, 'has_mult_bnd_states': 'No'},
     ]
     setup_grm_with_per_component(at, 2, settings)
 
@@ -134,15 +138,86 @@ def test_per_component_0d_particle_resolution():
     at.selectbox(key="particle_resolution").set_value("0D (homogeneous)").run()
     at.selectbox(key="has_binding").set_value("Yes").run()
 
+    at.selectbox(key=f"nonlimiting_filmDiff_comp_0").set_value("Limiting").run()
     at.selectbox(key=f"req_binding_comp_0").set_value("Kinetic").run()
+    at.selectbox(key=f"has_surfDiff_comp_0").set_value("No").run()
     at.selectbox(key=f"has_mult_bnd_states_comp_0").set_value("No").run()
 
+    at.selectbox(key=f"nonlimiting_filmDiff_comp_1").set_value("Limiting").run()
     at.selectbox(key=f"req_binding_comp_1").set_value("Rapid-equilibrium").run()
+    at.selectbox(key=f"has_surfDiff_comp_1").set_value("No").run()
     at.selectbox(key=f"has_mult_bnd_states_comp_1").set_value("No").run()
 
     assert not at.exception
     latex = at.session_state.latex_string
     assert "For component(s)" in latex
+
+
+@pytest.mark.ci
+@pytest.mark.reference
+def test_per_component_different_film_diffusion():
+    """Test per-component with mixed film diffusion settings."""
+    at = AppTest.from_file("../Equation-Generator.py")
+    at.run()
+    assert not at.exception
+
+    settings = [
+        {'req_binding': 'Kinetic', 'nonlimiting_filmDiff': True, 'has_surfDiff': False, 'has_mult_bnd_states': 'No'},
+        {'req_binding': 'Kinetic', 'nonlimiting_filmDiff': False, 'has_surfDiff': False, 'has_mult_bnd_states': 'No'},
+    ]
+    setup_grm_with_per_component(at, 2, settings)
+
+    assert not at.exception
+    latex = at.session_state.latex_string
+    assert "For component(s)" in latex
+    assert r"i = 1" in latex
+    assert r"i = 2" in latex
+
+
+@pytest.mark.ci
+@pytest.mark.reference
+def test_per_component_different_surface_diffusion():
+    """Test per-component with mixed surface diffusion settings."""
+    at = AppTest.from_file("../Equation-Generator.py")
+    at.run()
+    assert not at.exception
+
+    settings = [
+        {'req_binding': 'Kinetic', 'nonlimiting_filmDiff': False, 'has_surfDiff': True, 'has_mult_bnd_states': 'No'},
+        {'req_binding': 'Kinetic', 'nonlimiting_filmDiff': False, 'has_surfDiff': False, 'has_mult_bnd_states': 'No'},
+    ]
+    setup_grm_with_per_component(at, 2, settings)
+
+    assert not at.exception
+    latex = at.session_state.latex_string
+    assert "For component(s)" in latex
+    assert r"i = 1" in latex
+    assert r"i = 2" in latex
+
+
+@pytest.mark.ci
+@pytest.mark.reference
+def test_per_component_no_binding_film_diffusion():
+    """Test per-component film diffusion without binding enabled."""
+    at = AppTest.from_file("../Equation-Generator.py")
+    at.run()
+    assert not at.exception
+
+    at.selectbox(key="advanced_mode").set_value("On").run()
+    at.selectbox(key="dev_mode").set_value("On").run()
+    at.selectbox(key="N_c_choice").set_value(2).run()
+    at.number_input(key=r"N^\mathrm{p}").set_value(1).run()
+    at.selectbox(key="particle_resolution").set_value("1D (radial coordinate)").run()
+    at.selectbox(key="has_binding").set_value("No").run()
+
+    at.selectbox(key=f"nonlimiting_filmDiff_comp_0").set_value("Non-limiting").run()
+    at.selectbox(key=f"nonlimiting_filmDiff_comp_1").set_value("Limiting").run()
+
+    assert not at.exception
+    latex = at.session_state.latex_string
+    assert "For component(s)" in latex
+    assert r"i = 1" in latex
+    assert r"i = 2" in latex
 
 
 @pytest.mark.ci

@@ -195,32 +195,40 @@ class Column:
                         self.has_mult_bnd_states = st.selectbox("Add multiple bound states", [
                                                                         "No", "Yes"], key=r"has_mult_bnd_states") == "Yes" if self.advanced_mode else False
 
-                # Per-component configuration
-                if self.dev_mode and self.N_c > 0:
-                    st.write("Per-component configuration")
-                    self.req_binding_per_comp = []
-                    self.nonlimiting_filmDiff_per_comp = []
-                    self.has_surfDiff_per_comp = []
-                    self.has_mult_bnd_states_per_comp = []
-                    for comp_i in range(self.N_c):
-                        with st.expander(f"Component {comp_i + 1}"):
-                            self.nonlimiting_filmDiff_per_comp.append(self.nonlimiting_filmDiff)
-                            if self.has_binding:
-                                self.req_binding_per_comp.append(
-                                    st.selectbox("Binding kinetics mode",
-                                                 ["Kinetic", "Rapid-equilibrium"],
-                                                 key=f"req_binding_comp_{comp_i}") == "Rapid-equilibrium"
-                                )
-                                self.has_surfDiff_per_comp.append(self.has_surfDiff)
-                                self.has_mult_bnd_states_per_comp.append(
-                                    st.selectbox("Multiple bound states",
-                                                 ["No", "Yes"],
-                                                 key=f"has_mult_bnd_states_comp_{comp_i}") == "Yes"
-                                )
-                            else:
-                                self.req_binding_per_comp.append(False)
-                                self.has_surfDiff_per_comp.append(False)
-                                self.has_mult_bnd_states_per_comp.append(False)
+        # Per-component configuration (independent of binding)
+        if self.N_p > 0 and self.dev_mode and self.N_c > 0:
+            with st.sidebar.expander("Per-component configuration", expanded=True):
+                self.req_binding_per_comp = []
+                self.nonlimiting_filmDiff_per_comp = []
+                self.has_surfDiff_per_comp = []
+                self.has_mult_bnd_states_per_comp = []
+                for comp_i in range(self.N_c):
+                    with st.expander(f"Component {comp_i + 1}"):
+                        self.nonlimiting_filmDiff_per_comp.append(
+                            st.selectbox("Film diffusion",
+                                         ["Limiting", "Non-limiting"],
+                                         key=f"nonlimiting_filmDiff_comp_{comp_i}") == "Non-limiting"
+                        )
+                        if self.has_binding:
+                            self.req_binding_per_comp.append(
+                                st.selectbox("Binding kinetics mode",
+                                             ["Kinetic", "Rapid-equilibrium"],
+                                             key=f"req_binding_comp_{comp_i}") == "Rapid-equilibrium"
+                            )
+                            self.has_surfDiff_per_comp.append(
+                                st.selectbox("Surface diffusion",
+                                             ["No", "Yes"],
+                                             key=f"has_surfDiff_comp_{comp_i}") == "Yes"
+                            )
+                            self.has_mult_bnd_states_per_comp.append(
+                                st.selectbox("Multiple bound states",
+                                             ["No", "Yes"],
+                                             key=f"has_mult_bnd_states_comp_{comp_i}") == "Yes"
+                            )
+                        else:
+                            self.req_binding_per_comp.append(False)
+                            self.has_surfDiff_per_comp.append(False)
+                            self.has_mult_bnd_states_per_comp.append(False)
 
         # Merge per-particle-type binding settings into particle configs
         if self.N_p > 0 and hasattr(self, '_binding_per_partype'):
