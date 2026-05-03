@@ -290,7 +290,8 @@ if column_model.N_p > 0:
 
             for par_type in column_model.par_type_counts.keys():
 
-                if not column_model.has_binding and group['nonlimiting_filmDiff'] and par_type.resolution == "0D":
+                orig_idx = column_model._original_partype_indices[par_type][0] - 1
+                if not column_model.has_binding and group['nonlimiting_filmDiff_per_partype'][orig_idx] and par_type.resolution == "0D":
                     break
 
                 if dev_mode_:
@@ -369,7 +370,7 @@ if column_model.N_p > 0:
 
                     # The salt component is in rapid equilibrium binding mode
                     salt_group = dict(group)
-                    salt_group['req_binding'] = True
+                    salt_group['req_binding_per_partype'] = [True] * len(group['req_binding_per_partype'])
                     tmpBndModel = column_model.binding_model
                     column_model.binding_model = "SMA_salt"
                     particle_eq_salt, particle_bc_salt = column_model.particle_equations_for_group(salt_group)

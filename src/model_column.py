@@ -40,11 +40,12 @@ class Column:
 
     nonlimiting_filmDiff: bool = False
 
-    # Per-component configuration (used in dev_mode when N_c > 0)
-    req_binding_per_comp: Optional[List[bool]] = None
-    nonlimiting_filmDiff_per_comp: Optional[List[bool]] = None
-    has_surfDiff_per_comp: Optional[List[bool]] = None
-    has_mult_bnd_states_per_comp: Optional[List[bool]] = None
+    # Per-component configuration (used when N_c > 0)
+    # All indexed as [partype][comp]
+    req_binding_per_comp: Optional[List[List[bool]]] = None
+    nonlimiting_filmDiff_per_comp: Optional[List[List[bool]]] = None
+    has_surfDiff_per_comp: Optional[List[List[bool]]] = None
+    has_mult_bnd_states_per_comp: Optional[List[List[bool]]] = None
 
     # Per-particle-type configuration (used when N_p > 1 and N_c <= 0)
     nonlimiting_filmDiff_per_partype: Optional[List[bool]] = None
@@ -118,7 +119,7 @@ class Column:
             self.has_angular_coordinate = True
             self.has_angular_dispersion = True
 
-        if self.dev_mode:
+        if self.advanced_mode:
             n_c_choice = st.sidebar.selectbox(
                 "Number of components (enables per-component configuration)",
                 ["Arbitrary"] + list(range(1, 11)),
@@ -171,11 +172,45 @@ class Column:
                     shared_config = self.configure_particle_type(typeCounter=-1)
                     particle_configs = [shared_config.copy() for _ in range(self.N_p)]
 
+                # Per-component transport configuration (film/surface diffusion)
+                if self.N_c > 0:
+                    self.nonlimiting_filmDiff_per_comp = []
+                    self.has_surfDiff_per_comp = []
+                    resolution = particle_configs[0]['resolution'] if particle_configs else "1D"
+                    for j in range(self.N_p):
+                        par_resolution = particle_configs[j]['resolution'] if len(particle_configs) > j else "1D"
+                        comp_film = []
+                        comp_surf = []
+                        label = f"Particle type {j + 1}: per-component transport" if self.N_p > 1 else "Per-component transport"
+                        with st.expander(label):
+                            for comp_i in range(self.N_c):
+                                st.write(f"**Component {comp_i + 1}**")
+                                comp_film.append(
+                                    st.selectbox("Film diffusion",
+                                                 ["Limiting", "Non-limiting"],
+                                                 key=f"parType_{j}_filmDiff_comp_{comp_i}") == "Non-limiting"
+                                )
+                                if self.has_binding and par_resolution == "1D":
+                                    comp_surf.append(
+                                        st.selectbox("Surface diffusion",
+                                                     ["No", "Yes"],
+                                                     key=f"parType_{j}_surfDiff_comp_{comp_i}") == "Yes"
+                                    )
+                                else:
+                                    comp_surf.append(False)
+                        self.nonlimiting_filmDiff_per_comp.append(comp_film)
+                        self.has_surfDiff_per_comp.append(comp_surf)
+                    # Set global fallback for code paths that use it
+                    self.nonlimiting_filmDiff = all(
+                        all(row) for row in self.nonlimiting_filmDiff_per_comp)
+                    self.has_surfDiff = any(
+                        any(row) for row in self.has_surfDiff_per_comp)
+
         # Configure binding model (separate section)
         if self.N_p > 0 and self.has_binding:
             with st.sidebar.expander("Configure binding", expanded=True):
                 if self.dev_mode and self.N_p > 1 and self.N_c <= 0:
-                    # Per-particle-type binding config
+                    # Per-particle-type binding config (no per-component)
                     self._binding_per_partype = []
                     for j in range(self.N_p):
                         with st.expander(f"Particle type {j + 1}"):
@@ -189,6 +224,35 @@ class Column:
                                 'req_binding': req_bnd_j,
                                 'has_mult_bnd_states': mult_bnd_j,
                             })
+                elif self.dev_mode and self.N_p > 1 and self.N_c > 0:
+                    # Per-component within per-particle-type (most granular)
+                    self._binding_per_partype = []
+                    self.req_binding_per_comp = []
+                    self.has_mult_bnd_states_per_comp = []
+                    for j in range(self.N_p):
+                        with st.expander(f"Particle type {j + 1}"):
+                            bnd_model_j = st.selectbox("Binding model", eq.BINDING_MODELS, key=f"parType_{j+1}_binding_model")
+                            comp_req = []
+                            comp_mbs = []
+                            for comp_i in range(self.N_c):
+                                st.write(f"**Component {comp_i + 1}**")
+                                comp_req.append(
+                                    st.selectbox("Binding kinetics mode",
+                                                 ["Kinetic", "Rapid-equilibrium"],
+                                                 key=f"parType_{j}_req_binding_comp_{comp_i}") == "Rapid-equilibrium"
+                                )
+                                comp_mbs.append(
+                                    st.selectbox("Multiple bound states",
+                                                 ["No", "Yes"],
+                                                 key=f"parType_{j}_has_mult_bnd_states_comp_{comp_i}") == "Yes"
+                                )
+                            self._binding_per_partype.append({
+                                'binding_model': bnd_model_j,
+                                'req_binding': any(comp_req),
+                                'has_mult_bnd_states': any(comp_mbs),
+                            })
+                            self.req_binding_per_comp.append(comp_req)
+                            self.has_mult_bnd_states_per_comp.append(comp_mbs)
                 else:
                     if self.N_c <= 0:
                         self.req_binding = st.selectbox("Binding kinetics mode", [
@@ -198,32 +262,27 @@ class Column:
                         self.has_mult_bnd_states = st.selectbox("Add multiple bound states", [
                                                                         "No", "Yes"], key=r"has_mult_bnd_states") == "Yes" if self.advanced_mode else False
 
-                # Per-component configuration
-                if self.dev_mode and self.N_c > 0:
-                    st.write("Per-component configuration")
-                    self.req_binding_per_comp = []
-                    self.nonlimiting_filmDiff_per_comp = []
-                    self.has_surfDiff_per_comp = []
-                    self.has_mult_bnd_states_per_comp = []
-                    for comp_i in range(self.N_c):
-                        with st.expander(f"Component {comp_i + 1}"):
-                            self.nonlimiting_filmDiff_per_comp.append(self.nonlimiting_filmDiff)
-                            if self.has_binding:
-                                self.req_binding_per_comp.append(
-                                    st.selectbox("Binding kinetics mode",
-                                                 ["Kinetic", "Rapid-equilibrium"],
-                                                 key=f"req_binding_comp_{comp_i}") == "Rapid-equilibrium"
-                                )
-                                self.has_surfDiff_per_comp.append(self.has_surfDiff)
-                                self.has_mult_bnd_states_per_comp.append(
-                                    st.selectbox("Multiple bound states",
-                                                 ["No", "Yes"],
-                                                 key=f"has_mult_bnd_states_comp_{comp_i}") == "Yes"
-                                )
-                            else:
-                                self.req_binding_per_comp.append(False)
-                                self.has_surfDiff_per_comp.append(False)
-                                self.has_mult_bnd_states_per_comp.append(False)
+                    # Per-component binding (single particle type)
+                    if self.N_c > 0:
+                        self.req_binding_per_comp = [[]]
+                        self.has_mult_bnd_states_per_comp = [[]]
+                        for comp_i in range(self.N_c):
+                            st.write(f"**Component {comp_i + 1}**")
+                            self.req_binding_per_comp[0].append(
+                                st.selectbox("Binding kinetics mode",
+                                             ["Kinetic", "Rapid-equilibrium"],
+                                             key=f"req_binding_comp_{comp_i}") == "Rapid-equilibrium"
+                            )
+                            self.has_mult_bnd_states_per_comp[0].append(
+                                st.selectbox("Multiple bound states",
+                                             ["No", "Yes"],
+                                             key=f"has_mult_bnd_states_comp_{comp_i}") == "Yes"
+                            )
+
+        # Initialize per-component binding lists when binding is disabled
+        if self.N_p > 0 and self.N_c > 0 and not self.has_binding:
+            self.req_binding_per_comp = [[False] * self.N_c for _ in range(self.N_p)]
+            self.has_mult_bnd_states_per_comp = [[False] * self.N_c for _ in range(self.N_p)]
 
         # Merge per-particle-type binding settings into particle configs
         if self.N_p > 0 and hasattr(self, '_binding_per_partype'):
@@ -269,8 +328,13 @@ class Column:
                 self._original_partype_indices.setdefault(p, []).append(j + 1)
 
             # Sort and count particle types
-            self.particle_models = sorted(self.particle_models, key=lambda particle: (
-                particle.geometry, particle.resolution, particle.nonlimiting_filmDiff, particle.has_surfDiff))
+            # When N_c > 0, transport is per-component so don't sort by transport fields
+            if self.N_c > 0:
+                self.particle_models = sorted(self.particle_models, key=lambda particle: (
+                    particle.geometry, particle.resolution))
+            else:
+                self.particle_models = sorted(self.particle_models, key=lambda particle: (
+                    particle.geometry, particle.resolution, particle.nonlimiting_filmDiff, particle.has_surfDiff))
             self.par_type_counts = Counter(self.particle_models)
             if self.nonlimiting_filmDiff:
                 self.par_unique_intV_contribution_counts = Counter(
@@ -350,16 +414,20 @@ class Column:
         else:
             geometry = "Sphere"
 
-        nonlimiting_filmDiff_j = st.selectbox(
-            "Infinite film diffusion rate", ["No", "Yes"], key=transportPrefix + "nonlimiting_filmDiff") == "Yes"
-        self.nonlimiting_filmDiff = nonlimiting_filmDiff_j
+        if self.N_c <= 0:
+            nonlimiting_filmDiff_j = st.selectbox(
+                "Infinite film diffusion rate", ["No", "Yes"], key=transportPrefix + "nonlimiting_filmDiff") == "Yes"
+            self.nonlimiting_filmDiff = nonlimiting_filmDiff_j
 
-        has_surfDiff_j = False
-        if self.has_binding and resolution == "1D":
-            has_surfDiff_j = st.selectbox(
-                "Add surface diffusion", ["No", "Yes"],
-                key=transportPrefix + "has_surfDiff") == "Yes"
-            self.has_surfDiff = has_surfDiff_j
+            has_surfDiff_j = False
+            if self.has_binding and resolution == "1D":
+                has_surfDiff_j = st.selectbox(
+                    "Add surface diffusion", ["No", "Yes"],
+                    key=transportPrefix + "has_surfDiff") == "Yes"
+                self.has_surfDiff = has_surfDiff_j
+        else:
+            nonlimiting_filmDiff_j = False
+            has_surfDiff_j = False
 
         config = {
             'geometry': geometry,
@@ -713,29 +781,32 @@ class Column:
 
         Returns a list of dicts, each containing:
           - 'components': list of 1-based component indices
-          - 'req_binding', 'nonlimiting_filmDiff', 'has_surfDiff', 'has_mult_bnd_states': the shared settings
+          - per-partype settings: 'nonlimiting_filmDiff_per_partype', 'has_surfDiff_per_partype',
+            'req_binding_per_partype', 'has_mult_bnd_states_per_partype'
         """
         if not self.has_per_component_config():
             return None
 
         groups = {}
         for i in range(self.N_c):
-            key = (
-                self.req_binding_per_comp[i],
-                self.nonlimiting_filmDiff_per_comp[i],
-                self.has_surfDiff_per_comp[i],
-                self.has_mult_bnd_states_per_comp[i],
+            # Key includes all per-partype settings for this component
+            per_partype_key = tuple(
+                (self.nonlimiting_filmDiff_per_comp[j][i],
+                 self.has_surfDiff_per_comp[j][i],
+                 self.req_binding_per_comp[j][i],
+                 self.has_mult_bnd_states_per_comp[j][i])
+                for j in range(self.N_p)
             )
-            groups.setdefault(key, []).append(i + 1)  # 1-based index
+            groups.setdefault(per_partype_key, []).append(i + 1)  # 1-based index
 
         result = []
-        for (req_b, nlf, sd, mbs), comps in groups.items():
+        for per_partype, comps in groups.items():
             result.append({
                 'components': comps,
-                'req_binding': req_b,
-                'nonlimiting_filmDiff': nlf,
-                'has_surfDiff': sd,
-                'has_mult_bnd_states': mbs,
+                'nonlimiting_filmDiff_per_partype': [t[0] for t in per_partype],
+                'has_surfDiff_per_partype': [t[1] for t in per_partype],
+                'req_binding_per_partype': [t[2] for t in per_partype],
+                'has_mult_bnd_states_per_partype': [t[3] for t in per_partype],
             })
         return result
 
@@ -744,26 +815,36 @@ class Column:
         eqs = {}
         boundary_conditions = {}
 
-        for par_type in self.par_type_counts.keys():
+        for idx, par_type in enumerate(self.par_type_counts.keys()):
+            # Get per-partype transport from group (indexed by original partype order)
+            # Use the first original index for this unique particle type
+            orig_idx = self._original_partype_indices[par_type][0] - 1  # convert 1-based to 0-based
+            nlf = group['nonlimiting_filmDiff_per_partype'][orig_idx]
+            sd = group['has_surfDiff_per_partype'][orig_idx]
+
+            req_b = group['req_binding_per_partype'][orig_idx]
+            mbs = group['has_mult_bnd_states_per_partype'][orig_idx]
+
+            bnd_model = par_type.binding_model if self.N_p > 1 else self.binding_model
 
             eqs[par_type] = eq.particle_transport(
                 par_type, singleParticle=self.N_p == 1,
-                nonlimiting_filmDiff=group['nonlimiting_filmDiff'],
-                has_surfDiff=group['has_surfDiff'],
+                nonlimiting_filmDiff=nlf,
+                has_surfDiff=sd,
                 has_binding=self.has_binding,
-                req_binding=group['req_binding'],
-                has_mult_bnd_states=group['has_mult_bnd_states'],
+                req_binding=req_b,
+                has_mult_bnd_states=mbs,
                 has_reaction_liquid=self.has_reaction_particle_liquid,
                 has_reaction_solid=self.has_reaction_particle_solid,
-                binding_model=self.binding_model)
+                binding_model=bnd_model)
 
             boundary_conditions[par_type] = eq.particle_boundary(
                 par_type, singleParticle=self.N_p == 1,
-                nonlimiting_filmDiff=group['nonlimiting_filmDiff'],
-                has_surfDiff=group['has_surfDiff'],
+                nonlimiting_filmDiff=nlf,
+                has_surfDiff=sd,
                 has_binding=self.has_binding,
-                req_binding=group['req_binding'],
-                has_mult_bnd_states=group['has_mult_bnd_states'])
+                req_binding=req_b,
+                has_mult_bnd_states=mbs)
 
             if self.N_p == 1:
                 eqs[par_type] = re.sub(",j", "", eqs[par_type])
