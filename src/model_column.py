@@ -162,44 +162,25 @@ class Column:
                 self.has_binding = st.selectbox(
                     "Add binding", ["No", "Yes"], key=r"has_binding") == "Yes"
 
+                if self.N_c > 0:
+                    self.nonlimiting_filmDiff_per_comp = []
+                    self.has_surfDiff_per_comp = []
+
                 if self.dev_mode and self.N_p > 1:
                     # Dev mode (PTD): per-particle-type config
                     for j in range(self.N_p):
                         with st.expander(f"Particle type {j + 1}"):
                             particle_configs.append(self.configure_particle_type(typeCounter=j))
+                            if self.N_c > 0:
+                                self._collect_per_component_transport(j, particle_configs[j]['resolution'])
                 else:
                     # Single particle or PSD in advanced mode: shared config
                     shared_config = self.configure_particle_type(typeCounter=-1)
                     particle_configs = [shared_config.copy() for _ in range(self.N_p)]
+                    if self.N_c > 0:
+                        self._collect_per_component_transport(0, shared_config['resolution'])
 
-                # Per-component transport configuration (film/surface diffusion)
                 if self.N_c > 0:
-                    self.nonlimiting_filmDiff_per_comp = []
-                    self.has_surfDiff_per_comp = []
-                    resolution = particle_configs[0]['resolution'] if particle_configs else "1D"
-                    for j in range(self.N_p):
-                        par_resolution = particle_configs[j]['resolution'] if len(particle_configs) > j else "1D"
-                        comp_film = []
-                        comp_surf = []
-                        label = f"Particle type {j + 1}: per-component transport" if self.N_p > 1 else "Per-component transport"
-                        with st.expander(label):
-                            for comp_i in range(self.N_c):
-                                st.write(f"**Component {comp_i + 1}**")
-                                comp_film.append(
-                                    st.selectbox("Film diffusion",
-                                                 ["Limiting", "Non-limiting"],
-                                                 key=f"parType_{j}_filmDiff_comp_{comp_i}") == "Non-limiting"
-                                )
-                                if self.has_binding and par_resolution == "1D":
-                                    comp_surf.append(
-                                        st.selectbox("Surface diffusion",
-                                                     ["No", "Yes"],
-                                                     key=f"parType_{j}_surfDiff_comp_{comp_i}") == "Yes"
-                                    )
-                                else:
-                                    comp_surf.append(False)
-                        self.nonlimiting_filmDiff_per_comp.append(comp_film)
-                        self.has_surfDiff_per_comp.append(comp_surf)
                     # Set global fallback for code paths that use it
                     self.nonlimiting_filmDiff = all(
                         all(row) for row in self.nonlimiting_filmDiff_per_comp)
@@ -438,6 +419,28 @@ class Column:
         }
 
         return config
+
+    def _collect_per_component_transport(self, j, par_resolution):
+        """Collect per-component film/surface diffusion UI within a particle type context."""
+        comp_film = []
+        comp_surf = []
+        for comp_i in range(self.N_c):
+            st.write(f"**Component {comp_i + 1}**")
+            comp_film.append(
+                st.selectbox("Film diffusion",
+                             ["Limiting", "Non-limiting"],
+                             key=f"parType_{j}_filmDiff_comp_{comp_i}") == "Non-limiting"
+            )
+            if self.has_binding and par_resolution == "1D":
+                comp_surf.append(
+                    st.selectbox("Surface diffusion",
+                                 ["No", "Yes"],
+                                 key=f"parType_{j}_surfDiff_comp_{comp_i}") == "Yes"
+                )
+            else:
+                comp_surf.append(False)
+        self.nonlimiting_filmDiff_per_comp.append(comp_film)
+        self.has_surfDiff_per_comp.append(comp_surf)
 
     def available_CADET_Core(self):
         """
