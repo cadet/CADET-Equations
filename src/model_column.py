@@ -427,9 +427,10 @@ class Column:
         for comp_i in range(self.N_c):
             st.write(f"**Component {comp_i + 1}**")
             comp_film.append(
-                st.selectbox("Film diffusion",
-                             ["Limiting", "Non-limiting"],
-                             key=f"parType_{j}_filmDiff_comp_{comp_i}") == "Non-limiting"
+                st.selectbox("Infinite film diffusion rate",
+                             ["No", "Yes"],
+                             key=f"parType_{j}_filmDiff_comp_{comp_i}") == "Yes"
+                
             )
             if self.has_binding and par_resolution == "1D":
                 comp_surf.append(
