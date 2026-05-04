@@ -108,7 +108,7 @@ var_format_ = st.sidebar.selectbox("Select parameter format", [
 advanced_mode_ = st.sidebar.selectbox("Advanced options (enables e.g. particle size distribution)", [
                                       "Off", "On"], key=r"advanced_mode") == "On"
 if advanced_mode_:
-    dev_mode_ = st.sidebar.selectbox("Developer options (not tested! Enables e.g. particle type distribution)", [
+    dev_mode_ = st.sidebar.selectbox("Developer options (not tested! Enables e.g. particle type distribution, per-component configuration)", [
                                      "Off", "On"], key=r"dev_mode") == "On"
     if dev_mode_:
         advanced_mode_ = True

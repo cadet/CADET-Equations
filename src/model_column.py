@@ -119,9 +119,9 @@ class Column:
             self.has_angular_coordinate = True
             self.has_angular_dispersion = True
 
-        if self.advanced_mode:
+        if self.dev_mode:
             n_c_choice = st.sidebar.selectbox(
-                "Number of components (enables per-component configuration)",
+                "Number of components (per-component configuration)",
                 ["Arbitrary"] + list(range(1, 11)),
                 key=r"N_c_choice")
             self.N_c = -1 if n_c_choice == "Arbitrary" else int(n_c_choice)
