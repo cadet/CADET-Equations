@@ -78,6 +78,9 @@ class Column:
 
     vars_and_params: List[dict] = field(default_factory=list)
 
+    def has_multiple_particle_types(self) -> bool:
+        return len(self.par_type_counts) > 1
+
     def __post_init__(self):
 
         # Configure interstitial column transport
@@ -845,10 +848,9 @@ class Column:
                     model_name += " without Pores" if self.nonlimiting_filmDiff else " with Pores"
 
                 if self.N_p > 1:
-                    if not any(par.geometry != "Sphere" for par in self.particle_models):
-                        model_name += " with particle-size distribution"  # particle-size distribution
+                    if not self.has_multiple_particle_types():
+                        model_name += " with particle-size distribution"
                     else:
-                        # particle-type distribution # TODO use when different kinds of geometry or binding
                         model_name += " with particle-type distribution"
             else:
                 if self.column_type == "Radial":
