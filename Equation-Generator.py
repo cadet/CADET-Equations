@@ -117,6 +117,14 @@ else:
 
 column_model = Column(dev_mode=dev_mode_, advanced_mode=advanced_mode_, var_format=var_format_)
 
+if dev_mode_:
+    st.warning(
+        "⚠️ **Developer Mode Active** — Models in developer mode are still "
+        "work in progress and have not been thoroughly verified. Please "
+        "double-check all equations and parameters before relying on them.",
+        icon="⚠️"
+    )
+
 # %% Display equations
 
 file_content = []  # used to export model to files
