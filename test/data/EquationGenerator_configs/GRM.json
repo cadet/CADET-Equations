@@ -11,5 +11,6 @@
     "var_format": "CADET",
     "particle_nonlimiting_filmDiff": "No",
     "particle_has_surfDiff": "No",
-    "column_type": "Axial flow cylinder"
+    "column_type": "Axial flow cylinder",
+    "binding_model": "Linear"
 }

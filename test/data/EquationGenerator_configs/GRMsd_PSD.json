@@ -14,5 +14,6 @@
     "has_mult_bnd_states": "No",
     "req_binding": "Kinetic",
     "particle_has_surfDiff": "Yes",
-    "column_type": "Axial flow cylinder"
+    "column_type": "Axial flow cylinder",
+    "binding_model": "Linear"
 }

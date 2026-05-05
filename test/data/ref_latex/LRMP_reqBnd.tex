@@ -31,7 +31,15 @@ Specific model assumptions:
 \end{itemize}
 
 
-\section*{Lumped Rate Model with Pores}
+Linear binding model assumptions:
+\begin{itemize}
+\item each component binds independently, that is, there are no competitive effects;
+\item the capacity of the resin is unbounded;
+\item for details see Guiochon, G., Shirazi, D. G., & Felinger, A. (2006). Fundamentals of preparative and nonlinear chromatography. Academic Press.
+\end{itemize}
+
+
+\section*{Lumped Rate Model with Pores with Linear binding}
 Consider a cylindrical column of length $L > 0$ packed with spherical particles, and observed over a time interval $(0, T^{\mathrm{end}})$.
 In the interstitial volume, mass transfer is governed by the following convection-diffusion-reaction equations in $(0, T^\mathrm{end})\times (0, L)$ and for all components $i\in\{1, \dots, N^{\mathrm{c}} \}$
 \begin{align}
@@ -52,9 +60,9 @@ In the particles, mass transfer is governed by reaction equations in $(0, T^\mat
           &=\frac{3}{R^{\mathrm{p}}} k^\mathrm{f}_{i} \left( c^{\mathrm{b}}_{i} - c^{\mathrm{p}}_{i} \right) ,\\
 
           0
-          &= f^{\mathrm{bind}}_{i}\left( \vec{c}^{\mathrm{p}}, \vec{c}^{\mathrm{s}} \right).
+          &= k^{\mathrm{a}}_{i} c^{\mathrm{p}}_{i} - k^{\mathrm{d}}_{i} c^{\mathrm{s}}_{i} .
 \end{align}
 
-Here, $c^{\mathrm{p}}_{i}\colon (0, T^\mathrm{end}) \times (0, L) \mapsto \mathbb{R}$ is the particle liquid concentration, $c^{\mathrm{s}}_{i}\colon (0, T^\mathrm{end}) \times (0, L) \mapsto \mathbb{R}$ is the particle solid concentration, $f^\mathrm{bind}_{i}$ is the adsorption isotherm function, $\vec{c}^\mathrm{p}$ is the particle liquid components vector, and $\vec{c}^\mathrm{s}$ is the particle solid components vector.
+Here, $c^{\mathrm{p}}_{i}\colon (0, T^\mathrm{end}) \times (0, L) \mapsto \mathbb{R}$ is the particle liquid concentration, $c^{\mathrm{s}}_{i}\colon (0, T^\mathrm{end}) \times (0, L) \mapsto \mathbb{R}$ is the particle solid concentration, $k^{\mathrm{a}}_{i}$ is the adsorption rate constant, and $k^{\mathrm{d}}_{i}$ is the desorption rate constant.
 Consistent initial values for all solution variables (concentrations) are defined at $t = 0$.
 \end{document}
