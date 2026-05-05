@@ -119,7 +119,7 @@ column_model = Column(dev_mode=dev_mode_, advanced_mode=advanced_mode_, var_form
 
 if dev_mode_:
     st.warning(
-        "⚠️ **Developer Mode Active** — Models in developer mode are still "
+        "**Warning:** — Models in developer mode are "
         "work in progress and have not been thoroughly verified. Please "
         "double-check all equations and parameters before relying on them.",
         icon="⚠️"
