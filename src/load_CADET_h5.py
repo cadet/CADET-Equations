@@ -19,10 +19,16 @@ CADET_binding_model_map = {
 
 
 CADET_column_unit_types = [
+                    'CSTR',
+                    'COLUMN_MODEL_1D', 'COLUMN_MODEL_2D',
                     'GENERAL_RATE_MODEL', 'LUMPED_RATE_MODEL_WITHOUT_PORES', 'LUMPED_RATE_MODEL_WITH_PORES',
+                    'GENERAL_RATE_MODEL_2D',
+                    'FRUSTUM_COLUMN_MODEL_1D',
+                    'FRUSTUM_GENERAL_RATE_MODEL', 'FRUSTUM_LUMPED_RATE_MODEL_WITHOUT_PORES', 'FRUSTUM_LUMPED_RATE_MODEL_WITH_PORES',
+                    'RADIAL_COLUMN_MODEL_1D',
+                    'RADIAL_GENERAL_RATE_MODEL', 'RADIAL_LUMPED_RATE_MODEL_WITHOUT_PORES', 'RADIAL_LUMPED_RATE_MODEL_WITH_PORES',
+                    # old interface
                     'GENERAL_RATE_MODEL_DG', 'LUMPED_RATE_MODEL_WITHOUT_PORES_DG', 'LUMPED_RATE_MODEL_WITH_PORES_DG',
-                    'GENERAL_RATE_MODEL_2D', 'CSTR',
-                    'COLUMN_MODEL_1D', 'COLUMN_MODEL_2D'
                 ]
 
 
