@@ -10,5 +10,6 @@
     "show_eq_description": true,
     "var_format": "CADET",
     "particle_nonlimiting_filmDiff": "No",
-    "particle_has_surfDiff": "No"
+    "particle_has_surfDiff": "No",
+    "column_type": "Axial flow cylinder"
 }

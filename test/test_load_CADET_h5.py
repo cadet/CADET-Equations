@@ -9,6 +9,7 @@ import numpy as np
 from unittest.mock import MagicMock
 from src.load_CADET_h5 import (
     get_h5_value,
+    map_unit_type_to_column_geometry,
     map_unit_type_to_column_model,
     map_unit_to_particle_model,
     is_v6_interface,
@@ -108,14 +109,37 @@ def test_get_h5_value_empty_array():
 @pytest.mark.ci
 @pytest.mark.unit_test
 @pytest.mark.parametrize("unit_type, expected", [
+    ('GENERAL_RATE_MODEL',                        "Axial flow cylinder"),
+    ('LUMPED_RATE_MODEL_WITHOUT_PORES',            "Axial flow cylinder"),
+    ('CSTR',                                       "Axial flow cylinder"),
+    ('COLUMN_MODEL_1D',                            "Axial flow cylinder"),
+    ('RADIAL_GENERAL_RATE_MODEL',                  "Radial flow cylinder"),
+    ('RADIAL_LUMPED_RATE_MODEL_WITHOUT_PORES',     "Radial flow cylinder"),
+    ('RADIAL_COLUMN_MODEL_1D',                     "Radial flow cylinder"),
+    ('FRUSTUM_GENERAL_RATE_MODEL',                 "Frustum"),
+    ('FRUSTUM_LUMPED_RATE_MODEL_WITHOUT_PORES',    "Frustum"),
+    ('FRUSTUM_COLUMN_MODEL_1D',                    "Frustum"),
+])
+def test_map_unit_type_to_column_geometry(unit_type, expected):
+    """Every supported CADET unit type should map to its correct column geometry."""
+    assert map_unit_type_to_column_geometry(unit_type) == expected
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+@pytest.mark.parametrize("unit_type, expected", [
     ('GENERAL_RATE_MODEL',                 "1D (axial coordinate)"),
     ('GENERAL_RATE_MODEL_DG',              "1D (axial coordinate)"),
     ('LUMPED_RATE_MODEL_WITHOUT_PORES',    "1D (axial coordinate)"),
     ('LUMPED_RATE_MODEL_WITH_PORES',       "1D (axial coordinate)"),
     ('LUMPED_RATE_MODEL_WITHOUT_PORES_DG', "1D (axial coordinate)"),
     ('LUMPED_RATE_MODEL_WITH_PORES_DG',    "1D (axial coordinate)"),
+    ('FRUSTUM_GENERAL_RATE_MODEL',         "1D (axial coordinate)"),
+    ('FRUSTUM_COLUMN_MODEL_1D',            "1D (axial coordinate)"),
     ('GENERAL_RATE_MODEL_2D',              "2D (axial and radial coordinate)"),
     ('CSTR',                               "0D (Homogeneous Tank)"),
+    ('RADIAL_GENERAL_RATE_MODEL',          "1D (radial coordinate)"),
+    ('RADIAL_COLUMN_MODEL_1D',             "1D (radial coordinate)"),
 ])
 def test_map_unit_type_to_column_model(unit_type, expected):
     """Every supported CADET unit type should map to its correct column resolution."""
@@ -165,13 +189,20 @@ def test_map_unit_to_particle_model_invalid():
 def test_CADET_column_unit_types_completeness():
     """The constant should contain all supported CADET column unit types (v5 + v6)."""
     expected = [
+        'CSTR',
+        'COLUMN_MODEL_1D', 'COLUMN_MODEL_2D',
         'GENERAL_RATE_MODEL', 'LUMPED_RATE_MODEL_WITHOUT_PORES',
-        'LUMPED_RATE_MODEL_WITH_PORES', 'GENERAL_RATE_MODEL_DG',
-        'LUMPED_RATE_MODEL_WITHOUT_PORES_DG', 'LUMPED_RATE_MODEL_WITH_PORES_DG',
-        'GENERAL_RATE_MODEL_2D', 'CSTR',
-        'COLUMN_MODEL_1D', 'COLUMN_MODEL_2D'
+        'LUMPED_RATE_MODEL_WITH_PORES', 'GENERAL_RATE_MODEL_2D',
+        'FRUSTUM_COLUMN_MODEL_1D',
+        'FRUSTUM_GENERAL_RATE_MODEL', 'FRUSTUM_LUMPED_RATE_MODEL_WITHOUT_PORES',
+        'FRUSTUM_LUMPED_RATE_MODEL_WITH_PORES',
+        'RADIAL_COLUMN_MODEL_1D',
+        'RADIAL_GENERAL_RATE_MODEL', 'RADIAL_LUMPED_RATE_MODEL_WITHOUT_PORES',
+        'RADIAL_LUMPED_RATE_MODEL_WITH_PORES',
+        'GENERAL_RATE_MODEL_DG', 'LUMPED_RATE_MODEL_WITHOUT_PORES_DG',
+        'LUMPED_RATE_MODEL_WITH_PORES_DG',
     ]
-    assert len(CADET_column_unit_types) == 10
+    assert len(CADET_column_unit_types) == len(expected)
     for t in expected:
         assert t in CADET_column_unit_types
 
@@ -486,3 +517,26 @@ def test_extract_v6_config_single_particle_no_binding():
     assert config['add_particles'] == "Yes"
     assert config['has_binding'] == "No"
     assert 'particle_has_surfDiff' not in config
+
+
+# %% extract_config_data_from_unit – column geometry
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+@pytest.mark.parametrize("unit_type, expected_geometry", [
+    ('GENERAL_RATE_MODEL',            "Axial flow cylinder"),
+    ('COLUMN_MODEL_1D',               "Axial flow cylinder"),
+    ('CSTR',                          "Axial flow cylinder"),
+    ('RADIAL_GENERAL_RATE_MODEL',     "Radial flow cylinder"),
+    ('RADIAL_COLUMN_MODEL_1D',        "Radial flow cylinder"),
+    ('FRUSTUM_GENERAL_RATE_MODEL',    "Frustum"),
+    ('FRUSTUM_COLUMN_MODEL_1D',       "Frustum"),
+])
+def test_extract_config_sets_column_type(unit_type, expected_geometry):
+    """extract_config_data_from_unit should set column_type from the CADET unit type."""
+    group = _make_h5_group({
+        'COL_POROSITY': 1.0,
+        'TOTAL_POROSITY': 1.0,
+    })
+    config = extract_config_data_from_unit(unit_type, group)
+    assert config['column_type'] == expected_geometry

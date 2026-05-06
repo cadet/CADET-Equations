@@ -37,7 +37,7 @@ def is_v6_interface(unit_type, h5_unit_group):
 
     Returns True when the file structure matches the newer v6 layout.
     """
-    if unit_type in ['COLUMN_MODEL_1D', 'COLUMN_MODEL_2D']:
+    if re.search("COLUMN_MODEL", unit_type):
         return True
     nParType = get_h5_value(h5_unit_group, 'NPARTYPE')
     if nParType is not None and nParType >= 1 and 'particle_type_000' in h5_unit_group:
@@ -71,6 +71,17 @@ def get_h5_value(unit_group, key:str, firstEntryIfList=True):
     return value
 
 
+def map_unit_type_to_column_geometry(cadet_unit_type):
+    """Map a CADET unit type string to the generator's column geometry label."""
+
+    if re.search("RADIAL", cadet_unit_type):
+        return "Radial flow cylinder"
+    elif re.search("FRUSTUM", cadet_unit_type):
+        return "Frustum"
+    else:
+        return "Axial flow cylinder"
+
+
 def map_unit_type_to_column_model(cadet_unit_type):
     """Map a CADET unit type string to the generator's column resolution label."""
 
@@ -80,6 +91,8 @@ def map_unit_type_to_column_model(cadet_unit_type):
         return "2D (axial and radial coordinate)"
     elif re.search("CSTR", cadet_unit_type):
         return "0D (Homogeneous Tank)"
+    elif re.search("RADIAL", cadet_unit_type):
+        return "1D (radial coordinate)"
     elif cadet_unit_type in CADET_column_unit_types:
         return "1D (axial coordinate)"
     else:
@@ -149,6 +162,7 @@ def extract_config_data_from_unit(unit_type, h5_unit_group):
     config['show_eq_description'] = True
     config['model_assumptions'] = True
 
+    config['column_type'] = map_unit_type_to_column_geometry(unit_type)
     config['column_resolution'] = map_unit_type_to_column_model(unit_type)
 
     if re.search("0D", config['column_resolution']):

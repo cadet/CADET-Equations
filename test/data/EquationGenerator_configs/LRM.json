@@ -9,5 +9,6 @@
     "req_binding": "Kinetic",
     "show_eq_description": true,
     "var_format": "CADET",
-    "particle_nonlimiting_filmDiff": "Yes"
+    "particle_nonlimiting_filmDiff": "Yes",
+    "column_type": "Axial flow cylinder"
 }
