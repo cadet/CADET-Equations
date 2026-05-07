@@ -155,6 +155,12 @@ class Column:
             else:
                 self.N_p = int(st.selectbox("Add particles", ["No", "Yes"], key=r"add_particles") == "Yes")
 
+            # Per-particle-type and per-component are mutually exclusive
+            if self.N_p > 1 and self.N_c > 0:
+                st.info("Per-component and per-particle-type configuration are mutually exclusive. "
+                        "Per-component configuration is disabled when multiple particle types are specified.")
+                self.N_c = -1
+
             # Collect per-particle-type transport configs
             particle_configs = []
 
@@ -171,8 +177,6 @@ class Column:
                     for j in range(self.N_p):
                         with st.expander(f"Particle type {j + 1}"):
                             particle_configs.append(self.configure_particle_type(typeCounter=j))
-                            if self.N_c > 0:
-                                self._collect_per_component_transport(j, particle_configs[j]['resolution'])
                 else:
                     # Single particle or PSD in advanced mode: shared config
                     shared_config = self.configure_particle_type(typeCounter=-1)
@@ -205,35 +209,6 @@ class Column:
                                 'req_binding': req_bnd_j,
                                 'has_mult_bnd_states': mult_bnd_j,
                             })
-                elif self.dev_mode and self.N_p > 1 and self.N_c > 0:
-                    # Per-component within per-particle-type (most granular)
-                    self._binding_per_partype = []
-                    self.req_binding_per_comp = []
-                    self.has_mult_bnd_states_per_comp = []
-                    for j in range(self.N_p):
-                        with st.expander(f"Particle type {j + 1}"):
-                            bnd_model_j = st.selectbox("Binding model", eq.BINDING_MODELS, key=f"parType_{j+1}_binding_model")
-                            comp_req = []
-                            comp_mbs = []
-                            for comp_i in range(self.N_c):
-                                st.write(f"**Component {comp_i + 1}**")
-                                comp_req.append(
-                                    st.selectbox("Binding kinetics mode",
-                                                 ["Kinetic", "Rapid-equilibrium"],
-                                                 key=f"parType_{j}_req_binding_comp_{comp_i}") == "Rapid-equilibrium"
-                                )
-                                comp_mbs.append(
-                                    st.selectbox("Multiple bound states",
-                                                 ["No", "Yes"],
-                                                 key=f"parType_{j}_has_mult_bnd_states_comp_{comp_i}") == "Yes"
-                                )
-                            self._binding_per_partype.append({
-                                'binding_model': bnd_model_j,
-                                'req_binding': any(comp_req),
-                                'has_mult_bnd_states': any(comp_mbs),
-                            })
-                            self.req_binding_per_comp.append(comp_req)
-                            self.has_mult_bnd_states_per_comp.append(comp_mbs)
                 else:
                     if self.N_c <= 0:
                         self.req_binding = st.selectbox("Binding kinetics mode", [
@@ -727,6 +702,73 @@ class Column:
             return eq.int_vol_BC(self.resolution, self.has_axial_dispersion, self.column_type)
         else:
             return None
+
+    def interstitial_volume_equation_for_group(self, group):
+        """Generate the interstitial volume equation for a specific component group.
+
+        Uses the group's film diffusion and surface diffusion settings instead of
+        the global settings. Only valid when N_p == 1 (per-component and per-particle
+        are mutually exclusive).
+        """
+        nlf = group['nonlimiting_filmDiff_per_partype'][0]
+        sd = group['has_surfDiff_per_partype'][0]
+
+        without_pores_ = nlf and self.has_binding and self.particle_models[0].resolution == "0D"
+
+        equation = eq.bulk_time_derivative(r"\varepsilon^{\mathrm{c}}") if not without_pores_ else eq.bulk_time_derivative()
+        if without_pores_:
+            equation += r" + " + eq.solid_time_derivative(r"\varepsilon^{\mathrm{t}}")
+
+        needs_linebreak = self.has_radial_dispersion or self.has_angular_dispersion
+        eq_sign = " &= " if needs_linebreak else " = "
+
+        if self.column_type == "Radial":
+            convection_func = eq.radial_flow_convection
+            dispersion_func = eq.radial_flow_dispersion
+        elif self.column_type == "Frustum":
+            convection_func = eq.frustum_convection
+            dispersion_func = eq.frustum_dispersion
+        else:
+            convection_func = eq.axial_convection
+            dispersion_func = eq.axial_dispersion
+
+        equation += eq_sign + convection_func() if without_pores_ else eq_sign + convection_func(r"\varepsilon^{\mathrm{c}}")
+
+        if self.has_axial_dispersion:
+            equation += " + " + dispersion_func(r"\varepsilon^{\mathrm{c}}")
+        if self.has_radial_dispersion:
+            equation += r" \nonumber \\ & + " + eq.radial_dispersion(r"\varepsilon^{\mathrm{c}}")
+        if self.has_angular_dispersion:
+            equation += r" \nonumber \\ & + " + eq.angular_dispersion(r"\varepsilon^{\mathrm{c}}")
+
+        # Single particle type (N_p == 1 guaranteed when N_c > 0)
+        equation += eq.int_filmDiff_term(
+            Particle(
+                self.particle_models[0].geometry, self.particle_models[0].has_core,
+                self.var_format, self.particle_models[0].resolution
+            ),
+            1, 1, True, nlf, sd
+        )
+
+        if self.has_reaction_bulk and not self.req_reaction_bulk:
+            equation += " + " + eq.bulk_reaction_term()
+
+        equation = r"""\begin{align}
+""" + equation + r""",
+\end{align}"""
+
+        return equation
+
+    def interstitial_groups_differ_in_film_diff(self, component_groups):
+        """Check if component groups have different film diffusion settings relevant to interstitial eq."""
+        if component_groups is None or len(component_groups) <= 1:
+            return False
+        first_key = (component_groups[0]['nonlimiting_filmDiff_per_partype'][0],
+                     component_groups[0]['has_surfDiff_per_partype'][0])
+        return any(
+            (g['nonlimiting_filmDiff_per_partype'][0], g['has_surfDiff_per_partype'][0]) != first_key
+            for g in component_groups[1:]
+        )
 
     def particle_equations(self):
 

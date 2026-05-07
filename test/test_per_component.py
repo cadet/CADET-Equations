@@ -8,7 +8,7 @@ from streamlit.testing.v1 import AppTest
 import pytest
 
 
-def setup_grm_with_per_component(at, n_comp, per_comp_settings, n_p=1, use_dev_mode=False):
+def setup_grm_with_per_component(at, n_comp, per_comp_settings, n_p=1):
     """Set up a GRM model with per-component configuration.
 
     Parameters
@@ -22,25 +22,17 @@ def setup_grm_with_per_component(at, n_comp, per_comp_settings, n_p=1, use_dev_m
         'req_binding', 'nonlimiting_filmDiff', 'has_surfDiff', 'has_mult_bnd_states'
     n_p : int
         Number of particle types (default 1).
-    use_dev_mode : bool
-        Whether to enable dev_mode (needed for N_p > 1).
     """
     at.selectbox(key="advanced_mode").set_value("On").run()
-    if use_dev_mode:
-        at.selectbox(key="dev_mode").set_value("On").run()
+    at.selectbox(key="dev_mode").set_value("On").run()
     at.selectbox(key="N_c_choice").set_value(n_comp).run()
-
-    if use_dev_mode:
-        at.number_input(key=r"N^\mathrm{p}").set_value(n_p).run()
-    else:
-        at.selectbox(key="PSD").set_value("Yes").run()
-
+    at.number_input(key=r"N^\mathrm{p}").set_value(n_p).run()
     at.selectbox(key="particle_resolution").set_value("1D (radial coordinate)").run()
     at.selectbox(key="has_binding").set_value("Yes").run()
 
     # Set per-component transport in particle panel (parType_0 for single particle type)
     for i, settings in enumerate(per_comp_settings):
-        film_diff = "Non-limiting" if settings.get('nonlimiting_filmDiff', False) else "Limiting"
+        film_diff = "Yes" if settings.get('nonlimiting_filmDiff', False) else "No"
         at.selectbox(key=f"parType_0_filmDiff_comp_{i}").set_value(film_diff).run()
         if settings.get('has_surfDiff', False) is not False:
             surf_diff = "Yes" if settings['has_surfDiff'] else "No"
@@ -147,14 +139,15 @@ def test_per_component_0d_particle_resolution():
     assert not at.exception
 
     at.selectbox(key="advanced_mode").set_value("On").run()
+    at.selectbox(key="dev_mode").set_value("On").run()
     at.selectbox(key="N_c_choice").set_value(2).run()
-    at.selectbox(key="PSD").set_value("Yes").run()
+    at.number_input(key=r"N^\mathrm{p}").set_value(1).run()
     at.selectbox(key="particle_resolution").set_value("0D (homogeneous)").run()
     at.selectbox(key="has_binding").set_value("Yes").run()
 
     # Film diffusion per component (parType_0 for single particle)
-    at.selectbox(key="parType_0_filmDiff_comp_0").set_value("Limiting").run()
-    at.selectbox(key="parType_0_filmDiff_comp_1").set_value("Limiting").run()
+    at.selectbox(key="parType_0_filmDiff_comp_0").set_value("No").run()
+    at.selectbox(key="parType_0_filmDiff_comp_1").set_value("No").run()
 
     # Binding per component
     at.selectbox(key="req_binding_comp_0").set_value("Kinetic").run()
@@ -186,6 +179,8 @@ def test_per_component_different_film_diffusion():
     assert "For component(s)" in latex
     assert r"i = 1" in latex
     assert r"i = 2" in latex
+    # Bulk equation should also be per-component when film diffusion differs
+    assert "in the interstitial volume" in latex
 
 
 @pytest.mark.ci
@@ -218,13 +213,14 @@ def test_per_component_no_binding_film_diffusion():
     assert not at.exception
 
     at.selectbox(key="advanced_mode").set_value("On").run()
+    at.selectbox(key="dev_mode").set_value("On").run()
     at.selectbox(key="N_c_choice").set_value(2).run()
-    at.selectbox(key="PSD").set_value("Yes").run()
+    at.number_input(key=r"N^\mathrm{p}").set_value(1).run()
     at.selectbox(key="particle_resolution").set_value("1D (radial coordinate)").run()
     at.selectbox(key="has_binding").set_value("No").run()
 
-    at.selectbox(key="parType_0_filmDiff_comp_0").set_value("Non-limiting").run()
-    at.selectbox(key="parType_0_filmDiff_comp_1").set_value("Limiting").run()
+    at.selectbox(key="parType_0_filmDiff_comp_0").set_value("Yes").run()
+    at.selectbox(key="parType_0_filmDiff_comp_1").set_value("No").run()
 
     assert not at.exception
     latex = at.session_state.latex_string
@@ -235,39 +231,8 @@ def test_per_component_no_binding_film_diffusion():
 
 @pytest.mark.ci
 @pytest.mark.reference
-def test_per_component_advanced_mode_only():
-    """Test that N_c selector appears in advanced_mode without dev_mode."""
-    at = AppTest.from_file("../Equation-Generator.py")
-    at.run()
-    assert not at.exception
-
-    at.selectbox(key="advanced_mode").set_value("On").run()
-    # N_c_choice should be available without dev_mode
-    at.selectbox(key="N_c_choice").set_value(2).run()
-    at.selectbox(key="PSD").set_value("Yes").run()
-    at.selectbox(key="particle_resolution").set_value("1D (radial coordinate)").run()
-    at.selectbox(key="has_binding").set_value("Yes").run()
-
-    # Per-component transport and binding should work
-    at.selectbox(key="parType_0_filmDiff_comp_0").set_value("Limiting").run()
-    at.selectbox(key="parType_0_surfDiff_comp_0").set_value("No").run()
-    at.selectbox(key="parType_0_filmDiff_comp_1").set_value("Non-limiting").run()
-    at.selectbox(key="parType_0_surfDiff_comp_1").set_value("No").run()
-
-    at.selectbox(key="req_binding_comp_0").set_value("Kinetic").run()
-    at.selectbox(key="has_mult_bnd_states_comp_0").set_value("No").run()
-    at.selectbox(key="req_binding_comp_1").set_value("Kinetic").run()
-    at.selectbox(key="has_mult_bnd_states_comp_1").set_value("No").run()
-
-    assert not at.exception
-    latex = at.session_state.latex_string
-    assert "For component(s)" in latex
-
-
-@pytest.mark.ci
-@pytest.mark.reference
-def test_per_component_multi_partype():
-    """Test per-component with multiple particle types (N_p > 1)."""
+def test_per_component_multi_partype_mutually_exclusive():
+    """Test that per-component config is disabled when N_p > 1."""
     at = AppTest.from_file("../Equation-Generator.py")
     at.run()
     assert not at.exception
@@ -276,38 +241,12 @@ def test_per_component_multi_partype():
     at.selectbox(key="dev_mode").set_value("On").run()
     at.selectbox(key="N_c_choice").set_value(2).run()
     at.number_input(key=r"N^\mathrm{p}").set_value(2).run()
-    # Both particle types get 1D resolution
-    at.selectbox(key="parType_1_resolution").set_value("1D (radial coordinate)").run()
-    at.selectbox(key="parType_2_resolution").set_value("1D (radial coordinate)").run()
     at.selectbox(key="has_binding").set_value("Yes").run()
-
-    # Per-component transport for particle type 0
-    at.selectbox(key="parType_0_filmDiff_comp_0").set_value("Limiting").run()
-    at.selectbox(key="parType_0_surfDiff_comp_0").set_value("No").run()
-    at.selectbox(key="parType_0_filmDiff_comp_1").set_value("Non-limiting").run()
-    at.selectbox(key="parType_0_surfDiff_comp_1").set_value("No").run()
-
-    # Per-component transport for particle type 1
-    at.selectbox(key="parType_1_filmDiff_comp_0").set_value("Limiting").run()
-    at.selectbox(key="parType_1_surfDiff_comp_0").set_value("Yes").run()
-    at.selectbox(key="parType_1_filmDiff_comp_1").set_value("Limiting").run()
-    at.selectbox(key="parType_1_surfDiff_comp_1").set_value("No").run()
-
-    # Binding per component within each particle type
-    at.selectbox(key="parType_0_req_binding_comp_0").set_value("Kinetic").run()
-    at.selectbox(key="parType_0_has_mult_bnd_states_comp_0").set_value("No").run()
-    at.selectbox(key="parType_0_req_binding_comp_1").set_value("Kinetic").run()
-    at.selectbox(key="parType_0_has_mult_bnd_states_comp_1").set_value("No").run()
-
-    at.selectbox(key="parType_1_req_binding_comp_0").set_value("Kinetic").run()
-    at.selectbox(key="parType_1_has_mult_bnd_states_comp_0").set_value("No").run()
-    at.selectbox(key="parType_1_req_binding_comp_1").set_value("Kinetic").run()
-    at.selectbox(key="parType_1_has_mult_bnd_states_comp_1").set_value("No").run()
 
     assert not at.exception
     latex = at.session_state.latex_string
-    # Different transport across components -> per-component output
-    assert "For component(s)" in latex
+    # Per-component should be disabled when N_p > 1
+    assert "For component(s)" not in latex
 
 
 @pytest.mark.ci
@@ -319,8 +258,9 @@ def test_arbitrary_n_c_no_per_component():
     assert not at.exception
 
     at.selectbox(key="advanced_mode").set_value("On").run()
+    at.selectbox(key="dev_mode").set_value("On").run()
     at.selectbox(key="N_c_choice").set_value("Arbitrary").run()
-    at.selectbox(key="PSD").set_value("Yes").run()
+    at.number_input(key=r"N^\mathrm{p}").set_value(1).run()
     at.selectbox(key="has_binding").set_value("Yes").run()
 
     assert not at.exception
