@@ -606,9 +606,20 @@ class Column:
             
         self.vars_and_params = sorted(self.vars_and_params, key=lambda x: x['Group'])
 
-    def interstitial_volume_equation(self):
+    def interstitial_volume_equation(self, nlf_override=None, sd_override=None):
+        """Generate the interstitial volume equation.
 
-        without_pores_ = self.nonlimiting_filmDiff and self.has_binding and self.particle_models[0].resolution == "0D"       
+        Parameters
+        ----------
+        nlf_override : bool, optional
+            Override for nonlimiting_filmDiff (used for per-component groups).
+        sd_override : bool, optional
+            Override for has_surfDiff (used for per-component groups).
+        """
+        nlf = nlf_override if nlf_override is not None else self.nonlimiting_filmDiff
+        sd = sd_override if sd_override is not None else self.has_surfDiff
+
+        without_pores_ = nlf and self.has_binding and self.particle_models[0].resolution == "0D"
 
         if self.resolution == "0D":
 
@@ -619,14 +630,14 @@ class Column:
     \\
     \frac{\mathrm{d}}{\mathrm{d} t} \left( V^{\b} c^{\b}_i \right)"""
 
-            if self.nonlimiting_filmDiff and self.has_binding and self.particle_models[0].resolution == "0D":
+            if nlf and self.has_binding and self.particle_models[0].resolution == "0D":
                 equation += r" + V^{\p} \varepsilon^{\mathrm{p}} \frac{\partial c^{b}_i}{\partial t}"
                 if self.req_binding:
                     equation += r" + V^{\p} \left( 1 - \varepsilon^{\mathrm{p}} \right) \frac{\partial c^{\s}_i}{\partial t}"
 
             equation += r"&= Q_{\mathrm{in}} c^{\b}_{\mathrm{in},i} - Q_{\mathrm{out}} c^{\b}_i"
 
-            if self.nonlimiting_filmDiff and self.has_binding and self.particle_models[0].resolution == "0D" and not self.req_binding:
+            if nlf and self.has_binding and self.particle_models[0].resolution == "0D" and not self.req_binding:
                 equation += r" - V^{\p} \left( 1 - \varepsilon^{\mathrm{p}} \right) \frac{\partial c^{\s}_i}{\partial t}"
 
             if self.has_reaction_bulk and not self.req_reaction_bulk:
@@ -664,25 +675,35 @@ class Column:
                 equation = re.sub(r"\\varepsilon^{\\mathrm{c}}", "", re.sub(
                     r"\\left\( \\varepsilon^{\\mathrm{c}} c^{\\l}_i \\right\)", r"c^{\\l}_i", equation))
 
-        par_added = 0
-        for par_uniq in self.par_unique_intV_contribution_counts.keys():
+        if nlf_override is not None:
+            # Per-component group: single particle type (N_p == 1)
+            equation += eq.int_filmDiff_term(
+                Particle(
+                    self.particle_models[0].geometry, self.particle_models[0].has_core,
+                    self.var_format, self.particle_models[0].resolution
+                ),
+                1, 1, True, nlf, sd
+            )
+        else:
+            par_added = 0
+            for par_uniq in self.par_unique_intV_contribution_counts.keys():
 
-            if self.dev_mode:
-                equation += eq.int_filmDiff_term(
-                    Particle(
-                        self.particle_models[par_added].geometry, self.particle_models[par_added].has_core, self.var_format, self.particle_models[par_added].resolution
-                    ),
-                    1 + par_added, par_added + self.par_unique_intV_contribution_counts[par_uniq], self.N_p == 1, self.particle_models[par_added].nonlimiting_filmDiff, self.particle_models[par_added].has_surfDiff
-                )
-            else:
-                equation += eq.int_filmDiff_term(
-                    Particle(
-                        self.particle_models[0].geometry, self.particle_models[0].has_core, self.var_format, self.particle_models[0].resolution
-                    ),
-                    1, r"N^{\mathrm{p}}", self.N_p == 1, self.particle_models[0].nonlimiting_filmDiff, self.particle_models[0].has_surfDiff
-                )
+                if self.dev_mode:
+                    equation += eq.int_filmDiff_term(
+                        Particle(
+                            self.particle_models[par_added].geometry, self.particle_models[par_added].has_core, self.var_format, self.particle_models[par_added].resolution
+                        ),
+                        1 + par_added, par_added + self.par_unique_intV_contribution_counts[par_uniq], self.N_p == 1, self.particle_models[par_added].nonlimiting_filmDiff, self.particle_models[par_added].has_surfDiff
+                    )
+                else:
+                    equation += eq.int_filmDiff_term(
+                        Particle(
+                            self.particle_models[0].geometry, self.particle_models[0].has_core, self.var_format, self.particle_models[0].resolution
+                        ),
+                        1, r"N^{\mathrm{p}}", self.N_p == 1, self.particle_models[0].nonlimiting_filmDiff, self.particle_models[0].has_surfDiff
+                    )
 
-            par_added += self.par_unique_intV_contribution_counts[par_uniq]
+                par_added += self.par_unique_intV_contribution_counts[par_uniq]
 
         if self.has_reaction_bulk and not self.req_reaction_bulk and self.resolution != "0D":
             equation += " + " + eq.bulk_reaction_term()
@@ -704,60 +725,10 @@ class Column:
             return None
 
     def interstitial_volume_equation_for_group(self, group):
-        """Generate the interstitial volume equation for a specific component group.
-
-        Uses the group's film diffusion and surface diffusion settings instead of
-        the global settings. Only valid when N_p == 1 (per-component and per-particle
-        are mutually exclusive).
-        """
+        """Generate the interstitial volume equation for a specific component group."""
         nlf = group['nonlimiting_filmDiff_per_partype'][0]
         sd = group['has_surfDiff_per_partype'][0]
-
-        without_pores_ = nlf and self.has_binding and self.particle_models[0].resolution == "0D"
-
-        equation = eq.bulk_time_derivative(r"\varepsilon^{\mathrm{c}}") if not without_pores_ else eq.bulk_time_derivative()
-        if without_pores_:
-            equation += r" + " + eq.solid_time_derivative(r"\varepsilon^{\mathrm{t}}")
-
-        needs_linebreak = self.has_radial_dispersion or self.has_angular_dispersion
-        eq_sign = " &= " if needs_linebreak else " = "
-
-        if self.column_type == "Radial":
-            convection_func = eq.radial_flow_convection
-            dispersion_func = eq.radial_flow_dispersion
-        elif self.column_type == "Frustum":
-            convection_func = eq.frustum_convection
-            dispersion_func = eq.frustum_dispersion
-        else:
-            convection_func = eq.axial_convection
-            dispersion_func = eq.axial_dispersion
-
-        equation += eq_sign + convection_func() if without_pores_ else eq_sign + convection_func(r"\varepsilon^{\mathrm{c}}")
-
-        if self.has_axial_dispersion:
-            equation += " + " + dispersion_func(r"\varepsilon^{\mathrm{c}}")
-        if self.has_radial_dispersion:
-            equation += r" \nonumber \\ & + " + eq.radial_dispersion(r"\varepsilon^{\mathrm{c}}")
-        if self.has_angular_dispersion:
-            equation += r" \nonumber \\ & + " + eq.angular_dispersion(r"\varepsilon^{\mathrm{c}}")
-
-        # Single particle type (N_p == 1 guaranteed when N_c > 0)
-        equation += eq.int_filmDiff_term(
-            Particle(
-                self.particle_models[0].geometry, self.particle_models[0].has_core,
-                self.var_format, self.particle_models[0].resolution
-            ),
-            1, 1, True, nlf, sd
-        )
-
-        if self.has_reaction_bulk and not self.req_reaction_bulk:
-            equation += " + " + eq.bulk_reaction_term()
-
-        equation = r"""\begin{align}
-""" + equation + r""",
-\end{align}"""
-
-        return equation
+        return self.interstitial_volume_equation(nlf_override=nlf, sd_override=sd)
 
     def interstitial_groups_differ_in_film_diff(self, component_groups):
         """Check if component groups have different film diffusion settings relevant to interstitial eq."""
