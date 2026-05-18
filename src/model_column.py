@@ -182,7 +182,8 @@ class Column:
                     shared_config = self.configure_particle_type(typeCounter=-1)
                     particle_configs = [shared_config.copy() for _ in range(self.N_p)]
                     if self.N_c > 0:
-                        self._collect_per_component_transport(0, shared_config['resolution'])
+                        with st.expander("Per-component transport"):
+                            self._collect_per_component_transport(0, shared_config['resolution'])
 
                 if self.N_c > 0:
                     # Set global fallback for code paths that use it
@@ -222,18 +223,19 @@ class Column:
                     if self.N_c > 0:
                         self.req_binding_per_comp = [[]]
                         self.has_mult_bnd_states_per_comp = [[]]
-                        for comp_i in range(self.N_c):
-                            st.write(f"**Component {comp_i + 1}**")
-                            self.req_binding_per_comp[0].append(
-                                st.selectbox("Binding kinetics mode",
-                                             ["Kinetic", "Rapid-equilibrium"],
-                                             key=f"req_binding_comp_{comp_i}") == "Rapid-equilibrium"
-                            )
-                            self.has_mult_bnd_states_per_comp[0].append(
-                                st.selectbox("Multiple bound states",
-                                             ["No", "Yes"],
-                                             key=f"has_mult_bnd_states_comp_{comp_i}") == "Yes"
-                            )
+                        with st.expander("Per-component binding"):
+                            for comp_i in range(self.N_c):
+                                st.write(f"**Component {comp_i + 1}**")
+                                self.req_binding_per_comp[0].append(
+                                    st.selectbox("Binding kinetics mode",
+                                                 ["Kinetic", "Rapid-equilibrium"],
+                                                 key=f"req_binding_comp_{comp_i}") == "Rapid-equilibrium"
+                                )
+                                self.has_mult_bnd_states_per_comp[0].append(
+                                    st.selectbox("Multiple bound states",
+                                                 ["No", "Yes"],
+                                                 key=f"has_mult_bnd_states_comp_{comp_i}") == "Yes"
+                                )
 
         # Initialize per-component binding lists when binding is disabled
         if self.N_p > 0 and self.N_c > 0 and not self.has_binding:
