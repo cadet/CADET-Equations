@@ -157,7 +157,7 @@ class Column:
 
             # Per-particle-type and per-component are mutually exclusive
             if self.N_p > 1 and self.N_c > 0:
-                st.info("Per-component and per-particle-type configuration are mutually exclusive. "
+                st.warning("Per-component and per-particle-type configuration are mutually exclusive. "
                         "Per-component configuration is disabled when multiple particle types are specified.")
                 self.N_c = -1
 
