@@ -9,6 +9,9 @@ coverage:
         target: auto
         threshold: 1%
 
+ignore:
+  - "Equation-Generator.py"  # Streamlit entry point, not importable as a module for coverage
+
 comment:
   layout: "reach,diff,flags,components"
   behavior: default

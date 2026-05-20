@@ -108,7 +108,7 @@ var_format_ = st.sidebar.selectbox("Select parameter format", [
 advanced_mode_ = st.sidebar.selectbox("Advanced options (enables e.g. particle size distribution)", [
                                       "Off", "On"], key=r"advanced_mode") == "On"
 if advanced_mode_:
-    dev_mode_ = st.sidebar.selectbox("Developer options (not tested! Enables e.g. particle type distribution)", [
+    dev_mode_ = st.sidebar.selectbox("Developer options (not tested! Enables e.g. particle type distribution, per-component configuration)", [
                                      "Off", "On"], key=r"dev_mode") == "On"
     if dev_mode_:
         advanced_mode_ = True
@@ -241,17 +241,39 @@ if column_model.resolution == "0D":
         r"The evolution of the liquid volume $V^{\l}\colon (0, T^{\mathrm{end}}) \to \mathbb{R}$ and the concentrations $c_i\colon (0, T^{\mathrm{end}}) \to \mathbb{R}$ of the components in the tank is governed by")
     write_and_save(interstitial_volume_eq, as_latex=True)
 else:
-    eq_type = "convection" # first order derivative
-    if not column_model.resolution == "1D" or column_model.has_axial_dispersion: # second order derivative
-        eq_type += "-diffusion"
-    if column_model.N_p > 0 and not column_model.nonlimiting_filmDiff: # i.e. film diffusion term (reaction type)
-        eq_type += "-reaction"
+    component_groups_intV = column_model.component_groups()
+    if column_model.interstitial_groups_differ_in_film_diff(component_groups_intV):
+        # Per-component mode: film diffusion settings differ, show separate bulk equations per group
+        for group in component_groups_intV:
+            nlf = group['nonlimiting_filmDiff_per_partype'][0]
+            comp_set_str = column_model.format_component_set(group['components'])
 
-    write_and_save(r"In the interstitial volume, mass transfer is governed by the following " + eq_type +
-                   " equations in " + column_model.domain_interstitial() + r" and for all components " + nComp_list)
-    write_and_save(interstitial_volume_eq, as_latex=True)
-    write_and_save("with boundary conditions")
-    write_and_save(column_model.interstitial_volume_bc(), as_latex=True)
+            eq_type = "convection"
+            if not column_model.resolution == "1D" or column_model.has_axial_dispersion:
+                eq_type += "-diffusion"
+            if column_model.N_p > 0 and not nlf:
+                eq_type += "-reaction"
+
+            write_and_save(
+                "For component(s) " + comp_set_str +
+                r", in the interstitial volume, mass transfer is governed by the following " + eq_type +
+                " equations in " + column_model.domain_interstitial())
+            write_and_save(column_model.interstitial_volume_equation_for_group(group), as_latex=True)
+
+        write_and_save("with boundary conditions")
+        write_and_save(column_model.interstitial_volume_bc(), as_latex=True)
+    else:
+        eq_type = "convection" # first order derivative
+        if not column_model.resolution == "1D" or column_model.has_axial_dispersion: # second order derivative
+            eq_type += "-diffusion"
+        if column_model.N_p > 0 and not column_model.nonlimiting_filmDiff: # i.e. film diffusion term (reaction type)
+            eq_type += "-reaction"
+
+        write_and_save(r"In the interstitial volume, mass transfer is governed by the following " + eq_type +
+                       " equations in " + column_model.domain_interstitial() + r" and for all components " + nComp_list)
+        write_and_save(interstitial_volume_eq, as_latex=True)
+        write_and_save("with boundary conditions")
+        write_and_save(column_model.interstitial_volume_bc(), as_latex=True)
 
 if show_eq_description:
     write_and_save("Here, " + column_model.vars_params_description())
@@ -290,7 +312,8 @@ if column_model.N_p > 0:
 
             for par_type in column_model.par_type_counts.keys():
 
-                if not column_model.has_binding and group['nonlimiting_filmDiff'] and par_type.resolution == "0D":
+                orig_idx = column_model._original_partype_indices[par_type][0] - 1
+                if not column_model.has_binding and group['nonlimiting_filmDiff_per_partype'][orig_idx] and par_type.resolution == "0D":
                     break
 
                 if dev_mode_:
@@ -369,7 +392,7 @@ if column_model.N_p > 0:
 
                     # The salt component is in rapid equilibrium binding mode
                     salt_group = dict(group)
-                    salt_group['req_binding'] = True
+                    salt_group['req_binding_per_partype'] = [True] * len(group['req_binding_per_partype'])
                     tmpBndModel = column_model.binding_model
                     column_model.binding_model = "SMA_salt"
                     particle_eq_salt, particle_bc_salt = column_model.particle_equations_for_group(salt_group)
