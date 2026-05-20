@@ -52,7 +52,7 @@ def apply_model_from_config(at, model_config):
 
 @pytest.mark.ci
 @pytest.mark.reference
-@pytest.mark.parametrize("model_name", ["CSTR", "Plug_Flow", "LRM", "LRMP", "GRMsd", "GRM", "GRMsd_PSD", "GRMsd2D", "GRMsd_nonLimFD_parCore", "GRMsd_nonLimFD_reqBnd", "GeneralFiniteBath", "Radial_Plug_Flow", "Radial_Dispersive_Plug_Flow", "Radial_GRM", "Radial_LRM", "Radial_LRMP", "Frustum_Plug_Flow", "Frustum_GRM"])
+@pytest.mark.parametrize("model_name", ["CSTR", "Plug_Flow", "LRM_dynLin", "LRMP_dynLin", "LRMP_reqLin", "GRMsd_dynLin", "GRM", "GRM_dynLin", "GRMsd_PSD_dynLin", "GRMsd2D_dynLin", "GRMsd_nonLimFD_parCore", "GRMsd_nonLimFD_reqBnd", "GeneralFiniteBath", "Radial_Plug_Flow", "Radial_Dispersive_Plug_Flow", "Radial_GRM", "Radial_LRM", "Radial_LRMP", "Frustum_Plug_Flow", "Frustum_GRM"])
 def test_json_config_output_against_latex_reference(model_name, test_dir):
 
     at = AppTest.from_file("../Equation-Generator.py")
@@ -80,18 +80,20 @@ def test_json_config_output_against_latex_reference(model_name, test_dir):
 
 @pytest.mark.ci
 @pytest.mark.reference
-@pytest.mark.parametrize("model_name", ["CSTR", "Plug_Flow", "LRM", "LRMP", "GRM", "GRMsd", "GRMsd_PSD", "GRMsd2D", "GRMsd_nonLimFD_parCore", "GRMsd_nonLimFD_reqBnd"])
+@pytest.mark.parametrize("model_name", ["CSTR", "Plug_Flow", "LRM_dynLin", "LRMP_dynLin", "LRMP_reqLin", "GRM", "GRM_dynLin", "GRMsd_dynLin", "GRMsd_PSD_dynLin", "GRMsd2D_dynLin", "GRMsd_nonLimFD_parCore", "GRMsd_nonLimFD_reqBnd"])
 def test_CADET_config_output_against_latex_reference(model_name, test_dir):
 
     CADET_file_ref = {
         "CSTR": "CSTR",
         "Plug_Flow": r"PlugFlow_1comp_benchmark1_DG_P3Z1",
-        "LRM": r"LRM_dynLin_1comp_benchmark1_DG_P3Z1",
-        "LRMP": r"LRMP_dynLin_1comp_benchmark1_DG_P3Z1",
-        "GRM": r"GRM_dynLin_1comp_benchmark1_cDG_P3Z8_GSM_parP3parZ1",
-        "GRMsd": r"GRMsd_dynLin_1comp_benchmark1_cDG_P3Z8_GSM_parP3parZ1",
-        "GRMsd_PSD": r"GRMsdParType2_dynLin_1comp_benchmark1_cDG_P3Z8_GSM_parP3parZ1",
-        "GRMsd2D": r"2DGRMsd3Zone_dynLin_1Comp_FV_axZ4radZ3parZ3",
+        "LRM_dynLin": r"LRM_dynLin_1comp_benchmark1_DG_P3Z1",
+        "LRMP_dynLin": r"LRMP_dynLin_1comp_benchmark1_DG_P3Z1",
+        "LRMP_reqLin": r"LRMP_reqLin_1comp_benchmark1_DG_P3Z1",
+        "GRM": r"GRM_662_1comp_benchmark1_cDG_P3Z8_GSM_parP3parZ1",
+        "GRM_dynLin": r"GRM_dynLin_1comp_benchmark1_cDG_P3Z8_GSM_parP3parZ1",
+        "GRMsd_dynLin": r"GRMsd_dynLin_1comp_benchmark1_cDG_P3Z8_GSM_parP3parZ1",
+        "GRMsd_PSD_dynLin": r"GRMsdParType2_dynLin_1comp_benchmark1_cDG_P3Z8_GSM_parP3parZ1",
+        "GRMsd2D_dynLin": r"2DGRMsd3Zone_dynLin_1Comp_FV_axZ4radZ3parZ3",
         "GRMsd_nonLimFD_parCore": None, # does not exist in cadet-core
         "GRMsd_nonLimFD_reqBnd": None # does not exist in cadet-core
     }
@@ -137,18 +139,20 @@ def test_CADET_config_output_against_latex_reference(model_name, test_dir):
 
 @pytest.mark.ci
 @pytest.mark.reference
-@pytest.mark.parametrize("model_name", ["CSTR", "Plug_Flow", "LRM", "LRMP", "GRM", "GRMsd", "GRMsd_PSD", "GRMsd2D"])
+@pytest.mark.parametrize("model_name", ["CSTR", "Plug_Flow", "LRM_dynLin", "LRMP_dynLin", "LRMP_reqLin", "GRM", "GRM_dynLin", "GRMsd_dynLin", "GRMsd_PSD_dynLin", "GRMsd2D_dynLin"])
 def test_CADET_v6_config_output_against_latex_reference(model_name, test_dir):
 
     CADET_v6_file_ref = {
         "CSTR": "v6_CSTR",
         "Plug_Flow": "v6_PlugFlow_1comp",
-        "LRM": "v6_LRM_dynLin_1comp",
-        "LRMP": "v6_LRMP_dynLin_1comp",
-        "GRM": "v6_GRM_dynLin_1comp",
-        "GRMsd": "v6_GRMsd_dynLin_1comp",
-        "GRMsd_PSD": "v6_GRMsd_PSD_dynLin_1comp",
-        "GRMsd2D": "v6_GRMsd2D_dynLin_1comp",
+        "LRM_dynLin": "v6_LRM_dynLin_1comp",
+        "LRMP_dynLin": "v6_LRMP_dynLin_1comp",
+        "LRMP_reqLin": "v6_LRMP_reqLin_1comp",
+        "GRM": "v6_GRM_662_1comp",
+        "GRM_dynLin": "v6_GRM_dynLin_1comp",
+        "GRMsd_dynLin": "v6_GRMsd_dynLin_1comp",
+        "GRMsd_PSD_dynLin": "v6_GRMsd_PSD_dynLin_1comp",
+        "GRMsd2D_dynLin": "v6_GRMsd2D_dynLin_1comp",
     }
 
     ref_name = CADET_v6_file_ref[model_name]
@@ -204,7 +208,7 @@ def test_CADET_config_manual_unitIdx(test_dir):
     apply_model_from_config(at, model_config)
     latex_string = at.session_state.latex_string
 
-    ref_string = read_tex_file(ref_latex_dir + "LRMP.tex")
+    ref_string = read_tex_file(ref_latex_dir + "LRMP_dynLin.tex")
 
     assert latex_string == ref_string
 
@@ -212,6 +216,6 @@ def test_CADET_config_manual_unitIdx(test_dir):
     apply_model_from_config(at, model_config)
     latex_string = at.session_state.latex_string
 
-    ref_string = read_tex_file(ref_latex_dir + "LRMP_reqBnd.tex")
+    ref_string = read_tex_file(ref_latex_dir + "LRMP_reqLin.tex")
 
     assert latex_string == ref_string

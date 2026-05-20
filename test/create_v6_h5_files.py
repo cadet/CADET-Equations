@@ -151,6 +151,98 @@ def create_v6_LRMP():
     print(f"Created {fname}")
 
 
+def create_v6_LRMP_reqLin():
+    """LRMP with rapid-equilibrium Linear binding (IS_KINETIC=0)."""
+    fname = os.path.join(OUTPUT_DIR, "v6_LRMP_reqLin_1comp.h5")
+    with h5py.File(fname, 'w') as f:
+        create_base_structure(f)
+        create_inlet(f, 0)
+
+        unit = f.create_group("input/model/unit_001")
+        unit.create_dataset("UNIT_TYPE", data="COLUMN_MODEL_1D")
+        unit.create_dataset("NCOMP", data=1)
+        unit.create_dataset("NPARTYPE", data=1)
+        unit.create_dataset("COL_DISPERSION", data=np.array([0.0001]))
+        unit.create_dataset("COL_LENGTH", data=1.0)
+        unit.create_dataset("COL_POROSITY", data=0.6)
+        unit.create_dataset("VELOCITY", data=0.03333333333333333)
+        unit.create_dataset("INIT_C", data=np.array([0.0]))
+        unit.create_dataset("INIT_CP", data=np.array([0.0]))
+        unit.create_dataset("INIT_Q", data=np.array([0.0]))
+        unit.create_dataset("PAR_TYPE_VOLFRAC", data=1)
+
+        disc = unit.create_group("discretization")
+        disc.create_dataset("NELEM", data=1)
+        disc.create_dataset("POLYDEG", data=3)
+        disc.create_dataset("SPATIAL_METHOD", data="DG")
+        disc.create_dataset("PAR_GEOM", data=np.array([b'SPHERE']))
+
+        pt = unit.create_group("particle_type_000")
+        pt.create_dataset("HAS_FILM_DIFFUSION", data=True)
+        pt.create_dataset("HAS_PORE_DIFFUSION", data=False)
+        pt.create_dataset("HAS_SURFACE_DIFFUSION", data=False)
+        pt.create_dataset("PAR_POROSITY", data=0.2)
+        pt.create_dataset("PAR_RADIUS", data=0.0001)
+        pt.create_dataset("FILM_DIFFUSION", data=np.array([0.00333333]))
+        pt.create_dataset("ADSORPTION_MODEL", data="LINEAR")
+        pt.create_dataset("NBOUND", data=np.array([1]))
+
+        ads = pt.create_group("adsorption")
+        ads.create_dataset("IS_KINETIC", data=0)
+        ads.create_dataset("LIN_KA", data=np.array([1.0]))
+        ads.create_dataset("LIN_KD", data=np.array([1.0]))
+
+        create_outlet(f, 2)
+    print(f"Created {fname}")
+
+
+def create_v6_GRM_arbitrary():
+    """GRM with ARBITRARY binding model (unknown model fallback)."""
+    fname = os.path.join(OUTPUT_DIR, "v6_GRM_662_1comp.h5")
+    with h5py.File(fname, 'w') as f:
+        create_base_structure(f)
+        create_inlet(f, 0)
+
+        unit = f.create_group("input/model/unit_001")
+        unit.create_dataset("UNIT_TYPE", data="COLUMN_MODEL_1D")
+        unit.create_dataset("NCOMP", data=1)
+        unit.create_dataset("NPARTYPE", data=1)
+        unit.create_dataset("COL_DISPERSION", data=5.75e-08)
+        unit.create_dataset("COL_LENGTH", data=0.014)
+        unit.create_dataset("COL_POROSITY", data=0.37)
+        unit.create_dataset("VELOCITY", data=0.000575)
+        unit.create_dataset("INIT_C", data=np.array([0.0]))
+        unit.create_dataset("INIT_CP", data=np.array([0.0]))
+        unit.create_dataset("INIT_Q", data=np.array([0.0]))
+        unit.create_dataset("PAR_TYPE_VOLFRAC", data=1)
+
+        disc = unit.create_group("discretization")
+        disc.create_dataset("NELEM", data=8)
+        disc.create_dataset("POLYDEG", data=3)
+        disc.create_dataset("SPATIAL_METHOD", data="DG")
+        disc.create_dataset("PAR_GEOM", data=np.array([b'SPHERE']))
+
+        pt = unit.create_group("particle_type_000")
+        pt.create_dataset("HAS_FILM_DIFFUSION", data=True)
+        pt.create_dataset("HAS_PORE_DIFFUSION", data=True)
+        pt.create_dataset("HAS_SURFACE_DIFFUSION", data=False)
+        pt.create_dataset("PAR_POROSITY", data=0.75)
+        pt.create_dataset("PAR_RADIUS", data=4.5e-05)
+        pt.create_dataset("PAR_CORERADIUS", data=0.0)
+        pt.create_dataset("FILM_DIFFUSION", data=np.array([6.9e-06]))
+        pt.create_dataset("PORE_DIFFUSION", data=np.array([6.07e-11]))
+        pt.create_dataset("ADSORPTION_MODEL", data="ARBITRARY")
+        pt.create_dataset("NBOUND", data=np.array([1]))
+
+        ads = pt.create_group("adsorption")
+        ads.create_dataset("IS_KINETIC", data=True)
+        ads.create_dataset("LIN_KA", data=np.array([3.55]))
+        ads.create_dataset("LIN_KD", data=np.array([0.1]))
+
+        create_outlet(f, 2)
+    print(f"Created {fname}")
+
+
 def create_v6_GRM():
     """GRM: COLUMN_MODEL_1D with film + pore diffusion, no surface diffusion."""
     fname = os.path.join(OUTPUT_DIR, "v6_GRM_dynLin_1comp.h5")
@@ -408,7 +500,9 @@ if __name__ == "__main__":
     create_v6_PlugFlow()
     create_v6_LRM()
     create_v6_LRMP()
+    create_v6_LRMP_reqLin()
     create_v6_GRM()
+    create_v6_GRM_arbitrary()
     create_v6_GRMsd()
     create_v6_GRMsd_PSD()
     create_v6_GRMsd2D()

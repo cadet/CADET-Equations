@@ -253,6 +253,8 @@ def _extract_v5_particle_config(config, unit_type, h5_unit_group, par_model):
             config['has_binding'] = "Yes"
 
             config['binding_model'] = CADET_binding_model_map.get(binding_model, "Arbitrary")
+            if binding_model not in CADET_binding_model_map:
+                st.sidebar.warning(f"Unknown binding model {binding_model}, default to arbitrary binding")
 
             config['has_mult_bnd_states'] = "No"
 
@@ -304,6 +306,8 @@ def _extract_v6_particle_config(config, h5_unit_group, par_model):
             config['has_binding'] = "Yes"
 
             config['binding_model'] = CADET_binding_model_map.get(binding_model, "Arbitrary")
+            if binding_model not in CADET_binding_model_map:
+                st.sidebar.warning(f"Unknown binding model {binding_model}, default to arbitrary binding")
 
             config['has_mult_bnd_states'] = "No"
 
