@@ -198,7 +198,7 @@ def create_v6_LRMP_reqLin():
 
 def create_v6_GRM_arbitrary():
     """GRM with ARBITRARY binding model (unknown model fallback)."""
-    fname = os.path.join(OUTPUT_DIR, "v6_GRM_662_1comp.h5")
+    fname = os.path.join(OUTPUT_DIR, "v6_GRM_arbBnd_1comp.h5")
     with h5py.File(fname, 'w') as f:
         create_base_structure(f)
         create_inlet(f, 0)
