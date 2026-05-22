@@ -6,9 +6,10 @@ Each public function is tested in isolation using mock HDF5 groups.
 
 import pytest
 import numpy as np
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 from src.load_CADET_h5 import (
     get_h5_value,
+    get_config_from_CADET_h5,
     map_unit_type_to_column_geometry,
     map_unit_type_to_column_model,
     map_unit_to_particle_model,
@@ -882,3 +883,62 @@ def test_extract_reaction_config_none_model():
     _extract_reaction_config(config, unit_group)
     assert 'reaction_model' not in config
     assert 'has_reaction_bulk' not in config
+
+
+# %% get_config_from_CADET_h5 – error paths
+
+
+def _mock_h5_file(model_group_dict):
+    """Create a mock h5py.File context manager with a model group containing the given unit keys."""
+    model_group = MagicMock()
+    model_group.keys.return_value = list(model_group_dict.keys())
+    model_group.__contains__ = lambda self, k: k in model_group_dict
+    model_group.__getitem__ = lambda self, k: model_group_dict[k]
+
+    f = MagicMock()
+    f.__getitem__ = lambda self, k: model_group if k == 'input/model' else None
+    f.__enter__ = lambda self: f
+    f.__exit__ = MagicMock(return_value=False)
+    return f
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+@patch('src.load_CADET_h5.st')
+@patch('src.load_CADET_h5.h5py.File')
+def test_get_config_unit_does_not_exist(mock_h5file, mock_st):
+    """Specifying a unit index that doesn't exist should show sidebar error and return None."""
+    mock_h5file.return_value = _mock_h5_file({})
+    result = get_config_from_CADET_h5('dummy.h5', '005')
+    assert result is None
+    mock_st.sidebar.error.assert_called_once_with("unit_005 does not exist!")
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+@patch('src.load_CADET_h5.st')
+@patch('src.load_CADET_h5.h5py.File')
+def test_get_config_unsupported_unit_type(mock_h5file, mock_st):
+    """A unit with an unsupported type (e.g. INLET) should show sidebar error and return None."""
+    unit_group = _make_h5_group({'UNIT_TYPE': b'INLET'})
+    mock_h5file.return_value = _mock_h5_file({'unit_000': unit_group})
+    result = get_config_from_CADET_h5('dummy.h5', '000')
+    assert result is None
+    mock_st.sidebar.error.assert_called_once_with("Equations for INLET are not available.")
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+@patch('src.load_CADET_h5.st')
+@patch('src.load_CADET_h5.h5py.File')
+def test_get_config_auto_search_no_column_unit(mock_h5file, mock_st):
+    """Auto-search with no supported column units should show sidebar error and return None."""
+    inlet_group = _make_h5_group({'UNIT_TYPE': b'INLET'})
+    outlet_group = _make_h5_group({'UNIT_TYPE': b'OUTLET'})
+    mock_h5file.return_value = _mock_h5_file({
+        'unit_000': inlet_group,
+        'unit_001': outlet_group,
+    })
+    result = get_config_from_CADET_h5('dummy.h5', '-01')
+    assert result is None
+    mock_st.sidebar.error.assert_called_once_with("No supported column unit type was found in the file.")

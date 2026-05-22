@@ -472,13 +472,15 @@ def get_config_from_CADET_h5(h5_filename, unit_idx):
 
                         return extract_config_data_from_unit(unit_type, unit_group)
 
+            st.sidebar.error("No supported column unit type was found in the file.")
+
         else:
 
-            if 'unit_' + unit_idx in model_group.keys(): 
+            if 'unit_' + unit_idx in model_group.keys():
                 unit_group = model_group['unit_' + unit_idx]
                 unit_type = get_h5_value(unit_group, 'UNIT_TYPE')
             else:
-                st.error(f"unit_{unit_idx} does not exist!")
+                st.sidebar.error(f"unit_{unit_idx} does not exist!")
                 return None
 
             if unit_type in CADET_column_unit_types:
@@ -491,6 +493,6 @@ def get_config_from_CADET_h5(h5_filename, unit_idx):
                 return extract_config_data_from_unit(unit_type, unit_group)
 
             else:
-                st.error(f"Equations for {unit_type} are not available.")
-            
+                st.sidebar.error(f"Equations for {unit_type} are not available.")
+
         return None
