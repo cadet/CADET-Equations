@@ -5,11 +5,11 @@
     "has_binding": "Yes",
     "has_axial_dispersion": "Yes",
     "model_assumptions": true,
-    "particle_resolution": "1D (radial coordinate)",
+    "particle_resolution": "0D (homogeneous)",
     "req_binding": "Kinetic",
     "show_eq_description": true,
     "var_format": "CADET",
-    "particle_nonlimiting_filmDiff": "No",
-    "particle_has_surfDiff": "Yes",
-    "column_type": "Axial flow cylinder"
+    "particle_nonlimiting_filmDiff": "Yes",
+    "column_type": "Axial flow cylinder",
+    "binding_model": "Linear"
 }

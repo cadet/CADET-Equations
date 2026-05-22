@@ -540,3 +540,162 @@ def test_extract_config_sets_column_type(unit_type, expected_geometry):
     })
     config = extract_config_data_from_unit(unit_type, group)
     assert config['column_type'] == expected_geometry
+
+
+# %% Binding model extraction from h5
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+@pytest.mark.parametrize("cadet_name, expected", [
+    ('LINEAR', 'Linear'),
+    ('MULTI_COMPONENT_LANGMUIR', 'Langmuir'),
+    ('STERIC_MASS_ACTION', 'SMA'),
+])
+def test_extract_binding_model_v6_known_models(cadet_name, expected):
+    """Known CADET binding model names should map to the generator's model name."""
+    ads_group = _make_h5_group({'IS_KINETIC': True})
+    pt_group = _make_h5_group(
+        {
+            'HAS_FILM_DIFFUSION': True,
+            'HAS_PORE_DIFFUSION': True,
+            'HAS_SURFACE_DIFFUSION': False,
+            'ADSORPTION_MODEL': cadet_name.encode(),
+            'NBOUND': np.array([1]),
+        },
+        subgroups={'adsorption': ads_group},
+    )
+    group = _make_h5_group(
+        {
+            'NPARTYPE': 1,
+            'COL_POROSITY': 0.37,
+            'COL_DISPERSION': 5.75e-08,
+        },
+        subgroups={'particle_type_000': pt_group},
+    )
+
+    config = extract_config_data_from_unit('COLUMN_MODEL_1D', group)
+
+    assert config['binding_model'] == expected
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_extract_binding_model_v6_unknown_falls_back_to_arbitrary():
+    """An unknown CADET binding model should fall back to 'Arbitrary'."""
+    ads_group = _make_h5_group({'IS_KINETIC': False})
+    pt_group = _make_h5_group(
+        {
+            'HAS_FILM_DIFFUSION': True,
+            'HAS_PORE_DIFFUSION': False,
+            'HAS_SURFACE_DIFFUSION': False,
+            'ADSORPTION_MODEL': b'MOBILE_PHASE_MODULATOR',
+            'NBOUND': np.array([1]),
+        },
+        subgroups={'adsorption': ads_group},
+    )
+    group = _make_h5_group(
+        {
+            'NPARTYPE': 1,
+            'COL_POROSITY': 0.37,
+            'COL_DISPERSION': 5.75e-08,
+        },
+        subgroups={'particle_type_000': pt_group},
+    )
+
+    config = extract_config_data_from_unit('COLUMN_MODEL_1D', group)
+
+    assert config['binding_model'] == "Arbitrary"
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_extract_binding_model_v5_linear():
+    """V5 GRM with LINEAR binding should extract binding_model='Linear'."""
+    ads_group = _make_h5_group({'IS_KINETIC': True})
+    group = _make_h5_group(
+        {
+            'COL_POROSITY': 0.37,
+            'COL_DISPERSION': 5.75e-08,
+            'ADSORPTION_MODEL': b'LINEAR',
+            'NBOUND': np.array([1]),
+            'PAR_SURFDIFFUSION': 1.0e-10,
+        },
+        subgroups={'adsorption': ads_group},
+    )
+
+    config = extract_config_data_from_unit('GENERAL_RATE_MODEL', group)
+
+    assert config['binding_model'] == "Linear"
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_extract_binding_model_not_set_when_no_binding():
+    """When ADSORPTION_MODEL is NONE, binding_model should not be in config."""
+    pt_group = _make_h5_group(
+        {
+            'HAS_FILM_DIFFUSION': True,
+            'HAS_PORE_DIFFUSION': True,
+            'HAS_SURFACE_DIFFUSION': False,
+            'ADSORPTION_MODEL': b'NONE',
+        },
+        subgroups={},
+    )
+    group = _make_h5_group(
+        {
+            'NPARTYPE': 1,
+            'COL_POROSITY': 0.37,
+            'COL_DISPERSION': 5.75e-08,
+        },
+        subgroups={'particle_type_000': pt_group},
+    )
+
+    config = extract_config_data_from_unit('COLUMN_MODEL_1D', group)
+
+    assert 'binding_model' not in config
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_extract_binding_model_v6_multi_partype_uses_first():
+    """V6 multi-particle config should use first particle type's binding model as shared config."""
+    ads_group_0 = _make_h5_group({'IS_KINETIC': True})
+    pt0_group = _make_h5_group(
+        {
+            'HAS_FILM_DIFFUSION': True,
+            'HAS_PORE_DIFFUSION': False,
+            'HAS_SURFACE_DIFFUSION': False,
+            'ADSORPTION_MODEL': b'STERIC_MASS_ACTION',
+            'NBOUND': np.array([1]),
+        },
+        subgroups={'adsorption': ads_group_0},
+    )
+    pt1_group = _make_h5_group(
+        {
+            'HAS_FILM_DIFFUSION': True,
+            'HAS_PORE_DIFFUSION': False,
+            'HAS_SURFACE_DIFFUSION': False,
+            'ADSORPTION_MODEL': b'LINEAR',
+            'NBOUND': np.array([1]),
+        },
+        subgroups={'adsorption': ads_group_0},
+    )
+    group = _make_h5_group(
+        {
+            'NPARTYPE': 2,
+            'COL_POROSITY': 0.37,
+            'COL_DISPERSION': 5.75e-08,
+        },
+        subgroups={
+            'particle_type_000': pt0_group,
+            'particle_type_001': pt1_group,
+        },
+    )
+
+    config = extract_config_data_from_unit('COLUMN_MODEL_1D', group)
+
+    # Shared binding_model comes from first particle type
+    assert config['binding_model'] == "SMA"
+    # Per-particle-type keys are not extracted (only used in dev mode)
+    assert 'parType_1_binding_model' not in config
+    assert 'parType_2_binding_model' not in config

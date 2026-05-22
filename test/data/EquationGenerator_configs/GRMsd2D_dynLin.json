@@ -1,6 +1,6 @@
 {
     "advanced_mode": "Off",
-    "column_resolution": "1D (axial coordinate)",
+    "column_resolution": "2D (axial and radial coordinate)",
     "add_particles": "Yes",
     "has_binding": "Yes",
     "has_axial_dispersion": "Yes",
@@ -10,7 +10,7 @@
     "show_eq_description": true,
     "var_format": "CADET",
     "particle_nonlimiting_filmDiff": "No",
-    "particle_has_surfDiff": "No",
+    "particle_has_surfDiff": "Yes",
     "column_type": "Axial flow cylinder",
-    "binding_model": "Arbitrary"
+    "binding_model": "Linear"
 }

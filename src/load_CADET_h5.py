@@ -220,7 +220,6 @@ def extract_config_data_from_unit(unit_type, h5_unit_group):
         config.pop('particle_has_core', None)
         config.pop('has_radial_dispersion', None)
         config.pop('has_mult_bnd_states', None)
-        config.pop('binding_model', None)
 
     return config
 
@@ -253,6 +252,9 @@ def _extract_v5_particle_config(config, unit_type, h5_unit_group, par_model):
 
             config['has_binding'] = "Yes"
 
+            config['binding_model'] = CADET_binding_model_map.get(binding_model, "Arbitrary")
+            if binding_model not in CADET_binding_model_map:
+                st.sidebar.warning(f"Binding model {binding_model} not implemented in CADET-Equations, default to arbitrary binding")
 
             config['has_mult_bnd_states'] = "No"
 
@@ -303,6 +305,9 @@ def _extract_v6_particle_config(config, h5_unit_group, par_model):
 
             config['has_binding'] = "Yes"
 
+            config['binding_model'] = CADET_binding_model_map.get(binding_model, "Arbitrary")
+            if binding_model not in CADET_binding_model_map:
+                st.sidebar.warning(f"Binding model {binding_model} not implemented in CADET-Equations, default to arbitrary binding")
 
             config['has_mult_bnd_states'] = "No"
 
