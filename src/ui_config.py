@@ -5,7 +5,7 @@ This file defines the configuration of the user interface, i.e. which states exi
 
 
 
-_NO_MODEL_CONFIG_STATES_ = ["generate_pdf", "generate_config", "sym_table", "latex_string", "h5_input_unit_index"]
+_NO_MODEL_CONFIG_STATES_ = ["generate_pdf", "generate_config", "sym_table", "latex_string", "template_script", "h5_input_unit_index"]
 
 
 #def state_exists_dep(state_key):
