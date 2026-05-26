@@ -538,7 +538,7 @@ st.session_state.latex_string = str(st.session_state.latex_string) # for testing
 st.download_button("Download .tex", st.session_state.latex_string, "model.tex", "text/plain")
 
 st.session_state.template_script = generate_unit_operation_script(column_model)
-st.download_button("Download .py template", st.session_state.template_script, "unit_operation.py", "text/x-python")
+st.download_button("Download CADET-Python template (.py file)", st.session_state.template_script, "unit_operation.py", "text/x-python")
 
 if st.button("Generate PDF", key=r"generate_pdf"):
     with tempfile.TemporaryDirectory() as temp_dir:
