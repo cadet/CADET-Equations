@@ -102,12 +102,73 @@ if uploaded_file is not None:
     else:
         st.sidebar.error("Uploaded configuration could not be read!")
 
+# ---------------------------------
 # User configuration of the model
+# ---------------------------------
 
-model_type_ = st.sidebar.selectbox(
-    "Model type",
-    ["Chromatography", "Crystallization"],
-    key=r"model_type")
+import streamlit as st
+
+# %% Sidebar selection of model family
+
+if "model_type" not in st.session_state:
+    st.session_state["model_type"] = "Chromatography"
+
+# Custom button styling
+st.markdown("""
+<style>
+
+/* Primary button */
+div.stButton > button[kind="primary"] {
+    background-color: #023d6b;
+    color: white;
+    border: none;
+}
+
+/* Primary button hover */
+div.stButton > button[kind="primary"]:hover {
+    background-color: #145a86;
+    color: white;
+}
+
+</style>
+""", unsafe_allow_html=True)
+
+st.sidebar.markdown("### Model Family")
+
+col1, col2 = st.sidebar.columns(2)
+
+if col1.button(
+    "Chromatography",
+    key="model_type_chromatography_button",
+    use_container_width=True,
+    type="primary" if st.session_state["model_type"] == "Chromatography" else "secondary",
+):
+    st.session_state["model_type"] = "Chromatography"
+    st.rerun()
+
+if col2.button(
+    "Crystallization",
+    key="model_type_crystallization_button",
+    use_container_width=True,
+    type="primary" if st.session_state["model_type"] == "Crystallization" else "secondary",
+):
+    st.session_state["model_type"] = "Crystallization"
+    st.rerun()
+
+st.write("Selected:", st.session_state["model_type"])
+
+model_type_ = st.session_state["model_type"]
+
+st.sidebar.caption(
+    "Selected: "
+    + (
+        "Chromatography - select from transport, particles, binding, and reactions."
+        if model_type_ == "Chromatography"
+        else "Crystallization - population balance, nucleation, growth, and breakage."
+    )
+)
+
+# %% Variable format: CADET vs. Legacy
 
 var_format_ = st.sidebar.selectbox("Select parameter format", [
                                    "CADET", "Legacy"], key=r"var_format")

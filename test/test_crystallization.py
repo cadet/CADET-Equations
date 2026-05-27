@@ -271,7 +271,7 @@ def test_crystallization_cstr_primary_formation():
     at = AppTest.from_file("../Equation-Generator.py")
     at.run()
     assert not at.exception
-    at.selectbox(key="model_type").set_value("Crystallization").run()
+    at.button(key="model_type_crystallization_button").click().run()
     assert not at.exception
     assert "Crystallization" in at.session_state.latex_string
 
@@ -281,7 +281,7 @@ def test_crystallization_cstr_primary_formation():
 def test_crystallization_dpfr():
     at = AppTest.from_file("../Equation-Generator.py")
     at.run()
-    at.selectbox(key="model_type").set_value("Crystallization").run()
+    at.button(key="model_type_crystallization_button").click().run()
     at.selectbox(key="cry_column_type").set_value("DPFR").run()
     assert not at.exception
     assert "DPFR" in at.session_state.latex_string
@@ -292,7 +292,7 @@ def test_crystallization_dpfr():
 def test_crystallization_aggregation_mode():
     at = AppTest.from_file("../Equation-Generator.py")
     at.run()
-    at.selectbox(key="model_type").set_value("Crystallization").run()
+    at.button(key="model_type_crystallization_button").click().run()
     at.selectbox(key="cry_has_primary_formation").set_value("No").run()
     at.selectbox(key="cry_has_aggregation").set_value("Yes").run()
     assert not at.exception
@@ -304,7 +304,7 @@ def test_crystallization_aggregation_mode():
 def test_crystallization_fragmentation_mode():
     at = AppTest.from_file("../Equation-Generator.py")
     at.run()
-    at.selectbox(key="model_type").set_value("Crystallization").run()
+    at.button(key="model_type_crystallization_button").click().run()
     at.selectbox(key="cry_has_primary_formation").set_value("No").run()
     at.selectbox(key="cry_has_fragmentation").set_value("Yes").run()
     assert not at.exception
@@ -316,7 +316,7 @@ def test_crystallization_fragmentation_mode():
 def test_crystallization_all_mechanisms():
     at = AppTest.from_file("../Equation-Generator.py")
     at.run()
-    at.selectbox(key="model_type").set_value("Crystallization").run()
+    at.button(key="model_type_crystallization_button").click().run()
     at.selectbox(key="cry_has_aggregation").set_value("Yes").run()
     at.selectbox(key="cry_has_fragmentation").set_value("Yes").run()
     assert not at.exception
@@ -330,7 +330,7 @@ def test_crystallization_all_mechanisms():
 def test_crystallization_secondary_nucleation():
     at = AppTest.from_file("../Equation-Generator.py")
     at.run()
-    at.selectbox(key="model_type").set_value("Crystallization").run()
+    at.button(key="model_type_crystallization_button").click().run()
     at.selectbox(key="cry_has_secondary_nucleation").set_value("Yes").run()
     assert not at.exception
     assert "k_b" in at.session_state.latex_string
@@ -341,7 +341,7 @@ def test_crystallization_secondary_nucleation():
 def test_crystallization_size_dependent_growth():
     at = AppTest.from_file("../Equation-Generator.py")
     at.run()
-    at.selectbox(key="model_type").set_value("Crystallization").run()
+    at.button(key="model_type_crystallization_button").click().run()
     at.selectbox(key="cry_size_dependent_growth").set_value("Yes").run()
     assert not at.exception
     assert r"\gamma" in at.session_state.latex_string
@@ -352,7 +352,7 @@ def test_crystallization_size_dependent_growth():
 def test_crystallization_growth_dispersion():
     at = AppTest.from_file("../Equation-Generator.py")
     at.run()
-    at.selectbox(key="model_type").set_value("Crystallization").run()
+    at.button(key="model_type_crystallization_button").click().run()
     at.selectbox(key="cry_has_growth_dispersion").set_value("Yes").run()
     assert not at.exception
     assert "D_g" in at.session_state.latex_string
@@ -363,8 +363,8 @@ def test_crystallization_growth_dispersion():
 def test_switching_back_to_chromatography():
     at = AppTest.from_file("../Equation-Generator.py")
     at.run()
-    at.selectbox(key="model_type").set_value("Crystallization").run()
+    at.button(key="model_type_crystallization_button").click().run()
     assert not at.exception
-    at.selectbox(key="model_type").set_value("Chromatography").run()
+    at.button(key="model_type_chromatography_button").click().run()
     assert not at.exception
     assert "Crystallization" not in at.session_state.latex_string
