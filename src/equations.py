@@ -838,3 +838,243 @@ def full_particle_conc_domain(column_resolution: str, particle_resolution: str, 
         par1D_domain = re.sub(r"\_{j}", "", par1D_domain)
     
     return domain + r"$" if particle_resolution == "0D" else domain + par1D_domain
+
+
+# %% Crystallization / Population Balance Model equations
+
+CRY_MODES = {
+    1: "Primary particle formation",
+    2: "Aggregation",
+    3: "Primary particle formation + Aggregation",
+    4: "Fragmentation",
+    5: "Primary particle formation + Fragmentation",
+    6: "Aggregation + Fragmentation",
+    7: "Primary particle formation + Aggregation + Fragmentation",
+}
+
+AGGREGATION_KERNELS = {
+    0: "Constant",
+    1: "Brownian",
+    2: "Smoluchowski",
+    3: "Golovin",
+    4: "Differential force",
+}
+
+
+def cry_has_primary_formation(cry_mode: int) -> bool:
+    return cry_mode in (1, 3, 5, 7)
+
+
+def cry_has_aggregation(cry_mode: int) -> bool:
+    return cry_mode in (2, 3, 6, 7)
+
+
+def cry_has_fragmentation(cry_mode: int) -> bool:
+    return cry_mode in (4, 5, 6, 7)
+
+
+def cry_supersaturation():
+    return r"s = \frac{c - c_{\mathrm{eq}}}{c_{\mathrm{eq}}}"
+
+
+def cry_growth_rate(size_dependent: bool):
+    if size_dependent:
+        return r"v_G = k_g s^g (a + \gamma x^p)"
+    else:
+        return r"v_G = k_g s^g a"
+
+
+def cry_primary_nucleation():
+    return r"B_p = k_p s^u"
+
+
+def cry_secondary_nucleation():
+    return r"B_s = k_b s^b M^k"
+
+
+def cry_total_nucleation():
+    return r"B_0 = B_p + B_s"
+
+
+def cry_suspension_density():
+    return r"M = k_v \rho \int_0^{\infty} n \, x^3 \, \mathrm{d}x"
+
+
+def cry_pbe_cstr(has_primary: bool, has_growth_dispersion: bool,
+                 has_aggregation: bool, has_fragmentation: bool):
+    lhs = r"\frac{\partial (n V)}{\partial t}"
+    rhs = r"F_{\mathrm{in}} n_{\mathrm{in}} - F_{\mathrm{out}} n"
+
+    primary_terms = []
+    if has_primary:
+        primary_terms.append(r"\frac{\partial (v_G n)}{\partial x}")
+        if has_growth_dispersion:
+            primary_terms.append(r"- D_g \frac{\partial^2 n}{\partial x^2}")
+        primary_terms.append(r"- B_0 \delta(x - x_c)")
+        rhs += r" - V \left( " + " ".join(primary_terms) + r" \right)"
+
+    if has_aggregation:
+        rhs += r" + V \left( B_{\mathrm{agg}} - D_{\mathrm{agg}} \right)"
+    if has_fragmentation:
+        rhs += r" + V \left( B_{\mathrm{frag}} - D_{\mathrm{frag}} \right)"
+
+    return r"\begin{align}" + lhs + r" &= " + rhs + r". \end{align}"
+
+
+def cry_pbe_dpfr(has_primary: bool, has_axial_dispersion: bool,
+                 has_growth_dispersion: bool,
+                 has_aggregation: bool, has_fragmentation: bool):
+    lhs = r"\frac{\partial n}{\partial t}"
+    rhs = r"- v_{\mathrm{ax}} \frac{\partial n}{\partial z}"
+
+    if has_axial_dispersion:
+        rhs += r" + D_{\mathrm{ax}} \frac{\partial^2 n}{\partial z^2}"
+
+    if has_primary:
+        rhs += r" - \frac{\partial (v_G n)}{\partial x}"
+        if has_growth_dispersion:
+            rhs += r" + D_g \frac{\partial^2 n}{\partial x^2}"
+
+    if has_aggregation:
+        rhs += r" + B_{\mathrm{agg}} - D_{\mathrm{agg}}"
+    if has_fragmentation:
+        rhs += r" + B_{\mathrm{frag}} - D_{\mathrm{frag}}"
+
+    return r"\begin{align}" + lhs + r" &= " + rhs + r". \end{align}"
+
+
+def cry_mass_balance_cstr(has_primary: bool):
+    vol_eq = r"\frac{\mathrm{d} V}{\mathrm{d} t} &= F_{\mathrm{in}} - F_{\mathrm{out}}"
+
+    conc_lhs = r"\frac{\partial (c V)}{\partial t}"
+    conc_rhs = r"F_{\mathrm{in}} c_{\mathrm{in}} - F_{\mathrm{out}} c"
+
+    if has_primary:
+        conc_rhs += r" - \rho k_v V \left( B_0 x_c^3 + 3 \int_{x_c}^{\infty} v_G n \, x^2 \, \mathrm{d}x \right)"
+
+    return r"""\begin{align}
+""" + vol_eq + r""", \\
+""" + conc_lhs + r" &= " + conc_rhs + r""".
+\end{align}"""
+
+
+def cry_mass_balance_dpfr(has_primary: bool, has_axial_dispersion: bool):
+    lhs = r"\frac{\partial c}{\partial t}"
+    rhs = r"- v_{\mathrm{ax}} \frac{\partial c}{\partial z}"
+
+    if has_axial_dispersion:
+        rhs += r" + D_{\mathrm{ax}} \frac{\partial^2 c}{\partial z^2}"
+
+    if has_primary:
+        rhs += r" - \rho k_v \left( B_0 x_c^3 + 3 \int_{x_c}^{\infty} v_G n \, x^2 \, \mathrm{d}x \right)"
+
+    return r"\begin{align}" + lhs + r" &= " + rhs + r". \end{align}"
+
+
+def cry_pbe_bc_internal(has_primary: bool, has_growth_dispersion: bool):
+    bcs = []
+    if has_primary:
+        if has_growth_dispersion:
+            bcs.append(r"\left. \left( n v_G - D_g \frac{\partial n}{\partial x} \right) \right|_{x = x_c} &= B_0")
+            bcs.append(r"\left. \left( n v_G - D_g \frac{\partial n}{\partial x} \right) \right|_{x \to \infty} &= 0")
+        else:
+            bcs.append(r"\left. n \right|_{x = x_c} &= \frac{B_0}{v_G(x_c)}")
+            bcs.append(r"\left. n \right|_{x \to \infty} &= 0")
+    return r"""\begin{align}
+""" + r""", \\
+""".join(bcs) + r""".
+\end{align}""" if bcs else ""
+
+
+def cry_pbe_bc_external_dpfr(has_axial_dispersion: bool):
+    bcs = []
+    if has_axial_dispersion:
+        bcs.append(r"\left. \left( n v_{\mathrm{ax}} - D_{\mathrm{ax}} \frac{\partial n}{\partial z} \right) \right|_{z=0} &= v_{\mathrm{ax}} n_{\mathrm{in},x}")
+        bcs.append(r"\left. \frac{\partial n}{\partial z} \right|_{z=L} &= 0")
+    else:
+        bcs.append(r"\left. n \right|_{z=0} &= n_{\mathrm{in},x}")
+    return r"""\begin{align}
+""" + r""", \\
+""".join(bcs) + r""".
+\end{align}"""
+
+
+def cry_solute_bc_dpfr(has_axial_dispersion: bool):
+    bcs = []
+    if has_axial_dispersion:
+        bcs.append(r"\left. \left( c \, v_{\mathrm{ax}} - D_{\mathrm{ax}} \frac{\partial c}{\partial z} \right) \right|_{z=0} &= v_{\mathrm{ax}} c_{\mathrm{in}}")
+        bcs.append(r"\left. \frac{\partial c}{\partial z} \right|_{z=L} &= 0")
+    else:
+        bcs.append(r"\left. c \right|_{z=0} &= c_{\mathrm{in}}")
+    return r"""\begin{align}
+""" + r""", \\
+""".join(bcs) + r""".
+\end{align}"""
+
+
+def cry_aggregation_birth_death():
+    birth = (r"B_{\mathrm{agg}}(x) = \frac{x^2}{2} \int_{x_c}^{x} "
+             r"\frac{\beta\!\left((x^3 - \lambda^3)^{1/3}, \lambda\right)}"
+             r"{(x^3 - \lambda^3)^{2/3}} "
+             r"n\!\left((x^3 - \lambda^3)^{1/3}\right) n(\lambda) \, \mathrm{d}\lambda")
+    death = (r"D_{\mathrm{agg}}(x) = n(x) \int_0^{x_{\mathrm{end}}} "
+             r"\beta(x, \lambda) \, n(\lambda) \, \mathrm{d}\lambda")
+    return r"""\begin{align}
+""" + birth + r""", \\
+""" + death + r""".
+\end{align}"""
+
+
+def cry_aggregation_kernel(kernel_index: int):
+    kernels = {
+        0: r"\beta(x, \lambda) = \beta_0",
+        1: r"\beta(x, \lambda) = \beta_0 \frac{(x + \lambda)^2}{x \lambda}",
+        2: r"\beta(x, \lambda) = \beta_0 (x + \lambda)^3",
+        3: r"\beta(x, \lambda) = \beta_0 (x^3 + \lambda^3)",
+        4: r"\beta(x, \lambda) = \beta_0 (x + \lambda)^2 (x^2 - \lambda^2)",
+    }
+    return r"\begin{align}" + kernels.get(kernel_index, kernels[0]) + r". \end{align}"
+
+
+def cry_fragmentation_birth_death():
+    birth = (r"B_{\mathrm{frag}}(x) = \int_x^{x_{\mathrm{max}}} "
+             r"S(\lambda) \, b(x \mid \lambda) \, n(\lambda) \, \mathrm{d}\lambda")
+    death = r"D_{\mathrm{frag}}(x) = S(x) \, n(x)"
+    return r"""\begin{align}
+""" + birth + r""", \\
+""" + death + r""".
+\end{align}"""
+
+
+def cry_selection_function():
+    return r"S(x) = S_0 \, x^{3\alpha}"
+
+
+def cry_breakage_function():
+    return r"b(x \mid \lambda) = 3 x^2 \frac{\gamma}{\lambda^3} \left( \frac{x^3}{\lambda^3} \right)^{\gamma - 2}"
+
+
+def cry_assumptions(column_type: str, cry_mode: int):
+    asmpts = [
+        r"the fluid density and viscosity are constant in time and space;",
+        r"the process is isothermal;",
+    ]
+
+    if column_type == "CSTR":
+        asmpts.append(r"the reactor is spatially homogeneous (perfectly mixed);")
+    else:
+        asmpts.append(r"the column is radially symmetric and homogeneous (1D axial coordinate);")
+
+    if cry_has_primary_formation(cry_mode):
+        asmpts.append(r"nucleation produces particles at a minimum critical size $x_c$;")
+        asmpts.append(r"the growth rate depends on supersaturation;")
+
+    if cry_has_aggregation(cry_mode):
+        asmpts.append(r"binary aggregation only (two particles coalesce into one);")
+        asmpts.append(r"the aggregation kernel is symmetric, i.e. $\beta(x, \lambda) = \beta(\lambda, x)$;")
+
+    if cry_has_fragmentation(cry_mode):
+        asmpts.append(r"binary fragmentation (one particle breaks into daughter particles);")
+        asmpts.append(r"mass is conserved during fragmentation events;")
+
+    return asmpts

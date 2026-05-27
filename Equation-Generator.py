@@ -25,6 +25,7 @@ from src import ui_config
 from src.utils import format_variables
 from src.renderer import availability_badge_html, write_and_save as renderer_write_and_save
 from src.model_column import Column
+from src.model_crystallization import Crystallization
 from src.generate_template import generate_unit_operation_script
 
 # %% Streamlit UI
@@ -67,9 +68,9 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 st.sidebar.title(
-    "CADET-Equations: Packed-Bed Chromatography Model Equation Generator")
+    "CADET-Equations: Model Equation Generator")
 st.sidebar.write(
-    "Configure a chromatography model to get the corresponding governing equations.")
+    "Configure a model to get the corresponding governing equations.")
 
 # File uploader for JSON file
 uploaded_file = st.sidebar.file_uploader(
@@ -103,133 +104,269 @@ if uploaded_file is not None:
 
 # User configuration of the model
 
+model_type_ = st.sidebar.radio(
+    "Model type",
+    ["Chromatography", "Crystallization"],
+    key=r"model_type",
+    horizontal=True)
+
 var_format_ = st.sidebar.selectbox("Select parameter format", [
                                    "CADET", "Legacy"], key=r"var_format")
-
-advanced_mode_ = st.sidebar.selectbox("Advanced options (enables e.g. particle size distribution)", [
-                                      "Off", "On"], key=r"advanced_mode") == "On"
-if advanced_mode_:
-    dev_mode_ = st.sidebar.selectbox("Developer options (not tested! Enables e.g. particle type distribution, per-component configuration)", [
-                                     "Off", "On"], key=r"dev_mode") == "On"
-    if dev_mode_:
-        advanced_mode_ = True
-else:
-    dev_mode_ = False
-
-column_model = Column(dev_mode=dev_mode_, advanced_mode=advanced_mode_, var_format=var_format_)
-
-if dev_mode_:
-    st.warning(
-        "**Warning:** Models in developer mode are "
-        "work in progress and have not been thoroughly verified. Please "
-        "double-check all equations and parameters before relying on them.",
-        icon="⚠️"
-    )
 
 # %% Display equations
 
 file_content = []  # used to export model to files
 
-if st.toggle("Show Model Assumptions", key=r"model_assumptions"):
+# The following function is used to both print the output and collect it to later generate and export output files
+def write_and_save(output: str, as_latex: bool = False):
 
-    asmpts = column_model.model_assumptions()
+    renderer_write_and_save(output, var_format_, file_content, as_latex)
 
-    for key in asmpts.keys():
 
-        st.write(key + ":\n" + "\n".join(f"- {item}" for item in asmpts[key]))
+if model_type_ == "Crystallization":
 
-        file_content.append(
-            key + r""":
+    cry_model = Crystallization(var_format=var_format_)
+
+    show_eq_description = st.toggle("Show equation description", key=r"show_eq_description", value=True)
+
+    if st.toggle("Show Model Assumptions", key=r"model_assumptions"):
+        asmpts = cry_model.model_assumptions()
+        for key in asmpts.keys():
+            st.write(key + ":\n" + "\n".join(f"- {item}" for item in asmpts[key]))
+            file_content.append(
+                key + r""":
+\begin{itemize}
+""" + "\n".join(f"\\item {item}" for item in asmpts[key]) + r"""
+\end{itemize}
+
+""")
+
+    if st.toggle("Show symbol table", key=r"sym_table"):
+        df = pd.DataFrame(cry_model.vars_and_params)
+        df[['Symbol', "Dependence", 'Unit']] = df[['Symbol', "Dependence", 'Unit']].map(
+            lambda x: f"${x}$" if isinstance(x, str) else x)
+        df = df.sort_values(by=r"Group").reset_index()
+        st.table(df[['Symbol', 'Description', 'Dependence', 'Unit']])
+
+    # Title
+    st.write("### " + cry_model.model_name())
+    file_content.append(r"\section*{" + cry_model.model_name() + r"}")
+
+    html = availability_badge_html("CADET-Core", cry_model.available_CADET_Core())
+    html += availability_badge_html("CADET-Process", cry_model.available_CADET_Process())
+    st.markdown(html, unsafe_allow_html=True)
+
+    has_primary = eq.cry_has_primary_formation(cry_model.cry_mode)
+    has_agg = eq.cry_has_aggregation(cry_model.cry_mode)
+    has_frag = eq.cry_has_fragmentation(cry_model.cry_mode)
+
+    if cry_model.column_type == "CSTR":
+        write_and_save(r"Consider a continuously stirred tank reactor (CSTR) with volume $V(t)$, "
+                       r"observed over a time interval $(0, T^{\mathrm{end}})$. "
+                       r"The particle population is described by the number density $n(t, x)$ "
+                       r"over the internal coordinate (particle size) $x$.")
+    else:
+        disp_str = " with axial dispersion" if cry_model.has_axial_dispersion else ""
+        write_and_save(r"Consider a dispersive plug flow reactor (DPFR) of length $L > 0$" + disp_str +
+                       r", observed over a time interval $(0, T^{\mathrm{end}})$. "
+                       r"The particle population is described by the number density $n(t, x, z)$ "
+                       r"over the internal coordinate (particle size) $x$ and axial position $z$.")
+
+    # PBE
+    write_and_save(r"The evolution of the number density is governed by the population balance equation")
+    if cry_model.column_type == "CSTR":
+        write_and_save(eq.cry_pbe_cstr(has_primary, cry_model.has_growth_dispersion,
+                                       has_agg, has_frag), as_latex=True)
+    else:
+        write_and_save(eq.cry_pbe_dpfr(has_primary, cry_model.has_axial_dispersion,
+                                       cry_model.has_growth_dispersion,
+                                       has_agg, has_frag), as_latex=True)
+
+    # Boundary conditions for PBE (internal coordinate)
+    if has_primary:
+        bc_internal = eq.cry_pbe_bc_internal(has_primary, cry_model.has_growth_dispersion)
+        if bc_internal:
+            write_and_save("with boundary conditions in the internal coordinate")
+            write_and_save(bc_internal, as_latex=True)
+
+    # Boundary conditions for PBE (external coordinate, DPFR only)
+    if cry_model.column_type == "DPFR":
+        write_and_save("Boundary conditions in the external (axial) coordinate for the number density are")
+        write_and_save(eq.cry_pbe_bc_external_dpfr(cry_model.has_axial_dispersion), as_latex=True)
+
+    # Mass balance
+    write_and_save(r"The solute mass balance is given by")
+    if cry_model.column_type == "CSTR":
+        write_and_save(eq.cry_mass_balance_cstr(has_primary), as_latex=True)
+    else:
+        write_and_save(eq.cry_mass_balance_dpfr(has_primary, cry_model.has_axial_dispersion), as_latex=True)
+        write_and_save("with boundary conditions")
+        write_and_save(eq.cry_solute_bc_dpfr(cry_model.has_axial_dispersion), as_latex=True)
+
+    # Constitutive equations
+    if has_primary:
+        write_and_save(r"The constitutive relations for growth and nucleation are defined as follows. "
+                       r"The relative supersaturation is")
+        write_and_save(r"\begin{align}" + eq.cry_supersaturation() + r". \end{align}", as_latex=True)
+
+        write_and_save("The growth rate is")
+        write_and_save(r"\begin{align}" + eq.cry_growth_rate(cry_model.size_dependent_growth) + r". \end{align}", as_latex=True)
+
+        write_and_save("The primary nucleation rate is")
+        write_and_save(r"\begin{align}" + eq.cry_primary_nucleation() + r". \end{align}", as_latex=True)
+
+        if cry_model.has_secondary_nucleation:
+            write_and_save("The secondary nucleation rate is")
+            write_and_save(r"\begin{align}" + eq.cry_secondary_nucleation() + r". \end{align}", as_latex=True)
+            write_and_save("where the suspension density is")
+            write_and_save(r"\begin{align}" + eq.cry_suspension_density() + r". \end{align}", as_latex=True)
+
+        write_and_save("The total nucleation rate is")
+        if cry_model.has_secondary_nucleation:
+            write_and_save(r"\begin{align}" + eq.cry_total_nucleation() + r". \end{align}", as_latex=True)
+        else:
+            write_and_save(r"\begin{align} B_0 = B_p. \end{align}", as_latex=True)
+
+    # Aggregation details
+    if has_agg:
+        write_and_save(r"The aggregation birth and death terms are")
+        write_and_save(eq.cry_aggregation_birth_death(), as_latex=True)
+        write_and_save("The aggregation kernel is")
+        write_and_save(eq.cry_aggregation_kernel(cry_model.aggregation_kernel_index), as_latex=True)
+
+    # Fragmentation details
+    if has_frag:
+        write_and_save(r"The fragmentation birth and death terms are")
+        write_and_save(eq.cry_fragmentation_birth_death(), as_latex=True)
+        write_and_save("The selection (fragmentation rate) function is")
+        write_and_save(r"\begin{align}" + eq.cry_selection_function() + r". \end{align}", as_latex=True)
+        write_and_save("The breakage probability density function is")
+        write_and_save(r"\begin{align}" + eq.cry_breakage_function() + r". \end{align}", as_latex=True)
+
+    if show_eq_description:
+        write_and_save("Here, " + cry_model.vars_params_description())
+
+    write_and_save("Consistent initial values for all solution variables are defined at $t = 0$.")
+
+
+else:
+    # Chromatography mode (original flow)
+
+    advanced_mode_ = st.sidebar.selectbox("Advanced options (enables e.g. particle size distribution)", [
+                                          "Off", "On"], key=r"advanced_mode") == "On"
+    if advanced_mode_:
+        dev_mode_ = st.sidebar.selectbox("Developer options (not tested! Enables e.g. particle type distribution, per-component configuration)", [
+                                         "Off", "On"], key=r"dev_mode") == "On"
+        if dev_mode_:
+            advanced_mode_ = True
+    else:
+        dev_mode_ = False
+
+    column_model = Column(dev_mode=dev_mode_, advanced_mode=advanced_mode_, var_format=var_format_)
+
+    if dev_mode_:
+        st.warning(
+            "**Warning:** Models in developer mode are "
+            "work in progress and have not been thoroughly verified. Please "
+            "double-check all equations and parameters before relying on them.",
+            icon="⚠️"
+        )
+
+    show_eq_description = st.toggle("Show equation description", key=r"show_eq_description", value=True)
+
+    if st.toggle("Show Model Assumptions", key=r"model_assumptions"):
+
+        asmpts = column_model.model_assumptions()
+
+        for key in asmpts.keys():
+
+            st.write(key + ":\n" + "\n".join(f"- {item}" for item in asmpts[key]))
+
+            file_content.append(
+                key + r""":
 \begin{itemize}
 """ + "\n".join(f"\\item {item}" for item in asmpts[key]) + r"""
 \end{itemize}
 
 """
-        )
+            )
 
-if st.toggle("Show symbol table", key=r"sym_table"):
+    if st.toggle("Show symbol table", key=r"sym_table"):
 
-    df = pd.DataFrame(column_model.vars_and_params)
-    if column_model.N_p > 0:
-        df_par = pd.DataFrame(column_model.particle_models[0].vars_and_params, columns=["Group", 'Symbol', 'Description', "Dependence", 'Unit'])
-        df = pd.concat([df, df_par], ignore_index=True)
-    
-    df[['Symbol', "Dependence", 'Unit']] = df[['Symbol', "Dependence", 'Unit']].map(lambda x: f"${x}$" if isinstance(x, str) else x)
-    
-    df = df.sort_values(by=r"Group").reset_index()
-    
-    st.table(df[['Symbol', 'Description', 'Dependence', 'Unit']])
+        df = pd.DataFrame(column_model.vars_and_params)
+        if column_model.N_p > 0:
+            df_par = pd.DataFrame(column_model.particle_models[0].vars_and_params, columns=["Group", 'Symbol', 'Description', "Dependence", 'Unit'])
+            df = pd.concat([df, df_par], ignore_index=True)
 
-interstitial_volume_eq = column_model.interstitial_volume_equation()
+        df[['Symbol', "Dependence", 'Unit']] = df[['Symbol', "Dependence", 'Unit']].map(lambda x: f"${x}$" if isinstance(x, str) else x)
 
-nComp_list = r"$i\in\{" + ", ".join(str(i) for i in range(1, column_model.N_c + 1)) + \
-    r"\}$" if column_model.N_c > 0 else r"$i\in\{1, \dots, N^{\mathrm{c}} \}$"
+        df = df.sort_values(by=r"Group").reset_index()
 
-show_eq_description = st.toggle("Show equation description", key=r"show_eq_description", value=True)
+        st.table(df[['Symbol', 'Description', 'Dependence', 'Unit']])
 
-# The following function is used to both print the output and collect it to later generate and export output files
-def write_and_save(output: str, as_latex: bool = False):
-    
-    renderer_write_and_save(output, var_format_, file_content, as_latex)
+    interstitial_volume_eq = column_model.interstitial_volume_equation()
 
-# Title
-st.write("### " + column_model.model_name())
-file_content.append(r"\section*{" + column_model.model_name() + r"}")
+    nComp_list = r"$i\in\{" + ", ".join(str(i) for i in range(1, column_model.N_c + 1)) + \
+        r"\}$" if column_model.N_c > 0 else r"$i\in\{1, \dots, N^{\mathrm{c}} \}$"
 
-#%% CADET model availability badge
+    # Title
+    st.write("### " + column_model.model_name())
+    file_content.append(r"\section*{" + column_model.model_name() + r"}")
 
-html = availability_badge_html(
-    "CADET-Core",
-    column_model.available_CADET_Core()
-)
+    #%% CADET model availability badge
 
-html += availability_badge_html(
-    "CADET-Process",
-    column_model.available_CADET_Process()
-)
+    html = availability_badge_html(
+        "CADET-Core",
+        column_model.available_CADET_Core()
+    )
 
-st.markdown(html, unsafe_allow_html=True)
+    html += availability_badge_html(
+        "CADET-Process",
+        column_model.available_CADET_Process()
+    )
 
-#%% Continue with model
+    st.markdown(html, unsafe_allow_html=True)
 
-if column_model.resolution == "0D":
-    intro_str = r"Consider a continuously stirred tank "
-elif column_model.column_type == "Radial":
-    intro_str = r"Consider a hollow cylindrical column with inner radius $R^{\mathrm{in}} > 0$ and outer radius $R^{\mathrm{out}} > R^{\mathrm{in}}$ "
-elif column_model.column_type == "Frustum":
-    intro_str = r"Consider a conical frustum column of length $L > 0$ with inlet radius $R^0 > 0$ and outlet radius $R^L > 0$ "
-else:
-    intro_str = r"Consider a cylindrical column of length $L > 0$ "
-    if column_model.resolution == "2D" or column_model.resolution == "3D":
-        intro_str += r" and radius $R^{\mathrm{c}} > 0$ "
-
-if column_model.N_p == 0:
-    write_and_save(intro_str + r"filled with a liquid phase, and observed over a time interval $(0, T^{\mathrm{end}})$.")
-elif column_model.N_p == 1:
-    # TODO particle geometries?
-    write_and_save(intro_str + r"packed with spherical particles, and observed over a time interval $(0, T^{\mathrm{end}})$.")
-else:
-    if column_model.resolution == "0D":
-        d_j_def = r"$d_j \in [0, 1]$"
-    else:
-        d_j_def = r"$d_j \colon " + re.sub(r"\$", "", column_model.domain_interstitial(with_time_domain=False)) + r" \to [0, 1]$"
-    write_and_save(intro_str + r"packed with $N^{\mathrm{p}}$ different particle-sizes indexed by $j \in \{1, \dots, N^{\mathrm{p}}\}$ and distributed according to the volume fractions " + d_j_def + r", which satisfy")
+    #%% Continue with model
 
     if column_model.resolution == "0D":
-        d_j_dep = r""
-        d_j_dep2 = r""
+        intro_str = r"Consider a continuously stirred tank "
+    elif column_model.column_type == "Radial":
+        intro_str = r"Consider a hollow cylindrical column with inner radius $R^{\mathrm{in}} > 0$ and outer radius $R^{\mathrm{out}} > R^{\mathrm{in}}$ "
+    elif column_model.column_type == "Frustum":
+        intro_str = r"Consider a conical frustum column of length $L > 0$ with inlet radius $R^0 > 0$ and outlet radius $R^L > 0$ "
     else:
-        if column_model.resolution == "1D":
-            d_j_dep = r"z"
-        elif column_model.resolution == "2D":
-            d_j_dep = r"z, \rho"
-        elif column_model.resolution == "3D":
-            d_j_dep = r"z, \rho, \phi"
+        intro_str = r"Consider a cylindrical column of length $L > 0$ "
+        if column_model.resolution == "2D" or column_model.resolution == "3D":
+            intro_str += r" and radius $R^{\mathrm{c}} > 0$ "
 
-        d_j_dep2 = r", \quad \forall """ + d_j_dep + r""" \in """ + re.sub(r"\$", "", column_model.domain_interstitial(with_time_domain=False))
-        d_j_dep = "(" + d_j_dep + ")"
+    if column_model.N_p == 0:
+        write_and_save(intro_str + r"filled with a liquid phase, and observed over a time interval $(0, T^{\mathrm{end}})$.")
+    elif column_model.N_p == 1:
+        # TODO particle geometries?
+        write_and_save(intro_str + r"packed with spherical particles, and observed over a time interval $(0, T^{\mathrm{end}})$.")
+    else:
+        if column_model.resolution == "0D":
+            d_j_def = r"$d_j \in [0, 1]$"
+        else:
+            d_j_def = r"$d_j \colon " + re.sub(r"\$", "", column_model.domain_interstitial(with_time_domain=False)) + r" \to [0, 1]$"
+        write_and_save(intro_str + r"packed with $N^{\mathrm{p}}$ different particle-sizes indexed by $j \in \{1, \dots, N^{\mathrm{p}}\}$ and distributed according to the volume fractions " + d_j_def + r", which satisfy")
 
-    write_and_save(r"""
+        if column_model.resolution == "0D":
+            d_j_dep = r""
+            d_j_dep2 = r""
+        else:
+            if column_model.resolution == "1D":
+                d_j_dep = r"z"
+            elif column_model.resolution == "2D":
+                d_j_dep = r"z, \rho"
+            elif column_model.resolution == "3D":
+                d_j_dep = r"z, \rho, \phi"
+
+            d_j_dep2 = r", \quad \forall """ + d_j_dep + r""" \in """ + re.sub(r"\$", "", column_model.domain_interstitial(with_time_domain=False))
+            d_j_dep = "(" + d_j_dep + ")"
+
+        write_and_save(r"""
     \begin{equation*}
 	    \sum_{j=1}^{N_{\mathrm{p}}} d_j""" + d_j_dep + r" = 1 " + d_j_dep2 + r""".
     \end{equation*}
@@ -237,84 +374,191 @@ else:
     """, as_latex=True)
 
 
-if column_model.resolution == "0D":
-    write_and_save(
-        r"The evolution of the liquid volume $V^{\l}\colon (0, T^{\mathrm{end}}) \to \mathbb{R}$ and the concentrations $c_i\colon (0, T^{\mathrm{end}}) \to \mathbb{R}$ of the components in the tank is governed by")
-    write_and_save(interstitial_volume_eq, as_latex=True)
-else:
-    component_groups_intV = column_model.component_groups()
-    if column_model.interstitial_groups_differ_in_film_diff(component_groups_intV):
-        # Per-component mode: film diffusion settings differ, show separate bulk equations per group
-        for group in component_groups_intV:
-            nlf = group['nonlimiting_filmDiff_per_partype'][0]
-            comp_set_str = column_model.format_component_set(group['components'])
+    if column_model.resolution == "0D":
+        write_and_save(
+            r"The evolution of the liquid volume $V^{\l}\colon (0, T^{\mathrm{end}}) \to \mathbb{R}$ and the concentrations $c_i\colon (0, T^{\mathrm{end}}) \to \mathbb{R}$ of the components in the tank is governed by")
+        write_and_save(interstitial_volume_eq, as_latex=True)
+    else:
+        component_groups_intV = column_model.component_groups()
+        if column_model.interstitial_groups_differ_in_film_diff(component_groups_intV):
+            # Per-component mode: film diffusion settings differ, show separate bulk equations per group
+            for group in component_groups_intV:
+                nlf = group['nonlimiting_filmDiff_per_partype'][0]
+                comp_set_str = column_model.format_component_set(group['components'])
 
-            eq_type = "convection"
-            if not column_model.resolution == "1D" or column_model.has_axial_dispersion:
+                eq_type = "convection"
+                if not column_model.resolution == "1D" or column_model.has_axial_dispersion:
+                    eq_type += "-diffusion"
+                if column_model.N_p > 0 and not nlf:
+                    eq_type += "-reaction"
+
+                write_and_save(
+                    "For component(s) " + comp_set_str +
+                    r", in the interstitial volume, mass transfer is governed by the following " + eq_type +
+                    " equations in " + column_model.domain_interstitial())
+                write_and_save(column_model.interstitial_volume_equation_for_group(group), as_latex=True)
+
+            write_and_save("with boundary conditions")
+            write_and_save(column_model.interstitial_volume_bc(), as_latex=True)
+        else:
+            eq_type = "convection" # first order derivative
+            if not column_model.resolution == "1D" or column_model.has_axial_dispersion: # second order derivative
                 eq_type += "-diffusion"
-            if column_model.N_p > 0 and not nlf:
+            if column_model.N_p > 0 and not column_model.nonlimiting_filmDiff: # i.e. film diffusion term (reaction type)
                 eq_type += "-reaction"
 
-            write_and_save(
-                "For component(s) " + comp_set_str +
-                r", in the interstitial volume, mass transfer is governed by the following " + eq_type +
-                " equations in " + column_model.domain_interstitial())
-            write_and_save(column_model.interstitial_volume_equation_for_group(group), as_latex=True)
+            write_and_save(r"In the interstitial volume, mass transfer is governed by the following " + eq_type +
+                           " equations in " + column_model.domain_interstitial() + r" and for all components " + nComp_list)
+            write_and_save(interstitial_volume_eq, as_latex=True)
+            write_and_save("with boundary conditions")
+            write_and_save(column_model.interstitial_volume_bc(), as_latex=True)
 
-        write_and_save("with boundary conditions")
-        write_and_save(column_model.interstitial_volume_bc(), as_latex=True)
-    else:
-        eq_type = "convection" # first order derivative
-        if not column_model.resolution == "1D" or column_model.has_axial_dispersion: # second order derivative
-            eq_type += "-diffusion"
-        if column_model.N_p > 0 and not column_model.nonlimiting_filmDiff: # i.e. film diffusion term (reaction type)
-            eq_type += "-reaction"
+    if show_eq_description:
+        write_and_save("Here, " + column_model.vars_params_description())
 
-        write_and_save(r"In the interstitial volume, mass transfer is governed by the following " + eq_type +
-                       " equations in " + column_model.domain_interstitial() + r" and for all components " + nComp_list)
-        write_and_save(interstitial_volume_eq, as_latex=True)
-        write_and_save("with boundary conditions")
-        write_and_save(column_model.interstitial_volume_bc(), as_latex=True)
-
-if show_eq_description:
-    write_and_save("Here, " + column_model.vars_params_description())
-
-if column_model.has_reaction_bulk and column_model.req_reaction_bulk:
-    write_and_save(
-        r"The bulk liquid phase reactions are in rapid equilibrium. "
-        r"The resulting overdetermined system of $N^{\mathrm{c}}$ component transport equations is reduced through conserved moieties. "
-        r"Specifically, $N^{\mathrm{react,eq},\b}$ of the component equations are replaced by algebraic equilibrium constraints")
-    write_and_save(r"""
+    if column_model.has_reaction_bulk and column_model.req_reaction_bulk:
+        write_and_save(
+            r"The bulk liquid phase reactions are in rapid equilibrium. "
+            r"The resulting overdetermined system of $N^{\mathrm{c}}$ component transport equations is reduced through conserved moieties. "
+            r"Specifically, $N^{\mathrm{react,eq},\b}$ of the component equations are replaced by algebraic equilibrium constraints")
+        write_and_save(r"""
 \begin{align}
 """ + eq.req_reaction_bulk_constraint() + r""", \quad k = 1, \ldots, N^{\mathrm{react,eq},\b}.
 \end{align}
 """, as_latex=True)
-    write_and_save(
-        r"The remaining $N^{\mathrm{c}} - N^{\mathrm{react,eq},\b}$ equations are replaced by conserved moiety equations, "
-        r"obtained by left-multiplying the component transport equations with the conserved moiety matrix "
-        r"$M^{\b} \in \mathbb{R}^{(N^{\mathrm{c}} - N^{\mathrm{react,eq},\b}) \times N^{\mathrm{c}}}$, "
-        r"whose rows span the left null space of the stoichiometric matrix")
-    write_and_save(r"""
+        write_and_save(
+            r"The remaining $N^{\mathrm{c}} - N^{\mathrm{react,eq},\b}$ equations are replaced by conserved moiety equations, "
+            r"obtained by left-multiplying the component transport equations with the conserved moiety matrix "
+            r"$M^{\b} \in \mathbb{R}^{(N^{\mathrm{c}} - N^{\mathrm{react,eq},\b}) \times N^{\mathrm{c}}}$, "
+            r"whose rows span the left null space of the stoichiometric matrix")
+        write_and_save(r"""
 \begin{align}
 """ + eq.conserved_moiety_equation_bulk() + r""", \quad l = 1, \ldots, N^{\mathrm{c}} - N^{\mathrm{react,eq},\b}.
 \end{align}
 """, as_latex=True)
-    write_and_save(r"By construction, the reaction terms cancel in the conserved moiety equations.")
+        write_and_save(r"By construction, the reaction terms cancel in the conserved moiety equations.")
 
-if column_model.N_p > 0:
+    if column_model.N_p > 0:
 
-    component_groups = column_model.component_groups()
+        component_groups = column_model.component_groups()
 
-    if component_groups is not None and len(component_groups) > 1:
-        # Per-component mode: generate separate equations for each group of components
-        # that share the same settings
-        for group in component_groups:
-            comp_set_str = column_model.format_component_set(group['components'])
+        if component_groups is not None and len(component_groups) > 1:
+            # Per-component mode: generate separate equations for each group of components
+            # that share the same settings
+            for group in component_groups:
+                comp_set_str = column_model.format_component_set(group['components'])
+
+                for par_type in column_model.par_type_counts.keys():
+
+                    orig_idx = column_model._original_partype_indices[par_type][0] - 1
+                    if not column_model.has_binding and group['nonlimiting_filmDiff_per_partype'][orig_idx] and par_type.resolution == "0D":
+                        break
+
+                    if dev_mode_:
+                        par_indices = column_model.partype_indices(par_type)
+                        nPar_list = column_model.format_partype_set(par_indices)
+                    else:
+                        nPar_list = r"$j\in\{1, \dots, N^{\mathrm{p}}\}$"
+
+                    eq_type_ = "reaction" if column_model.particle_models[0].resolution == "0D" else "diffusion-reaction"
+                    tmp_str = r" and all particle types " + nPar_list if column_model.N_p > 1 else r""
+
+                    whatComp = eq.primary_binding_eq_what_comps(column_model.binding_model)
+
+                    write_and_save(
+                        "For component(s) " + comp_set_str + ", mass transfer in the particles is governed by " + eq_type_ + " equations in " + eq.full_particle_conc_domain(column_model.resolution, par_type.resolution, par_type.has_core, with_par_index=False, with_time_domain=True, column_type=column_model.column_type) + tmp_str)
+
+                    group_eq, group_bc = column_model.particle_equations_for_group(group)
+
+                    write_and_save(group_eq[par_type], as_latex=True)
+
+                    if not group_bc[par_type] == "":
+                        write_and_save("with boundary conditions")
+                        write_and_save(group_bc[par_type], as_latex=True)
+
+                    if show_eq_description:
+                        write_and_save("Here, " + column_model.particle_models[0].vars_params_description())
+
+                    # Rapid-equilibrium reactions in the particle phase
+                    if column_model.has_reaction_particle_liquid and column_model.req_reaction_particle_liquid:
+                        write_and_save(
+                            r"The particle liquid phase reactions are in rapid equilibrium. "
+                            r"The system is reduced through conserved moieties: "
+                            r"$N^{\mathrm{react,eq},\p}$ algebraic equilibrium constraints")
+                        write_and_save(r"""
+\begin{align}
+""" + eq.req_reaction_particle_liquid_constraint(column_model.N_p == 1) + r""", \quad k = 1, \ldots, N^{\mathrm{react,eq},\p}
+\end{align}
+""", as_latex=True)
+                        write_and_save(
+                            r"replace $N^{\mathrm{react,eq},\p}$ of the component equations. "
+                            r"The remaining $N^{\mathrm{c}} - N^{\mathrm{react,eq},\p}$ equations are conserved moiety equations")
+                        write_and_save(r"""
+\begin{align}
+""" + eq.conserved_moiety_equation_particle_liquid(column_model.N_p == 1) + r""", \quad l = 1, \ldots, N^{\mathrm{c}} - N^{\mathrm{react,eq},\p}.
+\end{align}
+""", as_latex=True)
+
+                    if column_model.has_reaction_particle_solid and column_model.req_reaction_particle_solid:
+                        write_and_save(
+                            r"The particle solid phase reactions are in rapid equilibrium. "
+                            r"The system is reduced through conserved moieties: "
+                            r"$N^{\mathrm{react,eq},\s}$ algebraic equilibrium constraints")
+                        write_and_save(r"""
+\begin{align}
+""" + eq.req_reaction_particle_solid_constraint(column_model.N_p == 1) + r""", \quad k = 1, \ldots, N^{\mathrm{react,eq},\s}
+\end{align}
+""", as_latex=True)
+                        write_and_save(
+                            r"replace $N^{\mathrm{react,eq},\s}$ of the component equations. "
+                            r"The remaining $N^{\mathrm{c}} - N^{\mathrm{react,eq},\s}$ equations are conserved moiety equations")
+                        write_and_save(r"""
+\begin{align}
+""" + eq.conserved_moiety_equation_particle_solid(column_model.N_p == 1) + r""", \quad l = 1, \ldots, N^{\mathrm{c}} - N^{\mathrm{react,eq},\s}.
+\end{align}
+""", as_latex=True)
+
+                    # SMA additional equations
+                    if column_model.binding_model == "SMA" and column_model.has_binding:
+
+                        PTD_ = column_model.PTD and column_model.N_p > 1
+                        write_and_save(r"The number of available binding sites $\bar{q}_0$ is given by")
+                        write_and_save(r"\begin{align}" + eq.sma_free_binding_sites(PTD=PTD_) + r".\end{align}", as_latex=True)
+
+                        write_and_save(
+                            "For the salt component, mass transfer is governed by " + eq_type_ + " equations in " + eq.full_particle_conc_domain(column_model.resolution, par_type.resolution, par_type.has_core, with_par_index=False, with_time_domain=True, column_type=column_model.column_type) + tmp_str)
+
+                        # The salt component is in rapid equilibrium binding mode
+                        salt_group = dict(group)
+                        salt_group['req_binding_per_partype'] = [True] * len(group['req_binding_per_partype'])
+                        tmpBndModel = column_model.binding_model
+                        column_model.binding_model = "SMA_salt"
+                        particle_eq_salt, particle_bc_salt = column_model.particle_equations_for_group(salt_group)
+                        column_model.binding_model = tmpBndModel
+
+                        if PTD_:
+                            write_and_save(re.sub(r"_{i}", r"_{0}", particle_eq_salt[par_type]), as_latex=True)
+                        else:
+                            write_and_save(re.sub(r"_{j,i}", r"_{j,0}", particle_eq_salt[par_type]), as_latex=True)
+
+                        if not particle_bc_salt[par_type] == "":
+                            write_and_save(r"where the counter-ion concentration $c^{\s}_0$ satisfies the electroneutrality constraint. Boundary conditions are")
+                            write_and_save(particle_bc_salt[par_type], as_latex=True)
+                        else:
+                            write_and_save(r"where the counter-ion concentration $c^{\s}_0$ satisfies the electroneutrality constraint.")
+
+
+        else:
+            # Standard mode: single set of equations for all components
+            particle_eq, particle_bc = column_model.particle_equations()
+
+            # Build per-particle-type index mapping for display
+            has_mixed_partypes = column_model.has_per_partype_config() and len(column_model.par_type_counts) > 1
 
             for par_type in column_model.par_type_counts.keys():
 
-                orig_idx = column_model._original_partype_indices[par_type][0] - 1
-                if not column_model.has_binding and group['nonlimiting_filmDiff_per_partype'][orig_idx] and par_type.resolution == "0D":
+                # in this case, we dont have a particle model. this configuration is still allowed for educational purpose.
+                if not column_model.has_binding and par_type.nonlimiting_filmDiff and par_type.resolution == "0D":
                     break
 
                 if dev_mode_:
@@ -324,20 +568,27 @@ if column_model.N_p > 0:
                     nPar_list = r"$j\in\{1, \dots, N^{\mathrm{p}}\}$"
 
                 eq_type_ = "reaction" if column_model.particle_models[0].resolution == "0D" else "diffusion-reaction"
-                tmp_str = r" and all particle types " + nPar_list if column_model.N_p > 1 else r""
 
-                whatComp = eq.primary_binding_eq_what_comps(column_model.binding_model)
+                # Add per-particle-type label when particle types have different settings
+                partype_label = ""
+                if has_mixed_partypes:
+                    partype_label = " for particle type(s) " + nPar_list
+                    tmp_str = ""
+                elif column_model.N_p > 1:
+                    tmp_str = r" and all particle types " + nPar_list
+                else:
+                    tmp_str = ""
+
+                whatComp = eq.primary_binding_eq_what_comps(par_type.binding_model)
 
                 write_and_save(
-                    "For component(s) " + comp_set_str + ", mass transfer in the particles is governed by " + eq_type_ + " equations in " + eq.full_particle_conc_domain(column_model.resolution, par_type.resolution, par_type.has_core, with_par_index=False, with_time_domain=True, column_type=column_model.column_type) + tmp_str)
+                    "In the particles, mass transfer is governed by " + eq_type_ + " equations in " + eq.full_particle_conc_domain(column_model.resolution, par_type.resolution, par_type.has_core, with_par_index=False, with_time_domain=True, column_type=column_model.column_type) + r" and for " + whatComp + " components" + tmp_str + partype_label)
 
-                group_eq, group_bc = column_model.particle_equations_for_group(group)
+                write_and_save(particle_eq[par_type], as_latex=True)
 
-                write_and_save(group_eq[par_type], as_latex=True)
-
-                if not group_bc[par_type] == "":
+                if not particle_bc[par_type] == "":
                     write_and_save("with boundary conditions")
-                    write_and_save(group_bc[par_type], as_latex=True)
+                    write_and_save(particle_bc[par_type], as_latex=True)
 
                 if show_eq_description:
                     write_and_save("Here, " + column_model.particle_models[0].vars_params_description())
@@ -381,8 +632,8 @@ if column_model.N_p > 0:
 \end{align}
 """, as_latex=True)
 
-                # SMA additional equations
-                if column_model.binding_model == "SMA" and column_model.has_binding:
+                # Some more complicated binding models require additional equations
+                if par_type.binding_model == "SMA" and par_type.has_binding:
 
                     PTD_ = column_model.PTD and column_model.N_p > 1
                     write_and_save(r"The number of available binding sites $\bar{q}_0$ is given by")
@@ -392,135 +643,21 @@ if column_model.N_p > 0:
                         "For the salt component, mass transfer is governed by " + eq_type_ + " equations in " + eq.full_particle_conc_domain(column_model.resolution, par_type.resolution, par_type.has_core, with_par_index=False, with_time_domain=True, column_type=column_model.column_type) + tmp_str)
 
                     # The salt component is in rapid equilibrium binding mode
-                    salt_group = dict(group)
-                    salt_group['req_binding_per_partype'] = [True] * len(group['req_binding_per_partype'])
-                    tmpBndModel = column_model.binding_model
-                    column_model.binding_model = "SMA_salt"
-                    particle_eq_salt, particle_bc_salt = column_model.particle_equations_for_group(salt_group)
-                    column_model.binding_model = tmpBndModel
+                    salt_eq, salt_bc = column_model.particle_salt_equations(par_type)
 
                     if PTD_:
-                        write_and_save(re.sub(r"_{i}", r"_{0}", particle_eq_salt[par_type]), as_latex=True)
+                        write_and_save(re.sub(r"_{i}", r"_{0}", salt_eq), as_latex=True)
                     else:
-                        write_and_save(re.sub(r"_{j,i}", r"_{j,0}", particle_eq_salt[par_type]), as_latex=True)
+                        write_and_save(re.sub(r"_{j,i}", r"_{j,0}", salt_eq), as_latex=True)
 
-                    if not particle_bc_salt[par_type] == "":
+                    if salt_bc != "":
                         write_and_save(r"where the counter-ion concentration $c^{\s}_0$ satisfies the electroneutrality constraint. Boundary conditions are")
-                        write_and_save(particle_bc_salt[par_type], as_latex=True)
+                        write_and_save(salt_bc, as_latex=True)
                     else:
-                        write_and_save(r"where the counter-ion concentration $c^{\s}_0$ satisfies the electroneutrality constraint.")
+                       write_and_save(r"where the counter-ion concentration $c^{\s}_0$ satisfies the electroneutrality constraint.")
 
 
-    else:
-        # Standard mode: single set of equations for all components
-        particle_eq, particle_bc = column_model.particle_equations()
-
-        # Build per-particle-type index mapping for display
-        has_mixed_partypes = column_model.has_per_partype_config() and len(column_model.par_type_counts) > 1
-
-        for par_type in column_model.par_type_counts.keys():
-
-            # in this case, we dont have a particle model. this configuration is still allowed for educational purpose.
-            if not column_model.has_binding and par_type.nonlimiting_filmDiff and par_type.resolution == "0D":
-                break
-
-            if dev_mode_:
-                par_indices = column_model.partype_indices(par_type)
-                nPar_list = column_model.format_partype_set(par_indices)
-            else:
-                nPar_list = r"$j\in\{1, \dots, N^{\mathrm{p}}\}$"
-
-            eq_type_ = "reaction" if column_model.particle_models[0].resolution == "0D" else "diffusion-reaction"
-
-            # Add per-particle-type label when particle types have different settings
-            partype_label = ""
-            if has_mixed_partypes:
-                partype_label = " for particle type(s) " + nPar_list
-                tmp_str = ""
-            elif column_model.N_p > 1:
-                tmp_str = r" and all particle types " + nPar_list
-            else:
-                tmp_str = ""
-
-            whatComp = eq.primary_binding_eq_what_comps(par_type.binding_model)
-
-            write_and_save(
-                "In the particles, mass transfer is governed by " + eq_type_ + " equations in " + eq.full_particle_conc_domain(column_model.resolution, par_type.resolution, par_type.has_core, with_par_index=False, with_time_domain=True, column_type=column_model.column_type) + r" and for " + whatComp + " components" + tmp_str + partype_label)
-
-            write_and_save(particle_eq[par_type], as_latex=True)
-
-            if not particle_bc[par_type] == "":
-                write_and_save("with boundary conditions")
-                write_and_save(particle_bc[par_type], as_latex=True)
-
-            if show_eq_description:
-                write_and_save("Here, " + column_model.particle_models[0].vars_params_description())
-
-            # Rapid-equilibrium reactions in the particle phase
-            if column_model.has_reaction_particle_liquid and column_model.req_reaction_particle_liquid:
-                write_and_save(
-                    r"The particle liquid phase reactions are in rapid equilibrium. "
-                    r"The system is reduced through conserved moieties: "
-                    r"$N^{\mathrm{react,eq},\p}$ algebraic equilibrium constraints")
-                write_and_save(r"""
-\begin{align}
-""" + eq.req_reaction_particle_liquid_constraint(column_model.N_p == 1) + r""", \quad k = 1, \ldots, N^{\mathrm{react,eq},\p}
-\end{align}
-""", as_latex=True)
-                write_and_save(
-                    r"replace $N^{\mathrm{react,eq},\p}$ of the component equations. "
-                    r"The remaining $N^{\mathrm{c}} - N^{\mathrm{react,eq},\p}$ equations are conserved moiety equations")
-                write_and_save(r"""
-\begin{align}
-""" + eq.conserved_moiety_equation_particle_liquid(column_model.N_p == 1) + r""", \quad l = 1, \ldots, N^{\mathrm{c}} - N^{\mathrm{react,eq},\p}.
-\end{align}
-""", as_latex=True)
-
-            if column_model.has_reaction_particle_solid and column_model.req_reaction_particle_solid:
-                write_and_save(
-                    r"The particle solid phase reactions are in rapid equilibrium. "
-                    r"The system is reduced through conserved moieties: "
-                    r"$N^{\mathrm{react,eq},\s}$ algebraic equilibrium constraints")
-                write_and_save(r"""
-\begin{align}
-""" + eq.req_reaction_particle_solid_constraint(column_model.N_p == 1) + r""", \quad k = 1, \ldots, N^{\mathrm{react,eq},\s}
-\end{align}
-""", as_latex=True)
-                write_and_save(
-                    r"replace $N^{\mathrm{react,eq},\s}$ of the component equations. "
-                    r"The remaining $N^{\mathrm{c}} - N^{\mathrm{react,eq},\s}$ equations are conserved moiety equations")
-                write_and_save(r"""
-\begin{align}
-""" + eq.conserved_moiety_equation_particle_solid(column_model.N_p == 1) + r""", \quad l = 1, \ldots, N^{\mathrm{c}} - N^{\mathrm{react,eq},\s}.
-\end{align}
-""", as_latex=True)
-
-            # Some more complicated binding models require additional equations
-            if par_type.binding_model == "SMA" and par_type.has_binding:
-
-                PTD_ = column_model.PTD and column_model.N_p > 1
-                write_and_save(r"The number of available binding sites $\bar{q}_0$ is given by")
-                write_and_save(r"\begin{align}" + eq.sma_free_binding_sites(PTD=PTD_) + r".\end{align}", as_latex=True)
-
-                write_and_save(
-                    "For the salt component, mass transfer is governed by " + eq_type_ + " equations in " + eq.full_particle_conc_domain(column_model.resolution, par_type.resolution, par_type.has_core, with_par_index=False, with_time_domain=True, column_type=column_model.column_type) + tmp_str)
-
-                # The salt component is in rapid equilibrium binding mode
-                salt_eq, salt_bc = column_model.particle_salt_equations(par_type)
-
-                if PTD_:
-                    write_and_save(re.sub(r"_{i}", r"_{0}", salt_eq), as_latex=True)
-                else:
-                    write_and_save(re.sub(r"_{j,i}", r"_{j,0}", salt_eq), as_latex=True)
-
-                if salt_bc != "":
-                    write_and_save(r"where the counter-ion concentration $c^{\s}_0$ satisfies the electroneutrality constraint. Boundary conditions are")
-                    write_and_save(salt_bc, as_latex=True)
-                else:
-                   write_and_save(r"where the counter-ion concentration $c^{\s}_0$ satisfies the electroneutrality constraint.")
-
-
-write_and_save("Consistent initial values for all solution variables (concentrations) are defined at $t = 0$.")
+    write_and_save("Consistent initial values for all solution variables (concentrations) are defined at $t = 0$.")
 
 st.session_state.latex_string = [
     r"""\documentclass{article}
@@ -537,8 +674,9 @@ st.session_state.latex_string = str(st.session_state.latex_string) # for testing
 
 st.download_button("Download .tex", st.session_state.latex_string, "model.tex", "text/plain")
 
-st.session_state.template_script = generate_unit_operation_script(column_model)
-st.download_button("Download CADET-Python template (.py file)", st.session_state.template_script, "unit_operation.py", "text/x-python")
+if model_type_ == "Chromatography":
+    st.session_state.template_script = generate_unit_operation_script(column_model)
+    st.download_button("Download CADET-Python template (.py file)", st.session_state.template_script, "unit_operation.py", "text/x-python")
 
 if st.button("Generate PDF", key=r"generate_pdf"):
     with tempfile.TemporaryDirectory() as temp_dir:
@@ -569,7 +707,9 @@ if st.button("Generate configuration file", key=r"generate_config"):
     def sort_session_states(key):
         # a proper sorting is required for the tests, where we cannot apply a
         # global session state but must loop over the keys
-        if key == "advanced_mode":
+        if key == "model_type":
+            return -1
+        elif key == "advanced_mode":
             return 0
         elif key == "dev_mode":
             return 1
@@ -583,6 +723,8 @@ if st.button("Generate configuration file", key=r"generate_config"):
             return 3.3
         elif key == "particle_resolution":
             return 3.5
+        elif key.startswith("cry_"):
+            return 0.5
         return 10
 
     # Create a temporary directory
