@@ -842,16 +842,6 @@ def full_particle_conc_domain(column_resolution: str, particle_resolution: str, 
 
 # %% Crystallization / Population Balance Model equations
 
-CRY_MODES = {
-    1: "Primary particle formation",
-    2: "Aggregation",
-    3: "Primary particle formation + Aggregation",
-    4: "Fragmentation",
-    5: "Primary particle formation + Fragmentation",
-    6: "Aggregation + Fragmentation",
-    7: "Primary particle formation + Aggregation + Fragmentation",
-}
-
 AGGREGATION_KERNELS = {
     0: "Constant",
     1: "Brownian",
@@ -859,18 +849,6 @@ AGGREGATION_KERNELS = {
     3: "Golovin",
     4: "Differential force",
 }
-
-
-def cry_has_primary_formation(cry_mode: int) -> bool:
-    return cry_mode in (1, 3, 5, 7)
-
-
-def cry_has_aggregation(cry_mode: int) -> bool:
-    return cry_mode in (2, 3, 6, 7)
-
-
-def cry_has_fragmentation(cry_mode: int) -> bool:
-    return cry_mode in (4, 5, 6, 7)
 
 
 def cry_supersaturation():
@@ -1054,7 +1032,8 @@ def cry_breakage_function():
     return r"b(x \mid \lambda) = 3 x^2 \frac{\gamma}{\lambda^3} \left( \frac{x^3}{\lambda^3} \right)^{\gamma - 2}"
 
 
-def cry_assumptions(column_type: str, cry_mode: int):
+def cry_assumptions(column_type: str, has_primary: bool,
+                    has_aggregation: bool, has_fragmentation: bool):
     asmpts = [
         r"the fluid density and viscosity are constant in time and space;",
         r"the process is isothermal;",
@@ -1065,15 +1044,15 @@ def cry_assumptions(column_type: str, cry_mode: int):
     else:
         asmpts.append(r"the column is radially symmetric and homogeneous (1D axial coordinate);")
 
-    if cry_has_primary_formation(cry_mode):
+    if has_primary:
         asmpts.append(r"nucleation produces particles at a minimum critical size $x_c$;")
         asmpts.append(r"the growth rate depends on supersaturation;")
 
-    if cry_has_aggregation(cry_mode):
+    if has_aggregation:
         asmpts.append(r"binary aggregation only (two particles coalesce into one);")
         asmpts.append(r"the aggregation kernel is symmetric, i.e. $\beta(x, \lambda) = \beta(\lambda, x)$;")
 
-    if cry_has_fragmentation(cry_mode):
+    if has_fragmentation:
         asmpts.append(r"binary fragmentation (one particle breaks into daughter particles);")
         asmpts.append(r"mass is conserved during fragmentation events;")
 

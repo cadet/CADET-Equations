@@ -17,7 +17,9 @@ class Crystallization:
 
     var_format: Literal
     column_type: str = "CSTR"
-    cry_mode: int = 1
+    has_primary_formation: bool = True
+    has_aggregation: bool = False
+    has_fragmentation: bool = False
     has_axial_dispersion: bool = False
     has_growth_dispersion: bool = False
     size_dependent_growth: bool = False
@@ -39,14 +41,22 @@ class Crystallization:
                 "Add axial dispersion", ["Yes", "No"],
                 key=r"cry_has_axial_dispersion") == "Yes"
 
-        mode_labels = list(eq.CRY_MODES.values())
-        mode_keys = list(eq.CRY_MODES.keys())
-        selected_label = st.sidebar.selectbox(
-            "Crystallization mode (CRY_MODE)",
-            mode_labels, key=r"cry_mode")
-        self.cry_mode = mode_keys[mode_labels.index(selected_label)]
+        st.sidebar.write("Crystallization mechanisms")
+        self.has_primary_formation = st.sidebar.selectbox(
+            "Primary particle formation (growth/nucleation)",
+            ["Yes", "No"], key=r"cry_has_primary_formation") == "Yes"
+        self.has_aggregation = st.sidebar.selectbox(
+            "Aggregation",
+            ["No", "Yes"], key=r"cry_has_aggregation") == "Yes"
+        self.has_fragmentation = st.sidebar.selectbox(
+            "Fragmentation",
+            ["No", "Yes"], key=r"cry_has_fragmentation") == "Yes"
 
-        if eq.cry_has_primary_formation(self.cry_mode):
+        if not self.has_primary_formation and not self.has_aggregation and not self.has_fragmentation:
+            st.sidebar.warning("At least one mechanism must be enabled.")
+            self.has_primary_formation = True
+
+        if self.has_primary_formation:
             with st.sidebar.expander("Growth and nucleation", expanded=True):
                 self.size_dependent_growth = st.selectbox(
                     "Size-dependent growth", ["No", "Yes"],
@@ -58,7 +68,7 @@ class Crystallization:
                     "Add secondary nucleation", ["No", "Yes"],
                     key=r"cry_has_secondary_nucleation") == "Yes"
 
-        if eq.cry_has_aggregation(self.cry_mode):
+        if self.has_aggregation:
             with st.sidebar.expander("Aggregation", expanded=True):
                 kernel_labels = list(eq.AGGREGATION_KERNELS.values())
                 kernel_keys = list(eq.AGGREGATION_KERNELS.keys())
@@ -66,6 +76,10 @@ class Crystallization:
                     "Aggregation kernel", kernel_labels,
                     key=r"cry_aggregation_kernel")
                 self.aggregation_kernel_index = kernel_keys[kernel_labels.index(selected_kernel)]
+
+        if self.has_fragmentation:
+            with st.sidebar.expander("Fragmentation", expanded=True):
+                st.write("Fragmentation uses a power-law selection function and symmetric breakage kernel.")
 
         self.fill_vars_and_params()
 
@@ -77,11 +91,11 @@ class Crystallization:
             name += " in DPFR"
 
         parts = []
-        if eq.cry_has_primary_formation(self.cry_mode):
+        if self.has_primary_formation:
             parts.append("growth/nucleation")
-        if eq.cry_has_aggregation(self.cry_mode):
+        if self.has_aggregation:
             parts.append("aggregation")
-        if eq.cry_has_fragmentation(self.cry_mode):
+        if self.has_fragmentation:
             parts.append("fragmentation")
 
         if parts:
@@ -90,7 +104,9 @@ class Crystallization:
 
     def model_assumptions(self):
         return {
-            "Model assumptions": eq.cry_assumptions(self.column_type, self.cry_mode)
+            "Model assumptions": eq.cry_assumptions(
+                self.column_type, self.has_primary_formation,
+                self.has_aggregation, self.has_fragmentation)
         }
 
     def available_CADET_Core(self):
@@ -100,9 +116,9 @@ class Crystallization:
         return -1
 
     def fill_vars_and_params(self):
-        has_primary = eq.cry_has_primary_formation(self.cry_mode)
-        has_agg = eq.cry_has_aggregation(self.cry_mode)
-        has_frag = eq.cry_has_fragmentation(self.cry_mode)
+        has_primary = self.has_primary_formation
+        has_agg = self.has_aggregation
+        has_frag = self.has_fragmentation
 
         vp = [
             {"Group": 0, "Symbol": r"t", "Description": "time coordinate",

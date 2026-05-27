@@ -155,9 +155,9 @@ if model_type_ == "Crystallization":
     html += availability_badge_html("CADET-Process", cry_model.available_CADET_Process())
     st.markdown(html, unsafe_allow_html=True)
 
-    has_primary = eq.cry_has_primary_formation(cry_model.cry_mode)
-    has_agg = eq.cry_has_aggregation(cry_model.cry_mode)
-    has_frag = eq.cry_has_fragmentation(cry_model.cry_mode)
+    has_primary = cry_model.has_primary_formation
+    has_agg = cry_model.has_aggregation
+    has_frag = cry_model.has_fragmentation
 
     if cry_model.column_type == "CSTR":
         write_and_save(r"Consider a continuously stirred tank reactor (CSTR) with volume $V(t)$, "

@@ -9,38 +9,6 @@ from streamlit.testing.v1 import AppTest
 from src import equations as eq
 
 
-# %% CRY_MODE helpers
-
-@pytest.mark.ci
-@pytest.mark.unit_test
-@pytest.mark.parametrize("mode, expected", [
-    (1, True), (2, False), (3, True), (4, False),
-    (5, True), (6, False), (7, True),
-])
-def test_cry_has_primary_formation(mode, expected):
-    assert eq.cry_has_primary_formation(mode) == expected
-
-
-@pytest.mark.ci
-@pytest.mark.unit_test
-@pytest.mark.parametrize("mode, expected", [
-    (1, False), (2, True), (3, True), (4, False),
-    (5, False), (6, True), (7, True),
-])
-def test_cry_has_aggregation(mode, expected):
-    assert eq.cry_has_aggregation(mode) == expected
-
-
-@pytest.mark.ci
-@pytest.mark.unit_test
-@pytest.mark.parametrize("mode, expected", [
-    (1, False), (2, False), (3, False), (4, True),
-    (5, True), (6, True), (7, True),
-])
-def test_cry_has_fragmentation(mode, expected):
-    assert eq.cry_has_fragmentation(mode) == expected
-
-
 # %% Constitutive relations
 
 @pytest.mark.ci
@@ -273,22 +241,25 @@ def test_cry_breakage_function():
 
 @pytest.mark.ci
 @pytest.mark.unit_test
-@pytest.mark.parametrize("col_type, cry_mode", [
-    ("CSTR", 1), ("DPFR", 1), ("CSTR", 2),
-    ("CSTR", 4), ("CSTR", 7),
+@pytest.mark.parametrize("col_type, has_primary, has_agg, has_frag", [
+    ("CSTR", True, False, False),
+    ("DPFR", True, False, False),
+    ("CSTR", False, True, False),
+    ("CSTR", False, False, True),
+    ("CSTR", True, True, True),
 ])
-def test_cry_assumptions(col_type, cry_mode):
-    result = eq.cry_assumptions(col_type, cry_mode)
+def test_cry_assumptions(col_type, has_primary, has_agg, has_frag):
+    result = eq.cry_assumptions(col_type, has_primary, has_agg, has_frag)
     assert len(result) >= 3
     if col_type == "CSTR":
         assert any("perfectly mixed" in a for a in result)
     else:
         assert any("1D axial" in a for a in result)
-    if eq.cry_has_primary_formation(cry_mode):
+    if has_primary:
         assert any("nucleation" in a for a in result)
-    if eq.cry_has_aggregation(cry_mode):
+    if has_agg:
         assert any("aggregation" in a for a in result)
-    if eq.cry_has_fragmentation(cry_mode):
+    if has_frag:
         assert any("fragmentation" in a for a in result)
 
 
@@ -322,7 +293,8 @@ def test_crystallization_aggregation_mode():
     at = AppTest.from_file("../Equation-Generator.py")
     at.run()
     at.selectbox(key="model_type").set_value("Crystallization").run()
-    at.selectbox(key="cry_mode").set_value("Aggregation").run()
+    at.selectbox(key="cry_has_primary_formation").set_value("No").run()
+    at.selectbox(key="cry_has_aggregation").set_value("Yes").run()
     assert not at.exception
     assert "aggregation" in at.session_state.latex_string.lower()
 
@@ -333,7 +305,8 @@ def test_crystallization_fragmentation_mode():
     at = AppTest.from_file("../Equation-Generator.py")
     at.run()
     at.selectbox(key="model_type").set_value("Crystallization").run()
-    at.selectbox(key="cry_mode").set_value("Fragmentation").run()
+    at.selectbox(key="cry_has_primary_formation").set_value("No").run()
+    at.selectbox(key="cry_has_fragmentation").set_value("Yes").run()
     assert not at.exception
     assert "fragmentation" in at.session_state.latex_string.lower()
 
@@ -344,8 +317,8 @@ def test_crystallization_all_mechanisms():
     at = AppTest.from_file("../Equation-Generator.py")
     at.run()
     at.selectbox(key="model_type").set_value("Crystallization").run()
-    at.selectbox(key="cry_mode").set_value(
-        "Primary particle formation + Aggregation + Fragmentation").run()
+    at.selectbox(key="cry_has_aggregation").set_value("Yes").run()
+    at.selectbox(key="cry_has_fragmentation").set_value("Yes").run()
     assert not at.exception
     latex = at.session_state.latex_string.lower()
     assert "aggregation" in latex
