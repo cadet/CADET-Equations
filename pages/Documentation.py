@@ -45,9 +45,45 @@ for entry in bib_database.entries:
     formatted_refs.append(f'<a id="{anchor_id}"></a>{author} ({year}). <i>{title}</i>{chapter}. {journal}.{doi_html}')
 
 
-st.markdown("""
-<div style="background-color: #f0f4f8; padding: 1.5rem; border-left: 5px solid #1f77b4; border-radius: 8px; line-height: 1.6;">
-<span style="font-size: 2rem; font-weight: bold; color: #1f77b4; font-family: serif;">CADET-Equations</span><br>
+st.markdown(
+    """
+<style>
+.cadet-hero {
+    background-color: #f0f4f8;
+    color: #0f172a;
+    padding: 1.5rem;
+    border-left: 5px solid #023d6b;
+    border-radius: 8px;
+    line-height: 1.6;
+    color-scheme: light dark;
+}
+
+.cadet-hero-title {
+    font-size: 2rem;
+    font-weight: bold;
+    color: #023d6b;
+    font-family: serif;
+}
+
+.cadet-hero a {
+    color: #023d6b;
+}
+
+@media (prefers-color-scheme: dark) {
+    .cadet-hero {
+        background-color: #1A2230;
+        color: #e5e7eb;
+        border-left-color: #023d6b;
+    }
+
+    .cadet-hero-title,
+    .cadet-hero a {
+        color: #023d6b;
+    }
+}
+</style>
+<div class="cadet-hero">
+<span class="cadet-hero-title">CADET-Equations</span><br>
 is a Python tool for <b>generating model equations</b> based on a <b>unified and holistic modeling framework</b> for packed-bed chromatography (<a href="#ref-leweke2021">Leweke, 2021</a>).
 
 This framework embodies the CADET group's modeling philosophy, and its principles are reflected throughout our software stack.
@@ -56,7 +92,8 @@ This framework embodies the CADET group's modeling philosophy, and its principle
 CADET-Equations provides a simplistic user interface that allows users to define models, and outputs the corresponding equations in <b>LaTeX format</b> and as <b>PDF</b>.
 </div>
 """,
-unsafe_allow_html=True)
+    unsafe_allow_html=True,
+)
 
 st.markdown(
 """
