@@ -104,11 +104,10 @@ if uploaded_file is not None:
 
 # User configuration of the model
 
-model_type_ = st.sidebar.radio(
+model_type_ = st.sidebar.selectbox(
     "Model type",
     ["Chromatography", "Crystallization"],
-    key=r"model_type",
-    horizontal=True)
+    key=r"model_type")
 
 var_format_ = st.sidebar.selectbox("Select parameter format", [
                                    "CADET", "Legacy"], key=r"var_format")
