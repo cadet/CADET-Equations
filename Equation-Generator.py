@@ -795,23 +795,55 @@ if st.button("Generate PDF", key=r"generate_pdf"):
         pdf_path = f"{temp_dir}/model.pdf"
 
         # Write LaTeX content to a temporary file
-        with open(tex_path, "w") as f:
+        with open(tex_path, "w", encoding="utf-8") as f:
             f.write(st.session_state.latex_string)
 
-        result = subprocess.run(
-            ["pdflatex", "-output-directory", temp_dir, tex_path],
-            capture_output=True,
-            text=True,
-            cwd=temp_dir
-        )
-
-        if result.returncode != 0:
+        try:
+            result = subprocess.run(
+                [
+                    "pdflatex",
+                    "-interaction=nonstopmode",
+                    "-halt-on-error",
+                    "-file-line-error",
+                    "-output-directory",
+                    temp_dir,
+                    tex_path,
+                ],
+                capture_output=True,
+                text=True,
+                cwd=temp_dir,
+                timeout=90,
+                check=False,
+            )
+        except subprocess.TimeoutExpired as exc:
+            partial = (exc.stderr or exc.stdout or "").strip()
+            if partial:
+                partial = partial[-4000:]
             st.error(
-                "PDF generation failed. Please check the LaTeX compilation output:\n" + result.stderr)
+                "PDF generation timed out after 90 seconds. "
+                "The LaTeX process likely waited on an error prompt.\n"
+                + partial
+            )
         else:
-            with open(pdf_path, "rb") as pdf_file:
-                st.download_button("Download PDF", pdf_file,
-                                   "model.pdf", "application/pdf")
+            if result.returncode != 0:
+                log = (result.stderr or result.stdout or "").strip()
+                if log:
+                    log = log[-4000:]
+                st.error(
+                    "PDF generation failed. LaTeX output:\n" + log
+                )
+            elif not Path(pdf_path).exists():
+                st.error(
+                    "PDF generation failed: pdflatex finished but no PDF file was produced."
+                )
+            else:
+                with open(pdf_path, "rb") as pdf_file:
+                    st.download_button(
+                        "Download PDF",
+                        pdf_file,
+                        "model.pdf",
+                        "application/pdf",
+                    )
 
 if st.button("Generate configuration file", key=r"generate_config"):
 
