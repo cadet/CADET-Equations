@@ -45,16 +45,6 @@ class Crystallization:
         self.has_primary_formation = st.sidebar.selectbox(
             "Primary particle formation (growth/nucleation)",
             ["Yes", "No"], key=r"cry_has_primary_formation") == "Yes"
-        self.has_aggregation = st.sidebar.selectbox(
-            "Aggregation",
-            ["No", "Yes"], key=r"cry_has_aggregation") == "Yes"
-        self.has_fragmentation = st.sidebar.selectbox(
-            "Fragmentation",
-            ["No", "Yes"], key=r"cry_has_fragmentation") == "Yes"
-
-        if not self.has_primary_formation and not self.has_aggregation and not self.has_fragmentation:
-            st.sidebar.warning("At least one mechanism must be enabled.")
-            self.has_primary_formation = True
 
         if self.has_primary_formation:
             with st.sidebar.expander("Growth and nucleation", expanded=True):
@@ -68,6 +58,10 @@ class Crystallization:
                     "Add secondary nucleation", ["No", "Yes"],
                     key=r"cry_has_secondary_nucleation") == "Yes"
 
+        self.has_aggregation = st.sidebar.selectbox(
+            "Aggregation",
+            ["No", "Yes"], key=r"cry_has_aggregation") == "Yes"
+
         if self.has_aggregation:
             with st.sidebar.expander("Aggregation", expanded=True):
                 kernel_labels = list(eq.AGGREGATION_KERNELS.values())
@@ -77,9 +71,13 @@ class Crystallization:
                     key=r"cry_aggregation_kernel")
                 self.aggregation_kernel_index = kernel_keys[kernel_labels.index(selected_kernel)]
 
-        if self.has_fragmentation:
-            with st.sidebar.expander("Fragmentation", expanded=True):
-                st.write("Fragmentation uses a power-law selection function and symmetric breakage kernel.")
+        self.has_fragmentation = st.sidebar.selectbox(
+            "Fragmentation",
+            ["No", "Yes"], key=r"cry_has_fragmentation") == "Yes"
+
+        if not self.has_primary_formation and not self.has_aggregation and not self.has_fragmentation:
+            st.sidebar.warning("At least one mechanism must be enabled.")
+            self.has_primary_formation = True
 
         self.fill_vars_and_params()
 
