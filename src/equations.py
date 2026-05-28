@@ -1049,11 +1049,10 @@ def cry_assumptions(column_type: str, has_primary: bool,
         asmpts.append(r"the growth rate depends on supersaturation;")
 
     if has_aggregation:
-        asmpts.append(r"binary aggregation only (two particles coalesce into one);")
+        asmpts.append(r"aggregation is a binary process (two particles coalesce into one);")
         asmpts.append(r"the aggregation kernel is symmetric, i.e. $\beta(x, \lambda) = \beta(\lambda, x)$;")
 
     if has_fragmentation:
-        asmpts.append(r"binary fragmentation (one particle breaks into daughter particles);")
-        asmpts.append(r"mass is conserved during fragmentation events;")
+        asmpts.append(r"fragmentation is a binary process (one particle breaks into two daughter particles);")
 
     return asmpts
