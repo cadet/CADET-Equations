@@ -133,39 +133,76 @@ div.stButton > button[kind="primary"]:hover {
 </style>
 """, unsafe_allow_html=True)
 
-st.sidebar.markdown("### Model Family")
 
-col1, col2 = st.sidebar.columns(2)
+#%% Developer mode toggle enabling untested features
 
-if col1.button(
-    "Chromatography",
-    key="model_type_chromatography_button",
+if "dev_mode" not in st.session_state:
+    st.session_state["dev_mode"] = False
+
+if st.sidebar.button(
+    "Developer mode",
+    key="dev_mode_button",
     use_container_width=True,
-    type="primary" if st.session_state["model_type"] == "Chromatography" else "secondary",
+    type="primary" if st.session_state["dev_mode"] else "secondary",
 ):
-    st.session_state["model_type"] = "Chromatography"
+    st.session_state["dev_mode"] = not st.session_state["dev_mode"]
     st.rerun()
-
-if col2.button(
-    "Crystallization",
-    key="model_type_crystallization_button",
-    use_container_width=True,
-    type="primary" if st.session_state["model_type"] == "Crystallization" else "secondary",
-):
-    st.session_state["model_type"] = "Crystallization"
-    st.rerun()
-
-st.write("Selected:", st.session_state["model_type"])
-
-model_type_ = st.session_state["model_type"]
 
 st.sidebar.caption(
-	(
-		"Chromatography: Convection, dispersion, fixed-bed particles, binding, and reactions."
-		if model_type_ == "Chromatography"
-		else "Crystallization: Population balance model, nucleation, growth, aggregation and breakage."
+    (
+        "Developer mode enables untested features such as Crystallization and further chromatography model variants."
     )
 )
+
+dev_mode_ = st.session_state["dev_mode"]
+
+if dev_mode_:
+    st.warning(
+        "**Warning:** Models in developer mode are "
+        "work in progress and have not been thoroughly verified. Please "
+        "double-check all equations and parameters before relying on them.",
+        icon="⚠️"
+    )
+
+if dev_mode_:
+    
+    st.sidebar.markdown("### Model Family")
+
+    col1, col2 = st.sidebar.columns(2)
+
+    if col1.button(
+        "Chromatography",
+        key="model_type_chromatography_button",
+        use_container_width=True,
+        type="primary" if st.session_state["model_type"] == "Chromatography" else "secondary",
+    ):
+        st.session_state["model_type"] = "Chromatography"
+        st.rerun()
+
+    if col2.button(
+        "Crystallization",
+        key="model_type_crystallization_button",
+        use_container_width=True,
+        type="primary" if st.session_state["model_type"] == "Crystallization" else "secondary",
+    ):
+        st.session_state["model_type"] = "Crystallization"
+        st.rerun()
+
+    st.write("Selected:", st.session_state["model_type"])
+
+    model_type_ = st.session_state["model_type"]
+
+    st.sidebar.caption(
+        (
+            "Chromatography: Convection, dispersion, fixed-bed particles, binding, and reactions."
+            if model_type_ == "Chromatography"
+            else "Crystallization: Population balance model, nucleation, growth, aggregation and breakage."
+        )
+    )
+
+else:
+    st.session_state["model_type"] = "Chromatography"
+    model_type_ = st.session_state["model_type"]
 
 # %% Variable format: CADET vs. Legacy
 
@@ -308,28 +345,15 @@ if model_type_ == "Crystallization":
     write_and_save("Consistent initial values for all solution variables are defined at $t = 0$.")
 
 
-else:
-    # Chromatography mode (original flow)
-
-    advanced_mode_ = st.sidebar.selectbox("Advanced options (enables e.g. particle size distribution)", [
-                                          "Off", "On"], key=r"advanced_mode") == "On"
-    if advanced_mode_:
-        dev_mode_ = st.sidebar.selectbox("Developer options (not tested! Enables e.g. particle type distribution, per-component configuration)", [
-                                         "Off", "On"], key=r"dev_mode") == "On"
-        if dev_mode_:
-            advanced_mode_ = True
-    else:
-        dev_mode_ = False
-
-    column_model = Column(dev_mode=dev_mode_, advanced_mode=advanced_mode_, var_format=var_format_)
+else: # Chromatography model family
 
     if dev_mode_:
-        st.warning(
-            "**Warning:** Models in developer mode are "
-            "work in progress and have not been thoroughly verified. Please "
-            "double-check all equations and parameters before relying on them.",
-            icon="⚠️"
-        )
+        advanced_mode_ = True
+    else:
+        advanced_mode_ = st.sidebar.selectbox("Advanced options (enables e.g. particle size distribution)", [
+                                            "Off", "On"], key=r"advanced_mode") == "On"
+
+    column_model = Column(dev_mode=dev_mode_, advanced_mode=advanced_mode_, var_format=var_format_)
 
     show_eq_description = st.toggle("Show equation description", key=r"show_eq_description", value=True)
 

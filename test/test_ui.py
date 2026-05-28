@@ -97,7 +97,7 @@ def test_streamlit_app():
     # check if we are in the mode we support
     assert at.selectbox(key="advanced_mode").value == "Off"
     at.selectbox(key="advanced_mode").set_value("On").run()
-    assert at.selectbox(key="dev_mode").value == "Off"
+    assert at.button(key="dev_mode").value == False
 
     # 1) test all configs with PSD = "No" -> no has_binding and no particle_resolution
     assert at.selectbox(key="PSD").value == "No"

@@ -17,7 +17,7 @@ def setup_grm_ptd(at, per_partype_settings):
         'nonlimiting_filmDiff', 'has_surfDiff'
     """
     at.selectbox(key="advanced_mode").set_value("On").run()
-    at.selectbox(key="dev_mode").set_value("On").run()
+    at.button(key="dev_mode_button").click().run()
     n_p = len(per_partype_settings)
     at.number_input(key=r"N^\mathrm{p}").set_value(n_p).run()
     at.selectbox(key="has_binding").set_value("Yes").run()
@@ -158,7 +158,7 @@ def test_ptd_different_binding_models():
 
     at.toggle(key="model_assumptions").set_value(True).run()
     at.selectbox(key="advanced_mode").set_value("On").run()
-    at.selectbox(key="dev_mode").set_value("On").run()
+    at.button(key="dev_mode_button").click().run()
     at.number_input(key=r"N^\mathrm{p}").set_value(2).run()
     at.selectbox(key="has_binding").set_value("Yes").run()
 
@@ -189,7 +189,7 @@ def test_ptd_sma_binding():
 
     at.toggle(key="model_assumptions").set_value(True).run()
     at.selectbox(key="advanced_mode").set_value("On").run()
-    at.selectbox(key="dev_mode").set_value("On").run()
+    at.button(key="dev_mode_button").click().run()
     at.number_input(key=r"N^\mathrm{p}").set_value(2).run()
     at.selectbox(key="has_binding").set_value("Yes").run()
 
@@ -214,7 +214,7 @@ def test_ptd_mixed_binding_and_arbitrary():
     assert not at.exception
 
     at.selectbox(key="advanced_mode").set_value("On").run()
-    at.selectbox(key="dev_mode").set_value("On").run()
+    at.button(key="dev_mode_button").click().run()
     at.number_input(key=r"N^\mathrm{p}").set_value(2).run()
     at.selectbox(key="has_binding").set_value("Yes").run()
 
