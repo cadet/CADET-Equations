@@ -806,15 +806,24 @@ class Column:
         if not self.has_per_component_config():
             return None
 
+        def per_component_value(values, partype_index, component_index):
+            """Return a per-component value from nested or flat storage."""
+            if values is None:
+                return None
+            if values and isinstance(values[0], (list, tuple)):
+                return values[partype_index][component_index]
+            return values[component_index]
+
+        num_partypes = self.N_p if self.N_p > 0 else 1
         groups = {}
         for i in range(self.N_c):
             # Key includes all per-partype settings for this component
             per_partype_key = tuple(
-                (self.nonlimiting_filmDiff_per_comp[j][i],
-                 self.has_surfDiff_per_comp[j][i],
-                 self.req_binding_per_comp[j][i],
-                 self.has_mult_bnd_states_per_comp[j][i])
-                for j in range(self.N_p)
+                (per_component_value(self.nonlimiting_filmDiff_per_comp, j, i),
+                 per_component_value(self.has_surfDiff_per_comp, j, i),
+                 per_component_value(self.req_binding_per_comp, j, i),
+                 per_component_value(self.has_mult_bnd_states_per_comp, j, i))
+                for j in range(num_partypes)
             )
             groups.setdefault(per_partype_key, []).append(i + 1)  # 1-based index
 
