@@ -160,11 +160,10 @@ st.write("Selected:", st.session_state["model_type"])
 model_type_ = st.session_state["model_type"]
 
 st.sidebar.caption(
-    "Selected: "
-    + (
-        "Chromatography - select from transport, particles, binding, and reactions."
-        if model_type_ == "Chromatography"
-        else "Crystallization - population balance, nucleation, growth, and breakage."
+	(
+		"Chromatography: Convection, dispersion, fixed-bed particles, binding, and reactions."
+		if model_type_ == "Chromatography"
+		else "Crystallization: Population balance model, nucleation, growth, aggregation and breakage."
     )
 )
 
