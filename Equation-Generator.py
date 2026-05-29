@@ -12,6 +12,7 @@ from dataclasses import dataclass, field
 import json
 import subprocess
 import tempfile
+from pathlib import Path
 import pandas as pd
 
 from typing import List
@@ -27,6 +28,7 @@ from src.renderer import availability_badge_html, write_and_save as renderer_wri
 from src.model_column import Column
 from src.model_crystallization import Crystallization
 from src.generate_template import generate_unit_operation_script
+from src.handler_cite import load_bibliography, cite_html, cite, render_references
 
 # %% Streamlit UI
 
@@ -213,10 +215,21 @@ var_format_ = st.sidebar.selectbox("Select parameter format", [
 
 file_content = []  # used to export model to files
 
+bibliography_entries = load_bibliography("CITATION.bib")
+used_citation_keys = []
+
 # The following function is used to both print the output and collect it to later generate and export output files
 def write_and_save(output: str, as_latex: bool = False):
 
     renderer_write_and_save(output, var_format_, file_content, as_latex)
+
+
+def write_html_and_save(html_output: str, export_output: str):
+    """Render HTML in Streamlit and save plain text for LaTeX export."""
+    export_output = format_variables(export_output, var_format_)
+    if export_output is not None:
+        file_content.append(export_output)
+    st.markdown(html_output, unsafe_allow_html=True)
 
 
 if model_type_ == "Crystallization":
@@ -255,6 +268,19 @@ if model_type_ == "Crystallization":
     has_primary = cry_model.has_primary_formation
     has_agg = cry_model.has_aggregation
     has_frag = cry_model.has_fragmentation
+
+    write_html_and_save(
+        "Crystallization model equations and assumptions follow established formulations in "
+        + cite_html("ZHANG2024108612", bibliography_entries, used_citation_keys)
+        + " and "
+        + cite_html("ZHANG2025108860", bibliography_entries, used_citation_keys)
+        + ".",
+        "Crystallization model equations and assumptions follow established formulations in "
+        + cite("ZHANG2024108612", bibliography_entries, used_citation_keys)
+        + " and "
+        + cite("ZHANG2025108860", bibliography_entries, used_citation_keys)
+        + "."
+    )
 
     if cry_model.column_type == "CSTR":
         write_and_save(r"Consider a continuously stirred tank reactor (CSTR) with volume $V(t)$, "
@@ -741,6 +767,8 @@ else: # Chromatography model family
 
 
     write_and_save("Consistent initial values for all solution variables (concentrations) are defined at $t = 0$.")
+
+render_references(bibliography_entries, used_citation_keys, file_content)
 
 st.session_state.latex_string = [
     r"""\documentclass{article}
