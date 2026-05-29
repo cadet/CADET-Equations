@@ -1,5 +1,33 @@
 % The following reference is the base for the document that reflects our modeling framework, which is work in progress. It thus serves as a placeholder here.
 
+@article{ZHANG2025108860,
+title = {Solving crystallization/precipitation population balance models in CADET, Part II: Size-based Smoluchowski coagulation and fragmentation equations in batch and continuous modes},
+journal = {Computers & Chemical Engineering},
+volume = {192},
+pages = {108860},
+year = {2025},
+issn = {0098-1354},
+doi = {https://doi.org/10.1016/j.compchemeng.2024.108860},
+url = {https://www.sciencedirect.com/science/article/pii/S0098135424002783},
+author = {Wendi Zhang and Todd Przybycien and Jan Michael Breuer and Eric {von Lieres}},
+keywords = {Smoluchowski coagulation equation, Fragmentation equation, Analytical Jacobians, Open source CADET software, Stirred tank and dispersive plug flow reactors, Finite volume},
+abstract = {A particle size-based Smoluchowski coagulation and fragmentation equation was solved in the free and open source process modeling package CADET. The WFV and MCNP schemes were selected to discretize the internal particle size coordinate. Weights in these schemes were modified to preserve and conserve the zeroth and third moments for size-based equations. Modified propositions and proofs for the scheme are provided. Analytical Jacobians were derived and implemented to reduce the solver’s runtime. A two-dimensional Smoluchowski coagulation and fragmentation equation with axial position as external coordinate was formulated and discretized to support simulations of continuous particulate processes in dispersive plug flow reactors. Five 1D and four 2D test cases were used to validate the implementation and benchmark the solver’s performance. The runtime, L1 error norm, L1 error rate, particle size distribution moments up to sixth order and several scalar metrics were analyzed in detail.}
+}
+
+@article{ZHANG2024108612,
+title = {Solving crystallization/precipitation population balance models in CADET, part I: Nucleation growth and growth rate dispersion in batch and continuous modes on nonuniform grids},
+journal = {Computers & Chemical Engineering},
+volume = {183},
+pages = {108612},
+year = {2024},
+issn = {0098-1354},
+doi = {https://doi.org/10.1016/j.compchemeng.2024.108612},
+url = {https://www.sciencedirect.com/science/article/pii/S0098135424000309},
+author = {Wendi Zhang and Todd Przybycien and Johannes Schmölder and Samuel Leweke and Eric {von Lieres}},
+keywords = {Precipitation and crystallization, Population balance model, Stirred tank and dispersive plug flow reactors, Finite volumes on nonuniform grid, Analytical Jacobian, Open source CADET software},
+abstract = {We have developed, implemented and validated 1D and 2D population balance models (PBMs) in the open-source process simulator CADET. 1D PBMs incorporate the particle size as an internal coordinate and are associated with dynamic mass balances to describe particle-based processes in batch and continuous stirred tank reactors. 2D PBMs include the spatial position as an additional external coordinate to describe particulate systems in dispersive plug flow reactors. Along with particle nucleation and growth, growth rate dispersion is considered. Using the finite volume method, cell face fluxes are reconstructed by upwind, Koren and two weighted essentially non-oscillatory (WENO) schemes. Analytical Jacobians are derived to reduce runtime. The implementations utilize arbitrary grids in the internal coordinate. The implementations are validated and benchmarked using seven test cases. The L1 error norm, L1 error convergence rate, and moments up to sixth order are analyzed. Runtime and approximation errors are reported and discussed in detail.}
+}
+
 @phdthesis{leweke2021,
 author  = {Leweke, Samuel},
 title   = {Unified modeling and efficient simulation of chromatographic separation processes},

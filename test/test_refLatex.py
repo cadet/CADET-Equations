@@ -45,8 +45,11 @@ def apply_model_from_config(at, model_config):
             at.toggle(key=config).set_value(model_config[config]).run()
         elif config in [box.key for box in at.selectbox]:
             at.selectbox(key=config).set_value(model_config[config]).run()
+        elif config in [box.key for box in at.button]:
+            if model_config[config]:
+                at.button(key=config).click().run()
         else:
-            raise ValueError(f"Error: {config} is neither a toggle nor a selectbox in the current session state")
+            raise ValueError(f"Error: {config} is neither a toggle nor a selectbox nor a button in the current session state")
 
     return model_config
 

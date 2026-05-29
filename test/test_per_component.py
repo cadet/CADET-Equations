@@ -24,7 +24,7 @@ def setup_grm_with_per_component(at, n_comp, per_comp_settings, n_p=1):
         Number of particle types (default 1).
     """
     at.selectbox(key="advanced_mode").set_value("On").run()
-    at.selectbox(key="dev_mode").set_value("On").run()
+    at.button(key="dev_mode_button").click().run()
     at.selectbox(key="N_c_choice").set_value(n_comp).run()
     at.number_input(key=r"N^\mathrm{p}").set_value(n_p).run()
     at.selectbox(key="particle_resolution").set_value("1D (radial coordinate)").run()
@@ -139,7 +139,7 @@ def test_per_component_0d_particle_resolution():
     assert not at.exception
 
     at.selectbox(key="advanced_mode").set_value("On").run()
-    at.selectbox(key="dev_mode").set_value("On").run()
+    at.button(key="dev_mode_button").click().run()
     at.selectbox(key="N_c_choice").set_value(2).run()
     at.number_input(key=r"N^\mathrm{p}").set_value(1).run()
     at.selectbox(key="particle_resolution").set_value("0D (homogeneous)").run()
@@ -213,7 +213,7 @@ def test_per_component_no_binding_film_diffusion():
     assert not at.exception
 
     at.selectbox(key="advanced_mode").set_value("On").run()
-    at.selectbox(key="dev_mode").set_value("On").run()
+    at.button(key="dev_mode_button").click().run()
     at.selectbox(key="N_c_choice").set_value(2).run()
     at.number_input(key=r"N^\mathrm{p}").set_value(1).run()
     at.selectbox(key="particle_resolution").set_value("1D (radial coordinate)").run()
@@ -238,7 +238,7 @@ def test_per_component_multi_partype_mutually_exclusive():
     assert not at.exception
 
     at.selectbox(key="advanced_mode").set_value("On").run()
-    at.selectbox(key="dev_mode").set_value("On").run()
+    at.button(key="dev_mode_button").click().run()
     at.selectbox(key="N_c_choice").set_value(2).run()
     at.number_input(key=r"N^\mathrm{p}").set_value(2).run()
     at.selectbox(key="has_binding").set_value("Yes").run()
@@ -258,7 +258,7 @@ def test_arbitrary_n_c_no_per_component():
     assert not at.exception
 
     at.selectbox(key="advanced_mode").set_value("On").run()
-    at.selectbox(key="dev_mode").set_value("On").run()
+    at.button(key="dev_mode_button").click().run()
     at.selectbox(key="N_c_choice").set_value("Arbitrary").run()
     at.number_input(key=r"N^\mathrm{p}").set_value(1).run()
     at.selectbox(key="has_binding").set_value("Yes").run()

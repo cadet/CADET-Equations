@@ -157,7 +157,6 @@ def extract_config_data_from_unit(unit_type, h5_unit_group):
     config = {}
 
     config['advanced_mode'] = "Off"
-    config['dev_mode'] = "Off"
     config['var_format'] = "CADET"
     config['show_eq_description'] = True
     config['model_assumptions'] = True

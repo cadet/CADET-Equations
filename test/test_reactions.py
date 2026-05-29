@@ -13,7 +13,7 @@ def setup_app_with_dev_mode(add_particles="Yes", particle_resolution="1D (radial
     assert not at.exception
 
     at.selectbox(key="advanced_mode").set_value("On").run()
-    at.selectbox(key="dev_mode").set_value("On").run()
+    at.button(key="dev_mode_button").click().run()
     assert not at.exception
 
     if add_particles == "Yes":
@@ -130,7 +130,7 @@ def test_bulk_reaction_0D_tank():
     at.run()
     assert not at.exception
     at.selectbox(key="advanced_mode").set_value("On").run()
-    at.selectbox(key="dev_mode").set_value("On").run()
+    at.button(key="dev_mode_button").click().run()
     at.selectbox(key="column_resolution").set_value("0D (Homogeneous Tank)").run()
     at.selectbox(key="has_reaction_bulk").set_value("Yes").run()
     assert not at.exception
@@ -321,7 +321,7 @@ def test_req_reaction_bulk_0D_tank():
     at.run()
     assert not at.exception
     at.selectbox(key="advanced_mode").set_value("On").run()
-    at.selectbox(key="dev_mode").set_value("On").run()
+    at.button(key="dev_mode_button").click().run()
     at.selectbox(key="column_resolution").set_value("0D (Homogeneous Tank)").run()
     at.selectbox(key="has_reaction_bulk").set_value("Yes").run()
     at.selectbox(key="req_reaction_bulk").set_value("Rapid-equilibrium").run()
@@ -340,7 +340,7 @@ def test_req_reaction_with_psd():
     at.run()
     assert not at.exception
     at.selectbox(key="advanced_mode").set_value("On").run()
-    at.selectbox(key="dev_mode").set_value("On").run()
+    at.button(key="dev_mode_button").click().run()
     # dev_mode uses number_input for N_p
     at.number_input(key=r"N^\mathrm{p}").set_value(2).run()
     at.selectbox(key="has_binding").set_value("Yes").run()
