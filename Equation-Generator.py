@@ -780,7 +780,42 @@ else: # Chromatography model family
                        write_and_save(r"where the counter-ion concentration $c^{\s}_0$ satisfies the electroneutrality constraint.")
 
 
-    write_and_save("Consistent initial values for all solution variables (concentrations) are defined at $t = 0$.")
+# %% Reaction model definition section
+if column_model.reaction_model != "Arbitrary":
+    has_kinetic_bulk = column_model.has_reaction_bulk and not column_model.req_reaction_bulk
+    has_kinetic_par_liq = column_model.has_reaction_particle_liquid and not column_model.req_reaction_particle_liquid
+    has_kinetic_par_sol = column_model.has_reaction_particle_solid and not column_model.req_reaction_particle_solid
+
+    if has_kinetic_bulk or has_kinetic_par_liq or has_kinetic_par_sol:
+        write_and_save("### " + column_model.reaction_model + " reaction model")
+        file_content.append(r"\subsection*{" + column_model.reaction_model + r" reaction model}")
+
+        phase_map = [
+            (has_kinetic_bulk, "bulk", "bulk liquid"),
+            (has_kinetic_par_liq, "particle_liquid", "particle liquid"),
+            (has_kinetic_par_sol, "particle_solid", "particle solid"),
+        ]
+        for active, phase_key, phase_label in phase_map:
+            if not active:
+                continue
+            definition = eq.reaction_model_definition(column_model.reaction_model, phase_key)
+            if definition is None:
+                continue
+            main_eq, flux_eq = definition
+            write_and_save(r"The " + phase_label + " phase reaction term is given by")
+            write_and_save(r"""
+\begin{align}
+""" + main_eq + r"""
+\end{align}
+""", as_latex=True)
+            write_and_save("where")
+            write_and_save(r"""
+\begin{align}
+""" + flux_eq + r""".
+\end{align}
+""", as_latex=True)
+
+write_and_save("Consistent initial values for all solution variables (concentrations) are defined at $t = 0$.")
 
 render_references(bibliography_entries, used_citation_keys, file_content)
 

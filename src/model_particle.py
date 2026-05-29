@@ -41,6 +41,7 @@ class Particle:
     has_reaction_solid: bool = False
     req_reaction_liquid: bool = False
     req_reaction_solid: bool = False
+    reaction_model: str = "Arbitrary"
     # volume fraction ?
     # binding -> is_kinetic, nBound
     vars_and_params: List[dict] = field(default_factory=list, init=False, compare=False, hash=False)
@@ -133,9 +134,25 @@ class Particle:
                 self.vars_and_params.append({"Group" : 0.1, "Symbol": r"R^\mathrm{pc}", "Description": r"particle core radius", "Unit": r"-", "Dependence": r"-", "Property": r"\in (0, R^\mathrm{p})"})
 
         if self.has_reaction_liquid and not self.req_reaction_liquid:
-            symbol_name_ = r"f^{\mathrm{react},\p}_{i}" if self.single_partype else r"f^{\mathrm{react},\p}_{j,i}"
-            dep_ = r"\vec{c}^{\p}, \vec{c}^{\s}; i" if self.single_partype else r"\vec{c}^{\p}, \vec{c}^{\s}; j, i"
-            vars_and_params_.append({"Group" : 10.2, "Symbol": symbol_name_, "Description": r"particle liquid phase reaction function", "Unit": r"\frac{mol}{m^3 \cdot s}", "Dependence": dep_})
+            if self.reaction_model == "Arbitrary":
+                symbol_name_ = r"f^{\mathrm{react},\p}_{i}" if self.single_partype else r"f^{\mathrm{react},\p}_{j,i}"
+                dep_ = r"\vec{c}^{\p}, \vec{c}^{\s}; i" if self.single_partype else r"\vec{c}^{\p}, \vec{c}^{\s}; j, i"
+                vars_and_params_.append({"Group" : 10.2, "Symbol": symbol_name_, "Description": r"particle liquid phase reaction function", "Unit": r"\frac{mol}{m^3 \cdot s}", "Dependence": dep_})
+            elif self.reaction_model == "Mass Action Law":
+                idx_ = "i" if self.single_partype else "j,i"
+                vars_and_params_.append({"Group" : 10.2, "Symbol": r"N^{\mathrm{react},\p}", "Description": r"number of particle liquid reactions", "Unit": r"-", "Dependence": r"-"})
+                vars_and_params_.append({"Group" : 10.2, "Symbol": r"S^{\p}_{" + idx_ + r",r}", "Description": r"stoichiometric matrix (particle liquid)", "Unit": r"-", "Dependence": idx_ + r", r"})
+                vars_and_params_.append({"Group" : 10.21, "Symbol": r"k^{\mathrm{fwd},\p}_{r}", "Description": r"forward rate constant (particle liquid)", "Unit": r"\frac{1}{s} \cdot \left(\frac{m^3}{mol}\right)^{n}", "Dependence": r"r"})
+                vars_and_params_.append({"Group" : 10.21, "Symbol": r"k^{\mathrm{bwd},\p}_{r}", "Description": r"backward rate constant (particle liquid)", "Unit": r"\frac{1}{s} \cdot \left(\frac{m^3}{mol}\right)^{n}", "Dependence": r"r"})
+                vars_and_params_.append({"Group" : 10.21, "Symbol": r"e^{\mathrm{fwd},\p}_{\ell,r}", "Description": r"forward exponent matrix (particle liquid)", "Unit": r"-", "Dependence": r"\ell, r"})
+                vars_and_params_.append({"Group" : 10.21, "Symbol": r"e^{\mathrm{bwd},\p}_{\ell,r}", "Description": r"backward exponent matrix (particle liquid)", "Unit": r"-", "Dependence": r"\ell, r"})
+            elif self.reaction_model == "Michaelis Menten":
+                idx_ = "i" if self.single_partype else "j,i"
+                vars_and_params_.append({"Group" : 10.2, "Symbol": r"N^{\mathrm{react},\p}", "Description": r"number of particle liquid reactions", "Unit": r"-", "Dependence": r"-"})
+                vars_and_params_.append({"Group" : 10.2, "Symbol": r"S^{\p}_{" + idx_ + r",r}", "Description": r"stoichiometric matrix (particle liquid)", "Unit": r"-", "Dependence": idx_ + r", r"})
+                vars_and_params_.append({"Group" : 10.21, "Symbol": r"v^{\mathrm{max},\p}_{r}", "Description": r"maximum reaction rate (particle liquid)", "Unit": r"\frac{mol}{m^3 \cdot s}", "Dependence": r"r"})
+                vars_and_params_.append({"Group" : 10.21, "Symbol": r"K^{\mathrm{M},\p}_{m,r}", "Description": r"Michaelis constant (particle liquid)", "Unit": r"\frac{mol}{m^3}", "Dependence": r"m, r"})
+                vars_and_params_.append({"Group" : 10.21, "Symbol": r"N^{\mathrm{sub},\p}_{r}", "Description": r"number of substrates per reaction (particle liquid)", "Unit": r"-", "Dependence": r"r"})
 
         if self.has_reaction_liquid and self.req_reaction_liquid:
             symbol_name_ = r"g^{\mathrm{react,eq},\p}_{k}" if self.single_partype else r"g^{\mathrm{react,eq},\p}_{j,k}"
@@ -145,9 +162,25 @@ class Particle:
             vars_and_params_.append({"Group" : 10.21, "Symbol": r"M^{\p}", "Description": r"conserved moiety matrix for particle liquid reactions", "Unit": r"-", "Dependence": r"-"})
 
         if self.has_reaction_solid and not self.req_reaction_solid:
-            symbol_name_ = r"f^{\mathrm{react},\s}_{i}" if self.single_partype else r"f^{\mathrm{react},\s}_{j,i}"
-            dep_ = r"\vec{c}^{\p}, \vec{c}^{\s}; i" if self.single_partype else r"\vec{c}^{\p}, \vec{c}^{\s}; j, i"
-            vars_and_params_.append({"Group" : 10.3, "Symbol": symbol_name_, "Description": r"particle solid phase reaction function", "Unit": r"\frac{mol}{m^3 \cdot s}", "Dependence": dep_})
+            if self.reaction_model == "Arbitrary":
+                symbol_name_ = r"f^{\mathrm{react},\s}_{i}" if self.single_partype else r"f^{\mathrm{react},\s}_{j,i}"
+                dep_ = r"\vec{c}^{\p}, \vec{c}^{\s}; i" if self.single_partype else r"\vec{c}^{\p}, \vec{c}^{\s}; j, i"
+                vars_and_params_.append({"Group" : 10.3, "Symbol": symbol_name_, "Description": r"particle solid phase reaction function", "Unit": r"\frac{mol}{m^3 \cdot s}", "Dependence": dep_})
+            elif self.reaction_model == "Mass Action Law":
+                idx_ = "i" if self.single_partype else "j,i"
+                vars_and_params_.append({"Group" : 10.3, "Symbol": r"N^{\mathrm{react},\s}", "Description": r"number of particle solid reactions", "Unit": r"-", "Dependence": r"-"})
+                vars_and_params_.append({"Group" : 10.3, "Symbol": r"S^{\s}_{" + idx_ + r",r}", "Description": r"stoichiometric matrix (particle solid)", "Unit": r"-", "Dependence": idx_ + r", r"})
+                vars_and_params_.append({"Group" : 10.31, "Symbol": r"k^{\mathrm{fwd},\s}_{r}", "Description": r"forward rate constant (particle solid)", "Unit": r"\frac{1}{s} \cdot \left(\frac{m^3}{mol}\right)^{n}", "Dependence": r"r"})
+                vars_and_params_.append({"Group" : 10.31, "Symbol": r"k^{\mathrm{bwd},\s}_{r}", "Description": r"backward rate constant (particle solid)", "Unit": r"\frac{1}{s} \cdot \left(\frac{m^3}{mol}\right)^{n}", "Dependence": r"r"})
+                vars_and_params_.append({"Group" : 10.31, "Symbol": r"e^{\mathrm{fwd},\s}_{\ell,r}", "Description": r"forward exponent matrix (particle solid)", "Unit": r"-", "Dependence": r"\ell, r"})
+                vars_and_params_.append({"Group" : 10.31, "Symbol": r"e^{\mathrm{bwd},\s}_{\ell,r}", "Description": r"backward exponent matrix (particle solid)", "Unit": r"-", "Dependence": r"\ell, r"})
+            elif self.reaction_model == "Michaelis Menten":
+                idx_ = "i" if self.single_partype else "j,i"
+                vars_and_params_.append({"Group" : 10.3, "Symbol": r"N^{\mathrm{react},\s}", "Description": r"number of particle solid reactions", "Unit": r"-", "Dependence": r"-"})
+                vars_and_params_.append({"Group" : 10.3, "Symbol": r"S^{\s}_{" + idx_ + r",r}", "Description": r"stoichiometric matrix (particle solid)", "Unit": r"-", "Dependence": idx_ + r", r"})
+                vars_and_params_.append({"Group" : 10.31, "Symbol": r"v^{\mathrm{max},\s}_{r}", "Description": r"maximum reaction rate (particle solid)", "Unit": r"\frac{mol}{m^3 \cdot s}", "Dependence": r"r"})
+                vars_and_params_.append({"Group" : 10.31, "Symbol": r"K^{\mathrm{M},\s}_{m,r}", "Description": r"Michaelis constant (particle solid)", "Unit": r"\frac{mol}{m^3}", "Dependence": r"m, r"})
+                vars_and_params_.append({"Group" : 10.31, "Symbol": r"N^{\mathrm{sub},\s}_{r}", "Description": r"number of substrates per reaction (particle solid)", "Unit": r"-", "Dependence": r"r"})
 
         if self.has_reaction_solid and self.req_reaction_solid:
             symbol_name_ = r"g^{\mathrm{react,eq},\s}_{k}" if self.single_partype else r"g^{\mathrm{react,eq},\s}_{j,k}"

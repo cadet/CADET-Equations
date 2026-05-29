@@ -332,6 +332,94 @@ def int_filmDiff_term(particle, numIdxBegin, numIdxEnd, singleParticle:bool, non
     return term
 
 
+# %% Reaction model equations
+
+REACTION_MODELS = ["Arbitrary", "Mass Action Law", "Michaelis Menten"]
+
+
+def mass_action_law_definition(phase: str):
+    """Return (main_eq, flux_eq) LaTeX strings for the Mass Action Law reaction model.
+
+    Parameters
+    ----------
+    phase : str
+        One of "bulk", "particle_liquid", "particle_solid".
+    """
+    sup = {"bulk": r"\b", "particle_liquid": r"\p", "particle_solid": r"\s"}[phase]
+
+    main_eq = (
+        r"f^{\mathrm{react}," + sup + r"}_{i}\left( \vec{c}^{" + sup + r"} \right) = "
+        r"\sum_{r=0}^{N^{\mathrm{react}," + sup + r"}-1} S^{" + sup + r"}_{i,r} \,"
+        r"\varphi^{" + sup + r"}_{r}\left( \vec{c}^{" + sup + r"} \right)"
+    )
+
+    flux_eq = (
+        r"\varphi^{" + sup + r"}_{r}\left( \vec{c}^{" + sup + r"} \right) = "
+        r"k^{\mathrm{fwd}," + sup + r"}_{r} \prod_{\ell=0}^{N^{\mathrm{c}}-1} "
+        r"\left(c^{" + sup + r"}_{\ell}\right)^{e^{\mathrm{fwd}," + sup + r"}_{\ell,r}}"
+        r" - k^{\mathrm{bwd}," + sup + r"}_{r} \prod_{\ell=0}^{N^{\mathrm{c}}-1} "
+        r"\left(c^{" + sup + r"}_{\ell}\right)^{e^{\mathrm{bwd}," + sup + r"}_{\ell,r}}"
+    )
+
+    return main_eq, flux_eq
+
+
+def michaelis_menten_definition(phase: str):
+    """Return (main_eq, flux_eq) LaTeX strings for the Michaelis-Menten reaction model.
+
+    Parameters
+    ----------
+    phase : str
+        One of "bulk", "particle_liquid", "particle_solid".
+    """
+    sup = {"bulk": r"\b", "particle_liquid": r"\p", "particle_solid": r"\s"}[phase]
+
+    main_eq = (
+        r"f^{\mathrm{react}," + sup + r"}_{i}\left( \vec{c}^{" + sup + r"} \right) = "
+        r"\sum_{r=0}^{N^{\mathrm{react}," + sup + r"}-1} S^{" + sup + r"}_{i,r} \,"
+        r"\nu^{" + sup + r"}_{r}"
+    )
+
+    flux_eq = (
+        r"\nu^{" + sup + r"}_{r} = "
+        r"v^{\mathrm{max}," + sup + r"}_{r} \prod_{m=1}^{N^{\mathrm{sub}," + sup + r"}_{r}} "
+        r"\frac{c^{" + sup + r"}_{m,r}}"
+        r"{K^{\mathrm{M}," + sup + r"}_{m,r} + c^{" + sup + r"}_{m,r}}"
+    )
+
+    return main_eq, flux_eq
+
+
+def reaction_model_definition(reaction_model: str, phase: str):
+    """Get the reaction model definition equations for the specified model and phase.
+
+    Returns a (main_eq, flux_eq) tuple, or None if the model is Arbitrary.
+    """
+    if reaction_model == "Mass Action Law":
+        return mass_action_law_definition(phase)
+    elif reaction_model == "Michaelis Menten":
+        return michaelis_menten_definition(phase)
+    return None
+
+
+def reaction_model_assumptions(reaction_model: str):
+    """Return a list of assumption strings for the selected reaction model."""
+    if reaction_model == "Arbitrary":
+        return ["No custom assumptions"]
+    elif reaction_model == "Mass Action Law":
+        return [
+            "the reaction rates follow the law of mass action, where rates are proportional to products of reactant concentrations raised to their stoichiometric powers;",
+            "this model applies to reactions occurring within a single phase (liquid or solid) only;",
+        ]
+    elif reaction_model == "Michaelis Menten":
+        return [
+            "the reaction rates follow Michaelis-Menten enzyme kinetics, characterized by saturation at high substrate concentrations;",
+            "this model applies to reactions occurring within a single phase (liquid or solid) only;",
+            r"for the original source see Michaelis, L. and Menten, M.L. (1913). Die Kinetik der Invertinwirkung. Biochem. Z., 49, 333-369;",
+        ]
+    return None
+
+
 # Reaction terms
 def bulk_reaction_term():
     return r"f^{\mathrm{react},\b}_{i}\left( \vec{c}^{\b} \right)"

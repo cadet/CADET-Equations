@@ -76,6 +76,7 @@ class Column:
     req_reaction_bulk: bool = False
     req_reaction_particle_liquid: bool = False
     req_reaction_particle_solid: bool = False
+    reaction_model: str = "Arbitrary"
 
     vars_and_params: List[dict] = field(default_factory=list)
 
@@ -271,7 +272,8 @@ class Column:
                         has_reaction_liquid=self.has_reaction_particle_liquid,
                         has_reaction_solid=self.has_reaction_particle_solid,
                         req_reaction_liquid=self.req_reaction_particle_liquid,
-                        req_reaction_solid=self.req_reaction_particle_solid
+                        req_reaction_solid=self.req_reaction_particle_solid,
+                        reaction_model=self.reaction_model
                     )
                 )
 
@@ -305,38 +307,43 @@ class Column:
             self.particle_models = []
 
         with st.sidebar.expander("Configure reactions"):
-        
+
             if not self.dev_mode:
-                
+
                 self.has_reaction_bulk = st.selectbox(
                     "Add bulk liquid reaction (kinetic)", ["No", "Yes"], key=r"has_reaction_bulk") == "Yes"
             else:
-                
+
                 self.has_reaction_bulk = st.selectbox(
                     "Add bulk liquid reaction", ["No", "Yes"], key=r"has_reaction_bulk") == "Yes"
-            
+
             if self.has_reaction_bulk and self.dev_mode:
-                
+
                 self.req_reaction_bulk = st.selectbox(
                     "Bulk reaction kinetics mode", ["Kinetic", "Rapid-equilibrium"], key=r"req_reaction_bulk") == "Rapid-equilibrium"
-            
+
             if self.N_p > 0 and self.dev_mode:
-            
+
                 self.has_reaction_particle_liquid = st.selectbox(
                     "Add particle liquid reaction", ["No", "Yes"], key=r"has_reaction_particle_liquid") == "Yes"
-                
+
                 if self.has_reaction_particle_liquid:
-                
+
                     self.req_reaction_particle_liquid = st.selectbox(
                         "Particle liquid reaction kinetics mode", ["Kinetic", "Rapid-equilibrium"], key=r"req_reaction_particle_liquid") == "Rapid-equilibrium"
-                
+
                 if self.has_binding:
                     self.has_reaction_particle_solid = st.selectbox(
                         "Add particle solid reaction", ["No", "Yes"], key=r"has_reaction_particle_solid") == "Yes"
-                    
+
                     if self.has_reaction_particle_solid:
                         self.req_reaction_particle_solid = st.selectbox(
                             "Particle solid reaction kinetics mode", ["Kinetic", "Rapid-equilibrium"], key=r"req_reaction_particle_solid") == "Rapid-equilibrium"
+
+            has_any_reaction = self.has_reaction_bulk or self.has_reaction_particle_liquid or self.has_reaction_particle_solid
+            if has_any_reaction:
+                self.reaction_model = st.selectbox(
+                    "Reaction model", eq.REACTION_MODELS, key=r"reaction_model")
 
         self.fill_vars_and_params()
 
@@ -594,8 +601,22 @@ class Column:
                 self.vars_and_params.append({"Group" : 7, "Symbol": symbol_name_, "Description": r"film diffusion coefficient", "Unit": r"\frac{m}{s}", "Dependence": r"i" if self.N_p<=1 else r"j,i", "Property": r"\geq 0"})
 
         if self.has_reaction_bulk and not self.req_reaction_bulk:
-            self.vars_and_params.append({"Group" : 8, "Symbol": r"f^{\mathrm{react},\b}_{i}", "Description": r"bulk liquid phase reaction function", "Unit": r"\frac{mol}{m^3 \cdot s}", "Dependence": r"\vec{c}^{\b}; i"})
-            self.vars_and_params.append({"Group" : 8.1, "Symbol": r"\vec{c}^{\b}", "Description": r"bulk liquid components vector", "Unit": r"[\frac{mol}{m^3}]", "Dependence": state_deps})
+            if self.reaction_model == "Arbitrary":
+                self.vars_and_params.append({"Group" : 8, "Symbol": r"f^{\mathrm{react},\b}_{i}", "Description": r"bulk liquid phase reaction function", "Unit": r"\frac{mol}{m^3 \cdot s}", "Dependence": r"\vec{c}^{\b}; i"})
+                self.vars_and_params.append({"Group" : 8.1, "Symbol": r"\vec{c}^{\b}", "Description": r"bulk liquid components vector", "Unit": r"[\frac{mol}{m^3}]", "Dependence": state_deps})
+            elif self.reaction_model == "Mass Action Law":
+                self.vars_and_params.append({"Group" : 8, "Symbol": r"N^{\mathrm{react},\b}", "Description": r"number of bulk reactions", "Unit": r"-", "Dependence": r"-"})
+                self.vars_and_params.append({"Group" : 8, "Symbol": r"S^{\b}_{i,r}", "Description": r"stoichiometric matrix (bulk)", "Unit": r"-", "Dependence": r"i, r"})
+                self.vars_and_params.append({"Group" : 8.1, "Symbol": r"k^{\mathrm{fwd},\b}_{r}", "Description": r"forward rate constant (bulk)", "Unit": r"\frac{1}{s} \cdot \left(\frac{m^3}{mol}\right)^{n}", "Dependence": r"r"})
+                self.vars_and_params.append({"Group" : 8.1, "Symbol": r"k^{\mathrm{bwd},\b}_{r}", "Description": r"backward rate constant (bulk)", "Unit": r"\frac{1}{s} \cdot \left(\frac{m^3}{mol}\right)^{n}", "Dependence": r"r"})
+                self.vars_and_params.append({"Group" : 8.1, "Symbol": r"e^{\mathrm{fwd},\b}_{\ell,r}", "Description": r"forward exponent matrix (bulk)", "Unit": r"-", "Dependence": r"\ell, r"})
+                self.vars_and_params.append({"Group" : 8.1, "Symbol": r"e^{\mathrm{bwd},\b}_{\ell,r}", "Description": r"backward exponent matrix (bulk)", "Unit": r"-", "Dependence": r"\ell, r"})
+            elif self.reaction_model == "Michaelis Menten":
+                self.vars_and_params.append({"Group" : 8, "Symbol": r"N^{\mathrm{react},\b}", "Description": r"number of bulk reactions", "Unit": r"-", "Dependence": r"-"})
+                self.vars_and_params.append({"Group" : 8, "Symbol": r"S^{\b}_{i,r}", "Description": r"stoichiometric matrix (bulk)", "Unit": r"-", "Dependence": r"i, r"})
+                self.vars_and_params.append({"Group" : 8.1, "Symbol": r"v^{\mathrm{max},\b}_{r}", "Description": r"maximum reaction rate (bulk)", "Unit": r"\frac{mol}{m^3 \cdot s}", "Dependence": r"r"})
+                self.vars_and_params.append({"Group" : 8.1, "Symbol": r"K^{\mathrm{M},\b}_{m,r}", "Description": r"Michaelis constant (bulk)", "Unit": r"\frac{mol}{m^3}", "Dependence": r"m, r"})
+                self.vars_and_params.append({"Group" : 8.1, "Symbol": r"N^{\mathrm{sub},\b}_{r}", "Description": r"number of substrates per reaction (bulk)", "Unit": r"-", "Dependence": r"r"})
 
         if self.has_reaction_bulk and self.req_reaction_bulk:
             self.vars_and_params.append({"Group" : 8, "Symbol": r"g^{\mathrm{react,eq},\b}_{k}", "Description": r"bulk liquid phase equilibrium constraint function", "Unit": r"\frac{mol}{m^3}", "Dependence": r"\vec{c}^{\b}; k"})
@@ -977,6 +998,10 @@ class Column:
             elif len(unique_models) > 1:
                 model_name += " with " + "/".join(sorted(unique_models)) + " binding"
 
+        has_any_reaction = self.has_reaction_bulk or self.has_reaction_particle_liquid or self.has_reaction_particle_solid
+        if has_any_reaction and self.reaction_model != "Arbitrary":
+            model_name += f" and {self.reaction_model} reactions"
+
         return model_name
 
     def model_assumptions(self):
@@ -1020,6 +1045,9 @@ class Column:
                 asmpts.update({f"{bm} binding model assumptions": eq.binding_model_assumptions(bm)})
         elif self.binding_model != "Arbitrary":
             asmpts.update({"Binding model assumptions": eq.binding_model_assumptions(self.binding_model)})
+
+        if self.reaction_model != "Arbitrary" and (self.has_reaction_bulk or self.has_reaction_particle_liquid or self.has_reaction_particle_solid):
+            asmpts.update({f"{self.reaction_model} reaction model assumptions": eq.reaction_model_assumptions(self.reaction_model)})
 
         return asmpts
 
