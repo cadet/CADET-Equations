@@ -30,9 +30,19 @@ def read_tex_file(file_path):
 def _config_key_order(key):
     """Sort config keys so that dependent widgets are set after their parents."""
     order = {
-        "advanced_mode": 0, "dev_mode": 1,
+        "dev_mode": -2, "model_type": -1,
+        "advanced_mode": 0,
         "column_type": 1.5, "column_resolution": 2,
         "add_particles": 3, "PSD": 3.2, "has_binding": 3.3, "particle_resolution": 3.5,
+        "cry_column_type": 4,
+        "cry_has_axial_dispersion": 4.5,
+        "cry_has_primary_formation": 5,
+        "cry_size_dependent_growth": 6,
+        "cry_has_growth_dispersion": 6.1,
+        "cry_has_secondary_nucleation": 6.2,
+        "cry_has_aggregation": 7,
+        "cry_aggregation_kernel": 7.1,
+        "cry_has_fragmentation": 8,
     }
     return order.get(key, 10)
 
@@ -41,7 +51,13 @@ def apply_model_from_config(at, model_config):
 
     for config in sorted(model_config.keys(), key=_config_key_order):
 
-        if config in [box.key for box in at.toggle]:
+        if config == "dev_mode":
+            if model_config[config]:
+                at.button(key="dev_mode_button").click().run()
+        elif config == "model_type":
+            if model_config[config] == "Crystallization":
+                at.button(key="model_type_crystallization_button").click().run()
+        elif config in [box.key for box in at.toggle]:
             at.toggle(key=config).set_value(model_config[config]).run()
         elif config in [box.key for box in at.selectbox]:
             at.selectbox(key=config).set_value(model_config[config]).run()
@@ -55,7 +71,7 @@ def apply_model_from_config(at, model_config):
 
 @pytest.mark.ci
 @pytest.mark.reference
-@pytest.mark.parametrize("model_name", ["CSTR", "Plug_Flow", "LRM_dynLin", "LRMP_dynLin", "LRMP_reqLin", "GRMsd_dynLin", "GRM", "GRM_dynLin", "GRMsd_PSD_dynLin", "GRMsd2D_dynLin", "GRMsd_nonLimFD_parCore", "GRMsd_nonLimFD_reqBnd", "GeneralFiniteBath", "Radial_Plug_Flow", "Radial_Dispersive_Plug_Flow", "Radial_GRM", "Radial_LRM", "Radial_LRMP", "Frustum_Plug_Flow", "Frustum_GRM"])
+@pytest.mark.parametrize("model_name", ["CSTR", "Plug_Flow", "LRM_dynLin", "LRMP_dynLin", "LRMP_reqLin", "GRMsd_dynLin", "GRM", "GRM_dynLin", "GRMsd_PSD_dynLin", "GRMsd2D_dynLin", "GRMsd_nonLimFD_parCore", "GRMsd_nonLimFD_reqBnd", "GeneralFiniteBath", "Radial_Plug_Flow", "Radial_Dispersive_Plug_Flow", "Radial_GRM", "Radial_LRM", "Radial_LRMP", "Frustum_Plug_Flow", "Frustum_GRM", "cry_CSTR_primaryGrowth", "cry_CSTR_Agg_Frag", "cry_DPFR_aggregation", "cry_DPFR_primarySecondaryNucleation"])
 def test_json_config_output_against_latex_reference(model_name, test_dir):
 
     at = AppTest.from_file("../Equation-Generator.py")
@@ -87,7 +103,7 @@ def test_json_config_output_against_latex_reference(model_name, test_dir):
 def test_CADET_config_output_against_latex_reference(model_name, test_dir):
 
     CADET_file_ref = {
-        "CSTR": "CSTR",
+        "CSTR": None,
         "Plug_Flow": r"PlugFlow_1comp_benchmark1_DG_P3Z1",
         "LRM_dynLin": r"LRM_dynLin_1comp_benchmark1_DG_P3Z1",
         "LRMP_dynLin": r"LRMP_dynLin_1comp_benchmark1_DG_P3Z1",
@@ -220,5 +236,49 @@ def test_CADET_config_manual_unitIdx(test_dir):
     latex_string = at.session_state.latex_string
 
     ref_string = read_tex_file(ref_latex_dir + "LRMP_reqLin.tex")
+
+    assert latex_string == ref_string
+
+
+@pytest.mark.ci
+@pytest.mark.reference
+@pytest.mark.parametrize("model_name", ["cry_CSTR_primaryGrowth", "cry_CSTR_Agg_Frag", "cry_DPFR_aggregation", "cry_DPFR_primarySecondaryNucleation"])
+def test_crystallization_h5_config_output(model_name, test_dir):
+
+    CADET_file_ref = {
+        "cry_CSTR_primaryGrowth": "ref_cry_CSTR_PBM_primaryNucleationGrowthGrowthRateDispersion_benchmark1",
+        "cry_CSTR_Agg_Frag": "ref_cry_CSTR_PBM_Agg_Frag_benchmark1",
+        "cry_DPFR_aggregation": "ref_cry_DPFR_PBM_aggregation_benchmark1",
+        "cry_DPFR_primarySecondaryNucleation": "ref_cry_DPFR_PBM_primarySecondaryNucleationGrowth_benchmark1",
+    }
+
+    ref_name = CADET_file_ref[model_name]
+
+    at = AppTest.from_file("../Equation-Generator.py")
+
+    at.run()
+    assert not at.exception
+
+    at.toggle(key="model_assumptions").set_value(True).run()
+
+    config_file = test_dir + "/data/CADET_configs/" + ref_name + ".h5"
+
+    model_config = load_CADET_h5.get_config_from_CADET_h5(config_file, "-01")
+
+    json_config_dir = test_dir + '/data/EquationGenerator_configs/'
+
+    with open(json_config_dir + model_name + ".json", 'r') as file:
+
+        model_config_json = json.load(file)
+
+        assert model_config == model_config_json
+
+    apply_model_from_config(at, model_config)
+
+    latex_string = at.session_state.latex_string
+
+    ref_latex_dir = test_dir + '/data/ref_latex/'
+
+    ref_string = read_tex_file(ref_latex_dir + model_name + ".tex")
 
     assert latex_string == ref_string

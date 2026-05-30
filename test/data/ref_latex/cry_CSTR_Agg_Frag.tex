@@ -1,0 +1,69 @@
+\documentclass{article}
+
+\usepackage{amssymb,amsmath,mleftright}
+
+\begin{document}
+
+Model assumptions:
+\begin{itemize}
+\item the fluid density and viscosity are constant in time and space;
+\item the process is isothermal;
+\item the reactor is spatially homogeneous (perfectly mixed);
+\item nucleation produces particles at a minimum critical size $x_c$;
+\item the growth rate depends on supersaturation;
+\item aggregation is a binary process (two particles coalesce into one);
+\item the aggregation kernel is symmetric, i.e. $\beta(x, \lambda) = \beta(\lambda, x)$;
+\item fragmentation is a binary process (one particle breaks into two daughter particles);
+\end{itemize}
+
+
+\section*{Crystallization in CSTR with growth/nucleation, aggregation, fragmentation}
+Crystallization model equations and assumptions follow established formulations in Zhang et al. (2024) and Zhang et al. (2025).
+Consider a continuously stirred tank reactor (CSTR) with volume $V(t)$, observed over a time interval $(0, T^{\mathrm{end}})$. The particle population is described by the number density $n(t, x)$ over the internal coordinate (particle size) $x$.
+The evolution of the number density is governed by the population balance equation
+\begin{align}\frac{\partial (n V)}{\partial t} &= F_{\mathrm{in}} n_{\mathrm{in}} - F_{\mathrm{out}} n - V \left( \frac{\partial (v_G n)}{\partial x} - D_g \frac{\partial^2 n}{\partial x^2} - B_0 \delta(x - x_c) \right) + V \left( B_{\mathrm{agg}} - D_{\mathrm{agg}} \right) + V \left( B_{\mathrm{frag}} - D_{\mathrm{frag}} \right). \end{align}
+with boundary conditions in the internal coordinate
+\begin{align}
+\left. \left( n v_G - D_g \frac{\partial n}{\partial x} \right) \right|_{x = x_c} &= B_0, \\
+\left. \left( n v_G - D_g \frac{\partial n}{\partial x} \right) \right|_{x \to \infty} &= 0.
+\end{align}
+The solute mass balance is given by
+\begin{align}
+\frac{\mathrm{d} V}{\mathrm{d} t} &= F_{\mathrm{in}} - F_{\mathrm{out}}, \\
+\frac{\partial (c V)}{\partial t} &= F_{\mathrm{in}} c_{\mathrm{in}} - F_{\mathrm{out}} c - \rho k_v V \left( B_0 x_c^3 + 3 \int_{x_c}^{\infty} v_G n \, x^2 \, \mathrm{d}x \right).
+\end{align}
+The constitutive relations for growth and nucleation are defined as follows. The relative supersaturation is
+\begin{align}s = \frac{c - c_{\mathrm{eq}}}{c_{\mathrm{eq}}}. \end{align}
+The growth rate is
+\begin{align}v_G = k_g s^g a. \end{align}
+The primary nucleation rate is
+\begin{align}B_p = k_p s^u. \end{align}
+The secondary nucleation rate is
+\begin{align}B_s = k_b s^b M^k. \end{align}
+where the suspension density is
+\begin{align}M = k_v \rho \int_0^{\infty} n \, x^3 \, \mathrm{d}x. \end{align}
+The total nucleation rate is
+\begin{align}B_0 = B_p + B_s. \end{align}
+The aggregation birth and death terms are
+\begin{align}
+B_{\mathrm{agg}}(x) = \frac{x^2}{2} \int_{x_c}^{x} \frac{\beta\!\left((x^3 - \lambda^3)^{1/3}, \lambda\right)}{(x^3 - \lambda^3)^{2/3}} n\!\left((x^3 - \lambda^3)^{1/3}\right) n(\lambda) \, \mathrm{d}\lambda, \\
+D_{\mathrm{agg}}(x) = n(x) \int_0^{x_{\mathrm{end}}} \beta(x, \lambda) \, n(\lambda) \, \mathrm{d}\lambda.
+\end{align}
+The aggregation kernel is
+\begin{align}\beta(x, \lambda) = \beta_0. \end{align}
+The fragmentation birth and death terms are
+\begin{align}
+B_{\mathrm{frag}}(x) = \int_x^{x_{\mathrm{max}}} S(\lambda) \, b(x \mid \lambda) \, n(\lambda) \, \mathrm{d}\lambda, \\
+D_{\mathrm{frag}}(x) = S(x) \, n(x).
+\end{align}
+The selection (fragmentation rate) function is
+\begin{align}S(x) = S_0 \, x^{3\alpha}. \end{align}
+The breakage probability density function is
+\begin{align}b(x \mid \lambda) = 3 x^2 \frac{\gamma}{\lambda^3} \left( \frac{x^3}{\lambda^3} \right)^{\gamma - 2}. \end{align}
+Here, $t$ is the time coordinate, $x$ is the particle size (internal coordinate), $n$ is the particle number density, $c$ is the solute concentration, $V$ is the reactor volume, $F_{\mathrm{in}}$ is the volumetric inflow rate, $F_{\mathrm{out}}$ is the volumetric outflow rate, $v_G$ is the growth rate, $s$ is the relative supersaturation, $c_{\mathrm{eq}}$ is the equilibrium solubility, $B_0$ is the total nucleation rate, $k_g$ is the growth rate constant, $g$ is the growth exponent, $a$ is the growth parameter, $k_p$ is the primary nucleation rate constant, $u$ is the primary nucleation exponent, $k_b$ is the secondary nucleation rate constant, $b$ is the secondary nucleation exponent, $k$ is the suspension density exponent, $M$ is the suspension density, $x_c$ is the critical (minimum) particle size, $D_g$ is the growth dispersion rate, $\beta$ is the aggregation kernel, $\beta_0$ is the aggregation rate constant, $S(x)$ is the selection (fragmentation rate) function, $b(x \mid \lambda)$ is the breakage probability density, $S_0$ is the fragmentation rate constant, $\alpha$ is the fragmentation exponent, and $\gamma_f$ is the daughter distribution parameter.
+Consistent initial values for all solution variables are defined at $t = 0$.
+\begin{thebibliography}{99}
+\bibitem{ZHANG2024108612} Wendi Zhang and Todd Przybycien and Johannes Schmölder and Samuel Leweke and Eric \{von Lieres\} (2024). Solving crystallization/precipitation population balance models in CADET, part I: Nucleation growth and growth rate dispersion in batch and continuous modes on nonuniform grids. Computers \& Chemical Engineering. DOI: https://doi.org/10.1016/j.compchemeng.2024.108612.
+\bibitem{ZHANG2025108860} Wendi Zhang and Todd Przybycien and Jan Michael Breuer and Eric \{von Lieres\} (2025). Solving crystallization/precipitation population balance models in CADET, Part II: Size-based Smoluchowski coagulation and fragmentation equations in batch and continuous modes. Computers \& Chemical Engineering. DOI: https://doi.org/10.1016/j.compchemeng.2024.108860.
+\end{thebibliography}
+\end{document}

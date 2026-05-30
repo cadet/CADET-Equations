@@ -487,8 +487,6 @@ def create_v6_CSTR():
         unit.create_dataset("CONST_SOLID_VOLUME", data=0.0)
         unit.create_dataset("INIT_VOLUME", data=0.0005)
         unit.create_dataset("ADSORPTION_MODEL", data="NONE")
-        unit.create_dataset("REACTION_MODEL", data="CRYSTALLIZATION")
-        unit.create_dataset("USE_ANALYTIC_JACOBIAN", data=1)
         # Use a simple init array
         unit.create_dataset("INIT_C", data=np.zeros(384))
 

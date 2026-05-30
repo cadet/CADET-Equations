@@ -27,7 +27,7 @@ from src.utils import format_variables
 from src.renderer import availability_badge_html, write_and_save as renderer_write_and_save
 from src.model_column import Column
 from src.model_crystallization import Crystallization
-from src.generate_template import generate_unit_operation_script
+from src.generate_template import generate_unit_operation_script, generate_crystallization_script
 from src.handler_cite import load_bibliography, cite_html, cite, render_references
 
 # %% Streamlit UI
@@ -787,6 +787,9 @@ st.download_button("Download .tex", st.session_state.latex_string, "model.tex", 
 
 if model_type_ == "Chromatography":
     st.session_state.template_script = generate_unit_operation_script(column_model)
+    st.download_button("Download CADET-Python template (.py file)", st.session_state.template_script, "unit_operation.py", "text/x-python")
+elif model_type_ == "Crystallization":
+    st.session_state.template_script = generate_crystallization_script(cry_model)
     st.download_button("Download CADET-Python template (.py file)", st.session_state.template_script, "unit_operation.py", "text/x-python")
 
 if st.button("Generate PDF", key=r"generate_pdf"):
