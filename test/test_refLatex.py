@@ -242,6 +242,24 @@ def test_CADET_config_manual_unitIdx(test_dir):
 
 @pytest.mark.ci
 @pytest.mark.reference
+def test_crystallization_h5_manual_unitIdx(test_dir):
+
+    at = AppTest.from_file("../Equation-Generator.py")
+    at.run()
+    assert not at.exception
+    at.toggle(key="model_assumptions").set_value(True).run()
+
+    config_file = test_dir + "/data/CADET_configs/ref_cry_CSTR_PBM_primaryNucleationGrowthGrowthRateDispersion_benchmark1.h5"
+    model_config = load_CADET_h5.get_config_from_CADET_h5(config_file, "001")
+
+    json_config_dir = test_dir + '/data/EquationGenerator_configs/'
+    with open(json_config_dir + "cry_CSTR_primaryGrowth.json", 'r') as file:
+        model_config_json = json.load(file)
+        assert model_config == model_config_json
+
+
+@pytest.mark.ci
+@pytest.mark.reference
 @pytest.mark.parametrize("model_name", ["cry_CSTR_primaryGrowth", "cry_CSTR_Agg_Frag", "cry_DPFR_aggregation", "cry_DPFR_primarySecondaryNucleation"])
 def test_crystallization_h5_config_output(model_name, test_dir):
 

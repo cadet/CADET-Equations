@@ -14,6 +14,9 @@ from src.load_CADET_h5 import (
     map_unit_to_particle_model,
     is_v6_interface,
     extract_config_data_from_unit,
+    extract_crystallization_config,
+    _is_crystallization_unit,
+    _get_crystallization_reaction_group,
     CADET_column_unit_types,
 )
 
@@ -699,3 +702,135 @@ def test_extract_binding_model_v6_multi_partype_uses_first():
     # Per-particle-type keys are not extracted (only used in dev mode)
     assert 'parType_1_binding_model' not in config
     assert 'parType_2_binding_model' not in config
+
+
+# %% Crystallization detection and extraction
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_is_crystallization_unit_true():
+    group = _make_h5_group({'REACTION_MODEL': b'CRYSTALLIZATION'})
+    assert _is_crystallization_unit(group) is True
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_is_crystallization_unit_false():
+    group = _make_h5_group({'REACTION_MODEL': b'NONE'})
+    assert _is_crystallization_unit(group) is False
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_is_crystallization_unit_missing():
+    group = _make_h5_group({})
+    assert _is_crystallization_unit(group) is False
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_get_crystallization_reaction_group_reaction_bulk():
+    reaction_bulk = _make_h5_group({'CRY_MODE': 1})
+    group = _make_h5_group({}, subgroups={'reaction_bulk': reaction_bulk})
+    assert _get_crystallization_reaction_group(group) is reaction_bulk
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_get_crystallization_reaction_group_reaction():
+    reaction = _make_h5_group({'CRY_MODE': 3})
+    group = _make_h5_group({}, subgroups={'reaction': reaction})
+    assert _get_crystallization_reaction_group(group) is reaction
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_get_crystallization_reaction_group_none():
+    group = _make_h5_group({})
+    assert _get_crystallization_reaction_group(group) is None
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_extract_crystallization_config_no_reaction_group():
+    group = _make_h5_group({'REACTION_MODEL': b'CRYSTALLIZATION'})
+    config = extract_crystallization_config('CSTR', group)
+    assert config['model_type'] == 'Crystallization'
+    assert config['cry_column_type'] == 'CSTR'
+    assert config['cry_has_primary_formation'] == 'Yes'
+    assert config['cry_has_aggregation'] == 'No'
+    assert config['cry_has_fragmentation'] == 'No'
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_extract_crystallization_config_cstr_primary():
+    reaction = _make_h5_group({
+        'CRY_GROWTH_RATE_CONSTANT': 5e-6,
+        'CRY_GROWTH_DISPERSION_RATE': 2e-14,
+        'CRY_PRIMARY_NUCLEATION_RATE': 1e6,
+        'CRY_SECONDARY_NUCLEATION_RATE': 0.0,
+        'CRY_P': 0.0,
+    })
+    group = _make_h5_group(
+        {'REACTION_MODEL': b'CRYSTALLIZATION'},
+        subgroups={'reaction_bulk': reaction},
+    )
+    config = extract_crystallization_config('CSTR', group)
+    assert config['cry_column_type'] == 'CSTR'
+    assert config['cry_has_primary_formation'] == 'Yes'
+    assert config['cry_has_growth_dispersion'] == 'Yes'
+    assert config['cry_has_secondary_nucleation'] == 'No'
+    assert config['cry_size_dependent_growth'] == 'No'
+    assert config['cry_has_aggregation'] == 'No'
+    assert config['cry_has_fragmentation'] == 'No'
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_extract_crystallization_config_dpfr_aggregation():
+    reaction = _make_h5_group({
+        'CRY_MODE': 3,
+        'CRY_GROWTH_RATE_CONSTANT': 5e-6,
+        'CRY_GROWTH_DISPERSION_RATE': 2.5e-15,
+        'CRY_PRIMARY_NUCLEATION_RATE': 5.0,
+        'CRY_SECONDARY_NUCLEATION_RATE': 4e8,
+        'CRY_P': 0.0,
+        'CRY_AGGREGATION_INDEX': 0,
+    })
+    group = _make_h5_group(
+        {'REACTION_MODEL': b'CRYSTALLIZATION', 'COL_DISPERSION': 4.2e-5},
+        subgroups={'reaction': reaction},
+    )
+    config = extract_crystallization_config('LUMPED_RATE_MODEL_WITHOUT_PORES', group)
+    assert config['cry_column_type'] == 'DPFR'
+    assert config['cry_has_primary_formation'] == 'Yes'
+    assert config['cry_has_aggregation'] == 'Yes'
+    assert config['cry_aggregation_kernel'] == 'Constant'
+    assert config['cry_has_fragmentation'] == 'No'
+    assert config['cry_has_axial_dispersion'] == 'Yes'
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_extract_crystallization_config_agg_without_index():
+    reaction = _make_h5_group({'CRY_MODE': 3})
+    group = _make_h5_group(
+        {'REACTION_MODEL': b'CRYSTALLIZATION'},
+        subgroups={'reaction_bulk': reaction},
+    )
+    config = extract_crystallization_config('CSTR', group)
+    assert config['cry_has_aggregation'] == 'Yes'
+    assert config['cry_aggregation_kernel'] == 'Constant'
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_extract_crystallization_config_dpfr_no_axial_dispersion():
+    reaction = _make_h5_group({})
+    group = _make_h5_group(
+        {'REACTION_MODEL': b'CRYSTALLIZATION', 'COL_DISPERSION': 0.0},
+        subgroups={'reaction': reaction},
+    )
+    config = extract_crystallization_config('LUMPED_RATE_MODEL_WITHOUT_PORES', group)
+    assert config['cry_has_axial_dispersion'] == 'No'
