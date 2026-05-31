@@ -17,6 +17,7 @@ from src.load_CADET_h5 import (
     extract_crystallization_config,
     _is_crystallization_unit,
     _get_crystallization_reaction_group,
+    _extract_reaction_config,
     CADET_column_unit_types,
 )
 
@@ -834,3 +835,50 @@ def test_extract_crystallization_config_dpfr_no_axial_dispersion():
     )
     config = extract_crystallization_config('LUMPED_RATE_MODEL_WITHOUT_PORES', group)
     assert config['cry_has_axial_dispersion'] == 'No'
+
+
+# %% Reaction config extraction tests
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_extract_reaction_config_from_bulk_group():
+    """Test _extract_reaction_config reading from reaction_bulk subgroup."""
+    reaction_bulk = _make_h5_group({'REACTION_MODEL': b'MASS_ACTION_LAW'})
+    unit_group = _make_h5_group({}, subgroups={'reaction_bulk': reaction_bulk})
+    config = {}
+    _extract_reaction_config(config, unit_group)
+    assert config['reaction_model'] == 'Mass Action Law'
+    assert config['has_reaction_bulk'] == "Yes"
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_extract_reaction_config_from_unit_level():
+    """Test _extract_reaction_config reading REACTION_MODEL at unit level."""
+    unit_group = _make_h5_group({'REACTION_MODEL': b'MICHAELIS_MENTEN'})
+    config = {}
+    _extract_reaction_config(config, unit_group)
+    assert config['reaction_model'] == 'Michaelis Menten'
+    assert config['has_reaction_bulk'] == "Yes"
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_extract_reaction_config_unknown_model():
+    """Test _extract_reaction_config with unknown model maps to Arbitrary."""
+    unit_group = _make_h5_group({'REACTION_MODEL': b'SOME_UNKNOWN_MODEL'})
+    config = {}
+    _extract_reaction_config(config, unit_group)
+    assert config['reaction_model'] == 'Arbitrary'
+    assert config['has_reaction_bulk'] == "Yes"
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_extract_reaction_config_none_model():
+    """Test _extract_reaction_config with NONE does not set reaction config."""
+    unit_group = _make_h5_group({'REACTION_MODEL': b'NONE'})
+    config = {}
+    _extract_reaction_config(config, unit_group)
+    assert 'reaction_model' not in config
+    assert 'has_reaction_bulk' not in config
