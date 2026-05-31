@@ -781,7 +781,7 @@ else: # Chromatography model family
 
 
 # %% Reaction model definition section
-if column_model.reaction_model != "Arbitrary":
+if model_type_ == "Chromatography" and column_model.reaction_model != "Arbitrary":
     has_kinetic_bulk = column_model.has_reaction_bulk and not column_model.req_reaction_bulk
     has_kinetic_par_liq = column_model.has_reaction_particle_liquid and not column_model.req_reaction_particle_liquid
     has_kinetic_par_sol = column_model.has_reaction_particle_solid and not column_model.req_reaction_particle_solid
