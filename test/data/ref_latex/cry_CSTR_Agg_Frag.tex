@@ -13,7 +13,7 @@ Model assumptions:
 \item the growth rate depends on supersaturation;
 \item aggregation is a binary process (two particles coalesce into one);
 \item the aggregation kernel is symmetric, i.e. $\beta(x, \lambda) = \beta(\lambda, x)$;
-\item fragmentation is a binary process (one particle breaks into two daughter particles);
+\item fragmentation follows a general daughter-size distribution (one parent particle can produce multiple fragments);
 \end{itemize}
 
 
@@ -52,7 +52,7 @@ The aggregation birth and death terms are
 B_{\mathrm{agg}}(x) = \frac{x^2}{2} \int_{x_c}^{x} \frac{\beta\!\left((x^3 - \lambda^3)^{1/3}, \lambda\right)}{(x^3 - \lambda^3)^{2/3}} n\!\left((x^3 - \lambda^3)^{1/3}\right) n(\lambda) \, \mathrm{d}\lambda, \\
 D_{\mathrm{agg}}(x) = n(x) \int_0^{x_{\mathrm{end}}} \beta(x, \lambda) \, n(\lambda) \, \mathrm{d}\lambda.
 \end{align}
-The aggregation kernel is
+The aggregation kernel is defined by a Constant kernel
 \begin{align}\beta(x, \lambda) = \beta_0. \end{align}
 The fragmentation birth and death terms are
 \begin{align}

@@ -355,7 +355,7 @@ if model_type_ == "Crystallization":
     if has_agg:
         write_and_save(r"The aggregation birth and death terms are")
         write_and_save(eq.cry_aggregation_birth_death(), as_latex=True)
-        write_and_save("The aggregation kernel is")
+        write_and_save("The aggregation kernel is defined by a " + cry_model.aggregation_kernel_name() + " kernel")
         write_and_save(eq.cry_aggregation_kernel(cry_model.aggregation_kernel_index), as_latex=True)
 
     # Fragmentation details

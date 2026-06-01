@@ -100,6 +100,10 @@ class Crystallization:
             name += " with " + ", ".join(parts)
         return name
 
+    def aggregation_kernel_name(self):
+        """Return the human-readable aggregation kernel label."""
+        return eq.AGGREGATION_KERNELS.get(self.aggregation_kernel_index, eq.AGGREGATION_KERNELS[0])
+
     def model_assumptions(self):
         return {
             "Model assumptions": eq.cry_assumptions(
