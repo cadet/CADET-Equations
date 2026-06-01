@@ -270,12 +270,12 @@ if model_type_ == "Crystallization":
     has_frag = cry_model.has_fragmentation
 
     write_html_and_save(
-        "Crystallization model equations and assumptions follow established formulations in "
+        "The crystallization models stated in the following were established in "
         + cite_html("ZHANG2024108612", bibliography_entries, used_citation_keys)
         + " and "
         + cite_html("ZHANG2025108860", bibliography_entries, used_citation_keys)
         + ".",
-        "Crystallization model equations and assumptions follow established formulations in "
+        "The crystallization models stated in the following were established in "
         + cite("ZHANG2024108612", bibliography_entries, used_citation_keys)
         + " and "
         + cite("ZHANG2025108860", bibliography_entries, used_citation_keys)

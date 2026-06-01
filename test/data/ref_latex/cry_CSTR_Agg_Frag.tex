@@ -18,7 +18,7 @@ Model assumptions:
 
 
 \section*{Crystallization in CSTR with nucleation and growth, aggregation, fragmentation}
-Crystallization model equations and assumptions follow established formulations in Zhang et al. (2024) and Zhang et al. (2025).
+The crystallization models stated in the following were established in Zhang et al. (2024) and Zhang et al. (2025).
 Consider a continuously stirred tank reactor (CSTR) with volume $V(t)$, observed over a time interval $(0, T^{\mathrm{end}})$. The particle population is described by the number density $n(t, x)$ over the internal coordinate (particle size) $x$.
 The evolution of the number density is governed by the population balance equation
 \begin{align}\frac{\partial (n V)}{\partial t} &= F_{\mathrm{in}} n_{\mathrm{in}} - F_{\mathrm{out}} n - V \left( \frac{\partial (v_G n)}{\partial x} - D_g \frac{\partial^2 n}{\partial x^2} - B_0 \delta(x - x_c) \right) + V \left( B_{\mathrm{agg}} - D_{\mathrm{agg}} \right) + V \left( B_{\mathrm{frag}} - D_{\mathrm{frag}} \right). \end{align}
