@@ -83,7 +83,7 @@ def _binding_params_lines(binding_model, ncomp_fixed, req_binding):
     is_kinetic = 0 if req_binding else 1
 
     if binding_model not in _BINDING_DEFAULTS:
-        lines.append(f"par['adsorption_model'] = 'NONE'  # TODO: specify binding model")
+        lines.append(f"par['adsorption_model'] = 'UNKNOWN'")
         lines.append(f"par['adsorption'] = {{")
         lines.append(f"    'is_kinetic': {is_kinetic},")
         lines.append(f"}}")
@@ -357,7 +357,7 @@ def generate_crystallization_script(cry_model):
         else:
             body.append("unit['col_dispersion'] = 0.0")
 
-    body.append("unit['adsorption_model'] = 'NONE'")
+    body.append("unit['npartype'] = 0")
     body.append("unit['reaction_model'] = 'CRYSTALLIZATION'")
     body.append("unit['init_c'] = [0.0] * ncomp")
     body.append("")
