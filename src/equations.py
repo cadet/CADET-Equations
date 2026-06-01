@@ -1059,6 +1059,6 @@ def cry_assumptions(column_type: str, has_primary: bool,
         asmpts.append(r"the aggregation kernel is symmetric, i.e. $\beta(x, \lambda) = \beta(\lambda, x)$;")
 
     if has_fragmentation:
-        asmpts.append(r"fragmentation is a binary process (one particle breaks into two daughter particles);")
+        asmpts.append(r"fragmentation follows a general daughter-size distribution (one parent particle can produce multiple fragments);")
 
     return asmpts
