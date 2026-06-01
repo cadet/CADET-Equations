@@ -19,18 +19,21 @@ Model assumptions:
 
 \section*{Crystallization in CSTR with nucleation and growth, aggregation, fragmentation}
 The crystallization models stated in the following were established in Zhang et al. (2024) and Zhang et al. (2025).
-Consider a continuously stirred tank reactor (CSTR) with volume $V(t)$, observed over a time interval $(0, T^{\mathrm{end}})$. The particle population is described by the number density $n(t, x)$ over the internal coordinate (particle size) $x$.
+Consider a continuously stirred tank reactor (CSTR) with volume $V(t)$, observed over a time interval $(0, T^{\mathrm{end}})$. The particle population is described by the number density $n(t, x)$ over the internal coordinate (particle size) $x\in(x_0, \infty)$.
 The evolution of the number density is governed by the population balance equation
 \begin{align}\frac{\partial (n V)}{\partial t} &= F_{\mathrm{in}} n_{\mathrm{in}} - F_{\mathrm{out}} n - V \left( \frac{\partial (v_G n)}{\partial x} - D_g \frac{\partial^2 n}{\partial x^2} - B_0 \delta(x - x_c) \right) + V \left( B_{\mathrm{agg}} - D_{\mathrm{agg}} \right) + V \left( B_{\mathrm{frag}} - D_{\mathrm{frag}} \right). \end{align}
-with boundary conditions in the internal coordinate
+with nucleation kinetics and regularity boundary conditions in the internal coordinate
 \begin{align}
 \left. \left( n v_G - D_g \frac{\partial n}{\partial x} \right) \right|_{x = x_c} &= B_0, \\
 \left. \left( n v_G - D_g \frac{\partial n}{\partial x} \right) \right|_{x \to \infty} &= 0.
 \end{align}
 The solute mass balance is given by
 \begin{align}
-\frac{\mathrm{d} V}{\mathrm{d} t} &= F_{\mathrm{in}} - F_{\mathrm{out}}, \\
 \frac{\partial (c V)}{\partial t} &= F_{\mathrm{in}} c_{\mathrm{in}} - F_{\mathrm{out}} c - \rho k_v V \left( B_0 x_c^3 + 3 \int_{x_c}^{\infty} v_G n \, x^2 \, \mathrm{d}x \right).
+\end{align}
+Evolution of the reactor’s volume is governed by
+\begin{align}
+\frac{\mathrm{d} V}{\mathrm{d} t} &= F_{\mathrm{in}} - F_{\mathrm{out}}.
 \end{align}
 The constitutive relations for growth and nucleation are defined as follows. The relative supersaturation is
 \begin{align}s = \frac{c - c_{\mathrm{eq}}}{c_{\mathrm{eq}}}. \end{align}

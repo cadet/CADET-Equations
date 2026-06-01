@@ -286,13 +286,13 @@ if model_type_ == "Crystallization":
         write_and_save(r"Consider a continuously stirred tank reactor (CSTR) with volume $V(t)$, "
                        r"observed over a time interval $(0, T^{\mathrm{end}})$. "
                        r"The particle population is described by the number density $n(t, x)$ "
-                       r"over the internal coordinate (particle size) $x$.")
+                       r"over the internal coordinate (particle size) $x\in(x_0, \infty)$.")
     else:
         disp_str = " with axial dispersion" if cry_model.has_axial_dispersion else ""
         write_and_save(r"Consider a dispersive plug flow reactor (DPFR) of length $L > 0$" + disp_str +
                        r", observed over a time interval $(0, T^{\mathrm{end}})$. "
                        r"The particle population is described by the number density $n(t, x, z)$ "
-                       r"over the internal coordinate (particle size) $x$ and axial position $z$.")
+                       r"over the internal coordinate (particle size) $x\in(x_0, \infty)$ and axial position $z$.")
 
     # PBE
     write_and_save(r"The evolution of the number density is governed by the population balance equation")
@@ -308,7 +308,7 @@ if model_type_ == "Crystallization":
     if has_primary:
         bc_internal = eq.cry_pbe_bc_internal(has_primary, cry_model.has_growth_dispersion)
         if bc_internal:
-            write_and_save("with boundary conditions in the internal coordinate")
+            write_and_save("with nucleation kinetics and regularity boundary conditions in the internal coordinate")
             write_and_save(bc_internal, as_latex=True)
 
     # Boundary conditions for PBE (external coordinate, DPFR only)
@@ -320,6 +320,8 @@ if model_type_ == "Crystallization":
     write_and_save(r"The solute mass balance is given by")
     if cry_model.column_type == "CSTR":
         write_and_save(eq.cry_mass_balance_cstr(has_primary), as_latex=True)
+        write_and_save(r"Evolution of the reactor’s volume is governed by")
+        write_and_save(eq.cry_volume_cstr(), as_latex=True)
     else:
         write_and_save(eq.cry_mass_balance_dpfr(has_primary, cry_model.has_axial_dispersion), as_latex=True)
         write_and_save("with boundary conditions")
