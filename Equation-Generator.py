@@ -313,7 +313,7 @@ if model_type_ == "Crystallization":
 
     # Boundary conditions for PBE (external coordinate, DPFR only)
     if cry_model.column_type == "DPFR":
-        write_and_save("Boundary conditions in the external (axial) coordinate for the number density are")
+        write_and_save("Danckwerts boundary conditions are employed in the external (axial) coordinate")
         write_and_save(eq.cry_pbe_bc_external_dpfr(cry_model.has_axial_dispersion), as_latex=True)
 
     # Mass balance
@@ -324,7 +324,7 @@ if model_type_ == "Crystallization":
         write_and_save(eq.cry_volume_cstr(), as_latex=True)
     else:
         write_and_save(eq.cry_mass_balance_dpfr(has_primary, cry_model.has_axial_dispersion), as_latex=True)
-        write_and_save("with boundary conditions")
+        write_and_save("with Danckwerts boundary conditions")
         write_and_save(eq.cry_solute_bc_dpfr(cry_model.has_axial_dispersion), as_latex=True)
 
     # Constitutive equations
