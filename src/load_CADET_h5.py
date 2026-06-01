@@ -333,6 +333,89 @@ def _extract_particle_core_config(config, group):
             config['advanced_mode'] = "On"
 
 
+CADET_crystallization_unit_types = ['CSTR', 'LUMPED_RATE_MODEL_WITHOUT_PORES']
+
+AGGREGATION_KERNEL_MAP = {
+    0: "Constant",
+    1: "Brownian",
+    2: "Smoluchowski",
+    3: "Golovin",
+    4: "Differential force",
+}
+
+
+def _is_crystallization_unit(h5_unit_group):
+    reaction_model = get_h5_value(h5_unit_group, 'REACTION_MODEL')
+    return reaction_model == 'CRYSTALLIZATION'
+
+
+def _get_crystallization_reaction_group(h5_unit_group):
+    for name in ('reaction_bulk', 'reaction'):
+        grp = h5_unit_group.get(name)
+        if grp is not None:
+            return grp
+    return None
+
+
+def extract_crystallization_config(unit_type, h5_unit_group):
+
+    config = {}
+    config['model_type'] = 'Crystallization'
+    config['dev_mode'] = True
+    config['var_format'] = 'CADET'
+    config['show_eq_description'] = True
+    config['model_assumptions'] = True
+
+    if unit_type == 'CSTR':
+        config['cry_column_type'] = 'CSTR'
+    else:
+        config['cry_column_type'] = 'DPFR'
+
+    reaction_group = _get_crystallization_reaction_group(h5_unit_group)
+
+    if reaction_group is None:
+        config['cry_has_primary_formation'] = 'Yes'
+        config['cry_has_aggregation'] = 'No'
+        config['cry_has_fragmentation'] = 'No'
+        return config
+
+    cry_mode = get_h5_value(reaction_group, 'CRY_MODE')
+    if cry_mode is None:
+        cry_mode = 1
+
+    has_primary = bool(cry_mode & 1)
+    has_agg = bool(cry_mode & 2)
+    has_frag = bool(cry_mode & 4)
+
+    config['cry_has_primary_formation'] = 'Yes' if has_primary else 'No'
+
+    if has_primary:
+        gd_rate = get_h5_value(reaction_group, 'CRY_GROWTH_DISPERSION_RATE')
+        config['cry_has_growth_dispersion'] = 'Yes' if (gd_rate is not None and gd_rate > 0) else 'No'
+
+        sec_rate = get_h5_value(reaction_group, 'CRY_SECONDARY_NUCLEATION_RATE')
+        config['cry_has_secondary_nucleation'] = 'Yes' if (sec_rate is not None and sec_rate > 0) else 'No'
+
+        cry_p = get_h5_value(reaction_group, 'CRY_P')
+        config['cry_size_dependent_growth'] = 'Yes' if (cry_p is not None and cry_p != 0) else 'No'
+
+    config['cry_has_aggregation'] = 'Yes' if has_agg else 'No'
+
+    if has_agg:
+        agg_idx = get_h5_value(reaction_group, 'CRY_AGGREGATION_INDEX')
+        if agg_idx is None:
+            agg_idx = 0
+        config['cry_aggregation_kernel'] = AGGREGATION_KERNEL_MAP.get(agg_idx, 'Constant')
+
+    config['cry_has_fragmentation'] = 'Yes' if has_frag else 'No'
+
+    if config['cry_column_type'] == 'DPFR':
+        col_disp = get_h5_value(h5_unit_group, 'COL_DISPERSION')
+        config['cry_has_axial_dispersion'] = 'Yes' if (col_disp is not None and col_disp > 1E-20) else 'No'
+
+    return config
+
+
 def get_config_from_CADET_h5(h5_filename, unit_idx):
 
     with h5py.File(h5_filename, 'r') as f:
@@ -353,8 +436,11 @@ def get_config_from_CADET_h5(h5_filename, unit_idx):
                 if unit_type is not None:
 
                     if unit_type in CADET_column_unit_types:
-                        
+
                         st.sidebar.success(unit_type + " was found in " + re.sub(r"input/model/", "", unit_key) + " and is applied!")
+
+                        if _is_crystallization_unit(unit_group):
+                            return extract_crystallization_config(unit_type, unit_group)
 
                         return extract_config_data_from_unit(unit_type, unit_group)
 
@@ -370,6 +456,9 @@ def get_config_from_CADET_h5(h5_filename, unit_idx):
             if unit_type in CADET_column_unit_types:
 
                 st.sidebar.success(f"Unit type {unit_type} is applied.")
+
+                if _is_crystallization_unit(unit_group):
+                    return extract_crystallization_config(unit_type, unit_group)
 
                 return extract_config_data_from_unit(unit_type, unit_group)
 

@@ -1,0 +1,57 @@
+\documentclass{article}
+
+\usepackage{amssymb,amsmath,mleftright}
+
+\begin{document}
+
+Model assumptions:
+\begin{itemize}
+\item the fluid density and viscosity are constant in time and space;
+\item the process is isothermal;
+\item the column is radially symmetric and homogeneous (1D axial coordinate);
+\item nucleation produces particles at a minimum critical size $x_c$;
+\item the growth rate depends on supersaturation;
+\end{itemize}
+
+
+\section*{Crystallization in DPFR with nucleation and growth}
+The crystallization models stated in the following were established in Zhang et al. (2024) and Zhang et al. (2025).
+Consider a dispersive plug flow reactor (DPFR) of length $L > 0$ with axial dispersion, observed over a time interval $(0, T^{\mathrm{end}})$. The particle population is described by the number density $n(t, x, z)$ over the internal coordinate (particle size) $x\in(x_0, \infty)$ and axial position $z$.
+The evolution of the number density is governed by the population balance equation
+\begin{align}\frac{\partial n}{\partial t} &= - v_{\mathrm{ax}} \frac{\partial n}{\partial z} + D_{\mathrm{ax}} \frac{\partial^2 n}{\partial z^2} - \frac{\partial (v_G n)}{\partial x}. \end{align}
+with nucleation kinetics and regularity boundary conditions in the internal coordinate
+\begin{align}
+\left. n \right|_{x = x_c} &= \frac{B_0}{v_G(x_c)}, \\
+\left. n \right|_{x \to \infty} &= 0.
+\end{align}
+Danckwerts boundary conditions are employed in the external (axial) coordinate
+\begin{align}
+\left. \left( n v_{\mathrm{ax}} - D_{\mathrm{ax}} \frac{\partial n}{\partial z} \right) \right|_{z=0} &= v_{\mathrm{ax}} n_{\mathrm{in},x}, \\
+\left. \frac{\partial n}{\partial z} \right|_{z=L} &= 0.
+\end{align}
+The solute mass balance is given by
+\begin{align}\frac{\partial c}{\partial t} &= - v_{\mathrm{ax}} \frac{\partial c}{\partial z} + D_{\mathrm{ax}} \frac{\partial^2 c}{\partial z^2} - \rho k_v \left( B_0 x_c^3 + 3 \int_{x_c}^{\infty} v_G n \, x^2 \, \mathrm{d}x \right). \end{align}
+with Danckwerts boundary conditions
+\begin{align}
+\left. \left( c \, v_{\mathrm{ax}} - D_{\mathrm{ax}} \frac{\partial c}{\partial z} \right) \right|_{z=0} &= v_{\mathrm{ax}} c_{\mathrm{in}}, \\
+\left. \frac{\partial c}{\partial z} \right|_{z=L} &= 0.
+\end{align}
+The constitutive relations for growth and nucleation are defined as follows. The relative supersaturation is
+\begin{align}s = \frac{c - c_{\mathrm{eq}}}{c_{\mathrm{eq}}}. \end{align}
+The growth rate is
+\begin{align}v_G = k_g s^g a. \end{align}
+The primary nucleation rate is
+\begin{align}B_p = k_p s^u. \end{align}
+The secondary nucleation rate is
+\begin{align}B_s = k_b s^b M^k. \end{align}
+where the suspension density is
+\begin{align}M = k_v \rho \int_0^{\infty} n \, x^3 \, \mathrm{d}x. \end{align}
+The total nucleation rate is
+\begin{align}B_0 = B_p + B_s. \end{align}
+Here, $t$ is the time coordinate, $x$ is the particle size (internal coordinate), $z$ is the axial coordinate, $n$ is the particle number density, $c$ is the solute concentration, $v_{\mathrm{ax}}$ is the axial velocity, $v_G$ is the growth rate, $s$ is the relative supersaturation, $c_{\mathrm{eq}}$ is the equilibrium solubility, $B_0$ is the total nucleation rate, $k_g$ is the growth rate constant, $g$ is the growth exponent, $a$ is the growth parameter, $k_p$ is the primary nucleation rate constant, $u$ is the primary nucleation exponent, $k_b$ is the secondary nucleation rate constant, $b$ is the secondary nucleation exponent, $k$ is the suspension density exponent, $M$ is the suspension density, $x_c$ is the critical (minimum) particle size, and $D_{\mathrm{ax}}$ is the axial dispersion coefficient.
+Consistent initial values for all solution variables are defined at $t = 0$.
+\begin{thebibliography}{99}
+\bibitem{ZHANG2024108612} Wendi Zhang and Todd Przybycien and Johannes Schmölder and Samuel Leweke and Eric \{von Lieres\} (2024). Solving crystallization/precipitation population balance models in CADET, part I: Nucleation growth and growth rate dispersion in batch and continuous modes on nonuniform grids. Computers \& Chemical Engineering. DOI: https://doi.org/10.1016/j.compchemeng.2024.108612.
+\bibitem{ZHANG2025108860} Wendi Zhang and Todd Przybycien and Jan Michael Breuer and Eric \{von Lieres\} (2025). Solving crystallization/precipitation population balance models in CADET, Part II: Size-based Smoluchowski coagulation and fragmentation equations in batch and continuous modes. Computers \& Chemical Engineering. DOI: https://doi.org/10.1016/j.compchemeng.2024.108860.
+\end{thebibliography}
+\end{document}

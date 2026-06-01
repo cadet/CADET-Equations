@@ -1,0 +1,49 @@
+\documentclass{article}
+
+\usepackage{amssymb,amsmath,mleftright}
+
+\begin{document}
+
+Model assumptions:
+\begin{itemize}
+\item the fluid density and viscosity are constant in time and space;
+\item the process is isothermal;
+\item the reactor is spatially homogeneous (perfectly mixed);
+\item nucleation produces particles at a minimum critical size $x_c$;
+\item the growth rate depends on supersaturation;
+\end{itemize}
+
+
+\section*{Crystallization in CSTR with nucleation and growth}
+The crystallization models stated in the following were established in Zhang et al. (2024) and Zhang et al. (2025).
+Consider a continuously stirred tank reactor (CSTR) with volume $V(t)$, observed over a time interval $(0, T^{\mathrm{end}})$. The particle population is described by the number density $n(t, x)$ over the internal coordinate (particle size) $x\in(x_0, \infty)$.
+The evolution of the number density is governed by the population balance equation
+\begin{align}\frac{\partial (n V)}{\partial t} &= F_{\mathrm{in}} n_{\mathrm{in}} - F_{\mathrm{out}} n - V \left( \frac{\partial (v_G n)}{\partial x} - D_g \frac{\partial^2 n}{\partial x^2} - B_0 \delta(x - x_c) \right). \end{align}
+with nucleation kinetics and regularity boundary conditions in the internal coordinate
+\begin{align}
+\left. \left( n v_G - D_g \frac{\partial n}{\partial x} \right) \right|_{x = x_c} &= B_0, \\
+\left. \left( n v_G - D_g \frac{\partial n}{\partial x} \right) \right|_{x \to \infty} &= 0.
+\end{align}
+The solute mass balance is given by
+\begin{align}
+\frac{\partial (c V)}{\partial t} &= F_{\mathrm{in}} c_{\mathrm{in}} - F_{\mathrm{out}} c - \rho k_v V \left( B_0 x_c^3 + 3 \int_{x_c}^{\infty} v_G n \, x^2 \, \mathrm{d}x \right).
+\end{align}
+Evolution of the reactor’s volume is governed by
+\begin{align}
+\frac{\mathrm{d} V}{\mathrm{d} t} &= F_{\mathrm{in}} - F_{\mathrm{out}}.
+\end{align}
+The constitutive relations for growth and nucleation are defined as follows. The relative supersaturation is
+\begin{align}s = \frac{c - c_{\mathrm{eq}}}{c_{\mathrm{eq}}}. \end{align}
+The growth rate is
+\begin{align}v_G = k_g s^g a. \end{align}
+The primary nucleation rate is
+\begin{align}B_p = k_p s^u. \end{align}
+The total nucleation rate is
+\begin{align} B_0 = B_p. \end{align}
+Here, $t$ is the time coordinate, $x$ is the particle size (internal coordinate), $n$ is the particle number density, $c$ is the solute concentration, $V$ is the reactor volume, $F_{\mathrm{in}}$ is the volumetric inflow rate, $F_{\mathrm{out}}$ is the volumetric outflow rate, $v_G$ is the growth rate, $s$ is the relative supersaturation, $c_{\mathrm{eq}}$ is the equilibrium solubility, $B_0$ is the total nucleation rate, $k_g$ is the growth rate constant, $g$ is the growth exponent, $a$ is the growth parameter, $k_p$ is the primary nucleation rate constant, $u$ is the primary nucleation exponent, $x_c$ is the critical (minimum) particle size, and $D_g$ is the growth dispersion rate.
+Consistent initial values for all solution variables are defined at $t = 0$.
+\begin{thebibliography}{99}
+\bibitem{ZHANG2024108612} Wendi Zhang and Todd Przybycien and Johannes Schmölder and Samuel Leweke and Eric \{von Lieres\} (2024). Solving crystallization/precipitation population balance models in CADET, part I: Nucleation growth and growth rate dispersion in batch and continuous modes on nonuniform grids. Computers \& Chemical Engineering. DOI: https://doi.org/10.1016/j.compchemeng.2024.108612.
+\bibitem{ZHANG2025108860} Wendi Zhang and Todd Przybycien and Jan Michael Breuer and Eric \{von Lieres\} (2025). Solving crystallization/precipitation population balance models in CADET, Part II: Size-based Smoluchowski coagulation and fragmentation equations in batch and continuous modes. Computers \& Chemical Engineering. DOI: https://doi.org/10.1016/j.compchemeng.2024.108860.
+\end{thebibliography}
+\end{document}

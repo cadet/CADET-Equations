@@ -43,11 +43,11 @@ class Crystallization:
 
         st.sidebar.write("Crystallization mechanisms")
         self.has_primary_formation = st.sidebar.selectbox(
-            "Primary particle formation (growth/nucleation)",
+            "Primary particle formation (nucleation and growth)",
             ["Yes", "No"], key=r"cry_has_primary_formation") == "Yes"
 
         if self.has_primary_formation:
-            with st.sidebar.expander("Growth and nucleation", expanded=True):
+            with st.sidebar.expander("Nucleation and growth", expanded=True):
                 self.size_dependent_growth = st.selectbox(
                     "Size-dependent growth", ["No", "Yes"],
                     key=r"cry_size_dependent_growth") == "Yes"
@@ -90,7 +90,7 @@ class Crystallization:
 
         parts = []
         if self.has_primary_formation:
-            parts.append("growth/nucleation")
+            parts.append("nucleation and growth")
         if self.has_aggregation:
             parts.append("aggregation")
         if self.has_fragmentation:
@@ -99,6 +99,10 @@ class Crystallization:
         if parts:
             name += " with " + ", ".join(parts)
         return name
+
+    def aggregation_kernel_name(self):
+        """Return the human-readable aggregation kernel label."""
+        return eq.AGGREGATION_KERNELS.get(self.aggregation_kernel_index, eq.AGGREGATION_KERNELS[0])
 
     def model_assumptions(self):
         return {

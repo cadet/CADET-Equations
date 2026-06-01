@@ -241,6 +241,43 @@ class TestGenerateTemplateIntegration:
         assert par['adsorption']['sma_ka'][0] == 0.0
 
 
+@pytest.mark.ci
+@pytest.mark.unit_test
+class TestGenerateCrystallizationTemplateIntegration:
+
+    @staticmethod
+    def _setup_cry_app(**overrides):
+        at = AppTest.from_file("../Equation-Generator.py")
+        at.run()
+        assert not at.exception
+        at.button(key="dev_mode_button").click().run()
+        assert not at.exception
+        at.button(key="model_type_crystallization_button").click().run()
+        assert not at.exception
+        for key, value in overrides.items():
+            at.selectbox(key=key).set_value(value).run()
+            assert not at.exception
+        return at
+
+    def test_dpfr_without_axial_dispersion(self):
+        at = self._setup_cry_app(
+            cry_column_type="DPFR",
+            cry_has_axial_dispersion="No",
+        )
+        script = get_script(at)
+        assert "'LUMPED_RATE_MODEL_WITHOUT_PORES'" in script
+        assert "'col_dispersion'] = 0.0" in script
+        _assert_valid_python(script)
+
+    def test_cstr_template(self):
+        at = self._setup_cry_app(cry_column_type="CSTR")
+        script = get_script(at)
+        assert "'CSTR'" in script
+        assert "'reaction_model'] = 'CRYSTALLIZATION'" in script
+        assert "cry['cry_mode']" in script
+        _assert_valid_python(script)
+
+
 def _assert_valid_python(script):
     try:
         compile(script, "<template>", "exec")

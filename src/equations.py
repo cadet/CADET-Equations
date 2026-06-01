@@ -921,8 +921,15 @@ def cry_pbe_dpfr(has_primary: bool, has_axial_dispersion: bool,
     return r"\begin{align}" + lhs + r" &= " + rhs + r". \end{align}"
 
 
-def cry_mass_balance_cstr(has_primary: bool):
+def cry_volume_cstr():
     vol_eq = r"\frac{\mathrm{d} V}{\mathrm{d} t} &= F_{\mathrm{in}} - F_{\mathrm{out}}"
+
+    return r"""\begin{align}
+""" + vol_eq + r""".
+\end{align}"""
+
+
+def cry_mass_balance_cstr(has_primary: bool):
 
     conc_lhs = r"\frac{\partial (c V)}{\partial t}"
     conc_rhs = r"F_{\mathrm{in}} c_{\mathrm{in}} - F_{\mathrm{out}} c"
@@ -931,7 +938,6 @@ def cry_mass_balance_cstr(has_primary: bool):
         conc_rhs += r" - \rho k_v V \left( B_0 x_c^3 + 3 \int_{x_c}^{\infty} v_G n \, x^2 \, \mathrm{d}x \right)"
 
     return r"""\begin{align}
-""" + vol_eq + r""", \\
 """ + conc_lhs + r" &= " + conc_rhs + r""".
 \end{align}"""
 
@@ -1053,6 +1059,6 @@ def cry_assumptions(column_type: str, has_primary: bool,
         asmpts.append(r"the aggregation kernel is symmetric, i.e. $\beta(x, \lambda) = \beta(\lambda, x)$;")
 
     if has_fragmentation:
-        asmpts.append(r"fragmentation is a binary process (one particle breaks into two daughter particles);")
+        asmpts.append(r"fragmentation follows a general daughter-size distribution (one parent particle can produce multiple fragments);")
 
     return asmpts

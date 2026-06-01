@@ -27,7 +27,7 @@ from src.utils import format_variables
 from src.renderer import availability_badge_html, write_and_save as renderer_write_and_save
 from src.model_column import Column
 from src.model_crystallization import Crystallization
-from src.generate_template import generate_unit_operation_script
+from src.generate_template import generate_unit_operation_script, generate_crystallization_script
 from src.handler_cite import load_bibliography, cite_html, cite, render_references
 
 # %% Streamlit UI
@@ -270,12 +270,12 @@ if model_type_ == "Crystallization":
     has_frag = cry_model.has_fragmentation
 
     write_html_and_save(
-        "Crystallization model equations and assumptions follow established formulations in "
+        "The crystallization models stated in the following were established in "
         + cite_html("ZHANG2024108612", bibliography_entries, used_citation_keys)
         + " and "
         + cite_html("ZHANG2025108860", bibliography_entries, used_citation_keys)
         + ".",
-        "Crystallization model equations and assumptions follow established formulations in "
+        "The crystallization models stated in the following were established in "
         + cite("ZHANG2024108612", bibliography_entries, used_citation_keys)
         + " and "
         + cite("ZHANG2025108860", bibliography_entries, used_citation_keys)
@@ -286,13 +286,13 @@ if model_type_ == "Crystallization":
         write_and_save(r"Consider a continuously stirred tank reactor (CSTR) with volume $V(t)$, "
                        r"observed over a time interval $(0, T^{\mathrm{end}})$. "
                        r"The particle population is described by the number density $n(t, x)$ "
-                       r"over the internal coordinate (particle size) $x$.")
+                       r"over the internal coordinate (particle size) $x\in(x_0, \infty)$.")
     else:
         disp_str = " with axial dispersion" if cry_model.has_axial_dispersion else ""
         write_and_save(r"Consider a dispersive plug flow reactor (DPFR) of length $L > 0$" + disp_str +
                        r", observed over a time interval $(0, T^{\mathrm{end}})$. "
                        r"The particle population is described by the number density $n(t, x, z)$ "
-                       r"over the internal coordinate (particle size) $x$ and axial position $z$.")
+                       r"over the internal coordinate (particle size) $x\in(x_0, \infty)$ and axial position $z$.")
 
     # PBE
     write_and_save(r"The evolution of the number density is governed by the population balance equation")
@@ -308,21 +308,23 @@ if model_type_ == "Crystallization":
     if has_primary:
         bc_internal = eq.cry_pbe_bc_internal(has_primary, cry_model.has_growth_dispersion)
         if bc_internal:
-            write_and_save("with boundary conditions in the internal coordinate")
+            write_and_save("with nucleation kinetics and regularity boundary conditions in the internal coordinate")
             write_and_save(bc_internal, as_latex=True)
 
     # Boundary conditions for PBE (external coordinate, DPFR only)
     if cry_model.column_type == "DPFR":
-        write_and_save("Boundary conditions in the external (axial) coordinate for the number density are")
+        write_and_save("Danckwerts boundary conditions are employed in the external (axial) coordinate")
         write_and_save(eq.cry_pbe_bc_external_dpfr(cry_model.has_axial_dispersion), as_latex=True)
 
     # Mass balance
     write_and_save(r"The solute mass balance is given by")
     if cry_model.column_type == "CSTR":
         write_and_save(eq.cry_mass_balance_cstr(has_primary), as_latex=True)
+        write_and_save(r"Evolution of the reactor’s volume is governed by")
+        write_and_save(eq.cry_volume_cstr(), as_latex=True)
     else:
         write_and_save(eq.cry_mass_balance_dpfr(has_primary, cry_model.has_axial_dispersion), as_latex=True)
-        write_and_save("with boundary conditions")
+        write_and_save("with Danckwerts boundary conditions")
         write_and_save(eq.cry_solute_bc_dpfr(cry_model.has_axial_dispersion), as_latex=True)
 
     # Constitutive equations
@@ -353,7 +355,7 @@ if model_type_ == "Crystallization":
     if has_agg:
         write_and_save(r"The aggregation birth and death terms are")
         write_and_save(eq.cry_aggregation_birth_death(), as_latex=True)
-        write_and_save("The aggregation kernel is")
+        write_and_save("The aggregation kernel is defined by a " + cry_model.aggregation_kernel_name() + " kernel")
         write_and_save(eq.cry_aggregation_kernel(cry_model.aggregation_kernel_index), as_latex=True)
 
     # Fragmentation details
@@ -787,6 +789,9 @@ st.download_button("Download .tex", st.session_state.latex_string, "model.tex", 
 
 if model_type_ == "Chromatography":
     st.session_state.template_script = generate_unit_operation_script(column_model)
+    st.download_button("Download CADET-Python template (.py file)", st.session_state.template_script, "unit_operation.py", "text/x-python")
+elif model_type_ == "Crystallization":
+    st.session_state.template_script = generate_crystallization_script(cry_model)
     st.download_button("Download CADET-Python template (.py file)", st.session_state.template_script, "unit_operation.py", "text/x-python")
 
 if st.button("Generate PDF", key=r"generate_pdf"):

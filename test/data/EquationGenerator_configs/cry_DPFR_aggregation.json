@@ -1,0 +1,16 @@
+{
+    "model_type": "Crystallization",
+    "dev_mode": true,
+    "var_format": "CADET",
+    "show_eq_description": true,
+    "model_assumptions": true,
+    "cry_column_type": "DPFR",
+    "cry_has_primary_formation": "Yes",
+    "cry_has_growth_dispersion": "Yes",
+    "cry_has_secondary_nucleation": "Yes",
+    "cry_size_dependent_growth": "No",
+    "cry_has_aggregation": "Yes",
+    "cry_aggregation_kernel": "Constant",
+    "cry_has_fragmentation": "No",
+    "cry_has_axial_dispersion": "Yes"
+}
