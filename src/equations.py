@@ -402,6 +402,18 @@ def reaction_model_definition(reaction_model: str, phase: str):
     return None
 
 
+def reaction_model_references(reaction_model: str, bibliography_entries: dict, used_citation_keys: set):
+    """Get the reaction model definition equations for the specified model and phase.
+
+    Returns a (main_eq, flux_eq) tuple, or None if the model is Arbitrary.
+    """
+    if reaction_model == "Mass Action Law":
+        return "standard reaction engineering formulation " + cite_html("Levenspiel1999", bibliography_entries, used_citation_keys)
+    elif reaction_model == "Michaelis Menten":
+        return "original formulation " + cite_html("Michaelis1913", bibliography_entries, used_citation_keys) + ", steady-state interpretation " + cite_html("Briggs1925", bibliography_entries, used_citation_keys) + ", modern notation and parameter definitions " + cite_html("CornishBowden2012", bibliography_entries, used_citation_keys)
+    return None
+
+
 def reaction_model_assumptions(reaction_model: str):
     """Return a list of assumption strings for the selected reaction model."""
     if reaction_model == "Arbitrary":
@@ -414,8 +426,8 @@ def reaction_model_assumptions(reaction_model: str):
     elif reaction_model == "Michaelis Menten":
         return [
             "the reaction rates follow Michaelis-Menten enzyme kinetics, characterized by saturation at high substrate concentrations;",
+            "the kinetic expressions are interpreted in the steady-state (kinetic) sense;",
             "this model applies to reactions occurring within a single phase (liquid or solid) only;",
-            r"for the original source see Michaelis, L. and Menten, M.L. (1913). Die Kinetik der Invertinwirkung. Biochem. Z., 49, 333-369;",
         ]
     return None
 

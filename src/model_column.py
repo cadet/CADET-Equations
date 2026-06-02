@@ -1000,7 +1000,7 @@ class Column:
 
         has_any_reaction = self.has_reaction_bulk or self.has_reaction_particle_liquid or self.has_reaction_particle_solid
         if has_any_reaction and self.reaction_model != "Arbitrary":
-            model_name += f" and {self.reaction_model} reactions"
+            model_name += f" with {self.reaction_model} type reactions"
 
         return model_name
 

@@ -787,8 +787,6 @@ else: # Chromatography model family
         has_kinetic_par_sol = column_model.has_reaction_particle_solid and not column_model.req_reaction_particle_solid
 
         if has_kinetic_bulk or has_kinetic_par_liq or has_kinetic_par_sol:
-            write_and_save("### " + column_model.reaction_model + " reaction model")
-            file_content.append(r"\subsection*{" + column_model.reaction_model + r" reaction model}")
 
             phase_map = [
                 (has_kinetic_bulk, "bulk", "bulk liquid"),
@@ -802,7 +800,12 @@ else: # Chromatography model family
                 if definition is None:
                     continue
                 main_eq, flux_eq = definition
-                write_and_save(r"The " + phase_label + " phase reaction term is given by")
+                write_html_and_save(
+                r"The " + phase_label + " phase reaction term is defined by " + column_model.reaction_model + " type reactions ("
+                + eq.reaction_model_references(column_model.reaction_model, bibliography_entries, used_citation_keys) + ").",
+                r"The " + phase_label + " phase reaction term is defined by " + column_model.reaction_model + " type reactions ("
+                + eq.reaction_model_references(column_model.reaction_model, bibliography_entries, used_citation_keys) + ")."
+                )
                 write_and_save(r"""
 \begin{align}
 """ + main_eq + r"""
