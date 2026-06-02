@@ -921,6 +921,10 @@ if st.button("Generate configuration file", key=r"generate_config"):
             return 3.3
         elif key == "particle_resolution":
             return 3.5
+        elif key in ("has_reaction_bulk", "has_reaction_particle_liquid", "has_reaction_particle_solid"):
+            return 3.6
+        elif key == "reaction_model":
+            return 3.9
         elif key.startswith("cry_"):
             return 0.5
         return 10

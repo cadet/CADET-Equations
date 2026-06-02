@@ -43,11 +43,66 @@ _BINDING_DEFAULTS = {
     },
 }
 
+_REACTION_DEFAULTS = {
+    'Mass Action Law': {
+        'cadet_name': 'MASS_ACTION_LAW',
+        'nreact': 1,
+        'params': {
+            'mal_stoichiometry_bulk': '[0.0] * ncomp',
+            'mal_exponents_fwd_bulk': '[1.0] * ncomp',
+            'mal_exponents_bwd_bulk': '[1.0] * ncomp',
+            'mal_kfwd_bulk': '[1.0]',
+            'mal_kbwd_bulk': '[0.1]',
+        },
+    },
+    'Michaelis Menten': {
+        'cadet_name': 'MICHAELIS_MENTEN',
+        'nreact': 1,
+        'params': {
+            'mm_stoichiometry': '[0.0] * ncomp',
+            'mm_km': '[1.0] * ncomp',
+            'mm_vmax': '[1.0]',
+        },
+    },
+}
+
 _PAR_GEOM_MAP = {
     'Sphere': 'SPHERE',
     'Cylinder': 'CYLINDER',
     'Slab': 'SLAB',
 }
+
+
+def _reaction_lines(reaction_model, ncomp_fixed, phase):
+    """Generate reaction model config lines for a given phase (bulk/liquid/solid)."""
+    lines = []
+    if reaction_model not in _REACTION_DEFAULTS:
+        lines.append(f"# TODO: configure reaction model for {phase} phase")
+        return lines
+
+    info = _REACTION_DEFAULTS[reaction_model]
+    nreact = info['nreact']
+
+    if phase == "bulk":
+        lines.append("")
+        lines.append(f"unit['reaction_model'] = '{info['cadet_name']}'")
+        lines.append(f"unit['reaction_bulk'] = {{")
+    elif phase == "liquid":
+        lines.append("")
+        lines.append(f"par['reaction_model_liquid'] = '{info['cadet_name']}'")
+        lines.append(f"par['reaction_liquid'] = {{")
+    else:
+        lines.append("")
+        lines.append(f"par['reaction_model_solid'] = '{info['cadet_name']}'")
+        lines.append(f"par['reaction_solid'] = {{")
+
+    ncomp_str = str(ncomp_fixed) if ncomp_fixed is not None else "ncomp"
+    for key, val in info['params'].items():
+        val_str = val.replace('ncomp', ncomp_str)
+        lines.append(f"    '{key}': {val_str},")
+    lines.append(f"}}")
+
+    return lines
 
 
 def _get_unit_type(column_model):
@@ -271,6 +326,9 @@ def generate_unit_operation_script(column_model):
                 particle, j, ncomp_fixed, bnd_model, req_bnd,
                 column_model.has_binding, mult_bnd,
             ))
+
+    if column_model.has_reaction_bulk and column_model.reaction_model != "Arbitrary":
+        body.extend(_reaction_lines(column_model.reaction_model, ncomp_fixed, "bulk"))
 
     body.append("")
     body.append("return unit")
