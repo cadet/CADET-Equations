@@ -86,7 +86,12 @@ if uploaded_file is not None:
 
     if uploaded_file_name.endswith(".json"):
 
-        config = json.load(uploaded_file)
+        json_data = json.load(uploaded_file)
+        if isinstance(json_data, dict) and ('column_resolution' in json_data or 'model_type' in json_data):
+            config = json_data
+            st.sidebar.success("Uploaded configuration applied!")
+        else:
+            st.sidebar.error("Uploaded JSON is not a valid CADET-Equations configuration.")
 
     elif uploaded_file_name.endswith(".h5"):
 
@@ -99,10 +104,6 @@ if uploaded_file is not None:
         for key, value in config.items():
 
             st.session_state[key] = value
-
-        st.sidebar.success("Uploaded configuration applied!")
-    else:
-        st.sidebar.error("Uploaded configuration could not be read!")
 
 # ---------------------------------
 # User configuration of the model
