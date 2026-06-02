@@ -201,7 +201,6 @@ def binding_model_assumptions(binding_model: str):
         return [
             "each component binds independently, that is, there are no competitive effects;",
             "the capacity of the resin is unbounded;",
-            r"for details see Guiochon, G., Shirazi, D. G., & Felinger, A. (2006). Fundamentals of preparative and nonlinear chromatography. Academic Press.",
             ]
     elif binding_model == "Langmuir":
         return [

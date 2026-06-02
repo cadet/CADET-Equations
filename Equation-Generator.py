@@ -587,7 +587,7 @@ else: # Chromatography model family
                         write_and_save("with boundary conditions")
                         write_and_save(group_bc[par_type], as_latex=True)
                     
-                    if column_model.binding_model not in ["Arbitrary", None]:
+                    if column_model.binding_model not in ["Arbitrary", None] and eq.binding_model_references(column_model.binding_model, bibliography_entries, used_citation_keys) is not None:
                         write_html_and_save(
                             "Further details on the binding model can be found in " + eq.binding_model_references(column_model.binding_model, bibliography_entries, used_citation_keys) + ".",
                             "Further details on the binding model can be found in " + eq.binding_model_references(column_model.binding_model, bibliography_entries, used_citation_keys) + "."
@@ -707,7 +707,7 @@ else: # Chromatography model family
                     write_and_save("with boundary conditions")
                     write_and_save(particle_bc[par_type], as_latex=True)
 
-                if column_model.binding_model not in ["Arbitrary", None]:
+                if column_model.binding_model not in ["Arbitrary", None] and eq.binding_model_references(column_model.binding_model, bibliography_entries, used_citation_keys) is not None:
                     write_html_and_save(
                         "Further details on the binding model can be found in " + eq.binding_model_references(column_model.binding_model, bibliography_entries, used_citation_keys) + ".",
                         "Further details on the binding model can be found in " + eq.binding_model_references(column_model.binding_model, bibliography_entries, used_citation_keys) + "."
