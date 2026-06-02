@@ -586,6 +586,12 @@ else: # Chromatography model family
                     if not group_bc[par_type] == "":
                         write_and_save("with boundary conditions")
                         write_and_save(group_bc[par_type], as_latex=True)
+                    
+                    if column_model.binding_model not in ["Arbitrary", None] and eq.binding_model_references(column_model.binding_model, bibliography_entries, used_citation_keys) is not None:
+                        write_html_and_save(
+                            "Further details on the binding model can be found in " + eq.binding_model_references(column_model.binding_model, bibliography_entries, used_citation_keys) + ".",
+                            "Further details on the binding model can be found in " + eq.binding_model_references(column_model.binding_model, bibliography_entries, used_citation_keys) + "."
+                        )
 
                     if show_eq_description:
                         write_and_save("Here, " + column_model.particle_models[0].vars_params_description())
@@ -700,6 +706,12 @@ else: # Chromatography model family
                 if not particle_bc[par_type] == "":
                     write_and_save("with boundary conditions")
                     write_and_save(particle_bc[par_type], as_latex=True)
+
+                if column_model.binding_model not in ["Arbitrary", None] and eq.binding_model_references(column_model.binding_model, bibliography_entries, used_citation_keys) is not None:
+                    write_html_and_save(
+                        "Further details on the binding model can be found in " + eq.binding_model_references(column_model.binding_model, bibliography_entries, used_citation_keys) + ".",
+                        "Further details on the binding model can be found in " + eq.binding_model_references(column_model.binding_model, bibliography_entries, used_citation_keys) + "."
+                    )
 
                 if show_eq_description:
                     write_and_save("Here, " + column_model.particle_models[0].vars_params_description())

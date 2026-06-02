@@ -8,6 +8,8 @@ modeling assumptions and equation terms.
 
 import re
 
+from src.handler_cite import cite_html
+
 def HRM_asmpt(N_p: int, nonlimiting_filmDiff: bool, has_binding: bool, has_surfDiff: bool, column_resolution: str):
     """Return a list of HRM assumptions as LaTeX strings."""
 
@@ -199,21 +201,16 @@ def binding_model_assumptions(binding_model: str):
         return [
             "each component binds independently, that is, there are no competitive effects;",
             "the capacity of the resin is unbounded;",
-            r"for details see Guiochon, G., Shirazi, D. G., & Felinger, A. (2006). Fundamentals of preparative and nonlinear chromatography. Academic Press.",
             ]
     elif binding_model == "Langmuir":
         return [
-            "there is a finite number of binding sites on the stationary phase. Adsorption therefore saturates as the available capacity is approached, and different components compete for the same sites;"
-            r"for the original source see Langmuir, Irving (1916-11). Solids and Liquids. Part I. Solids. Journal of the American Chemical Society. doi:10.1021/ja02268a002",
-            r"for further details see Guiochon, G., Shirazi, D. G., & Felinger, A. (2006). Fundamentals of preparative and nonlinear chromatography. Academic Press.",
+            "there is a finite number of binding sites on the stationary phase. Adsorption therefore saturates as the available capacity is approached, and different components compete for the same sites;",
             ]
     elif binding_model == "SMA":
         return [
             "charged species interact with charged ligands on the resin;",
             "electroneutrality is enforced via displacing counter-ions;",
             "steric sheilding of binding sites may take place;",
-            r"for the original source see Brooks, Clayton A. and Cramer, Steven M. (1992). Steric mass-action ion exchange: Displacement profiles and induced salt gradients. AIChE Journal. doi:10.1002/aic.690381212;",
-            r"for the extension to multiple bound states see Diedrich, Juliane and Heymann, William and Leweke, Samuel and Hunt, Stephen and Todd, Robert and Kunert, Christian and Johnson, Will and von Lieres, Eric. (2017). Multi-state steric mass action model and case study on complex high loading behavior of mAb on ion exchange tentacle resin. Journal of Chromatography A. doi:10.1016/j.chroma.2017.09.039;",
             ]
     else:
         return None
@@ -230,6 +227,18 @@ def primary_binding_eq_what_comps(binding_model: str):
     else:
         return "all"
     
+def binding_model_references(binding_model: str, bibliography_entries: dict, used_citation_keys: set):
+    """Get the binding model references for the specified model.
+
+    Returns a string with HTML-formatted references, or None if the model is Arbitrary.
+    """
+    if binding_model == "SMA":
+        return "the original formulation " + cite_html("brooks1992steric", bibliography_entries, used_citation_keys) + ", extension to multiple bound states in " + cite_html("DIEDRICH201760", bibliography_entries, used_citation_keys)
+    elif binding_model == "Langmuir":
+        return "the original formulation " + cite_html("Langmuir1916", bibliography_entries, used_citation_keys) + ", modern notation, parameter definitions and details in " + cite_html("guiochon2006fundamentals", bibliography_entries, used_citation_keys)
+    return None
+
+
 # %% Equation definitions
 
 
