@@ -780,6 +780,44 @@ else: # Chromatography model family
                        write_and_save(r"where the counter-ion concentration $c^{\s}_0$ satisfies the electroneutrality constraint.")
 
 
+    # %% Reaction model definition section
+    if column_model.reaction_model != "Arbitrary":
+        has_kinetic_bulk = column_model.has_reaction_bulk and not column_model.req_reaction_bulk
+        has_kinetic_par_liq = column_model.has_reaction_particle_liquid and not column_model.req_reaction_particle_liquid
+        has_kinetic_par_sol = column_model.has_reaction_particle_solid and not column_model.req_reaction_particle_solid
+
+        if has_kinetic_bulk or has_kinetic_par_liq or has_kinetic_par_sol:
+
+            phase_map = [
+                (has_kinetic_bulk, "bulk", "bulk liquid"),
+                (has_kinetic_par_liq, "particle_liquid", "particle liquid"),
+                (has_kinetic_par_sol, "particle_solid", "particle solid"),
+            ]
+            for active, phase_key, phase_label in phase_map:
+                if not active:
+                    continue
+                definition = eq.reaction_model_definition(column_model.reaction_model, phase_key)
+                if definition is None:
+                    continue
+                main_eq, flux_eq = definition
+                write_html_and_save(
+                r"The " + phase_label + " phase reaction term is defined by " + column_model.reaction_model + " type reactions ("
+                + eq.reaction_model_references(column_model.reaction_model, bibliography_entries, used_citation_keys) + ").",
+                r"The " + phase_label + " phase reaction term is defined by " + column_model.reaction_model + " type reactions ("
+                + eq.reaction_model_references(column_model.reaction_model, bibliography_entries, used_citation_keys) + ")."
+                )
+                write_and_save(r"""
+\begin{align}
+""" + main_eq + r"""
+\end{align}
+""", as_latex=True)
+                write_and_save("where")
+                write_and_save(r"""
+\begin{align}
+""" + flux_eq + r""".
+\end{align}
+""", as_latex=True)
+
     write_and_save("Consistent initial values for all solution variables (concentrations) are defined at $t = 0$.")
 
 render_references(bibliography_entries, used_citation_keys, file_content)
@@ -883,6 +921,10 @@ if st.button("Generate configuration file", key=r"generate_config"):
             return 3.3
         elif key == "particle_resolution":
             return 3.5
+        elif key in ("has_reaction_bulk", "has_reaction_particle_liquid", "has_reaction_particle_solid"):
+            return 3.6
+        elif key == "reaction_model":
+            return 3.9
         elif key.startswith("cry_"):
             return 0.5
         return 10

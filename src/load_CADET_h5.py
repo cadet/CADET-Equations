@@ -17,6 +17,11 @@ CADET_binding_model_map = {
     'STERIC_MASS_ACTION': 'SMA',
 }
 
+CADET_reaction_model_map = {
+    'MASS_ACTION_LAW': 'Mass Action Law',
+    'MICHAELIS_MENTEN': 'Michaelis Menten',
+}
+
 
 CADET_column_unit_types = [
                     'CSTR',
@@ -274,6 +279,8 @@ def _extract_v5_particle_config(config, unit_type, h5_unit_group, par_model):
     if par_model == "1D (radial coordinate)":
         _extract_particle_core_config(config, h5_unit_group)
 
+    _extract_reaction_config(config, h5_unit_group)
+
 
 def _extract_v6_particle_config(config, h5_unit_group, par_model):
     """Extract particle configuration from v6 interface (particle info in particle_type_xxx subgroups)."""
@@ -321,6 +328,27 @@ def _extract_v6_particle_config(config, h5_unit_group, par_model):
 
     if par_model == "1D (radial coordinate)":
         _extract_particle_core_config(config, pt_group)
+
+    _extract_reaction_config(config, h5_unit_group)
+
+
+def _extract_reaction_config(config, h5_unit_group):
+    """Extract reaction model configuration from an HDF5 unit group."""
+    reaction_model_bulk = None
+    reaction_bulk_group = h5_unit_group.get('reaction_bulk')
+    if reaction_bulk_group is not None:
+        reaction_model_bulk = get_h5_value(reaction_bulk_group, 'REACTION_MODEL')
+
+    if reaction_model_bulk is None:
+        reaction_model_bulk = get_h5_value(h5_unit_group, 'REACTION_MODEL')
+
+    if reaction_model_bulk is not None and reaction_model_bulk != 'NONE':
+        mapped = CADET_reaction_model_map.get(reaction_model_bulk, 'Arbitrary')
+        config['reaction_model'] = mapped
+        config['has_reaction_bulk'] = "Yes"
+        if mapped == 'Arbitrary':
+            st.sidebar.warning(
+                f"Reaction model {reaction_model_bulk} not implemented in CADET-Equations, default to arbitrary reaction")
 
 
 def _extract_particle_core_config(config, group):

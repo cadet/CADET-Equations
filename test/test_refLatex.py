@@ -34,6 +34,8 @@ def _config_key_order(key):
         "advanced_mode": 0,
         "column_type": 1.5, "column_resolution": 2,
         "add_particles": 3, "PSD": 3.2, "has_binding": 3.3, "particle_resolution": 3.5,
+        "has_reaction_bulk": 3.6, "has_reaction_particle_liquid": 3.7,
+        "has_reaction_particle_solid": 3.8, "reaction_model": 3.9,
         "cry_column_type": 4,
         "cry_has_axial_dispersion": 4.5,
         "cry_has_primary_formation": 5,
@@ -71,7 +73,7 @@ def apply_model_from_config(at, model_config):
 
 @pytest.mark.ci
 @pytest.mark.reference
-@pytest.mark.parametrize("model_name", ["CSTR", "Plug_Flow", "LRM_dynLin", "LRMP_dynLin", "LRMP_reqLin", "GRMsd_dynLin", "GRM", "GRM_dynLin", "GRMsd_PSD_dynLin", "GRMsd2D_dynLin", "GRMsd_nonLimFD_parCore", "GRMsd_nonLimFD_reqBnd", "GeneralFiniteBath", "Radial_Plug_Flow", "Radial_Dispersive_Plug_Flow", "Radial_GRM", "Radial_LRM", "Radial_LRMP", "Frustum_Plug_Flow", "Frustum_GRM", "cry_CSTR_primaryGrowth", "cry_CSTR_Agg_Frag", "cry_DPFR_aggregation", "cry_DPFR_primarySecondaryNucleation"])
+@pytest.mark.parametrize("model_name", ["CSTR", "Plug_Flow", "LRM_dynLin", "LRMP_dynLin", "LRMP_reqLin", "GRMsd_dynLin", "GRM", "GRM_dynLin", "GRMsd_PSD_dynLin", "GRMsd2D_dynLin", "GRMsd_nonLimFD_parCore", "GRMsd_nonLimFD_reqBnd", "GeneralFiniteBath", "Radial_Plug_Flow", "Radial_Dispersive_Plug_Flow", "Radial_GRM", "Radial_LRM", "Radial_LRMP", "Frustum_Plug_Flow", "Frustum_GRM", "cry_CSTR_primaryGrowth", "cry_CSTR_Agg_Frag", "cry_DPFR_aggregation", "cry_DPFR_primarySecondaryNucleation", "GRMsd_MassActionLaw", "GRMsd_MichaelisMenten"])
 def test_json_config_output_against_latex_reference(model_name, test_dir):
 
     at = AppTest.from_file("../Equation-Generator.py")
