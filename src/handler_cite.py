@@ -133,7 +133,7 @@ def cite_html(citation_key: str, bibliography_entries: dict, used_citation_keys:
     citation_text = cite(citation_key, bibliography_entries, used_citation_keys)
     if citation_key not in bibliography_entries:
         return citation_text
-    return f"<a href='#ref-{citation_key}'>{citation_text}</a>"
+    return f"<a href='#ref-{citation_key}' style='color:#023d6b;'>{citation_text}</a>"
 
 
 def render_references(bibliography_entries: dict, used_citation_keys: list, file_content: list):

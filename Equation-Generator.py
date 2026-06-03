@@ -66,6 +66,15 @@ st.markdown("""
         top: 50% !important;
         transform: translateY(-50%) !important;
     }
+
+    /* CADET blue for all hyperlinks */
+    .stMarkdown a, .stMarkdown a:visited {
+        color: #023d6b !important;
+    }
+    .stMarkdown a:hover {
+        color: #145a86 !important;
+    }
+
 </style>
 """, unsafe_allow_html=True)
 

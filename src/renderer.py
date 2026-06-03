@@ -32,8 +32,8 @@ def availability_badge_html(name: str, available: int) -> str:
     icon = "not supported"
 
     if available == 1:
-        color_bg = "#e6f4ea"
-        color_fg = "#137333"
+        color_bg = "#dce7f0"
+        color_fg = "#023d6b"
         icon = "supported"
     elif available == 0:
         color_bg = "#fff4e5"
