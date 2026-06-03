@@ -952,3 +952,12 @@ if st.button("Generate configuration file", key=r"generate_config"):
             "config.json",
             "application/json"
         )
+
+# %% Bug report link
+
+st.sidebar.divider()
+st.sidebar.link_button(
+    ":material/bug_report: Report a bug",
+    "https://github.com/cadet/CADET-Equations/issues/new?template=bug_report.yml",
+    use_container_width=True,
+)
