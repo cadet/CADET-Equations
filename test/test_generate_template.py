@@ -149,8 +149,7 @@ class TestGenerateTemplateIntegration:
         _assert_valid_python(script)
 
     def test_cstr_template(self):
-        at = setup_app(column_type="Axial flow cylinder")
-        at.selectbox(key="column_resolution").set_value("0D (Homogeneous Tank)").run()
+        at = setup_app(column_type="Mixed tank")
         assert not at.exception
         script = get_script(at)
         assert "'CSTR'" in script

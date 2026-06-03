@@ -13,7 +13,7 @@ untested_variables = ["dev_mode", "advanced_mode", "var_format", "sym_table", "s
 # We thus first identify the boxes that change the number of boxes and thus combinations (critical_variables).
 # We then start the recursion for every combination of the aforementioned critical keys.
 # Sometimes, only specific options can be critical (e.g. 0D tank). Such options can be added here and handled independently later
-critical_variables = untested_variables + ["PSD", "has_binding", "particle_resolution", "0D (Homogeneous Tank)", "column_type"]
+critical_variables = untested_variables + ["PSD", "has_binding", "particle_resolution", "Mixed tank", "column_type"]
 
 # We test every configuration by recursively iteratiing through all combinations
 def config_recursion(at, widgies, counter, test_file_generator_buttons:bool):
@@ -126,10 +126,10 @@ def test_streamlit_app():
     run_configs(at, preSet, getInputToBeTested(at), 2221)
 
     # 6) test all configs for the tank
-    # enable the tank and remove column resolution from the test set
-    critical_variables.remove("0D (Homogeneous Tank)")
+    # enable the tank and remove column_type from the test set
+    critical_variables.remove("Mixed tank")
     critical_variables.append("column_resolution")
-    at.selectbox(key="column_resolution").set_value("0D (Homogeneous Tank)").run()
+    at.selectbox(key="column_type").set_value("Mixed tank").run()
 
     # reset variables
     at.selectbox(key="PSD").set_value("No").run()

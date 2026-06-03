@@ -116,7 +116,7 @@ def test_get_h5_value_empty_array():
 @pytest.mark.parametrize("unit_type, expected", [
     ('GENERAL_RATE_MODEL',                        "Axial flow cylinder"),
     ('LUMPED_RATE_MODEL_WITHOUT_PORES',            "Axial flow cylinder"),
-    ('CSTR',                                       "Axial flow cylinder"),
+    ('CSTR',                                       "Mixed tank"),
     ('COLUMN_MODEL_1D',                            "Axial flow cylinder"),
     ('RADIAL_GENERAL_RATE_MODEL',                  "Radial flow cylinder"),
     ('RADIAL_LUMPED_RATE_MODEL_WITHOUT_PORES',     "Radial flow cylinder"),
@@ -531,7 +531,7 @@ def test_extract_v6_config_single_particle_no_binding():
 @pytest.mark.parametrize("unit_type, expected_geometry", [
     ('GENERAL_RATE_MODEL',            "Axial flow cylinder"),
     ('COLUMN_MODEL_1D',               "Axial flow cylinder"),
-    ('CSTR',                          "Axial flow cylinder"),
+    ('CSTR',                          "Mixed tank"),
     ('RADIAL_GENERAL_RATE_MODEL',     "Radial flow cylinder"),
     ('RADIAL_COLUMN_MODEL_1D',        "Radial flow cylinder"),
     ('FRUSTUM_GENERAL_RATE_MODEL',    "Frustum"),
