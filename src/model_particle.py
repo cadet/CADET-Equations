@@ -11,6 +11,7 @@ import streamlit as st
 
 from src import equations as eq
 from src.utils import format_variables
+from src.units import get_unit
 
 # immutable & hashable dataclass -> unique particle type counter
 @dataclass(frozen=True)
@@ -26,6 +27,7 @@ class Particle:
     has_core: bool
     var_format: Literal
     resolution: Literal["1D", "0D"]
+    unit_system: str = "SI"
     has_binding: bool =None # and thus solid phase
     req_binding: bool = None
     has_mult_bnd_states: bool = None
@@ -64,8 +66,10 @@ class Particle:
         elif self.geometry == "Slab":
             object.__setattr__(self, 'surface_volume_ratio', 1)
 
+        u = lambda key: get_unit(key, self.unit_system)
+
         vars_and_params_ = []
-        
+
         state_deps = r"t"
         if self.interstitial_volume_resolution == "1D":
             if self.column_type == "Radial":
@@ -85,113 +89,113 @@ class Particle:
 
         if not (self.nonlimiting_filmDiff and self.resolution == "0D"):
             symbol_name_ = r"c^{\p}_{i}" if self.single_partype else r"c^{\p}_{j,i}"
-            vars_and_params_.append({"Group" : 1, "Symbol": symbol_name_, "Description": r"particle liquid concentration", "Unit": r"\frac{mol}{m^3}", "Dependence" : state_deps, "Domain" : eq.full_particle_conc_domain(column_resolution=self.interstitial_volume_resolution, particle_resolution=self.resolution, hasCore=self.has_core, with_par_index=False, with_time_domain=True, column_type=self.column_type)})
-            
+            vars_and_params_.append({"Group" : 1, "Symbol": symbol_name_, "Description": r"particle liquid concentration", "Unit": u("concentration_molar"), "Dependence" : state_deps, "Domain" : eq.full_particle_conc_domain(column_resolution=self.interstitial_volume_resolution, particle_resolution=self.resolution, hasCore=self.has_core, with_par_index=False, with_time_domain=True, column_type=self.column_type)})
+
         if self.resolution == "1D":
-            vars_and_params_.append({"Group" : 0, "Symbol": r"r", "Description": r"radial particle coordinate", "Unit": r"m", "Dependence": r"\text{independent variable}", "Property": r""})
+            vars_and_params_.append({"Group" : 0, "Symbol": r"r", "Description": r"radial particle coordinate", "Unit": u("length"), "Dependence": r"\text{independent variable}", "Property": r""})
             symbol_name_ = r"D^\mathrm{p}_{i}" if self.single_partype else r"D^\mathrm{p}_{j,i}"
-            vars_and_params_.append({"Group" : 6.1, "Symbol": symbol_name_, "Description": r"particle diffusion coefficient", "Unit": r"\frac{m^2}{s}", "Dependence": r"i" if self.single_partype else r"j,i", "Property": r"> 0"})
+            vars_and_params_.append({"Group" : 6.1, "Symbol": symbol_name_, "Description": r"particle diffusion coefficient", "Unit": u("diffusion"), "Dependence": r"i" if self.single_partype else r"j,i", "Property": r"> 0"})
 
             if not self.nonlimiting_filmDiff:
-                vars_and_params_.append({"Group" : 4, "Symbol": r"\varepsilon^{\mathrm{p}}" if self.single_partype else r"\varepsilon^{\mathrm{p}}_{j}", "Description": r"particle porosity", "Unit": r"-", "Dependence": r"\text{constant}" if self.single_partype else r"j", "Property": r"\in (0, 1)"})
+                vars_and_params_.append({"Group" : 4, "Symbol": r"\varepsilon^{\mathrm{p}}" if self.single_partype else r"\varepsilon^{\mathrm{p}}_{j}", "Description": r"particle porosity", "Unit": u("dimensionless"), "Dependence": r"\text{constant}" if self.single_partype else r"j", "Property": r"\in (0, 1)"})
 
         if self.has_binding:
             symbol_name_ = r"c^{\s}_{i}" if self.single_partype else r"c^{\s}_{j,i}"
-            vars_and_params_.append({"Group" : 1, "Symbol": symbol_name_, "Description": r"particle solid concentration", "Unit": r"\frac{mol}{m^3}", "Dependence" : state_deps, "Domain" : eq.full_particle_conc_domain(column_resolution=self.interstitial_volume_resolution, particle_resolution=self.resolution, hasCore=self.has_core, with_par_index=False, with_time_domain=True, column_type=self.column_type)})
+            vars_and_params_.append({"Group" : 1, "Symbol": symbol_name_, "Description": r"particle solid concentration", "Unit": u("concentration_molar"), "Dependence" : state_deps, "Domain" : eq.full_particle_conc_domain(column_resolution=self.interstitial_volume_resolution, particle_resolution=self.resolution, hasCore=self.has_core, with_par_index=False, with_time_domain=True, column_type=self.column_type)})
 
             if self.binding_model == "Arbitrary":
                 symbol_name_ = r"f^\mathrm{bind}_{j,i}" if self.PTD else r"f^\mathrm{bind}_{i}"
                 dep_ = r"\vec{c}^\mathrm{p}, \vec{c}^\mathrm{s}; j, i" if self.PTD else r"\vec{c}^\mathrm{p}, \vec{c}^\mathrm{s}; i"
-                vars_and_params_.append({"Group" : 10, "Symbol": symbol_name_, "Description": r"adsorption isotherm function", "Unit": r"\frac{1}{s}", "Dependence": dep_})
-                vars_and_params_.append({"Group" : 10.1, "Symbol": r"\vec{c}^\mathrm{p}", "Description": r"particle liquid components vector", "Unit": r"[\frac{mol}{m^3}]", "Dependence": state_deps})
-                vars_and_params_.append({"Group" : 10.1, "Symbol": r"\vec{c}^\mathrm{s}", "Description": r"particle solid components vector", "Unit": r"[\frac{mol}{m^3}]", "Dependence": state_deps})
+                vars_and_params_.append({"Group" : 10, "Symbol": symbol_name_, "Description": r"adsorption isotherm function", "Unit": u("rate_first_order"), "Dependence": dep_})
+                vars_and_params_.append({"Group" : 10.1, "Symbol": r"\vec{c}^\mathrm{p}", "Description": r"particle liquid components vector", "Unit": u("concentration_molar_vec"), "Dependence": state_deps})
+                vars_and_params_.append({"Group" : 10.1, "Symbol": r"\vec{c}^\mathrm{s}", "Description": r"particle solid components vector", "Unit": u("concentration_molar_vec"), "Dependence": state_deps})
             else:
                 idx_ = "i" if self.single_partype else "j,i"
-                vars_and_params_.append({"Group" : 10, "Symbol": r"k^{\mathrm{a}}_{" + idx_ + r"}", "Description": r"adsorption rate constant", "Unit": r"\frac{m^3}{mol \cdot s}", "Dependence": idx_})
-                vars_and_params_.append({"Group" : 10, "Symbol": r"k^{\mathrm{d}}_{" + idx_ + r"}", "Description": r"desorption rate constant", "Unit": r"\frac{1}{s}", "Dependence": idx_})
+                vars_and_params_.append({"Group" : 10, "Symbol": r"k^{\mathrm{a}}_{" + idx_ + r"}", "Description": r"adsorption rate constant", "Unit": u("rate_second_order"), "Dependence": idx_})
+                vars_and_params_.append({"Group" : 10, "Symbol": r"k^{\mathrm{d}}_{" + idx_ + r"}", "Description": r"desorption rate constant", "Unit": u("rate_first_order"), "Dependence": idx_})
 
             if self.binding_model == "Langmuir":
                 idx_ = "i" if self.single_partype else "j,i"
-                vars_and_params_.append({"Group" : 10.1, "Symbol": r"q^{\mathrm{max}}_{" + idx_ + r"}", "Description": r"maximum binding capacity", "Unit": r"\frac{mol}{m^3}", "Dependence": idx_})
+                vars_and_params_.append({"Group" : 10.1, "Symbol": r"q^{\mathrm{max}}_{" + idx_ + r"}", "Description": r"maximum binding capacity", "Unit": u("concentration_molar"), "Dependence": idx_})
 
             if self.binding_model == "SMA":
                 idx_ = "i" if self.single_partype else "j,i"
-                vars_and_params_.append({"Group" : 10.1, "Symbol": r"\nu_{" + idx_ + r"}", "Description": r"characteristic charge", "Unit": r"-", "Dependence": idx_})
-                vars_and_params_.append({"Group" : 10.1, "Symbol": r"\sigma_{" + idx_ + r"}", "Description": r"steric factor", "Unit": r"-", "Dependence": idx_})
-                vars_and_params_.append({"Group" : 10.1, "Symbol": r"\Lambda", "Description": r"ionic capacity (binding site concentration)", "Unit": r"\frac{mol}{m^3}", "Dependence": r"\text{constant}"})
-                vars_and_params_.append({"Group" : 10.1, "Symbol": r"q^{\mathrm{ref}}", "Description": r"reference solid phase concentration", "Unit": r"\frac{mol}{m^3}", "Dependence": r"\text{constant}"})
-                vars_and_params_.append({"Group" : 10.1, "Symbol": r"c^{\mathrm{ref}}", "Description": r"reference liquid phase concentration", "Unit": r"\frac{mol}{m^3}", "Dependence": r"\text{constant}"})
-            
+                vars_and_params_.append({"Group" : 10.1, "Symbol": r"\nu_{" + idx_ + r"}", "Description": r"characteristic charge", "Unit": u("dimensionless"), "Dependence": idx_})
+                vars_and_params_.append({"Group" : 10.1, "Symbol": r"\sigma_{" + idx_ + r"}", "Description": r"steric factor", "Unit": u("dimensionless"), "Dependence": idx_})
+                vars_and_params_.append({"Group" : 10.1, "Symbol": r"\Lambda", "Description": r"ionic capacity (binding site concentration)", "Unit": u("concentration_molar"), "Dependence": r"\text{constant}"})
+                vars_and_params_.append({"Group" : 10.1, "Symbol": r"q^{\mathrm{ref}}", "Description": r"reference solid phase concentration", "Unit": u("concentration_molar"), "Dependence": r"\text{constant}"})
+                vars_and_params_.append({"Group" : 10.1, "Symbol": r"c^{\mathrm{ref}}", "Description": r"reference liquid phase concentration", "Unit": u("concentration_molar"), "Dependence": r"\text{constant}"})
+
             if self.has_surfDiff:
                 symbol_name_ = r"D^\mathrm{s}_{i}" if self.single_partype else r"D^\mathrm{s}_{j,i}"
-                vars_and_params_.append({"Group" : 6.1, "Symbol": symbol_name_, "Description": r"surface diffusion coefficient", "Unit": r"\frac{m^2}{s}", "Dependence": r"i" if self.single_partype else r"j,i", "Property": r"\geq 0"})
-            
+                vars_and_params_.append({"Group" : 6.1, "Symbol": symbol_name_, "Description": r"surface diffusion coefficient", "Unit": u("diffusion"), "Dependence": r"i" if self.single_partype else r"j,i", "Property": r"\geq 0"})
+
             if self.has_mult_bnd_states:
                 symbol_name_ = r"N^{\mathrm{b}}_{i}" if self.single_partype else r"N^{\mathrm{b}}_{j,i}"
-                vars_and_params_.append({"Group" : 11, "Symbol": symbol_name_, "Description": r"number of bound states", "Unit": r"-", "Dependence": r"i" if self.single_partype else r"j,i"})
-            
+                vars_and_params_.append({"Group" : 11, "Symbol": symbol_name_, "Description": r"number of bound states", "Unit": u("dimensionless"), "Dependence": r"i" if self.single_partype else r"j,i"})
+
             if self.has_core:
-                self.vars_and_params.append({"Group" : 0.1, "Symbol": r"R^\mathrm{pc}", "Description": r"particle core radius", "Unit": r"-", "Dependence": r"-", "Property": r"\in (0, R^\mathrm{p})"})
+                self.vars_and_params.append({"Group" : 0.1, "Symbol": r"R^\mathrm{pc}", "Description": r"particle core radius", "Unit": u("dimensionless"), "Dependence": r"-", "Property": r"\in (0, R^\mathrm{p})"})
 
         if self.has_reaction_liquid and not self.req_reaction_liquid:
             if self.reaction_model == "Arbitrary":
                 symbol_name_ = r"f^{\mathrm{react},\p}_{i}" if self.single_partype else r"f^{\mathrm{react},\p}_{j,i}"
                 dep_ = r"\vec{c}^{\p}, \vec{c}^{\s}; i" if self.single_partype else r"\vec{c}^{\p}, \vec{c}^{\s}; j, i"
-                vars_and_params_.append({"Group" : 10.2, "Symbol": symbol_name_, "Description": r"particle liquid phase reaction function", "Unit": r"\frac{mol}{m^3 \cdot s}", "Dependence": dep_})
+                vars_and_params_.append({"Group" : 10.2, "Symbol": symbol_name_, "Description": r"particle liquid phase reaction function", "Unit": u("reaction_rate_molar"), "Dependence": dep_})
             elif self.reaction_model == "Mass Action Law":
                 idx_ = "i" if self.single_partype else "j,i"
-                vars_and_params_.append({"Group" : 10.2, "Symbol": r"N^{\mathrm{react},\p}", "Description": r"number of particle liquid reactions", "Unit": r"-", "Dependence": r"-"})
-                vars_and_params_.append({"Group" : 10.2, "Symbol": r"S^{\p}_{" + idx_ + r",r}", "Description": r"stoichiometric matrix (particle liquid)", "Unit": r"-", "Dependence": idx_ + r", r"})
-                vars_and_params_.append({"Group" : 10.21, "Symbol": r"k^{\mathrm{fwd},\p}_{r}", "Description": r"forward rate constant (particle liquid)", "Unit": r"\frac{1}{s} \cdot \left(\frac{m^3}{mol}\right)^{n}", "Dependence": r"r"})
-                vars_and_params_.append({"Group" : 10.21, "Symbol": r"k^{\mathrm{bwd},\p}_{r}", "Description": r"backward rate constant (particle liquid)", "Unit": r"\frac{1}{s} \cdot \left(\frac{m^3}{mol}\right)^{n}", "Dependence": r"r"})
-                vars_and_params_.append({"Group" : 10.21, "Symbol": r"e^{\mathrm{fwd},\p}_{\ell,r}", "Description": r"forward exponent matrix (particle liquid)", "Unit": r"-", "Dependence": r"\ell, r"})
-                vars_and_params_.append({"Group" : 10.21, "Symbol": r"e^{\mathrm{bwd},\p}_{\ell,r}", "Description": r"backward exponent matrix (particle liquid)", "Unit": r"-", "Dependence": r"\ell, r"})
+                vars_and_params_.append({"Group" : 10.2, "Symbol": r"N^{\mathrm{react},\p}", "Description": r"number of particle liquid reactions", "Unit": u("dimensionless"), "Dependence": r"-"})
+                vars_and_params_.append({"Group" : 10.2, "Symbol": r"S^{\p}_{" + idx_ + r",r}", "Description": r"stoichiometric matrix (particle liquid)", "Unit": u("dimensionless"), "Dependence": idx_ + r", r"})
+                vars_and_params_.append({"Group" : 10.21, "Symbol": r"k^{\mathrm{fwd},\p}_{r}", "Description": r"forward rate constant (particle liquid)", "Unit": u("rate_nth_order"), "Dependence": r"r"})
+                vars_and_params_.append({"Group" : 10.21, "Symbol": r"k^{\mathrm{bwd},\p}_{r}", "Description": r"backward rate constant (particle liquid)", "Unit": u("rate_nth_order"), "Dependence": r"r"})
+                vars_and_params_.append({"Group" : 10.21, "Symbol": r"e^{\mathrm{fwd},\p}_{\ell,r}", "Description": r"forward exponent matrix (particle liquid)", "Unit": u("dimensionless"), "Dependence": r"\ell, r"})
+                vars_and_params_.append({"Group" : 10.21, "Symbol": r"e^{\mathrm{bwd},\p}_{\ell,r}", "Description": r"backward exponent matrix (particle liquid)", "Unit": u("dimensionless"), "Dependence": r"\ell, r"})
             elif self.reaction_model == "Michaelis Menten":
                 idx_ = "i" if self.single_partype else "j,i"
-                vars_and_params_.append({"Group" : 10.2, "Symbol": r"N^{\mathrm{react},\p}", "Description": r"number of particle liquid reactions", "Unit": r"-", "Dependence": r"-"})
-                vars_and_params_.append({"Group" : 10.2, "Symbol": r"S^{\p}_{" + idx_ + r",r}", "Description": r"stoichiometric matrix (particle liquid)", "Unit": r"-", "Dependence": idx_ + r", r"})
-                vars_and_params_.append({"Group" : 10.21, "Symbol": r"v^{\mathrm{max},\p}_{r}", "Description": r"maximum reaction rate (particle liquid)", "Unit": r"\frac{mol}{m^3 \cdot s}", "Dependence": r"r"})
-                vars_and_params_.append({"Group" : 10.21, "Symbol": r"K^{\mathrm{M},\p}_{m,r}", "Description": r"Michaelis constant (particle liquid)", "Unit": r"\frac{mol}{m^3}", "Dependence": r"m, r"})
-                vars_and_params_.append({"Group" : 10.21, "Symbol": r"N^{\mathrm{sub},\p}_{r}", "Description": r"number of substrates per reaction (particle liquid)", "Unit": r"-", "Dependence": r"r"})
+                vars_and_params_.append({"Group" : 10.2, "Symbol": r"N^{\mathrm{react},\p}", "Description": r"number of particle liquid reactions", "Unit": u("dimensionless"), "Dependence": r"-"})
+                vars_and_params_.append({"Group" : 10.2, "Symbol": r"S^{\p}_{" + idx_ + r",r}", "Description": r"stoichiometric matrix (particle liquid)", "Unit": u("dimensionless"), "Dependence": idx_ + r", r"})
+                vars_and_params_.append({"Group" : 10.21, "Symbol": r"v^{\mathrm{max},\p}_{r}", "Description": r"maximum reaction rate (particle liquid)", "Unit": u("reaction_rate_molar"), "Dependence": r"r"})
+                vars_and_params_.append({"Group" : 10.21, "Symbol": r"K^{\mathrm{M},\p}_{m,r}", "Description": r"Michaelis constant (particle liquid)", "Unit": u("concentration_molar"), "Dependence": r"m, r"})
+                vars_and_params_.append({"Group" : 10.21, "Symbol": r"N^{\mathrm{sub},\p}_{r}", "Description": r"number of substrates per reaction (particle liquid)", "Unit": u("dimensionless"), "Dependence": r"r"})
 
         if self.has_reaction_liquid and self.req_reaction_liquid:
             symbol_name_ = r"g^{\mathrm{react,eq},\p}_{k}" if self.single_partype else r"g^{\mathrm{react,eq},\p}_{j,k}"
             dep_ = r"\vec{c}^{\p}, \vec{c}^{\s}; k" if self.single_partype else r"\vec{c}^{\p}, \vec{c}^{\s}; j, k"
-            vars_and_params_.append({"Group" : 10.2, "Symbol": symbol_name_, "Description": r"particle liquid phase equilibrium constraint function", "Unit": r"\frac{mol}{m^3}", "Dependence": dep_})
-            vars_and_params_.append({"Group" : 10.21, "Symbol": r"N^{\mathrm{react,eq},\p}", "Description": r"number of rapid-equilibrium particle liquid reactions", "Unit": r"-", "Dependence": r"-"})
-            vars_and_params_.append({"Group" : 10.21, "Symbol": r"M^{\p}", "Description": r"conserved moiety matrix for particle liquid reactions", "Unit": r"-", "Dependence": r"-"})
+            vars_and_params_.append({"Group" : 10.2, "Symbol": symbol_name_, "Description": r"particle liquid phase equilibrium constraint function", "Unit": u("concentration_molar"), "Dependence": dep_})
+            vars_and_params_.append({"Group" : 10.21, "Symbol": r"N^{\mathrm{react,eq},\p}", "Description": r"number of rapid-equilibrium particle liquid reactions", "Unit": u("dimensionless"), "Dependence": r"-"})
+            vars_and_params_.append({"Group" : 10.21, "Symbol": r"M^{\p}", "Description": r"conserved moiety matrix for particle liquid reactions", "Unit": u("dimensionless"), "Dependence": r"-"})
 
         if self.has_reaction_solid and not self.req_reaction_solid:
             if self.reaction_model == "Arbitrary":
                 symbol_name_ = r"f^{\mathrm{react},\s}_{i}" if self.single_partype else r"f^{\mathrm{react},\s}_{j,i}"
                 dep_ = r"\vec{c}^{\p}, \vec{c}^{\s}; i" if self.single_partype else r"\vec{c}^{\p}, \vec{c}^{\s}; j, i"
-                vars_and_params_.append({"Group" : 10.3, "Symbol": symbol_name_, "Description": r"particle solid phase reaction function", "Unit": r"\frac{mol}{m^3 \cdot s}", "Dependence": dep_})
+                vars_and_params_.append({"Group" : 10.3, "Symbol": symbol_name_, "Description": r"particle solid phase reaction function", "Unit": u("reaction_rate_molar"), "Dependence": dep_})
             elif self.reaction_model == "Mass Action Law":
                 idx_ = "i" if self.single_partype else "j,i"
-                vars_and_params_.append({"Group" : 10.3, "Symbol": r"N^{\mathrm{react},\s}", "Description": r"number of particle solid reactions", "Unit": r"-", "Dependence": r"-"})
-                vars_and_params_.append({"Group" : 10.3, "Symbol": r"S^{\s}_{" + idx_ + r",r}", "Description": r"stoichiometric matrix (particle solid)", "Unit": r"-", "Dependence": idx_ + r", r"})
-                vars_and_params_.append({"Group" : 10.31, "Symbol": r"k^{\mathrm{fwd},\s}_{r}", "Description": r"forward rate constant (particle solid)", "Unit": r"\frac{1}{s} \cdot \left(\frac{m^3}{mol}\right)^{n}", "Dependence": r"r"})
-                vars_and_params_.append({"Group" : 10.31, "Symbol": r"k^{\mathrm{bwd},\s}_{r}", "Description": r"backward rate constant (particle solid)", "Unit": r"\frac{1}{s} \cdot \left(\frac{m^3}{mol}\right)^{n}", "Dependence": r"r"})
-                vars_and_params_.append({"Group" : 10.31, "Symbol": r"e^{\mathrm{fwd},\s}_{\ell,r}", "Description": r"forward exponent matrix (particle solid)", "Unit": r"-", "Dependence": r"\ell, r"})
-                vars_and_params_.append({"Group" : 10.31, "Symbol": r"e^{\mathrm{bwd},\s}_{\ell,r}", "Description": r"backward exponent matrix (particle solid)", "Unit": r"-", "Dependence": r"\ell, r"})
+                vars_and_params_.append({"Group" : 10.3, "Symbol": r"N^{\mathrm{react},\s}", "Description": r"number of particle solid reactions", "Unit": u("dimensionless"), "Dependence": r"-"})
+                vars_and_params_.append({"Group" : 10.3, "Symbol": r"S^{\s}_{" + idx_ + r",r}", "Description": r"stoichiometric matrix (particle solid)", "Unit": u("dimensionless"), "Dependence": idx_ + r", r"})
+                vars_and_params_.append({"Group" : 10.31, "Symbol": r"k^{\mathrm{fwd},\s}_{r}", "Description": r"forward rate constant (particle solid)", "Unit": u("rate_nth_order"), "Dependence": r"r"})
+                vars_and_params_.append({"Group" : 10.31, "Symbol": r"k^{\mathrm{bwd},\s}_{r}", "Description": r"backward rate constant (particle solid)", "Unit": u("rate_nth_order"), "Dependence": r"r"})
+                vars_and_params_.append({"Group" : 10.31, "Symbol": r"e^{\mathrm{fwd},\s}_{\ell,r}", "Description": r"forward exponent matrix (particle solid)", "Unit": u("dimensionless"), "Dependence": r"\ell, r"})
+                vars_and_params_.append({"Group" : 10.31, "Symbol": r"e^{\mathrm{bwd},\s}_{\ell,r}", "Description": r"backward exponent matrix (particle solid)", "Unit": u("dimensionless"), "Dependence": r"\ell, r"})
             elif self.reaction_model == "Michaelis Menten":
                 idx_ = "i" if self.single_partype else "j,i"
-                vars_and_params_.append({"Group" : 10.3, "Symbol": r"N^{\mathrm{react},\s}", "Description": r"number of particle solid reactions", "Unit": r"-", "Dependence": r"-"})
-                vars_and_params_.append({"Group" : 10.3, "Symbol": r"S^{\s}_{" + idx_ + r",r}", "Description": r"stoichiometric matrix (particle solid)", "Unit": r"-", "Dependence": idx_ + r", r"})
-                vars_and_params_.append({"Group" : 10.31, "Symbol": r"v^{\mathrm{max},\s}_{r}", "Description": r"maximum reaction rate (particle solid)", "Unit": r"\frac{mol}{m^3 \cdot s}", "Dependence": r"r"})
-                vars_and_params_.append({"Group" : 10.31, "Symbol": r"K^{\mathrm{M},\s}_{m,r}", "Description": r"Michaelis constant (particle solid)", "Unit": r"\frac{mol}{m^3}", "Dependence": r"m, r"})
-                vars_and_params_.append({"Group" : 10.31, "Symbol": r"N^{\mathrm{sub},\s}_{r}", "Description": r"number of substrates per reaction (particle solid)", "Unit": r"-", "Dependence": r"r"})
+                vars_and_params_.append({"Group" : 10.3, "Symbol": r"N^{\mathrm{react},\s}", "Description": r"number of particle solid reactions", "Unit": u("dimensionless"), "Dependence": r"-"})
+                vars_and_params_.append({"Group" : 10.3, "Symbol": r"S^{\s}_{" + idx_ + r",r}", "Description": r"stoichiometric matrix (particle solid)", "Unit": u("dimensionless"), "Dependence": idx_ + r", r"})
+                vars_and_params_.append({"Group" : 10.31, "Symbol": r"v^{\mathrm{max},\s}_{r}", "Description": r"maximum reaction rate (particle solid)", "Unit": u("reaction_rate_molar"), "Dependence": r"r"})
+                vars_and_params_.append({"Group" : 10.31, "Symbol": r"K^{\mathrm{M},\s}_{m,r}", "Description": r"Michaelis constant (particle solid)", "Unit": u("concentration_molar"), "Dependence": r"m, r"})
+                vars_and_params_.append({"Group" : 10.31, "Symbol": r"N^{\mathrm{sub},\s}_{r}", "Description": r"number of substrates per reaction (particle solid)", "Unit": u("dimensionless"), "Dependence": r"r"})
 
         if self.has_reaction_solid and self.req_reaction_solid:
             symbol_name_ = r"g^{\mathrm{react,eq},\s}_{k}" if self.single_partype else r"g^{\mathrm{react,eq},\s}_{j,k}"
             dep_ = r"\vec{c}^{\p}, \vec{c}^{\s}; k" if self.single_partype else r"\vec{c}^{\p}, \vec{c}^{\s}; j, k"
-            vars_and_params_.append({"Group" : 10.3, "Symbol": symbol_name_, "Description": r"particle solid phase equilibrium constraint function", "Unit": r"\frac{mol}{m^3}", "Dependence": dep_})
-            vars_and_params_.append({"Group" : 10.31, "Symbol": r"N^{\mathrm{react,eq},\s}", "Description": r"number of rapid-equilibrium particle solid reactions", "Unit": r"-", "Dependence": r"-"})
-            vars_and_params_.append({"Group" : 10.31, "Symbol": r"M^{\s}", "Description": r"conserved moiety matrix for particle solid reactions", "Unit": r"-", "Dependence": r"-"})
+            vars_and_params_.append({"Group" : 10.3, "Symbol": symbol_name_, "Description": r"particle solid phase equilibrium constraint function", "Unit": u("concentration_molar"), "Dependence": dep_})
+            vars_and_params_.append({"Group" : 10.31, "Symbol": r"N^{\mathrm{react,eq},\s}", "Description": r"number of rapid-equilibrium particle solid reactions", "Unit": u("dimensionless"), "Dependence": r"-"})
+            vars_and_params_.append({"Group" : 10.31, "Symbol": r"M^{\s}", "Description": r"conserved moiety matrix for particle solid reactions", "Unit": u("dimensionless"), "Dependence": r"-"})
 
         if not self.single_partype:
-            vars_and_params_.append({"Group" : -0.1, "Symbol": r"j", "Description": r"particle type index", "Unit": r"-", "Dependence": r"-", "Property": r""})
-            vars_and_params_.append({"Group" : 1.9, "Symbol": r"d_j", "Description": r"particle type volume fraction", "Unit": r"-", "Dependence": r"j", "Property": r""})
+            vars_and_params_.append({"Group" : -0.1, "Symbol": r"j", "Description": r"particle type index", "Unit": u("dimensionless"), "Dependence": r"-", "Property": r""})
+            vars_and_params_.append({"Group" : 1.9, "Symbol": r"d_j", "Description": r"particle type volume fraction", "Unit": u("dimensionless"), "Dependence": r"j", "Property": r""})
 
         for var_ in vars_and_params_:
             var_["Symbol"] = format_variables(var_["Symbol"], self.var_format)

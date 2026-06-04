@@ -11,6 +11,7 @@ import streamlit as st
 
 from src import equations as eq
 from src.utils import format_variables
+from src.units import get_unit
 from src.model_particle import Particle
 
 
@@ -25,6 +26,7 @@ class Column:
     dev_mode: bool  # dev mode including untested, unstable and wip features
     advanced_mode: bool  # Ask for detailed parameter inputs
     var_format: Literal
+    unit_system: str = "SI"
     resolution: Literal = None
     N_c: int = -1
     N_p: int = -1
@@ -258,6 +260,7 @@ class Column:
                     Particle(
                         geometry=cfg['geometry'],
                         var_format=self.var_format,
+                        unit_system=self.unit_system,
                         resolution=cfg['resolution'],
                         has_core=cfg['has_core'],
                         has_binding=self.has_binding,
@@ -527,12 +530,14 @@ class Column:
         state_deps += "; i"
         param_deps_comp = r"i" if param_deps == r"\text{constant}" else param_deps + "; i"
 
+        u = lambda key: get_unit(key, self.unit_system)
+
         self.vars_and_params = [
-            {"Group" : 0, "Symbol": r"t", "Description": r"time coordinate", "Unit": r"s", "Dependence": r"\text{independent variable}", "Property": r"\in (0, T^{\mathrm{end}})"},
-            {"Group" : 1, "Symbol": r"c^{\b}_i", "Description": r"bulk liquid concentration", "Unit": r"\frac{mol}{m^3}", "Dependence" : state_deps, "Domain": eq.int_vol_domain(self.resolution, column_type=self.column_type)},
-            {"Group" : -1, "Symbol": r"T^{\mathrm{end}}", "Description": r"process end time", "Unit": r"s", "Dependence": r"\text{constant}", "Property": r" > 0"},
-            {"Group" : -0.2, "Symbol": r"N^\mathrm{c}", "Description": r"number of components", "Unit": r"-", "Dependence": r"-", "Property": r"\in \mathbb{N}"},
-            {"Group" : -0.1, "Symbol": r"i", "Description": r"component index", "Unit": r"s", "Dependence": r"-", "Property": r"-"},
+            {"Group" : 0, "Symbol": r"t", "Description": r"time coordinate", "Unit": u("time"), "Dependence": r"\text{independent variable}", "Property": r"\in (0, T^{\mathrm{end}})"},
+            {"Group" : 1, "Symbol": r"c^{\b}_i", "Description": r"bulk liquid concentration", "Unit": u("concentration_molar"), "Dependence" : state_deps, "Domain": eq.int_vol_domain(self.resolution, column_type=self.column_type)},
+            {"Group" : -1, "Symbol": r"T^{\mathrm{end}}", "Description": r"process end time", "Unit": u("time"), "Dependence": r"\text{constant}", "Property": r" > 0"},
+            {"Group" : -0.2, "Symbol": r"N^\mathrm{c}", "Description": r"number of components", "Unit": u("dimensionless"), "Dependence": r"-", "Property": r"\in \mathbb{N}"},
+            {"Group" : -0.1, "Symbol": r"i", "Description": r"component index", "Unit": u("time"), "Dependence": r"-", "Property": r"-"},
             ]
 
         if self.has_axial_dispersion:
@@ -547,82 +552,82 @@ class Column:
                 disp_symbol_apparent = r"\tilde{D}^\mathrm{ax}_i"
                 disp_desc_apparent = r"apparent axial dispersion coefficient"
             if not without_pores_:
-                self.vars_and_params.append({"Group" : 6, "Symbol": disp_symbol, "Description": disp_desc, "Unit": r"\frac{m^2}{s}", "Dependence": param_deps_comp, "Property": r"\geq 0"})
+                self.vars_and_params.append({"Group" : 6, "Symbol": disp_symbol, "Description": disp_desc, "Unit": u("diffusion"), "Dependence": param_deps_comp, "Property": r"\geq 0"})
             else:
-                self.vars_and_params.append({"Group" : 6, "Symbol": disp_symbol_apparent, "Description": disp_desc_apparent, "Unit": r"\frac{m^2}{s}", "Dependence": param_deps_comp, "Property": r"\geq 0"})
+                self.vars_and_params.append({"Group" : 6, "Symbol": disp_symbol_apparent, "Description": disp_desc_apparent, "Unit": u("diffusion"), "Dependence": param_deps_comp, "Property": r"\geq 0"})
         if self.has_radial_dispersion:
-            self.vars_and_params.append({"Group" : 6, "Symbol": r"D^\mathrm{rad}_i", "Description": r"radial dispersion coefficient", "Unit": r"\frac{m^2}{s}", "Dependence": param_deps_comp, "Property": r"\geq 0"})
+            self.vars_and_params.append({"Group" : 6, "Symbol": r"D^\mathrm{rad}_i", "Description": r"radial dispersion coefficient", "Unit": u("diffusion"), "Dependence": param_deps_comp, "Property": r"\geq 0"})
         if self.has_angular_dispersion:
-            self.vars_and_params.append({"Group" : 6, "Symbol": r"D^\mathrm{ang}_i", "Description": r"angular dispersion coefficient", "Unit": r"\frac{m^2}{s}", "Dependence": param_deps_comp, "Property": r"\geq 0"})
+            self.vars_and_params.append({"Group" : 6, "Symbol": r"D^\mathrm{ang}_i", "Description": r"angular dispersion coefficient", "Unit": u("diffusion"), "Dependence": param_deps_comp, "Property": r"\geq 0"})
 
         if self.resolution == "0D":
-            self.vars_and_params.append({"Group" : 2, "Symbol": r"Q^\mathrm{in}", "Description": r"volumetric flow rate into the tank", "Unit": r"\frac{m^3}{s}", "Dependence": r"\text{constant}", "Property": r"\geq 0"})
-            self.vars_and_params.append({"Group" : 2, "Symbol": r"Q^\mathrm{out}", "Description": r"volumetric flow rate out of the tank", "Unit": r"\frac{m^3}{s}", "Dependence": r"\text{constant}", "Property": r"\geq 0"})
+            self.vars_and_params.append({"Group" : 2, "Symbol": r"Q^\mathrm{in}", "Description": r"volumetric flow rate into the tank", "Unit": u("volumetric_flow"), "Dependence": r"\text{constant}", "Property": r"\geq 0"})
+            self.vars_and_params.append({"Group" : 2, "Symbol": r"Q^\mathrm{out}", "Description": r"volumetric flow rate out of the tank", "Unit": u("volumetric_flow"), "Dependence": r"\text{constant}", "Property": r"\geq 0"})
             if self.has_filter:
-                self.vars_and_params.append({"Group" : 2, "Symbol": r"Q^\mathrm{filter}", "Description": r"volumetric flow rate out of the tank (solvent only)", "Unit": r"\frac{m^3}{s}", "Dependence": r"\text{constant}", "Property": r"\geq 0"})
+                self.vars_and_params.append({"Group" : 2, "Symbol": r"Q^\mathrm{filter}", "Description": r"volumetric flow rate out of the tank (solvent only)", "Unit": u("volumetric_flow"), "Dependence": r"\text{constant}", "Property": r"\geq 0"})
         elif self.column_type == "Radial":
-            self.vars_and_params.append({"Group" : 0, "Symbol": r"\rho", "Description": r"radial coordinate", "Unit": r"m", "Dependence": r"\text{independent variable}", "Property": r"\in (R^{\mathrm{in}}, R^{\mathrm{out}})"})
-            self.vars_and_params.append({"Group" : -1, "Symbol": r"R^{\mathrm{in}}", "Description": r"inner cylinder radius", "Unit": r"m", "Dependence": r"\text{constant}", "Property": r" > 0"})
-            self.vars_and_params.append({"Group" : -1, "Symbol": r"R^{\mathrm{out}}", "Description": r"outer cylinder radius", "Unit": r"m", "Dependence": r"\text{constant}", "Property": r" > R^{\mathrm{in}}"})
-            self.vars_and_params.append({"Group" : 2, "Symbol": r"Q", "Description": r"volumetric flow rate", "Unit": r"\frac{m^3}{s}", "Dependence": r"\text{constant}", "Property": r"> 0"})
-            self.vars_and_params.append({"Group" : 5, "Symbol": r"v", "Description": r"velocity coefficient", "Unit": r"\frac{m^2}{s}", "Dependence": r"\text{constant}", "Property": r":= \frac{Q}{2 \pi L}"})
+            self.vars_and_params.append({"Group" : 0, "Symbol": r"\rho", "Description": r"radial coordinate", "Unit": u("length"), "Dependence": r"\text{independent variable}", "Property": r"\in (R^{\mathrm{in}}, R^{\mathrm{out}})"})
+            self.vars_and_params.append({"Group" : -1, "Symbol": r"R^{\mathrm{in}}", "Description": r"inner cylinder radius", "Unit": u("length"), "Dependence": r"\text{constant}", "Property": r" > 0"})
+            self.vars_and_params.append({"Group" : -1, "Symbol": r"R^{\mathrm{out}}", "Description": r"outer cylinder radius", "Unit": u("length"), "Dependence": r"\text{constant}", "Property": r" > R^{\mathrm{in}}"})
+            self.vars_and_params.append({"Group" : 2, "Symbol": r"Q", "Description": r"volumetric flow rate", "Unit": u("volumetric_flow"), "Dependence": r"\text{constant}", "Property": r"> 0"})
+            self.vars_and_params.append({"Group" : 5, "Symbol": r"v", "Description": r"velocity coefficient", "Unit": u("velocity_coeff"), "Dependence": r"\text{constant}", "Property": r":= \frac{Q}{2 \pi L}"})
         elif self.column_type == "Frustum":
-            self.vars_and_params.append({"Group" : 0, "Symbol": r"x", "Description": r"axial coordinate", "Unit": r"m", "Dependence": r"\text{independent variable}", "Property": r"\in (0, L)"})
-            self.vars_and_params.append({"Group" : -1, "Symbol": r"L", "Description": r"length of column", "Unit": r"m", "Dependence": r"\text{constant}", "Property": r" > 0"})
-            self.vars_and_params.append({"Group" : -1, "Symbol": r"R^0", "Description": r"column radius at inlet", "Unit": r"m", "Dependence": r"\text{constant}", "Property": r" > 0"})
-            self.vars_and_params.append({"Group" : -1, "Symbol": r"R^L", "Description": r"column radius at outlet", "Unit": r"m", "Dependence": r"\text{constant}", "Property": r" > 0"})
-            self.vars_and_params.append({"Group" : 3, "Symbol": r"R", "Description": r"column radius function", "Unit": r"m", "Dependence": r"x", "Property": r"(x) = R^0 + \frac{R^L - R^0}{L} x"})
-            self.vars_and_params.append({"Group" : 2, "Symbol": r"Q", "Description": r"volumetric flow rate", "Unit": r"\frac{m^3}{s}", "Dependence": r"\text{constant}", "Property": r"> 0"})
-            self.vars_and_params.append({"Group" : 5, "Symbol": r"v", "Description": r"velocity coefficient", "Unit": r"\frac{m^3}{s}", "Dependence": r"\text{constant}", "Property": r":= \frac{Q}{\pi}"})
+            self.vars_and_params.append({"Group" : 0, "Symbol": r"x", "Description": r"axial coordinate", "Unit": u("length"), "Dependence": r"\text{independent variable}", "Property": r"\in (0, L)"})
+            self.vars_and_params.append({"Group" : -1, "Symbol": r"L", "Description": r"length of column", "Unit": u("length"), "Dependence": r"\text{constant}", "Property": r" > 0"})
+            self.vars_and_params.append({"Group" : -1, "Symbol": r"R^0", "Description": r"column radius at inlet", "Unit": u("length"), "Dependence": r"\text{constant}", "Property": r" > 0"})
+            self.vars_and_params.append({"Group" : -1, "Symbol": r"R^L", "Description": r"column radius at outlet", "Unit": u("length"), "Dependence": r"\text{constant}", "Property": r" > 0"})
+            self.vars_and_params.append({"Group" : 3, "Symbol": r"R", "Description": r"column radius function", "Unit": u("length"), "Dependence": r"x", "Property": r"(x) = R^0 + \frac{R^L - R^0}{L} x"})
+            self.vars_and_params.append({"Group" : 2, "Symbol": r"Q", "Description": r"volumetric flow rate", "Unit": u("volumetric_flow"), "Dependence": r"\text{constant}", "Property": r"> 0"})
+            self.vars_and_params.append({"Group" : 5, "Symbol": r"v", "Description": r"velocity coefficient", "Unit": u("volumetric_flow"), "Dependence": r"\text{constant}", "Property": r":= \frac{Q}{\pi}"})
         else:
-            self.vars_and_params.append({"Group" : 0, "Symbol": r"z", "Description": r"axial cylinder coordinate", "Unit": r"m", "Dependence": r"\text{independent variable}", "Property": r"\in (0, L)"})
-            self.vars_and_params.append({"Group" : -1, "Symbol": r"L", "Description": r"length of cylinder", "Unit": r"m", "Dependence": r"\text{constant}", "Property": r" > 0"})
+            self.vars_and_params.append({"Group" : 0, "Symbol": r"z", "Description": r"axial cylinder coordinate", "Unit": u("length"), "Dependence": r"\text{independent variable}", "Property": r"\in (0, L)"})
+            self.vars_and_params.append({"Group" : -1, "Symbol": r"L", "Description": r"length of cylinder", "Unit": u("length"), "Dependence": r"\text{constant}", "Property": r" > 0"})
             if not without_pores_:
-                self.vars_and_params.append({"Group" : 5, "Symbol": r"u", "Description": r"interstitial velocity", "Unit": r"\frac{m}{s}", "Dependence": param_deps, "Property": r"> 0"})
+                self.vars_and_params.append({"Group" : 5, "Symbol": r"u", "Description": r"interstitial velocity", "Unit": u("velocity"), "Dependence": param_deps, "Property": r"> 0"})
             else:
-                self.vars_and_params.append({"Group" : 5, "Symbol": r"\tilde{u}", "Description": r"apparent interstitial velocity", "Unit": r"\frac{m}{s}", "Dependence": param_deps, "Property": r"> 0"})
+                self.vars_and_params.append({"Group" : 5, "Symbol": r"\tilde{u}", "Description": r"apparent interstitial velocity", "Unit": u("velocity"), "Dependence": param_deps, "Property": r"> 0"})
 
         if self.resolution == "2D":
-            self.vars_and_params.append({"Group" : 0, "Symbol": r"\rho", "Description": r"radial cylinder coordinate", "Unit": r"m", "Dependence": r"\text{independent variable}", "Property": r"\in (0, R^{\mathrm{c}})"})
-            self.vars_and_params.append({"Group" : -1, "Symbol": r"R^{\mathrm{c}}", "Description": r"cylinder radius", "Unit": r"m", "Dependence": r"\text{constant}", "Property": r" > 0"})
+            self.vars_and_params.append({"Group" : 0, "Symbol": r"\rho", "Description": r"radial cylinder coordinate", "Unit": u("length"), "Dependence": r"\text{independent variable}", "Property": r"\in (0, R^{\mathrm{c}})"})
+            self.vars_and_params.append({"Group" : -1, "Symbol": r"R^{\mathrm{c}}", "Description": r"cylinder radius", "Unit": u("length"), "Dependence": r"\text{constant}", "Property": r" > 0"})
 
         if self.resolution == "3D":
-            self.vars_and_params.append({"Group" : 0, "Symbol": r"\phi", "Description": r"angular cylinder coordinate", "Unit": r"m", "Dependence": r"\text{independent variable}", "Property": r"\in (0, 2\pi)"})
+            self.vars_and_params.append({"Group" : 0, "Symbol": r"\phi", "Description": r"angular cylinder coordinate", "Unit": u("length"), "Dependence": r"\text{independent variable}", "Property": r"\in (0, 2\pi)"})
 
         if self.N_p > 0:
             if not without_pores_:
-                self.vars_and_params.append({"Group" : 0.1, "Symbol": r"R^\mathrm{p}", "Description": r"particle radius", "Unit": r"-", "Dependence": r"-", "Property": r"> 0"})
+                self.vars_and_params.append({"Group" : 0.1, "Symbol": r"R^\mathrm{p}", "Description": r"particle radius", "Unit": u("dimensionless"), "Dependence": r"-", "Property": r"> 0"})
             if not without_pores_:
-                self.vars_and_params.append({"Group" : 4, "Symbol": r"\varepsilon^{\mathrm{c}}", "Description": r"column porosity", "Unit": r"-", "Dependence": re.sub("t, ", "", state_deps), "Property": r"\in (0, 1)"})
+                self.vars_and_params.append({"Group" : 4, "Symbol": r"\varepsilon^{\mathrm{c}}", "Description": r"column porosity", "Unit": u("dimensionless"), "Dependence": re.sub("t, ", "", state_deps), "Property": r"\in (0, 1)"})
             else:
-                self.vars_and_params.append({"Group" : 4, "Symbol": r"\varepsilon^{\mathrm{t}}", "Description": r"total porosity", "Unit": r"-", "Dependence": re.sub("t, ", "", state_deps), "Property": r"\in (0, 1)"})
+                self.vars_and_params.append({"Group" : 4, "Symbol": r"\varepsilon^{\mathrm{t}}", "Description": r"total porosity", "Unit": u("dimensionless"), "Dependence": re.sub("t, ", "", state_deps), "Property": r"\in (0, 1)"})
             if not self.nonlimiting_filmDiff:
                 symbol_name_ = r"k^\mathrm{f}_{i}" if self.N_p<=1 else r"k^\mathrm{f}_{j,i}"
-                self.vars_and_params.append({"Group" : 7, "Symbol": symbol_name_, "Description": r"film diffusion coefficient", "Unit": r"\frac{m}{s}", "Dependence": r"i" if self.N_p<=1 else r"j,i", "Property": r"\geq 0"})
+                self.vars_and_params.append({"Group" : 7, "Symbol": symbol_name_, "Description": r"film diffusion coefficient", "Unit": u("velocity"), "Dependence": r"i" if self.N_p<=1 else r"j,i", "Property": r"\geq 0"})
 
         if self.has_reaction_bulk and not self.req_reaction_bulk:
             if self.reaction_model == "Arbitrary":
-                self.vars_and_params.append({"Group" : 8, "Symbol": r"f^{\mathrm{react},\b}_{i}", "Description": r"bulk liquid phase reaction function", "Unit": r"\frac{mol}{m^3 \cdot s}", "Dependence": r"\vec{c}^{\b}; i"})
-                self.vars_and_params.append({"Group" : 8.1, "Symbol": r"\vec{c}^{\b}", "Description": r"bulk liquid components vector", "Unit": r"[\frac{mol}{m^3}]", "Dependence": state_deps})
+                self.vars_and_params.append({"Group" : 8, "Symbol": r"f^{\mathrm{react},\b}_{i}", "Description": r"bulk liquid phase reaction function", "Unit": u("reaction_rate_molar"), "Dependence": r"\vec{c}^{\b}; i"})
+                self.vars_and_params.append({"Group" : 8.1, "Symbol": r"\vec{c}^{\b}", "Description": r"bulk liquid components vector", "Unit": u("concentration_molar_vec"), "Dependence": state_deps})
             elif self.reaction_model == "Mass Action Law":
-                self.vars_and_params.append({"Group" : 8, "Symbol": r"N^{\mathrm{react},\b}", "Description": r"number of bulk reactions", "Unit": r"-", "Dependence": r"-"})
-                self.vars_and_params.append({"Group" : 8, "Symbol": r"S^{\b}_{i,r}", "Description": r"stoichiometric matrix (bulk)", "Unit": r"-", "Dependence": r"i, r"})
-                self.vars_and_params.append({"Group" : 8.1, "Symbol": r"k^{\mathrm{fwd},\b}_{r}", "Description": r"forward rate constant (bulk)", "Unit": r"\frac{1}{s} \cdot \left(\frac{m^3}{mol}\right)^{n}", "Dependence": r"r"})
-                self.vars_and_params.append({"Group" : 8.1, "Symbol": r"k^{\mathrm{bwd},\b}_{r}", "Description": r"backward rate constant (bulk)", "Unit": r"\frac{1}{s} \cdot \left(\frac{m^3}{mol}\right)^{n}", "Dependence": r"r"})
-                self.vars_and_params.append({"Group" : 8.1, "Symbol": r"e^{\mathrm{fwd},\b}_{\ell,r}", "Description": r"forward exponent matrix (bulk)", "Unit": r"-", "Dependence": r"\ell, r"})
-                self.vars_and_params.append({"Group" : 8.1, "Symbol": r"e^{\mathrm{bwd},\b}_{\ell,r}", "Description": r"backward exponent matrix (bulk)", "Unit": r"-", "Dependence": r"\ell, r"})
+                self.vars_and_params.append({"Group" : 8, "Symbol": r"N^{\mathrm{react},\b}", "Description": r"number of bulk reactions", "Unit": u("dimensionless"), "Dependence": r"-"})
+                self.vars_and_params.append({"Group" : 8, "Symbol": r"S^{\b}_{i,r}", "Description": r"stoichiometric matrix (bulk)", "Unit": u("dimensionless"), "Dependence": r"i, r"})
+                self.vars_and_params.append({"Group" : 8.1, "Symbol": r"k^{\mathrm{fwd},\b}_{r}", "Description": r"forward rate constant (bulk)", "Unit": u("rate_nth_order"), "Dependence": r"r"})
+                self.vars_and_params.append({"Group" : 8.1, "Symbol": r"k^{\mathrm{bwd},\b}_{r}", "Description": r"backward rate constant (bulk)", "Unit": u("rate_nth_order"), "Dependence": r"r"})
+                self.vars_and_params.append({"Group" : 8.1, "Symbol": r"e^{\mathrm{fwd},\b}_{\ell,r}", "Description": r"forward exponent matrix (bulk)", "Unit": u("dimensionless"), "Dependence": r"\ell, r"})
+                self.vars_and_params.append({"Group" : 8.1, "Symbol": r"e^{\mathrm{bwd},\b}_{\ell,r}", "Description": r"backward exponent matrix (bulk)", "Unit": u("dimensionless"), "Dependence": r"\ell, r"})
             elif self.reaction_model == "Michaelis Menten":
-                self.vars_and_params.append({"Group" : 8, "Symbol": r"N^{\mathrm{react},\b}", "Description": r"number of bulk reactions", "Unit": r"-", "Dependence": r"-"})
-                self.vars_and_params.append({"Group" : 8, "Symbol": r"S^{\b}_{i,r}", "Description": r"stoichiometric matrix (bulk)", "Unit": r"-", "Dependence": r"i, r"})
-                self.vars_and_params.append({"Group" : 8.1, "Symbol": r"v^{\mathrm{max},\b}_{r}", "Description": r"maximum reaction rate (bulk)", "Unit": r"\frac{mol}{m^3 \cdot s}", "Dependence": r"r"})
-                self.vars_and_params.append({"Group" : 8.1, "Symbol": r"K^{\mathrm{M},\b}_{m,r}", "Description": r"Michaelis constant (bulk)", "Unit": r"\frac{mol}{m^3}", "Dependence": r"m, r"})
-                self.vars_and_params.append({"Group" : 8.1, "Symbol": r"N^{\mathrm{sub},\b}_{r}", "Description": r"number of substrates per reaction (bulk)", "Unit": r"-", "Dependence": r"r"})
+                self.vars_and_params.append({"Group" : 8, "Symbol": r"N^{\mathrm{react},\b}", "Description": r"number of bulk reactions", "Unit": u("dimensionless"), "Dependence": r"-"})
+                self.vars_and_params.append({"Group" : 8, "Symbol": r"S^{\b}_{i,r}", "Description": r"stoichiometric matrix (bulk)", "Unit": u("dimensionless"), "Dependence": r"i, r"})
+                self.vars_and_params.append({"Group" : 8.1, "Symbol": r"v^{\mathrm{max},\b}_{r}", "Description": r"maximum reaction rate (bulk)", "Unit": u("reaction_rate_molar"), "Dependence": r"r"})
+                self.vars_and_params.append({"Group" : 8.1, "Symbol": r"K^{\mathrm{M},\b}_{m,r}", "Description": r"Michaelis constant (bulk)", "Unit": u("concentration_molar"), "Dependence": r"m, r"})
+                self.vars_and_params.append({"Group" : 8.1, "Symbol": r"N^{\mathrm{sub},\b}_{r}", "Description": r"number of substrates per reaction (bulk)", "Unit": u("dimensionless"), "Dependence": r"r"})
 
         if self.has_reaction_bulk and self.req_reaction_bulk:
-            self.vars_and_params.append({"Group" : 8, "Symbol": r"g^{\mathrm{react,eq},\b}_{k}", "Description": r"bulk liquid phase equilibrium constraint function", "Unit": r"\frac{mol}{m^3}", "Dependence": r"\vec{c}^{\b}; k"})
-            self.vars_and_params.append({"Group" : 8.1, "Symbol": r"N^{\mathrm{react,eq},\b}", "Description": r"number of rapid-equilibrium bulk reactions", "Unit": r"-", "Dependence": r"-"})
-            self.vars_and_params.append({"Group" : 8.1, "Symbol": r"M^{\b}", "Description": r"conserved moiety matrix for bulk reactions", "Unit": r"-", "Dependence": r"-"})
-            self.vars_and_params.append({"Group" : 8.1, "Symbol": r"\vec{c}^{\b}", "Description": r"bulk liquid components vector", "Unit": r"[\frac{mol}{m^3}]", "Dependence": state_deps})
+            self.vars_and_params.append({"Group" : 8, "Symbol": r"g^{\mathrm{react,eq},\b}_{k}", "Description": r"bulk liquid phase equilibrium constraint function", "Unit": u("concentration_molar"), "Dependence": r"\vec{c}^{\b}; k"})
+            self.vars_and_params.append({"Group" : 8.1, "Symbol": r"N^{\mathrm{react,eq},\b}", "Description": r"number of rapid-equilibrium bulk reactions", "Unit": u("dimensionless"), "Dependence": r"-"})
+            self.vars_and_params.append({"Group" : 8.1, "Symbol": r"M^{\b}", "Description": r"conserved moiety matrix for bulk reactions", "Unit": u("dimensionless"), "Dependence": r"-"})
+            self.vars_and_params.append({"Group" : 8.1, "Symbol": r"\vec{c}^{\b}", "Description": r"bulk liquid components vector", "Unit": u("concentration_molar_vec"), "Dependence": state_deps})
 
         for var_ in self.vars_and_params:
             var_["Symbol"] = format_variables(var_["Symbol"], self.var_format)

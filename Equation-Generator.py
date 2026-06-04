@@ -27,6 +27,7 @@ from src.utils import format_variables
 from src.renderer import availability_badge_html, write_and_save as renderer_write_and_save
 from src.model_column import Column
 from src.model_crystallization import Crystallization
+from src.units import AVAILABLE_SYSTEMS, UNIT_SYSTEMS, get_conversion_factor, format_conversion_factor
 from src.generate_template import generate_unit_operation_script, generate_crystallization_script
 from src.handler_cite import load_bibliography, cite_html, cite, render_references
 
@@ -221,6 +222,11 @@ else:
 var_format_ = st.sidebar.selectbox("Select parameter format", [
                                    "CADET", "Legacy"], key=r"var_format")
 
+# %% Unit system
+
+unit_system_ = st.sidebar.selectbox("Select unit system",
+                                    AVAILABLE_SYSTEMS, key=r"unit_system")
+
 # %% Display equations
 
 file_content = []  # used to export model to files
@@ -244,7 +250,7 @@ def write_html_and_save(html_output: str, export_output: str):
 
 if model_type_ == "Crystallization":
 
-    cry_model = Crystallization(var_format=var_format_)
+    cry_model = Crystallization(var_format=var_format_, unit_system=unit_system_)
 
     show_eq_description = st.toggle("Show equation description", key=r"show_eq_description", value=True)
 
@@ -262,10 +268,19 @@ if model_type_ == "Crystallization":
 
     if st.toggle("Show symbol table", key=r"sym_table"):
         df = pd.DataFrame(cry_model.vars_and_params)
+
+        columns = ['Symbol', 'Description', 'Dependence', 'Unit']
+        if unit_system_ != "SI":
+            reverse_map = {v: k for k, v in UNIT_SYSTEMS[unit_system_].items()}
+            df["SI Conversion"] = df["Unit"].map(
+                lambda u: f"${format_conversion_factor(get_conversion_factor(reverse_map.get(u, 'dimensionless'), unit_system_))}$"
+            )
+            columns.append("SI Conversion")
+
         df[['Symbol', "Dependence", 'Unit']] = df[['Symbol', "Dependence", 'Unit']].map(
             lambda x: f"${x}$" if isinstance(x, str) else x)
         df = df.sort_values(by=r"Group").reset_index()
-        st.table(df[['Symbol', 'Description', 'Dependence', 'Unit']])
+        st.table(df[columns])
 
     # Title
     st.write("### " + cry_model.model_name())
@@ -391,7 +406,7 @@ else: # Chromatography model family
         advanced_mode_ = st.sidebar.selectbox("Advanced options (enables e.g. particle size distribution)", [
                                             "Off", "On"], key=r"advanced_mode") == "On"
 
-    column_model = Column(dev_mode=dev_mode_, advanced_mode=advanced_mode_, var_format=var_format_)
+    column_model = Column(dev_mode=dev_mode_, advanced_mode=advanced_mode_, var_format=var_format_, unit_system=unit_system_)
 
     show_eq_description = st.toggle("Show equation description", key=r"show_eq_description", value=True)
 
@@ -419,11 +434,19 @@ else: # Chromatography model family
             df_par = pd.DataFrame(column_model.particle_models[0].vars_and_params, columns=["Group", 'Symbol', 'Description', "Dependence", 'Unit'])
             df = pd.concat([df, df_par], ignore_index=True)
 
+        columns = ['Symbol', 'Description', 'Dependence', 'Unit']
+        if unit_system_ != "SI":
+            reverse_map = {v: k for k, v in UNIT_SYSTEMS[unit_system_].items()}
+            df["SI Conversion"] = df["Unit"].map(
+                lambda u: f"${format_conversion_factor(get_conversion_factor(reverse_map.get(u, 'dimensionless'), unit_system_))}$"
+            )
+            columns.append("SI Conversion")
+
         df[['Symbol', "Dependence", 'Unit']] = df[['Symbol', "Dependence", 'Unit']].map(lambda x: f"${x}$" if isinstance(x, str) else x)
 
         df = df.sort_values(by=r"Group").reset_index()
 
-        st.table(df[['Symbol', 'Description', 'Dependence', 'Unit']])
+        st.table(df[columns])
 
     interstitial_volume_eq = column_model.interstitial_volume_equation()
 
