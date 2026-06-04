@@ -597,10 +597,12 @@ else: # Chromatography model family
                         write_and_save("with boundary conditions")
                         write_and_save(group_bc[par_type], as_latex=True)
                     
-                    if column_model.binding_model not in ["Arbitrary", None] and eq.binding_model_references(column_model.binding_model, bibliography_entries, used_citation_keys) is not None:
+                    binding_refs = eq.binding_model_references(column_model.binding_model, bibliography_entries, used_citation_keys) if column_model.binding_model not in ["Arbitrary", None] else None
+                    if binding_refs is not None:
+                        html_ref, plain_ref = binding_refs
                         write_html_and_save(
-                            "Further details on the binding model can be found in " + eq.binding_model_references(column_model.binding_model, bibliography_entries, used_citation_keys) + ".",
-                            "Further details on the binding model can be found in " + eq.binding_model_references(column_model.binding_model, bibliography_entries, used_citation_keys) + "."
+                            "Further details on the binding model can be found in " + html_ref + ".",
+                            "Further details on the binding model can be found in " + plain_ref + "."
                         )
 
                     if show_eq_description:
@@ -717,10 +719,12 @@ else: # Chromatography model family
                     write_and_save("with boundary conditions")
                     write_and_save(particle_bc[par_type], as_latex=True)
 
-                if column_model.binding_model not in ["Arbitrary", None] and eq.binding_model_references(column_model.binding_model, bibliography_entries, used_citation_keys) is not None:
+                binding_refs = eq.binding_model_references(column_model.binding_model, bibliography_entries, used_citation_keys) if column_model.binding_model not in ["Arbitrary", None] else None
+                if binding_refs is not None:
+                    html_ref, plain_ref = binding_refs
                     write_html_and_save(
-                        "Further details on the binding model can be found in " + eq.binding_model_references(column_model.binding_model, bibliography_entries, used_citation_keys) + ".",
-                        "Further details on the binding model can be found in " + eq.binding_model_references(column_model.binding_model, bibliography_entries, used_citation_keys) + "."
+                        "Further details on the binding model can be found in " + html_ref + ".",
+                        "Further details on the binding model can be found in " + plain_ref + "."
                     )
 
                 if show_eq_description:
@@ -810,11 +814,13 @@ else: # Chromatography model family
                 if definition is None:
                     continue
                 main_eq, flux_eq = definition
+                reaction_refs = eq.reaction_model_references(column_model.reaction_model, bibliography_entries, used_citation_keys)
+                html_ref, plain_ref = reaction_refs
                 write_html_and_save(
                 r"The " + phase_label + " phase reaction term is defined by " + column_model.reaction_model + " type reactions ("
-                + eq.reaction_model_references(column_model.reaction_model, bibliography_entries, used_citation_keys) + ").",
+                + html_ref + ").",
                 r"The " + phase_label + " phase reaction term is defined by " + column_model.reaction_model + " type reactions ("
-                + eq.reaction_model_references(column_model.reaction_model, bibliography_entries, used_citation_keys) + ")."
+                + plain_ref + ")."
                 )
                 write_and_save(r"""
 \begin{align}
