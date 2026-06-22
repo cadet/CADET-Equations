@@ -1,0 +1,49 @@
+\documentclass{article}
+
+\usepackage{amssymb,amsmath,mleftright}
+
+\begin{document}
+
+General model assumptions:
+\begin{itemize}
+\item the fluid density and viscosity are constant in time and space (implies incompressibility);
+\item the fluid flow is laminar;
+\item the tank is operated under constant conditions (e.g., temperature, flow rate);
+\item the process is isothermal (i.e., there are no thermal effects);
+\item diffusion does not depend on the concentration of the components, viscosity of the fluid, or pressure;
+\item the fluid in the particles is stagnant (i.e., there is no convective flow);
+\item the porous particles are spherical, rigid, and do not move;
+\item the particles are homogeneous and of uniform porosity;
+\item all components access the same particle volume;
+\item the partial molar volumes are the same in mobile and solid phase;
+\item the binding model parameters do not depend on pressure and are constant along the column;
+\item the solvent is not adsorbed;
+\end{itemize}
+
+
+Specific model assumptions:
+\begin{itemize}
+\item the tank is spatially homogeneous (i.e., the spatial position inside the interstitial volume does not matter);
+\item the interstitial liquid phase concentration is spatially constant on the outer particle surface;
+\item the pore and surface diffusion are infinitely fast. That is, we assume $D_{i}^{\mathrm{p}} = D_{i}^{\mathrm{s}} = \infty$;
+\item the film around the particles does not limit mass transfer. That is, we assume $k^{\mathrm{f}}_i = \infty$)
+\end{itemize}
+
+
+\section*{Finite Bath without Pores}
+Consider a continuously stirred tank packed with spherical particles, and observed over a time interval $(0, T^{\mathrm{end}})$.
+The evolution of the liquid volume $V^{\mathrm{\ell}}\colon (0, T^{\mathrm{end}}) \to \mathbb{R}$ and the concentrations $c_i\colon (0, T^{\mathrm{end}}) \to \mathbb{R}$ of the components in the tank is governed by
+\begin{align}
+
+    \frac{\mathrm{d}V^{\mathrm{b}}}{\mathrm{d}t} &= Q_{\mathrm{in}} - Q_{\mathrm{out}},
+    \\
+    \frac{\mathrm{d}}{\mathrm{d} t} \left( V^{\mathrm{b}} c^{\mathrm{b}}_i \right) + V^{\mathrm{p}} \varepsilon^{\mathrm{p}} \frac{\partial c^{b}_i}{\partial t}&= Q_{\mathrm{in}} c^{\mathrm{b}}_{\mathrm{in},i} - Q_{\mathrm{out}} c^{\mathrm{b}}_i - V^{\mathrm{p}} \left( 1 - \varepsilon^{\mathrm{p}} \right) \frac{\partial c^{\mathrm{s}}_i}{\partial t},
+\end{align}
+Here, $t\in (0, T^{\mathrm{end}})$ is the time coordinate, $c^{\mathrm{b}}_i\colon (0, T^\mathrm{end}) \mapsto \mathbb{R}$ is the bulk liquid concentration, $Q^\mathrm{in}\geq 0$ is the volumetric flow rate into the tank, $Q^\mathrm{out}\geq 0$ is the volumetric flow rate out of the tank, and $\varepsilon^{\mathrm{t}}\in (0, 1)$ is the total porosity.
+In the particles, mass transfer is governed by reaction equations in $(0, T^\mathrm{end})$ and for all components
+\begin{align}
+          \frac{\partial c^{\mathrm{s}}_{i}}{\partial t}
+          &= f^{\mathrm{bind}}_{i}\left( \vec{c}^{\mathrm{\ell}}, \vec{c}^{\mathrm{s}} \right), \end{align}
+Here, $c^{\mathrm{s}}_{i}\colon (0, T^\mathrm{end}) \mapsto \mathbb{R}$ is the particle solid concentration, $f^\mathrm{bind}_{i}$ is the adsorption isotherm function, $\vec{c}^\mathrm{p}$ is the particle liquid components vector, and $\vec{c}^\mathrm{s}$ is the particle solid components vector.
+Consistent initial values for all solution variables (concentrations) are defined at $t = 0$.
+\end{document}
