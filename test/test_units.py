@@ -105,28 +105,28 @@ class TestCGSSystem:
 class TestPracticalSystem:
 
     def test_practical_time(self):
-        assert get_unit("time", "Practical") == r"min"
+        assert get_unit("time", "Legacy") == r"min"
 
     def test_practical_length(self):
-        assert get_unit("length", "Practical") == r"cm"
+        assert get_unit("length", "Legacy") == r"cm"
 
     def test_practical_volume(self):
-        assert get_unit("volume", "Practical") == r"mL"
+        assert get_unit("volume", "Legacy") == r"mL"
 
     def test_practical_concentration_molar(self):
-        assert get_unit("concentration_molar", "Practical") == r"mM"
+        assert get_unit("concentration_molar", "Legacy") == r"mM"
 
     def test_practical_concentration_mass(self):
-        assert get_unit("concentration_mass", "Practical") == r"\frac{g}{L}"
+        assert get_unit("concentration_mass", "Legacy") == r"\frac{g}{L}"
 
     def test_practical_velocity(self):
-        assert get_unit("velocity", "Practical") == r"\frac{cm}{min}"
+        assert get_unit("velocity", "Legacy") == r"\frac{cm}{min}"
 
     def test_practical_volumetric_flow(self):
-        assert get_unit("volumetric_flow", "Practical") == r"\frac{mL}{min}"
+        assert get_unit("volumetric_flow", "Legacy") == r"\frac{mL}{min}"
 
     def test_practical_reaction_rate(self):
-        assert get_unit("reaction_rate_molar", "Practical") == r"\frac{mM}{min}"
+        assert get_unit("reaction_rate_molar", "Legacy") == r"\frac{mM}{min}"
 
 
 @pytest.mark.ci
@@ -159,22 +159,22 @@ class TestConversionFactors:
         assert get_conversion_factor("rate_nth_order", "CGS") is None
 
     def test_practical_time(self):
-        assert get_conversion_factor("time", "Practical") == pytest.approx(1.0 / 60)
+        assert get_conversion_factor("time", "Legacy") == pytest.approx(1.0 / 60)
 
     def test_practical_concentration_molar_unity(self):
-        assert get_conversion_factor("concentration_molar", "Practical") == pytest.approx(1.0)
+        assert get_conversion_factor("concentration_molar", "Legacy") == pytest.approx(1.0)
 
     def test_practical_concentration_mass_unity(self):
-        assert get_conversion_factor("concentration_mass", "Practical") == pytest.approx(1.0)
+        assert get_conversion_factor("concentration_mass", "Legacy") == pytest.approx(1.0)
 
     def test_practical_velocity(self):
-        assert get_conversion_factor("velocity", "Practical") == pytest.approx(6e3)
+        assert get_conversion_factor("velocity", "Legacy") == pytest.approx(6e3)
 
     def test_practical_rate_first_order(self):
-        assert get_conversion_factor("rate_first_order", "Practical") == pytest.approx(60.0)
+        assert get_conversion_factor("rate_first_order", "Legacy") == pytest.approx(60.0)
 
     def test_practical_volumetric_flow(self):
-        assert get_conversion_factor("volumetric_flow", "Practical") == pytest.approx(6e7)
+        assert get_conversion_factor("volumetric_flow", "Legacy") == pytest.approx(6e7)
 
     def test_unknown_system_raises(self):
         with pytest.raises(ValueError, match="Unknown unit system"):
@@ -222,7 +222,7 @@ class TestRegistry:
         assert "CGS" in AVAILABLE_SYSTEMS
 
     def test_practical_in_available(self):
-        assert "Practical" in AVAILABLE_SYSTEMS
+        assert "Legacy" in AVAILABLE_SYSTEMS
 
     def test_all_systems_have_same_keys(self):
         si_keys = set(UNIT_SYSTEMS["SI"].keys())

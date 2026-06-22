@@ -31,6 +31,26 @@ UNIT_SYSTEMS: Dict[str, Dict[str, str]] = {
         "number_density":         r"\frac{1}{m \cdot m^3}",
         "inverse_length":         r"\frac{1}{m}",
     },
+    "Legacy": {
+        "dimensionless":          r"-",
+        "time":                   r"min",
+        "length":                 r"cm",
+        "volume":                 r"mL",
+        "velocity":               r"\frac{cm}{min}",
+        "velocity_coeff":         r"\frac{cm^2}{min}",
+        "diffusion":              r"\frac{cm^2}{min}",
+        "volumetric_flow":        r"\frac{mL}{min}",
+        "concentration_molar":    r"mM",
+        "concentration_molar_vec":r"[mM]",
+        "concentration_mass":     r"\frac{g}{L}",
+        "reaction_rate_molar":    r"\frac{mM}{min}",
+        "rate_first_order":       r"\frac{1}{min}",
+        "rate_second_order":      r"\frac{1}{mM \cdot min}",
+        "rate_nth_order":         r"\frac{1}{min} \cdot \left(\frac{1}{mM}\right)^{n}",
+        "nucleation_rate":        r"\frac{1}{mL \cdot min}",
+        "number_density":         r"\frac{1}{cm \cdot mL}",
+        "inverse_length":         r"\frac{1}{cm}",
+    },
     "CGS": {
         "dimensionless":          r"-",
         "time":                   r"s",
@@ -51,26 +71,6 @@ UNIT_SYSTEMS: Dict[str, Dict[str, str]] = {
         "number_density":         r"\frac{1}{cm \cdot cm^3}",
         "inverse_length":         r"\frac{1}{cm}",
     },
-    "Practical": {
-        "dimensionless":          r"-",
-        "time":                   r"min",
-        "length":                 r"cm",
-        "volume":                 r"mL",
-        "velocity":               r"\frac{cm}{min}",
-        "velocity_coeff":         r"\frac{cm^2}{min}",
-        "diffusion":              r"\frac{cm^2}{min}",
-        "volumetric_flow":        r"\frac{mL}{min}",
-        "concentration_molar":    r"mM",
-        "concentration_molar_vec":r"[mM]",
-        "concentration_mass":     r"\frac{g}{L}",
-        "reaction_rate_molar":    r"\frac{mM}{min}",
-        "rate_first_order":       r"\frac{1}{min}",
-        "rate_second_order":      r"\frac{1}{mM \cdot min}",
-        "rate_nth_order":         r"\frac{1}{min} \cdot \left(\frac{1}{mM}\right)^{n}",
-        "nucleation_rate":        r"\frac{1}{mL \cdot min}",
-        "number_density":         r"\frac{1}{cm \cdot mL}",
-        "inverse_length":         r"\frac{1}{cm}",
-    },
 }
 
 AVAILABLE_SYSTEMS = list(UNIT_SYSTEMS.keys())
@@ -80,6 +80,26 @@ AVAILABLE_SYSTEMS = list(UNIT_SYSTEMS.keys())
 # None means the factor depends on a model parameter (e.g. reaction order n).
 CONVERSION_FACTORS: Dict[str, Dict[str, Optional[float]]] = {
     "SI": {key: 1.0 for key in UNIT_SYSTEMS["SI"]},
+    "Legacy": {
+        "dimensionless":          1.0,
+        "time":                   1.0 / 60,        # 1 s = 1/60 min
+        "length":                 1e2,              # 1 m = 100 cm
+        "volume":                 1e6,              # 1 m³ = 10⁶ mL
+        "velocity":               6e3,              # 1 m/s = 6000 cm/min
+        "velocity_coeff":         6e5,              # 1 m²/s = 6×10⁵ cm²/min
+        "diffusion":              6e5,              # 1 m²/s = 6×10⁵ cm²/min
+        "volumetric_flow":        6e7,              # 1 m³/s = 6×10⁷ mL/min
+        "concentration_molar":    1.0,              # 1 mol/m³ = 1 mM
+        "concentration_molar_vec":1.0,
+        "concentration_mass":     1.0,              # 1 kg/m³ = 1 g/L
+        "reaction_rate_molar":    60.0,             # 1 mol/(m³·s) = 60 mM/min
+        "rate_first_order":       60.0,             # 1/s = 60/min
+        "rate_second_order":      60.0,             # 1 m³/(mol·s) = 60/(mM·min)
+        "rate_nth_order":         None,             # depends on reaction order n
+        "nucleation_rate":        6e-5,             # 1/(m³·s) = 6×10⁻⁵/(mL·min)
+        "number_density":         1e-8,             # 1/(m·m³) = 10⁻⁸/(cm·mL)
+        "inverse_length":         1e-2,             # 1/m = 10⁻²/cm
+    },
     "CGS": {
         "dimensionless":          1.0,
         "time":                   1.0,            # 1 s = 1 s
@@ -99,26 +119,6 @@ CONVERSION_FACTORS: Dict[str, Dict[str, Optional[float]]] = {
         "nucleation_rate":        1e-6,            # 1/(m³·s) = 10⁻⁶/(cm³·s)
         "number_density":         1e-8,            # 1/(m·m³) = 10⁻⁸/(cm·cm³)
         "inverse_length":         1e-2,            # 1/m = 10⁻²/cm
-    },
-    "Practical": {
-        "dimensionless":          1.0,
-        "time":                   1.0 / 60,        # 1 s = 1/60 min
-        "length":                 1e2,              # 1 m = 100 cm
-        "volume":                 1e6,              # 1 m³ = 10⁶ mL
-        "velocity":               6e3,              # 1 m/s = 6000 cm/min
-        "velocity_coeff":         6e5,              # 1 m²/s = 6×10⁵ cm²/min
-        "diffusion":              6e5,              # 1 m²/s = 6×10⁵ cm²/min
-        "volumetric_flow":        6e7,              # 1 m³/s = 6×10⁷ mL/min
-        "concentration_molar":    1.0,              # 1 mol/m³ = 1 mM
-        "concentration_molar_vec":1.0,
-        "concentration_mass":     1.0,              # 1 kg/m³ = 1 g/L
-        "reaction_rate_molar":    60.0,             # 1 mol/(m³·s) = 60 mM/min
-        "rate_first_order":       60.0,             # 1/s = 60/min
-        "rate_second_order":      60.0,             # 1 m³/(mol·s) = 60/(mM·min)
-        "rate_nth_order":         None,             # depends on reaction order n
-        "nucleation_rate":        6e-5,             # 1/(m³·s) = 6×10⁻⁵/(mL·min)
-        "number_density":         1e-8,             # 1/(m·m³) = 10⁻⁸/(cm·mL)
-        "inverse_length":         1e-2,             # 1/m = 10⁻²/cm
     },
 }
 
