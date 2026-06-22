@@ -10,12 +10,14 @@ import streamlit as st
 
 from src import equations as eq
 from src.utils import format_variables
+from src.units import get_unit
 
 
 @dataclass
 class Crystallization:
 
     var_format: Literal
+    unit_system: str = "SI"
     column_type: str = "CSTR"
     has_primary_formation: bool = True
     has_aggregation: bool = False
@@ -121,98 +123,99 @@ class Crystallization:
         has_primary = self.has_primary_formation
         has_agg = self.has_aggregation
         has_frag = self.has_fragmentation
+        u = lambda key: get_unit(key, self.unit_system)
 
         vp = [
             {"Group": 0, "Symbol": r"t", "Description": "time coordinate",
-             "Unit": r"s", "Dependence": r"\text{independent variable}"},
+             "Unit": u("time"), "Dependence": r"\text{independent variable}"},
             {"Group": 0, "Symbol": r"x", "Description": "particle size (internal coordinate)",
-             "Unit": r"m", "Dependence": r"\text{independent variable}"},
+             "Unit": u("length"), "Dependence": r"\text{independent variable}"},
             {"Group": 1, "Symbol": r"n", "Description": "particle number density",
-             "Unit": r"\frac{1}{m \cdot m^3}", "Dependence": r"t, x"},
+             "Unit": u("number_density"), "Dependence": r"t, x"},
             {"Group": 1, "Symbol": r"c", "Description": "solute concentration",
-             "Unit": r"\frac{kg}{m^3}", "Dependence": r"t"},
+             "Unit": u("concentration_mass"), "Dependence": r"t"},
         ]
 
         if self.column_type == "CSTR":
             vp.append({"Group": 1.5, "Symbol": r"V", "Description": "reactor volume",
-                        "Unit": r"m^3", "Dependence": r"t"})
+                        "Unit": u("volume"), "Dependence": r"t"})
             vp.append({"Group": 2, "Symbol": r"F_{\mathrm{in}}", "Description": "volumetric inflow rate",
-                        "Unit": r"\frac{m^3}{s}", "Dependence": r"\text{constant}"})
+                        "Unit": u("volumetric_flow"), "Dependence": r"\text{constant}"})
             vp.append({"Group": 2, "Symbol": r"F_{\mathrm{out}}", "Description": "volumetric outflow rate",
-                        "Unit": r"\frac{m^3}{s}", "Dependence": r"\text{constant}"})
+                        "Unit": u("volumetric_flow"), "Dependence": r"\text{constant}"})
         else:
             vp.append({"Group": 0, "Symbol": r"z", "Description": "axial coordinate",
-                        "Unit": r"m", "Dependence": r"\text{independent variable}"})
+                        "Unit": u("length"), "Dependence": r"\text{independent variable}"})
             vp[2]["Dependence"] = r"t, x, z"
             vp[3]["Dependence"] = r"t, z"
             vp.append({"Group": 2, "Symbol": r"v_{\mathrm{ax}}", "Description": "axial velocity",
-                        "Unit": r"\frac{m}{s}", "Dependence": r"\text{constant}"})
+                        "Unit": u("velocity"), "Dependence": r"\text{constant}"})
             vp.append({"Group": -1, "Symbol": r"L", "Description": "reactor length",
-                        "Unit": r"m", "Dependence": r"\text{constant}"})
+                        "Unit": u("length"), "Dependence": r"\text{constant}"})
             if self.has_axial_dispersion:
                 vp.append({"Group": 6, "Symbol": r"D_{\mathrm{ax}}", "Description": "axial dispersion coefficient",
-                            "Unit": r"\frac{m^2}{s}", "Dependence": r"\text{constant}"})
+                            "Unit": u("diffusion"), "Dependence": r"\text{constant}"})
 
         if has_primary:
             vp.append({"Group": 3, "Symbol": r"v_G", "Description": "growth rate",
-                        "Unit": r"\frac{m}{s}", "Dependence": r"s, x"})
+                        "Unit": u("velocity"), "Dependence": r"s, x"})
             vp.append({"Group": 3, "Symbol": r"s", "Description": "relative supersaturation",
-                        "Unit": r"-", "Dependence": r"c"})
+                        "Unit": u("dimensionless"), "Dependence": r"c"})
             vp.append({"Group": 3, "Symbol": r"c_{\mathrm{eq}}", "Description": "equilibrium solubility",
-                        "Unit": r"\frac{kg}{m^3}", "Dependence": r"\text{constant}"})
+                        "Unit": u("concentration_mass"), "Dependence": r"\text{constant}"})
             vp.append({"Group": 3, "Symbol": r"B_0", "Description": "total nucleation rate",
-                        "Unit": r"\frac{1}{m^3 \cdot s}", "Dependence": r"s"})
+                        "Unit": u("nucleation_rate"), "Dependence": r"s"})
             vp.append({"Group": 4, "Symbol": r"k_g", "Description": "growth rate constant",
-                        "Unit": r"\frac{m}{s}", "Dependence": r"\text{constant}"})
+                        "Unit": u("velocity"), "Dependence": r"\text{constant}"})
             vp.append({"Group": 4, "Symbol": r"g", "Description": "growth exponent",
-                        "Unit": r"-", "Dependence": r"\text{constant}"})
+                        "Unit": u("dimensionless"), "Dependence": r"\text{constant}"})
             vp.append({"Group": 4, "Symbol": r"a", "Description": "growth parameter",
-                        "Unit": r"-", "Dependence": r"\text{constant}"})
+                        "Unit": u("dimensionless"), "Dependence": r"\text{constant}"})
             if self.size_dependent_growth:
                 vp.append({"Group": 4, "Symbol": r"\gamma", "Description": "size-dependence quantifier",
-                            "Unit": r"-", "Dependence": r"\text{constant}"})
+                            "Unit": u("dimensionless"), "Dependence": r"\text{constant}"})
                 vp.append({"Group": 4, "Symbol": r"p", "Description": "size-dependence exponent",
-                            "Unit": r"-", "Dependence": r"\text{constant}"})
+                            "Unit": u("dimensionless"), "Dependence": r"\text{constant}"})
             if self.has_growth_dispersion:
                 vp.append({"Group": 6, "Symbol": r"D_g", "Description": "growth dispersion rate",
-                            "Unit": r"\frac{m^2}{s}", "Dependence": r"\text{constant}"})
+                            "Unit": u("diffusion"), "Dependence": r"\text{constant}"})
             vp.append({"Group": 5, "Symbol": r"k_p", "Description": "primary nucleation rate constant",
-                        "Unit": r"\frac{1}{m^3 \cdot s}", "Dependence": r"\text{constant}"})
+                        "Unit": u("nucleation_rate"), "Dependence": r"\text{constant}"})
             vp.append({"Group": 5, "Symbol": r"u", "Description": "primary nucleation exponent",
-                        "Unit": r"-", "Dependence": r"\text{constant}"})
+                        "Unit": u("dimensionless"), "Dependence": r"\text{constant}"})
             if self.has_secondary_nucleation:
                 vp.append({"Group": 5, "Symbol": r"k_b", "Description": "secondary nucleation rate constant",
-                            "Unit": r"\frac{1}{m^3 \cdot s}", "Dependence": r"\text{constant}"})
+                            "Unit": u("nucleation_rate"), "Dependence": r"\text{constant}"})
                 vp.append({"Group": 5, "Symbol": r"b", "Description": "secondary nucleation exponent",
-                            "Unit": r"-", "Dependence": r"\text{constant}"})
+                            "Unit": u("dimensionless"), "Dependence": r"\text{constant}"})
                 vp.append({"Group": 5, "Symbol": r"k", "Description": "suspension density exponent",
-                            "Unit": r"-", "Dependence": r"\text{constant}"})
+                            "Unit": u("dimensionless"), "Dependence": r"\text{constant}"})
                 vp.append({"Group": 5, "Symbol": r"M", "Description": "suspension density",
-                            "Unit": r"\frac{kg}{m^3}", "Dependence": r"n"})
+                            "Unit": u("concentration_mass"), "Dependence": r"n"})
             vp.append({"Group": 5, "Symbol": r"x_c", "Description": "critical (minimum) particle size",
-                        "Unit": r"m", "Dependence": r"\text{constant}"})
+                        "Unit": u("length"), "Dependence": r"\text{constant}"})
             vp.append({"Group": -1, "Symbol": r"\rho", "Description": "nuclei mass density",
-                        "Unit": r"\frac{kg}{m^3}", "Dependence": r"\text{constant}"})
+                        "Unit": u("concentration_mass"), "Dependence": r"\text{constant}"})
             vp.append({"Group": -1, "Symbol": r"k_v", "Description": "volumetric shape factor",
-                        "Unit": r"-", "Dependence": r"\text{constant}"})
+                        "Unit": u("dimensionless"), "Dependence": r"\text{constant}"})
 
         if has_agg:
             vp.append({"Group": 7, "Symbol": r"\beta", "Description": "aggregation kernel",
-                        "Unit": r"\frac{m^3}{s}", "Dependence": r"x, \lambda"})
+                        "Unit": u("volumetric_flow"), "Dependence": r"x, \lambda"})
             vp.append({"Group": 7, "Symbol": r"\beta_0", "Description": "aggregation rate constant",
-                        "Unit": r"\frac{m^3}{s}", "Dependence": r"\text{constant}"})
+                        "Unit": u("volumetric_flow"), "Dependence": r"\text{constant}"})
 
         if has_frag:
             vp.append({"Group": 8, "Symbol": r"S(x)", "Description": "selection (fragmentation rate) function",
-                        "Unit": r"\frac{1}{s}", "Dependence": r"x"})
+                        "Unit": u("rate_first_order"), "Dependence": r"x"})
             vp.append({"Group": 8, "Symbol": r"b(x \mid \lambda)", "Description": "breakage probability density",
-                        "Unit": r"\frac{1}{m}", "Dependence": r"x, \lambda"})
+                        "Unit": u("inverse_length"), "Dependence": r"x, \lambda"})
             vp.append({"Group": 8, "Symbol": r"S_0", "Description": "fragmentation rate constant",
-                        "Unit": r"\frac{1}{s}", "Dependence": r"\text{constant}"})
+                        "Unit": u("rate_first_order"), "Dependence": r"\text{constant}"})
             vp.append({"Group": 8, "Symbol": r"\alpha", "Description": "fragmentation exponent",
-                        "Unit": r"-", "Dependence": r"\text{constant}"})
+                        "Unit": u("dimensionless"), "Dependence": r"\text{constant}"})
             vp.append({"Group": 8.1, "Symbol": r"\gamma_f", "Description": "daughter distribution parameter",
-                        "Unit": r"-", "Dependence": r"\text{constant}"})
+                        "Unit": u("dimensionless"), "Dependence": r"\text{constant}"})
 
         for var_ in vp:
             var_["Symbol"] = format_variables(var_["Symbol"], self.var_format)
