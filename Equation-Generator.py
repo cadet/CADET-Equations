@@ -166,6 +166,11 @@ if dev_mode_:
         "double-check all equations and parameters before relying on them.",
         icon="⚠️"
     )
+st.link_button(
+    ":material/bug_report: Report a bug",
+    "https://github.com/cadet/CADET-Equations/issues/new?template=bug_report.yml",
+    use_container_width=True,
+)
 
 if dev_mode_:
     
