@@ -8,7 +8,7 @@ modeling assumptions and equation terms.
 
 import re
 
-from src.handler_cite import cite_html
+from src.handler_cite import cite, cite_html
 
 def HRM_asmpt(N_p: int, nonlimiting_filmDiff: bool, has_binding: bool, has_surfDiff: bool, column_resolution: str):
     """Return a list of HRM assumptions as LaTeX strings."""
@@ -230,12 +230,18 @@ def primary_binding_eq_what_comps(binding_model: str):
 def binding_model_references(binding_model: str, bibliography_entries: dict, used_citation_keys: set):
     """Get the binding model references for the specified model.
 
-    Returns a string with HTML-formatted references, or None if the model is Arbitrary.
+    Returns a (html, plain_text) tuple, or None if the model is Arbitrary.
     """
     if binding_model == "SMA":
-        return "the original formulation " + cite_html("brooks1992steric", bibliography_entries, used_citation_keys) + ", extension to multiple bound states in " + cite_html("DIEDRICH201760", bibliography_entries, used_citation_keys)
+        return (
+            "the original formulation " + cite_html("brooks1992steric", bibliography_entries, used_citation_keys) + ", extension to multiple bound states in " + cite_html("DIEDRICH201760", bibliography_entries, used_citation_keys),
+            "the original formulation " + cite("brooks1992steric", bibliography_entries, used_citation_keys) + ", extension to multiple bound states in " + cite("DIEDRICH201760", bibliography_entries, used_citation_keys),
+        )
     elif binding_model == "Langmuir":
-        return "the original formulation " + cite_html("Langmuir1916", bibliography_entries, used_citation_keys) + ", modern notation, parameter definitions and details in " + cite_html("guiochon2006fundamentals", bibliography_entries, used_citation_keys)
+        return (
+            "the original formulation " + cite_html("Langmuir1916", bibliography_entries, used_citation_keys) + ", modern notation, parameter definitions and details in " + cite_html("guiochon2006fundamentals", bibliography_entries, used_citation_keys),
+            "the original formulation " + cite("Langmuir1916", bibliography_entries, used_citation_keys) + ", modern notation, parameter definitions and details in " + cite("guiochon2006fundamentals", bibliography_entries, used_citation_keys),
+        )
     return None
 
 
@@ -403,14 +409,20 @@ def reaction_model_definition(reaction_model: str, phase: str):
 
 
 def reaction_model_references(reaction_model: str, bibliography_entries: dict, used_citation_keys: set):
-    """Get the reaction model definition equations for the specified model and phase.
+    """Get the reaction model references for the specified model.
 
-    Returns a (main_eq, flux_eq) tuple, or None if the model is Arbitrary.
+    Returns a (html, plain_text) tuple, or None if the model is Arbitrary.
     """
     if reaction_model == "Mass Action Law":
-        return "standard reaction engineering formulation " + cite_html("Levenspiel1999", bibliography_entries, used_citation_keys)
+        return (
+            "standard reaction engineering formulation " + cite_html("Levenspiel1999", bibliography_entries, used_citation_keys),
+            "standard reaction engineering formulation " + cite("Levenspiel1999", bibliography_entries, used_citation_keys),
+        )
     elif reaction_model == "Michaelis Menten":
-        return "original formulation " + cite_html("Michaelis1913", bibliography_entries, used_citation_keys) + ", steady-state interpretation " + cite_html("Briggs1925", bibliography_entries, used_citation_keys) + ", modern notation and parameter definitions " + cite_html("CornishBowden2012", bibliography_entries, used_citation_keys)
+        return (
+            "original formulation " + cite_html("Michaelis1913", bibliography_entries, used_citation_keys) + ", steady-state interpretation " + cite_html("Briggs1925", bibliography_entries, used_citation_keys) + ", modern notation and parameter definitions " + cite_html("CornishBowden2012", bibliography_entries, used_citation_keys),
+            "original formulation " + cite("Michaelis1913", bibliography_entries, used_citation_keys) + ", steady-state interpretation " + cite("Briggs1925", bibliography_entries, used_citation_keys) + ", modern notation and parameter definitions " + cite("CornishBowden2012", bibliography_entries, used_citation_keys),
+        )
     return None
 
 
