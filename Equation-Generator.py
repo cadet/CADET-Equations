@@ -206,8 +206,6 @@ if dev_mode_:
         st.session_state["model_type"] = "Crystallization"
         st.rerun()
 
-    st.write("Selected:", st.session_state["model_type"])
-
     model_type_ = st.session_state["model_type"]
 
     st.sidebar.caption(
