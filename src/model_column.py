@@ -93,8 +93,9 @@ class Column:
 
         with col1:
             column_type_label = st.sidebar.selectbox("Column geometry", [
-                "Axial flow cylinder", "Radial flow cylinder", "Frustum", "Mixed tank"], key=r"column_type")
-            self.column_type = {"Axial flow cylinder": "Axial", "Radial flow cylinder": "Radial", "Frustum": "Frustum", "Mixed tank": "Axial"}[column_type_label]
+                "Axial flow cylinder", "Mixed tank", "Radial flow cylinder", "Frustum"], key=r"column_type")
+            # note that internally the mixed tank is handled as axial unit
+            self.column_type = {"Axial flow cylinder": "Axial", "Mixed tank": "Axial", "Radial flow cylinder": "Radial", "Frustum": "Frustum"}[column_type_label]
 
             resolution_options = {
                 "Axial flow cylinder": ["1D (axial coordinate)", "2D (axial and radial coordinate)", "3D (axial, radial and angular coordinate)"],
