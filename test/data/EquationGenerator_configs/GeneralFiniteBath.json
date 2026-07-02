@@ -9,5 +9,5 @@
     "show_eq_description": true,
     "var_format": "CADET",
     "particle_nonlimiting_filmDiff": "No",
-    "column_type": "Axial flow cylinder"
+    "column_type": "Mixed tank"
 }

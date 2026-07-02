@@ -6,5 +6,5 @@
     "model_assumptions": true,
     "show_eq_description": true,
     "var_format": "CADET",
-    "column_type": "Axial flow cylinder"
+    "column_type": "Mixed tank"
 }

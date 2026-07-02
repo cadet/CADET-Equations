@@ -93,16 +93,18 @@ class Column:
 
         with col1:
             column_type_label = st.sidebar.selectbox("Column geometry", [
-                "Axial flow cylinder", "Radial flow cylinder", "Frustum"], key=r"column_type")
-            self.column_type = {"Axial flow cylinder": "Axial", "Radial flow cylinder": "Radial", "Frustum": "Frustum"}[column_type_label]
+                "Axial flow cylinder", "Mixed tank", "Radial flow cylinder", "Frustum"], key=r"column_type")
+            # note that internally the mixed tank is handled as axial unit
+            self.column_type = {"Axial flow cylinder": "Axial", "Mixed tank": "Axial", "Radial flow cylinder": "Radial", "Frustum": "Frustum"}[column_type_label]
 
             resolution_options = {
-                "Axial": ["1D (axial coordinate)", "0D (Homogeneous Tank)", "2D (axial and radial coordinate)", "3D (axial, radial and angular coordinate)"],
-                "Radial": ["1D (radial coordinate)"],
+                "Axial flow cylinder": ["1D (axial coordinate)", "2D (axial and radial coordinate)", "3D (axial, radial and angular coordinate)"],
+                "Radial flow cylinder": ["1D (radial coordinate)"],
                 "Frustum": ["1D (axial coordinate)"],
+                "Mixed tank": ["0D (Homogeneous Tank)"],
             }
             self.resolution = re.search(r'\dD', st.sidebar.selectbox("Column resolution",
-                                        resolution_options[self.column_type], key=r"column_resolution")).group()
+                                        resolution_options[column_type_label], key=r"column_resolution")).group()
 
         valid_resolutions = {"3D", "2D", "1D", "0D"}
 

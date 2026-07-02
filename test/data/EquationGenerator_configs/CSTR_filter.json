@@ -1,5 +1,6 @@
 {
     "advanced_mode": "Off",
+    "column_type": "Mixed tank",
     "column_resolution": "0D (Homogeneous Tank)",
     "add_particles": "No",
     "has_filter": "Yes",

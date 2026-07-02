@@ -79,7 +79,9 @@ def get_h5_value(unit_group, key:str, firstEntryIfList=True):
 def map_unit_type_to_column_geometry(cadet_unit_type):
     """Map a CADET unit type string to the generator's column geometry label."""
 
-    if re.search("RADIAL", cadet_unit_type):
+    if re.search("CSTR", cadet_unit_type):
+        return "Mixed tank"
+    elif re.search("RADIAL", cadet_unit_type):
         return "Radial flow cylinder"
     elif re.search("FRUSTUM", cadet_unit_type):
         return "Frustum"

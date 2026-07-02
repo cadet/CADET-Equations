@@ -131,7 +131,7 @@ def test_bulk_reaction_0D_tank():
     assert not at.exception
     at.selectbox(key="advanced_mode").set_value("On").run()
     at.button(key="dev_mode_button").click().run()
-    at.selectbox(key="column_resolution").set_value("0D (Homogeneous Tank)").run()
+    at.selectbox(key="column_type").set_value("Mixed tank").run()
     at.selectbox(key="has_reaction_bulk").set_value("Yes").run()
     assert not at.exception
     latex = at.session_state.latex_string
@@ -322,7 +322,7 @@ def test_req_reaction_bulk_0D_tank():
     assert not at.exception
     at.selectbox(key="advanced_mode").set_value("On").run()
     at.button(key="dev_mode_button").click().run()
-    at.selectbox(key="column_resolution").set_value("0D (Homogeneous Tank)").run()
+    at.selectbox(key="column_type").set_value("Mixed tank").run()
     at.selectbox(key="has_reaction_bulk").set_value("Yes").run()
     at.selectbox(key="req_reaction_bulk").set_value("Rapid-equilibrium").run()
     assert not at.exception
@@ -653,7 +653,7 @@ def test_michaelis_menten_0D_tank():
     assert not at.exception
     at.selectbox(key="advanced_mode").set_value("On").run()
     at.button(key="dev_mode_button").click().run()
-    at.selectbox(key="column_resolution").set_value("0D (Homogeneous Tank)").run()
+    at.selectbox(key="column_type").set_value("Mixed tank").run()
     at.selectbox(key="has_reaction_bulk").set_value("Yes").run()
     at.selectbox(key="reaction_model").set_value("Michaelis Menten").run()
     assert not at.exception
