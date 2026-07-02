@@ -14,6 +14,7 @@ import subprocess
 import tempfile
 from pathlib import Path
 import pandas as pd
+import h5py
 
 from typing import List
 from typing import Literal
@@ -30,6 +31,8 @@ from src.model_crystallization import Crystallization
 from src.units import AVAILABLE_SYSTEMS, UNIT_SYSTEMS, get_conversion_factor, format_conversion_factor
 from src.generate_template import generate_unit_operation_script, generate_crystallization_script
 from src.handler_cite import load_bibliography, cite_html, cite, render_references
+from src.model_auxiliary import AuxiliaryModel
+
 
 # %% Streamlit UI
 
@@ -91,10 +94,8 @@ uploaded_file = st.sidebar.file_uploader(
 if uploaded_file is not None:
 
     uploaded_file_name = uploaded_file.name.lower()
-    
-    config = None
 
-    if uploaded_file_name.endswith(".json"):
+    if uploaded_file_name.endswith(".json"):      
 
         json_data = json.load(uploaded_file)
         if isinstance(json_data, dict) and ('column_resolution' in json_data or 'model_type' in json_data):
@@ -105,8 +106,14 @@ if uploaded_file is not None:
 
     elif uploaded_file_name.endswith(".h5"):
 
+        nUnits = 0
+        
+        with h5py.File(uploaded_file, 'r') as f:
+            
+            nUnits = int(f['input/model/NUNITS'][()])
+
         config = load_CADET_h5.get_config_from_CADET_h5(uploaded_file,
-        str(st.sidebar.number_input("Unit index in CADET file", key=r"h5_input_unit_index", min_value=-1, max_value=999, step=1, value=-1)).zfill(3)
+        str(st.sidebar.number_input("Unit index in CADET file", key=r"h5_input_unit_index", min_value=-1, max_value=nUnits-1, step=1, value=-1)).zfill(3)
         )
 
     if config is not None:
@@ -183,7 +190,7 @@ if dev_mode_:
     )
 
 if dev_mode_:
-    
+
     st.sidebar.markdown("### Model Family")
 
     col1, col2 = st.sidebar.columns(2)
@@ -409,7 +416,10 @@ else: # Chromatography model family
         advanced_mode_ = st.sidebar.selectbox("Advanced options (enables e.g. particle size distribution)", [
                                             "Off", "On"], key=r"advanced_mode") == "On"
 
-    column_model = Column(dev_mode=dev_mode_, advanced_mode=advanced_mode_, var_format=var_format_, unit_system=unit_system_)
+    if uploaded_file is not None and config.get('column_resolution') not in load_CADET_h5.CADET_column_unit_types and config.get('column_resolution') in load_CADET_h5.CADET_unit_types:
+        column_model = AuxiliaryModel(aux_model=config['column_resolution'], var_format=var_format_, unit_system=unit_system_)
+    else:
+        column_model = Column(dev_mode=dev_mode_, advanced_mode=advanced_mode_, var_format=var_format_, unit_system=unit_system_)
 
     show_eq_description = st.toggle("Show equation description", key=r"show_eq_description", value=True)
 
@@ -430,7 +440,7 @@ else: # Chromatography model family
 """
             )
 
-    if st.toggle("Show symbol table", key=r"sym_table"):
+    if column_model.vars_and_params and st.toggle("Show symbol table", key=r"sym_table"):
 
         df = pd.DataFrame(column_model.vars_and_params)
         if column_model.N_p > 0:
