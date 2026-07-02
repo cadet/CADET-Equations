@@ -1,0 +1,18 @@
+{
+    "advanced_mode": "On",
+    "column_resolution": "1D (axial coordinate)",
+    "has_axial_dispersion": "Yes",
+    "model_assumptions": true,
+    "show_eq_description": true,
+    "var_format": "CADET",
+    "PSD": "Particle size distribution",
+    "particle_resolution": "1D (radial coordinate)",
+    "particle_has_core": "No",
+    "particle_nonlimiting_filmDiff": "No",
+    "has_binding": "Yes",
+    "has_mult_bnd_states": "No",
+    "req_binding": "Kinetic",
+    "particle_has_surfDiff": "Yes",
+    "column_type": "Axial flow cylinder",
+    "binding_model": "Arbitrary"
+}

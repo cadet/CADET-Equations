@@ -6,7 +6,7 @@ This script implements tests iterating through all configurable states of the Ap
 from streamlit.testing.v1 import AppTest
 import pytest
 
-untested_variables = ["dev_mode", "advanced_mode", "var_format", "unit_system", "sym_table", "show_eq_description", "PSD", "PTD", "has_filter", "binding_model", "reaction_model", "has_reaction_bulk", "has_reaction_particle_liquid", "has_reaction_particle_solid", "N_c_choice", "model_type"]
+untested_variables = ["dev_mode", "advanced_mode", "var_format", "sym_table", "show_eq_description", "PSD", "PTD", "has_filter", "binding_model", "reaction_model", "has_reaction_bulk", "has_reaction_particle_liquid", "has_reaction_particle_solid", "N_c_choice", "model_type"]
 # dev_mode is not tested, TODO: test the advanced_mode (which includes PSD, PTD). test filter
 
 # Some boxes are conditional, e.g. film_diffusion can only be configured when particles are present.
@@ -101,29 +101,29 @@ def test_streamlit_app():
 
     # 1) test all configs with PSD = "No" -> no has_binding and no particle_resolution
     assert at.selectbox(key="PSD").value == "No"
-    run_configs(at, {"PSD": "No"}, getInputToBeTested(at), 21)
+    run_configs(at, {"PSD": "No"}, getInputToBeTested(at), 62)
 
     # 2) test all configs with particles, 1D, no binding
     preSet = {"PSD": "Yes", "has_binding": "No", "particle_resolution": "1D (radial coordinate)"}
     at.selectbox(key="PSD").set_value("Yes").run()
     assert at.selectbox(key="has_binding").value == "No"
     assert at.selectbox(key="particle_resolution").value == "1D (radial coordinate)"
-    run_configs(at, preSet, getInputToBeTested(at), 93)
+    run_configs(at, preSet, getInputToBeTested(at), 269)
 
     # 3) test all configs with particles, 0D, no binding
     preSet = {"PSD": "Yes", "has_binding": "No", "particle_resolution": "0D (homogeneous)"}
     at.selectbox(key="particle_resolution").set_value("0D (homogeneous)").run()
-    run_configs(at, preSet, getInputToBeTested(at), 45)
+    run_configs(at, preSet, getInputToBeTested(at), 133)
 
     # 4) test all configs with particles, 0D, binding
     preSet = {"PSD": "Yes", "has_binding": "Yes", "particle_resolution": "0D (homogeneous)"}
     at.selectbox(key="has_binding").set_value("Yes").run()
-    run_configs(at, preSet, getInputToBeTested(at), 189)
+    run_configs(at, preSet, getInputToBeTested(at), 549)
 
     # 5) test all configs with particles, 1D, binding
     preSet = {"PSD": "Yes", "has_binding": "Yes", "particle_resolution": "1D (radial coordinate)"}
     at.selectbox(key="particle_resolution").set_value("1D (radial coordinate)").run()
-    run_configs(at, preSet, getInputToBeTested(at), 765)
+    run_configs(at, preSet, getInputToBeTested(at), 2221)
 
     # 6) test all configs for the tank
     # enable the tank and remove column resolution from the test set
@@ -137,19 +137,19 @@ def test_streamlit_app():
     # 6a) tank, particles, 1D, no binding
     preSet = {"PSD": "Yes", "has_binding": "No", "particle_resolution": "1D (radial coordinate)"}
     at.selectbox(key="PSD").set_value("Yes").run()
-    run_configs(at, preSet, getInputToBeTested(at), 14)
+    run_configs(at, preSet, getInputToBeTested(at), 45)
 
     # 6b) tank, particles, 0D, no binding
     preSet = {"PSD": "Yes", "has_binding": "No", "particle_resolution": "0D (homogeneous)"}
     at.selectbox(key="particle_resolution").set_value("0D (homogeneous)").run()
-    run_configs(at, preSet, getInputToBeTested(at), 6)
+    run_configs(at, preSet, getInputToBeTested(at), 21)
 
     # 6c) tank, particles, 0D, binding
     preSet = {"PSD": "Yes", "has_binding": "Yes", "particle_resolution": "0D (homogeneous)"}
     at.selectbox(key="has_binding").set_value("Yes").run()
-    run_configs(at, preSet, getInputToBeTested(at), 30)
+    run_configs(at, preSet, getInputToBeTested(at), 93)
 
     # 6d) tank, particles, 1D, binding
     preSet = {"PSD": "Yes", "has_binding": "Yes", "particle_resolution": "1D (radial coordinate)"}
     at.selectbox(key="particle_resolution").set_value("1D (radial coordinate)").run()
-    run_configs(at, preSet, getInputToBeTested(at), 126)
+    run_configs(at, preSet, getInputToBeTested(at), 381)

@@ -1,0 +1,9 @@
+{
+    "advanced_mode": "Off",
+    "column_resolution": "0D (Homogeneous Tank)",
+    "add_particles": "No",
+    "has_filter": "Yes",
+    "model_assumptions": true,
+    "show_eq_description": true,
+    "var_format": "CADET"
+}

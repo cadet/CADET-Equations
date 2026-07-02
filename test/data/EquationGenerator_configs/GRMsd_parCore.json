@@ -1,0 +1,16 @@
+{
+    "advanced_mode": "On",
+    "column_resolution": "1D (axial coordinate)",
+    "has_binding": "Yes",
+    "PSD": "Yes",
+    "has_axial_dispersion": "Yes",
+    "has_mult_bnd_states": "No",
+    "model_assumptions": true,
+    "particle_has_core": "Yes",
+    "particle_resolution": "1D (radial coordinate)",
+    "req_binding": "Kinetic",
+    "show_eq_description": true,
+    "var_format": "CADET",
+    "particle_nonlimiting_filmDiff": "No",
+    "particle_has_surfDiff": "Yes"
+}

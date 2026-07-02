@@ -800,7 +800,13 @@ def particle_transport_radial(geometry: str, has_surfDiff: bool, has_binding: bo
 
         if has_mult_bnd_states:
             solid_eq = re.sub("j,i", "j,i,k", solid_eq)
-            liquid_eq = re.sub("j,i", "j,i,k", liquid_eq)
+            # In the liquid equation only the per-bound-state quantities (solid
+            # concentration, surface diffusion and binding term) carry the bound-state
+            # index k; the particle liquid concentration c^p and its diffusion
+            # coefficient D^p do not.
+            liquid_eq = re.sub(r"c\^\{\\s\}_\{j,i\}", r"c^{\\s}_{j,i,k}", liquid_eq)
+            liquid_eq = re.sub(r"D_\{j,i\}\^\{\\s\}", r"D_{j,i,k}^{\\s}", liquid_eq)
+            liquid_eq = re.sub(r"f\^\{\\mathrm\{bind\}\}_\{j,i\}", r"f^{\\mathrm{bind}}_{j,i,k}", liquid_eq)
 
         if has_binding:
             return r"""
@@ -864,7 +870,7 @@ def particle_boundary(particle, singleParticle: bool, nonlimiting_filmDiff: bool
     else:
         
         outerLiquidBC = r"\varepsilon^{\mathrm{p}}"
-        if not req_binding:
+        if not (req_binding and has_surfDiff):
             outerLiquidBC += r""" \left. \left( D^{\p}_{j,i} \frac{\partial c^{\p}_{j,i}}{\partial r} \right)\right|_{r = R^{\mathrm{p}}_{j}}
                &= k^{\mathrm{f}}_{j,i} \left. \left( c^{\b}_i - c^{\p}_{j,i} \right|_{r = R^{\mathrm{p}}_{j}} \right)"""
         else:
