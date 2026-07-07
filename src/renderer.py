@@ -11,7 +11,7 @@ from typing import List
 from src.utils import format_variables
 
 
-def availability_badge_html(name: str, available: int) -> str:
+def availability_badge_html(name: str, available: int, note: str = "") -> str:
     """Return an HTML badge indicating a model's availability.
 
     Parameters
@@ -20,6 +20,9 @@ def availability_badge_html(name: str, available: int) -> str:
         Label shown on the badge.
     available:
         Availability flag: -1 (not present), 0 (approx.), 1 (present).
+    note:
+        Optional qualifier appended to the availability text,
+        e.g. limitations or guarantees.
 
     Returns
     -------
@@ -39,6 +42,9 @@ def availability_badge_html(name: str, available: int) -> str:
         color_bg = "#fff4e5"
         color_fg = "#b26a00"
         icon = "approximation"
+
+    if note:
+        icon += f" ({note})"
 
     return (
         f'<span style="'
