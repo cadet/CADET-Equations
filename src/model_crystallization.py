@@ -120,7 +120,7 @@ class Crystallization:
         return -1
 
     def available_CADET_SemiAnalytic(self):
-        return -1, ""
+        return -1
 
     def fill_vars_and_params(self):
         has_primary = self.has_primary_formation

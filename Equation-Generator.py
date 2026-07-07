@@ -291,7 +291,7 @@ if model_type_ == "Crystallization":
 
     html = availability_badge_html("CADET-Core", cry_model.available_CADET_Core())
     html += availability_badge_html("CADET-Process", cry_model.available_CADET_Process())
-    html += availability_badge_html("CADET-Semi-Analytic", *cry_model.available_CADET_SemiAnalytic())
+    html += availability_badge_html("CADET-Semi-Analytic", cry_model.available_CADET_SemiAnalytic())
     st.markdown(html, unsafe_allow_html=True)
 
     has_primary = cry_model.has_primary_formation
@@ -475,7 +475,7 @@ else: # Chromatography model family
 
     html += availability_badge_html(
         "CADET-Semi-Analytic",
-        *column_model.available_CADET_SemiAnalytic()
+        column_model.available_CADET_SemiAnalytic()
     )
 
     st.markdown(html, unsafe_allow_html=True)

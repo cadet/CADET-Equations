@@ -520,46 +520,43 @@ class Column:
 
         Returns
         -------
-        tuple[int, str]
-            Availability flag (-1 if not present, 0 if the model can be
-            approximated, 1 if present) and a note qualifying the
-            availability (empty if there is nothing to remark).
+        int
+            -1 if model is not present,
+             0 if model can be approximated,
+             1 if model is present.
         """
 
         if self.has_reaction_bulk or self.has_reaction_particle_liquid or self.has_reaction_particle_solid:
-            return -1, ""
+            return -1
 
         # only axial flow columns and tanks
         if self.column_type in ["Radial", "Frustum"]:
-            return -1, ""
+            return -1
 
         if self.has_angular_coordinate:
-            return -1, ""
+            return -1
 
-        # no or linear binding only. Since linear binding decouples the
-        # components, the single-component restriction of
-        # CADET-Semi-Analytic is not remarked on the badge.
-        note_parts = []
+        # no or linear binding only. Arbitrary binding models are treated
+        # as supported since they include the linear isotherm. Linear
+        # binding decouples the components, hence the single-component
+        # restriction of CADET-Semi-Analytic is no limitation.
         if self.has_binding:
             binding_models = set(p.binding_model for p in self.particle_models)
             if not binding_models <= {"Linear", "Arbitrary"}:
-                return -1, ""
-            if "Arbitrary" in binding_models:
-                note_parts.append("linear binding only")
+                return -1
             if any(p.has_mult_bnd_states for p in self.particle_models):
-                return -1, ""
+                return -1
 
         # only spherical particles
         if any(p.geometry != "Sphere" for p in self.particle_models):
-            return -1, ""
+            return -1
 
         # tank model
         if not self.has_axial_coordinate:
             if self.N_p > 0:
                 # finite bath models are not implemented
-                return -1, ""
-            # CSTR: variable volume, hence no provable error bounds
-            return 1, ", ".join(note_parts)
+                return -1
+            return 1
 
         availability = 1
 
@@ -574,7 +571,7 @@ class Column:
 
             if self.has_radial_coordinate:
                 if any_LRM:
-                    return -1, ""
+                    return -1
                 if not all_par1D:
                     # 2D LRMP can be approximated by the 2D GRM
                     availability = 0
@@ -584,13 +581,7 @@ class Column:
             if self.has_radial_coordinate:
                 availability = 0
 
-        # provable error bounds are available except for 2D models and
-        # the GRM with surface diffusion and kinetic adsorption
-        if availability == 1 and not self.has_radial_coordinate:
-            if not any(p.has_surfDiff and not p.req_binding for p in self.particle_models):
-                note_parts.append("provable error bounds")
-
-        return availability, ", ".join(note_parts)
+        return availability
 
     def fill_vars_and_params(self):
 
