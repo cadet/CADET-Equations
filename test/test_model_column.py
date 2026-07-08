@@ -293,6 +293,7 @@ def _make_particle(**overrides):
 class TestColumnSemiAnalyticAvailability:
     """Test CADET-Semi-Analytic availability checks."""
 
+    @pytest.mark.ci
     @pytest.mark.unit_test
     def test_returns_valid_int(self):
         """Test that available_CADET_SemiAnalytic returns a valid integer."""
@@ -301,12 +302,14 @@ class TestColumnSemiAnalyticAvailability:
         assert isinstance(result, int)
         assert result in [-1, 0, 1]
 
+    @pytest.mark.ci
     @pytest.mark.unit_test
     def test_1d_dpfr_supported(self):
         """Default 1D axial column without particles is supported."""
         col = _make_column()
         assert col.available_CADET_SemiAnalytic() == 1
 
+    @pytest.mark.ci
     @pytest.mark.unit_test
     def test_1d_grm_linear_binding_supported(self):
         col = _make_column(
@@ -315,6 +318,7 @@ class TestColumnSemiAnalyticAvailability:
         )
         assert col.available_CADET_SemiAnalytic() == 1
 
+    @pytest.mark.ci
     @pytest.mark.unit_test
     def test_1d_lrm_and_lrmp_supported(self):
         for nonlimiting_filmDiff in [True, False]:
@@ -325,6 +329,7 @@ class TestColumnSemiAnalyticAvailability:
             )
             assert col.available_CADET_SemiAnalytic() == 1
 
+    @pytest.mark.ci
     @pytest.mark.unit_test
     def test_arbitrary_binding_supported(self):
         col = _make_column(
@@ -333,6 +338,7 @@ class TestColumnSemiAnalyticAvailability:
         )
         assert col.available_CADET_SemiAnalytic() == 1
 
+    @pytest.mark.ci
     @pytest.mark.unit_test
     def test_nonlinear_binding_not_supported(self):
         for binding_model in ["Langmuir", "SMA"]:
@@ -342,6 +348,7 @@ class TestColumnSemiAnalyticAvailability:
             )
             assert col.available_CADET_SemiAnalytic() == -1
 
+    @pytest.mark.ci
     @pytest.mark.unit_test
     def test_multiple_bound_states_not_supported(self):
         col = _make_column(
@@ -350,6 +357,7 @@ class TestColumnSemiAnalyticAvailability:
         )
         assert col.available_CADET_SemiAnalytic() == -1
 
+    @pytest.mark.ci
     @pytest.mark.unit_test
     def test_non_spherical_particles_not_supported(self):
         for geometry in ["Cylinder", "Slab"]:
@@ -359,17 +367,20 @@ class TestColumnSemiAnalyticAvailability:
             )
             assert col.available_CADET_SemiAnalytic() == -1
 
+    @pytest.mark.ci
     @pytest.mark.unit_test
     def test_non_axial_flow_not_supported(self):
         for column_type in ["Radial", "Frustum"]:
             col = _make_column(column_type=column_type)
             assert col.available_CADET_SemiAnalytic() == -1
 
+    @pytest.mark.ci
     @pytest.mark.unit_test
     def test_3d_bulk_not_supported(self):
         col = _make_column(has_angular_coordinate=True)
         assert col.available_CADET_SemiAnalytic() == -1
 
+    @pytest.mark.ci
     @pytest.mark.unit_test
     def test_reactions_not_supported(self):
         for reaction_attr in ["has_reaction_bulk", "has_reaction_particle_liquid",
@@ -377,6 +388,7 @@ class TestColumnSemiAnalyticAvailability:
             col = _make_column(**{reaction_attr: True})
             assert col.available_CADET_SemiAnalytic() == -1
 
+    @pytest.mark.ci
     @pytest.mark.unit_test
     def test_2d_grm_supported(self):
         col = _make_column(
@@ -386,6 +398,7 @@ class TestColumnSemiAnalyticAvailability:
         )
         assert col.available_CADET_SemiAnalytic() == 1
 
+    @pytest.mark.ci
     @pytest.mark.unit_test
     def test_2d_lrmp_approximated(self):
         col = _make_column(
@@ -395,6 +408,7 @@ class TestColumnSemiAnalyticAvailability:
         )
         assert col.available_CADET_SemiAnalytic() == 0
 
+    @pytest.mark.ci
     @pytest.mark.unit_test
     def test_2d_lrm_not_supported(self):
         col = _make_column(
@@ -404,16 +418,19 @@ class TestColumnSemiAnalyticAvailability:
         )
         assert col.available_CADET_SemiAnalytic() == -1
 
+    @pytest.mark.ci
     @pytest.mark.unit_test
     def test_2d_dpfr_approximated(self):
         col = _make_column(has_radial_coordinate=True)
         assert col.available_CADET_SemiAnalytic() == 0
 
+    @pytest.mark.ci
     @pytest.mark.unit_test
     def test_cstr_supported(self):
         col = _make_column(has_axial_coordinate=False)
         assert col.available_CADET_SemiAnalytic() == 1
 
+    @pytest.mark.ci
     @pytest.mark.unit_test
     def test_finite_bath_not_supported(self):
         col = _make_column(
@@ -423,6 +440,7 @@ class TestColumnSemiAnalyticAvailability:
         )
         assert col.available_CADET_SemiAnalytic() == -1
 
+    @pytest.mark.ci
     @pytest.mark.unit_test
     def test_grm_nonlimiting_film_diffusion_approximated(self):
         col = _make_column(
@@ -431,6 +449,7 @@ class TestColumnSemiAnalyticAvailability:
         )
         assert col.available_CADET_SemiAnalytic() == 0
 
+    @pytest.mark.ci
     @pytest.mark.unit_test
     def test_surface_diffusion_supported(self):
         col = _make_column(
@@ -439,6 +458,7 @@ class TestColumnSemiAnalyticAvailability:
         )
         assert col.available_CADET_SemiAnalytic() == 1
 
+    @pytest.mark.ci
     @pytest.mark.unit_test
     def test_multiple_particle_types_supported_within_limitations(self):
         col = _make_column(
