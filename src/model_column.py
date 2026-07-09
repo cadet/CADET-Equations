@@ -512,12 +512,7 @@ class Column:
     def available_CADET_SemiAnalytic(self):
         """
         Return the availability status of the model in CADET-Semi-Analytic.
-
-        Supported models: CSTR, and axial flow LRM, LRMP, GRM for 1D bulk
-        and GRM for 2D bulk, each restricted to no or linear binding and
-        spherical particles. Multiple particle types are supported within
-        these limitations.
-
+    
         Returns
         -------
         int
@@ -553,32 +548,29 @@ class Column:
 
         # tank model
         if not self.has_axial_coordinate:
-            if self.N_p > 0:
-                # finite bath models are not implemented
+            if self.N_p > 0 or self.particle_models[0].resolution != "0D":
                 return -1
             return 1
 
         availability = 1
 
         if self.N_p > 0:
-            all_par1D = all(p.resolution == "1D" for p in self.particle_models)
-            any_LRM = any(p.resolution == "0D" and p.nonlimiting_filmDiff for p in self.particle_models)
 
-            # nonlimiting film diffusion in the GRM can be approximated
-            # with a large film diffusion coefficient
+            # nonlimiting film diffusion in the GRM can be approximated via large film diffusion coefficient
             if any(p.resolution == "1D" and p.nonlimiting_filmDiff for p in self.particle_models):
                 availability = 0
 
-            if self.has_radial_coordinate:
-                if any_LRM:
-                    return -1
-                if not all_par1D:
-                    # 2D LRMP can be approximated by the 2D GRM
+            if self.has_radial_coordinate: # 2D model
+
+                all_par1D = all(p.resolution == "1D" for p in self.particle_models)
+                any_nonLimFD = any(p.nonlimiting_filmDiff for p in self.particle_models)
+
+                if any_nonLimFD:
+                    return 0 # approximation via fast film diffusion kinetic coefficient
+                if not all_par1D: # approximation via fast pore diffusion kinetic coefficient
                     availability = 0
         else:
-            # DPFR corresponds to the LRM without binding (1D bulk) and
-            # can be approximated by the 2D GRM (2D bulk)
-            if self.has_radial_coordinate:
+            if self.has_radial_coordinate: # 2D DPFR via kf = 0.0
                 availability = 0
 
         return availability
