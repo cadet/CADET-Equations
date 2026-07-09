@@ -548,7 +548,7 @@ class Column:
 
         # tank model
         if not self.has_axial_coordinate:
-            if self.N_p > 0 or self.particle_models[0].resolution != "0D":
+            if self.N_p > 0:
                 return -1
             return 1
 

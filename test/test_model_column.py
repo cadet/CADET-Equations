@@ -410,13 +410,15 @@ class TestColumnSemiAnalyticAvailability:
 
     @pytest.mark.ci
     @pytest.mark.unit_test
-    def test_2d_lrm_not_supported(self):
+    def test_2d_lrm_approximated(self):
+        # 2D LRM is approximated by the 2D GRM using large film and pore
+        # diffusion coefficients
         col = _make_column(
             has_radial_coordinate=True,
             N_p=1, has_binding=True,
             particle_models=[_make_particle(resolution="0D", nonlimiting_filmDiff=True)],
         )
-        assert col.available_CADET_SemiAnalytic() == -1
+        assert col.available_CADET_SemiAnalytic() == 0
 
     @pytest.mark.ci
     @pytest.mark.unit_test
