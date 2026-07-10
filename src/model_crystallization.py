@@ -122,6 +122,18 @@ class Crystallization:
     def available_CADET_SemiAnalytic(self):
         return -1
 
+    def solver_details(self):
+        """Return solver/discretization details for each tool."""
+        result = {}
+        if self.available_CADET_Core() >= 0:
+            details = [("Size coordinate discretization",
+                        "Finite Volume (FV) with upwind, HR-Koren, WENO23 or WENO35 reconstruction")]
+            if self.column_type == "DPFR":
+                details.append(("Axial discretization", "Finite Volume (FV)"))
+            details.append(("Time integration", "IDAS (SUNDIALS)"))
+            result["CADET-Core"] = details
+        return result
+
     def fill_vars_and_params(self):
         has_primary = self.has_primary_formation
         has_agg = self.has_aggregation

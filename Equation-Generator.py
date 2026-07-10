@@ -24,7 +24,7 @@ from src import equations as eq
 from src import load_CADET_h5
 from src import ui_config
 from src.utils import format_variables
-from src.renderer import availability_badge_html, write_and_save as renderer_write_and_save
+from src.renderer import render_availability_badges, write_and_save as renderer_write_and_save
 from src.model_column import Column
 from src.model_crystallization import Crystallization
 from src.units import AVAILABLE_SYSTEMS, UNIT_SYSTEMS, get_conversion_factor, format_conversion_factor
@@ -289,10 +289,7 @@ if model_type_ == "Crystallization":
     st.write("### " + cry_model.model_name())
     file_content.append(r"\section*{" + cry_model.model_name() + r"}")
 
-    html = availability_badge_html("CADET-Core", cry_model.available_CADET_Core())
-    html += availability_badge_html("CADET-Process", cry_model.available_CADET_Process())
-    html += availability_badge_html("CADET-Semi-Analytic", cry_model.available_CADET_SemiAnalytic())
-    st.markdown(html, unsafe_allow_html=True)
+    render_availability_badges(cry_model)
 
     has_primary = cry_model.has_primary_formation
     has_agg = cry_model.has_aggregation
@@ -463,22 +460,7 @@ else: # Chromatography model family
 
     #%% CADET model availability badge
 
-    html = availability_badge_html(
-        "CADET-Core",
-        column_model.available_CADET_Core()
-    )
-
-    html += availability_badge_html(
-        "CADET-Process",
-        column_model.available_CADET_Process()
-    )
-
-    html += availability_badge_html(
-        "CADET-Semi-Analytic",
-        column_model.available_CADET_SemiAnalytic()
-    )
-
-    st.markdown(html, unsafe_allow_html=True)
+    render_availability_badges(column_model)
 
     #%% Continue with model
 
