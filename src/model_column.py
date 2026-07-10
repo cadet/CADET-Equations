@@ -509,6 +509,72 @@ class Column:
         else:
             return core_availability
 
+    def available_CADET_SemiAnalytic(self):
+        """
+        Return the availability status of the model in CADET-Semi-Analytic.
+    
+        Returns
+        -------
+        int
+            -1 if model is not present,
+             0 if model can be approximated,
+             1 if model is present.
+        """
+
+        if self.has_reaction_bulk or self.has_reaction_particle_liquid or self.has_reaction_particle_solid:
+            return -1
+
+        # only axial flow columns and tanks
+        if self.column_type in ["Radial", "Frustum"]:
+            return -1
+
+        if self.has_angular_coordinate:
+            return -1
+
+        # no or linear binding only. Arbitrary binding models are treated
+        # as supported since they include the linear isotherm. Linear
+        # binding decouples the components, hence the single-component
+        # restriction of CADET-Semi-Analytic is no limitation.
+        if self.has_binding:
+            binding_models = set(p.binding_model for p in self.particle_models)
+            if not binding_models <= {"Linear", "Arbitrary"}:
+                return -1
+            if any(p.has_mult_bnd_states for p in self.particle_models):
+                return -1
+
+        # only spherical particles
+        if any(p.geometry != "Sphere" for p in self.particle_models):
+            return -1
+
+        # tank model
+        if not self.has_axial_coordinate:
+            if self.N_p > 0:
+                return -1
+            return 1
+
+        availability = 1
+
+        if self.N_p > 0:
+
+            # nonlimiting film diffusion in the GRM can be approximated via large film diffusion coefficient
+            if any(p.resolution == "1D" and p.nonlimiting_filmDiff for p in self.particle_models):
+                availability = 0
+
+            if self.has_radial_coordinate: # 2D model
+
+                all_par1D = all(p.resolution == "1D" for p in self.particle_models)
+                any_nonLimFD = any(p.nonlimiting_filmDiff for p in self.particle_models)
+
+                if any_nonLimFD:
+                    return 0 # approximation via fast film diffusion kinetic coefficient
+                if not all_par1D: # approximation via fast pore diffusion kinetic coefficient
+                    availability = 0
+        else:
+            if self.has_radial_coordinate: # 2D DPFR via kf = 0.0
+                availability = 0
+
+        return availability
+
     def fill_vars_and_params(self):
 
         without_pores_ = self.nonlimiting_filmDiff and self.has_binding and self.particle_models[0].resolution == "0D"

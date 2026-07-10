@@ -119,6 +119,9 @@ class Crystallization:
     def available_CADET_Process(self):
         return -1
 
+    def available_CADET_SemiAnalytic(self):
+        return -1
+
     def fill_vars_and_params(self):
         has_primary = self.has_primary_formation
         has_agg = self.has_aggregation
