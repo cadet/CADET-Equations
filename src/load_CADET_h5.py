@@ -262,16 +262,16 @@ def _extract_v5_particle_config(config, unit_type, h5_unit_group, par_model):
             if binding_model not in CADET_binding_model_map:
                 st.sidebar.warning(f"Binding model {binding_model} not implemented in CADET-Equations, default to arbitrary binding")
 
-            config['has_mult_bnd_states'] = "No"
-
             if nParType > 1:
                 ads_group = h5_unit_group['adsorption_000']
             else:
                 ads_group = h5_unit_group['adsorption']
 
             config['req_binding'] = "Kinetic" if get_h5_value(ads_group, 'IS_KINETIC') else "Rapid-equilibrium"
-            if get_h5_value(ads_group, 'NBOUND') is not None:
-                config['has_mult_bnd_states'] = "Yes" if get_h5_value(ads_group, 'NBOUND') > 1 else "No"
+            if config['binding_model'] == "Arbitrary":
+                config['has_mult_bnd_states'] = "No"
+                if get_h5_value(ads_group, 'NBOUND') is not None:
+                    config['has_mult_bnd_states'] = "Yes" if get_h5_value(ads_group, 'NBOUND') > 1 else "No"
 
             if par_model == "1D (radial coordinate)":
 
@@ -317,12 +317,12 @@ def _extract_v6_particle_config(config, h5_unit_group, par_model):
             if binding_model not in CADET_binding_model_map:
                 st.sidebar.warning(f"Binding model {binding_model} not implemented in CADET-Equations, default to arbitrary binding")
 
-            config['has_mult_bnd_states'] = "No"
-
             ads_group = pt_group['adsorption']
             config['req_binding'] = "Kinetic" if get_h5_value(ads_group, 'IS_KINETIC') else "Rapid-equilibrium"
-            if get_h5_value(pt_group, 'NBOUND') is not None:
-                config['has_mult_bnd_states'] = "Yes" if get_h5_value(pt_group, 'NBOUND') > 1 else "No"
+            if config['binding_model'] == "Arbitrary":
+                config['has_mult_bnd_states'] = "No"
+                if get_h5_value(pt_group, 'NBOUND') is not None:
+                    config['has_mult_bnd_states'] = "Yes" if get_h5_value(pt_group, 'NBOUND') > 1 else "No"
 
             if par_model == "1D (radial coordinate)":
                 has_surf_diff = get_h5_value(pt_group, 'HAS_SURFACE_DIFFUSION')

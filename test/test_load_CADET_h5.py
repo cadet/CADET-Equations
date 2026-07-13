@@ -431,14 +431,14 @@ def test_extract_config_0d_with_flow_filter():
 @pytest.mark.ci
 @pytest.mark.unit_test
 def test_extract_config_nbound_greater_than_one():
-    """NBOUND > 1 should set has_mult_bnd_states to Yes."""
+    """NBOUND > 1 should set has_mult_bnd_states to Yes for Arbitrary binding."""
     ads_group = _make_h5_group({'IS_KINETIC': True})
     pt_group = _make_h5_group(
         {
             'HAS_FILM_DIFFUSION': True,
             'HAS_PORE_DIFFUSION': True,
             'HAS_SURFACE_DIFFUSION': False,
-            'ADSORPTION_MODEL': b'LINEAR',
+            'ADSORPTION_MODEL': b'MULTI_STATE_SMA',
             'NBOUND': 2,
             'PAR_CORERADIUS': 0.001,
         },
