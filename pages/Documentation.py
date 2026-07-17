@@ -115,7 +115,7 @@ st.markdown(
 
     ## Contribute
 
-    We welcome contributions - such as [reporting bugs on GitHub](https://github.com/cadet/CADET-Equations/issues/new?template=bug_report.yml), or by reaching out with modeling questions on the [CADET forum](https://forum.cadet-web.de/).
+    We welcome contributions - such as [reporting bugs](https://github.com/cadet/CADET-Equations/issues/new?template=bug_report.yml) or [requesting features](https://github.com/cadet/CADET-Equations/issues/new?template=feature_request.yml) on GitHub, or by reaching out with modeling questions on the [CADET forum](https://forum.cadet-web.de/).
 
 """,
 unsafe_allow_html=True)

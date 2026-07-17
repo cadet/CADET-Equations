@@ -1000,11 +1000,17 @@ if st.button("Generate configuration file", key=r"generate_config"):
             "application/json"
         )
 
-# %% Bug report link
+# %% Bug report and feature request links
 
 st.sidebar.divider()
-st.sidebar.link_button(
+bug_col, feature_col = st.sidebar.columns(2)
+bug_col.link_button(
     ":material/bug_report: Report a bug",
     "https://github.com/cadet/CADET-Equations/issues/new?template=bug_report.yml",
+    use_container_width=True,
+)
+feature_col.link_button(
+    ":material/lightbulb: Request a feature",
+    "https://github.com/cadet/CADET-Equations/issues/new?template=feature_request.yml",
     use_container_width=True,
 )
