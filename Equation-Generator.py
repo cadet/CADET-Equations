@@ -312,7 +312,7 @@ if model_type_ == "Crystallization":
     )
 
     if cry_model.column_type == "CSTR":
-        write_and_save(r"Consider a continuously stirred tank reactor (CSTR) with volume $V(t)$, "
+        write_and_save(r"Consider a continuous stirred tank reactor (CSTR) with volume $V(t)$, "
                        r"observed over a time interval $(0, T^{\mathrm{end}})$. "
                        r"The particle population is described by the number density $n(t, x)$ "
                        r"over the internal coordinate (particle size) $x\in(x_0, \infty)$.")
@@ -483,7 +483,7 @@ else: # Chromatography model family
     #%% Continue with model
 
     if column_model.resolution == "0D":
-        intro_str = r"Consider a continuously stirred tank "
+        intro_str = r"Consider a continuous stirred tank "
     elif column_model.column_type == "Radial":
         intro_str = r"Consider a hollow cylindrical column with inner radius $R^{\mathrm{in}} > 0$ and outer radius $R^{\mathrm{out}} > R^{\mathrm{in}}$ "
     elif column_model.column_type == "Frustum":

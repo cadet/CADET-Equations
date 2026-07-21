@@ -1030,7 +1030,7 @@ class Column:
                 else:
                     model_name = "General " + model_name
             else:
-                return "Continuously Stirred Tank"
+                return "Continuous Stirred Tank"
 
         else:
 
