@@ -208,8 +208,10 @@ class Column:
                             bnd_model_j = st.selectbox("Binding model", eq.BINDING_MODELS, key=f"parType_{j+1}_binding_model")
                             req_bnd_j = st.selectbox("Binding kinetics mode", [
                                 "Kinetic", "Rapid-equilibrium"], key=f"parType_{j+1}_req_binding") == "Rapid-equilibrium"
-                            mult_bnd_j = st.selectbox("Add multiple bound states", [
-                                "No", "Yes"], key=f"parType_{j+1}_has_mult_bnd_states") == "Yes"
+                            if bnd_model_j == "Arbitrary":
+                                mult_bnd_j = st.selectbox("Add multiple bound states", ["No", "Yes"], key=f"parType_{j+1}_has_mult_bnd_states") == "Yes"
+                            else:
+                                mult_bnd_j = False
                             self._binding_per_partype.append({
                                 'binding_model': bnd_model_j,
                                 'req_binding': req_bnd_j,
@@ -221,8 +223,10 @@ class Column:
                                                                 "Kinetic", "Rapid-equilibrium"], key=r"req_binding") == "Rapid-equilibrium"
                     self.binding_model = st.selectbox("Binding model", eq.BINDING_MODELS, key=r"binding_model")
                     if self.N_c <= 0:
-                        self.has_mult_bnd_states = st.selectbox("Add multiple bound states", [
-                                                                        "No", "Yes"], key=r"has_mult_bnd_states") == "Yes" if self.advanced_mode else False
+                        if self.binding_model == "Arbitrary" and self.advanced_mode:
+                            self.has_mult_bnd_states = st.selectbox("Add multiple bound states", ["No", "Yes"], key=r"has_mult_bnd_states") == "Yes"
+                        else:
+                            self.has_mult_bnd_states = False
 
                     # Per-component binding (single particle type)
                     if self.N_c > 0:
@@ -236,11 +240,14 @@ class Column:
                                                  ["Kinetic", "Rapid-equilibrium"],
                                                  key=f"req_binding_comp_{comp_i}") == "Rapid-equilibrium"
                                 )
-                                self.has_mult_bnd_states_per_comp[0].append(
-                                    st.selectbox("Multiple bound states",
-                                                 ["No", "Yes"],
-                                                 key=f"has_mult_bnd_states_comp_{comp_i}") == "Yes"
-                                )
+                                if self.binding_model == "Arbitrary":
+                                    self.has_mult_bnd_states_per_comp[0].append(
+                                        st.selectbox("Multiple bound states",
+                                                     ["No", "Yes"],
+                                                     key=f"has_mult_bnd_states_comp_{comp_i}") == "Yes"
+                                    )
+                                else:
+                                    self.has_mult_bnd_states_per_comp[0].append(False)
 
         # Initialize per-component binding lists when binding is disabled
         if self.N_p > 0 and self.N_c > 0 and not self.has_binding:

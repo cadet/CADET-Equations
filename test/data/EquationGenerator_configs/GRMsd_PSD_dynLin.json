@@ -10,7 +10,6 @@
     "particle_has_core": "No",
     "particle_nonlimiting_filmDiff": "No",
     "has_binding": "Yes",
-    "has_mult_bnd_states": "No",
     "req_binding": "Kinetic",
     "particle_has_surfDiff": "Yes",
     "column_type": "Axial flow cylinder",
