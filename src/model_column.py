@@ -384,13 +384,6 @@ class Column:
         has_core = st.selectbox("Add impenetrable core-shell (i.e. " + r"$R^\mathrm{pc} > 0$)", [
                                        "No", "Yes"], key=geoPrefix + "has_core") == "Yes" if (resolution == "1D" and self.advanced_mode) else False
 
-        if self.dev_mode:
-            geometry = st.selectbox(
-                "Geometry", ["Sphere", "Cylinder", "Slab"], key=geoPrefix + "geometry"
-                )
-        else:
-            geometry = "Sphere"
-
         if self.N_c <= 0:
             nonlimiting_filmDiff_j = st.selectbox(
                 "Infinite film diffusion rate", ["No", "Yes"], key=transportPrefix + "nonlimiting_filmDiff") == "Yes"
@@ -405,6 +398,13 @@ class Column:
         else:
             nonlimiting_filmDiff_j = False
             has_surfDiff_j = False
+
+        if self.dev_mode and not (nonlimiting_filmDiff_j and resolution == "0D"):
+            geometry = st.selectbox(
+                "Geometry", ["Sphere", "Cylinder", "Slab"], key=geoPrefix + "geometry"
+                )
+        else:
+            geometry = "Sphere"
 
         config = {
             'geometry': geometry,
