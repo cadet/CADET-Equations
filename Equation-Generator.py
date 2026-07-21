@@ -121,8 +121,6 @@ if uploaded_file is not None:
 # User configuration of the model
 # ---------------------------------
 
-import streamlit as st
-
 # %% Sidebar selection of model family
 
 if "model_type" not in st.session_state:
@@ -554,7 +552,8 @@ else:  # Chromatography model family
         write_and_save(
             r"""
     \begin{equation*}
-	    \sum_{j=1}^{N_{\mathrm{p}}} d_j"""
+"""
+            + "\t    \\sum_{j=1}^{N_{\\mathrm{p}}} d_j"
             + d_j_dep
             + r" = 1 "
             + d_j_dep2

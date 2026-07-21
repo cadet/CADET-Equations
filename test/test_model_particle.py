@@ -3,6 +3,8 @@ Unit tests for src/model_particle.py.
 Tests the Particle dataclass and its methods.
 """
 
+from dataclasses import FrozenInstanceError
+
 import pytest
 
 from src.model_particle import Particle
@@ -103,7 +105,7 @@ class TestParticleInitialization:
             resolution="1D",
         )
         # Attempting to modify should raise an error
-        with pytest.raises(Exception):  # FrozenInstanceError
+        with pytest.raises(FrozenInstanceError):
             particle.geometry = "Cylinder"
 
 
