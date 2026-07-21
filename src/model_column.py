@@ -589,19 +589,17 @@ class Column:
         core_avail = self.available_CADET_Core()
         if core_avail >= 0:
             details = []
-            if self.resolution == "0D":
-                details.append(("Spatial discretization", "Not applicable"))
-            elif self.column_type == "Frustum":
-                details.append(("Spatial discretization", "Finite Volume (FV)"))
-            elif self.has_radial_coordinate:
+            if self.column_type == "Frustum":
+                details.append(("Spatial discretization", "WENO FV"))
+            elif self.resolution == "2D" and self.has_radial_coordinate:
                 # 2D: DG via ColumnModel2D; FV only for GRM-type (1D) particles
                 if self.N_p > 0 and all(p.resolution == "1D" for p in self.particle_models):
-                    details.append(("Spatial discretization", "Finite Volume (FV), Discontinuous Galerkin (DG)"))
+                    details.append(("Spatial discretization", "WENO FV, DGSEM"))
                 else:
-                    details.append(("Spatial discretization", "Discontinuous Galerkin (DG)"))
-            else:
-                details.append(("Spatial discretization", "Finite Volume (FV), Discontinuous Galerkin (DG)"))
-            details.append(("Time integration", "IDAS (SUNDIALS)"))
+                    details.append(("Spatial discretization", "DGSEM"))
+            elif not self.resolution == "0D":
+                details.append(("Spatial discretization", "WENO FV, DGSEM"))
+            details.append(("Time integration", "order adaptive BDF (IDAS, SUNDIALS)"))
 
             if core_avail == 0:
                 par1D = any(p.resolution == "1D" for p in self.particle_models) if self.N_p > 0 else False
@@ -613,11 +611,11 @@ class Column:
 
         process_avail = self.available_CADET_Process()
         if process_avail >= 0:
-            result["CADET-Process"] = list(result.get("CADET-Core", []))
+            result["CADET-Process"] = [("Solver", "CADET-Core, CADET-Julia")]
 
         semi_avail = self.available_CADET_SemiAnalytic()
         if semi_avail >= 0:
-            details = [("Solution method", "Laplace inversion")]
+            details = [("Solution method", "Numerical inverse Laplace transform")]
             if semi_avail == 0:
                 if self.N_p > 0 and any(p.resolution == "1D" and p.nonlimiting_filmDiff for p in self.particle_models):
                     details.append(("Approximation", "Nonlimiting film diffusion approximated via large film diffusion coefficient"))
