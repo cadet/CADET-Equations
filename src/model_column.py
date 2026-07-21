@@ -609,9 +609,10 @@ class Column:
                     details.append(("Approximation", "Nonlimiting film diffusion approximated via fast film diffusion kinetics"))
             result["CADET-Core"] = details
 
-        process_avail = self.available_CADET_Process()
-        if process_avail >= 0:
-            result["CADET-Process"] = [("Solver", "CADET-Core, CADET-Julia")]
+        # no meta info for cadet-process planned for now
+        # process_avail = self.available_CADET_Process()
+        # if process_avail >= 0:
+        #     result["CADET-Process"] = [("Solver", "CADET-Core")]
 
         semi_avail = self.available_CADET_SemiAnalytic()
         if semi_avail >= 0:
