@@ -466,18 +466,19 @@ class Column:
                 availability = int(availability and p.available_CADET_Core())
                 par1D = par1D or p.resolution == "1D"
                 
-            # no particles with pore diffusion but no film diffusion (yet)
-            if par1D and self.nonlimiting_filmDiff:
+            # no particles with pore diffusion but no film diffusion (yet) but approximation
+            # possible with fast kinetics, expcept for tank where we don't have 1D particles
+            if par1D and self.nonlimiting_filmDiff and not self.resolution == "0D":
                 return 0
         
         # tank model
-        if not self.has_axial_coordinate:
+        if self.resolution == "0D":
             # only 0D particles with non limiting film diffusion available
             if self.N_p > 0:
+                if self.N_p > 1:
+                    return -1
                 if not par1D and self.nonlimiting_filmDiff:
                     return 1
-                elif par1D and not self.nonlimiting_filmDiff: # can be approximated using 1 FV cell
-                    return 0
                 else:
                     return -1
             else:
@@ -553,11 +554,17 @@ class Column:
         if any(p.geometry != "Sphere" for p in self.particle_models):
             return -1
 
-        # tank model
-        if not self.has_axial_coordinate:
+        # tank model: only 0D particles with non limiting film diffusion available
+        if self.resolution == "0D":
             if self.N_p > 0:
-                return -1
-            return 1
+                if self.N_p > 1:
+                    return -1
+                if self.particle_models[0].resolution == "0D" and self.nonlimiting_filmDiff:
+                    return 1
+                else:
+                    return -1
+            else:
+                return 1
 
         availability = 1
 
@@ -1086,7 +1093,7 @@ class Column:
                 else:
                     model_name = "General " + model_name
             else:
-                return "Continuously Stirred Tank"
+                return "Continuous Stirred Tank"
 
         else:
 

@@ -434,11 +434,11 @@ class TestColumnSemiAnalyticAvailability:
 
     @pytest.mark.ci
     @pytest.mark.unit_test
-    def test_finite_bath_not_supported(self):
+    def test_general_finite_bath_not_supported(self):
         col = _make_column(
-            has_axial_coordinate=False,
+            resolution="0D",
             N_p=1, has_binding=True,
-            particle_models=[_make_particle(resolution="0D")],
+            particle_models=[_make_particle(resolution="1D")],
         )
         assert col.available_CADET_SemiAnalytic() == -1
 
