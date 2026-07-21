@@ -582,6 +582,62 @@ class Column:
 
         return availability
 
+    def solver_details(self):
+        """Return solver/discretization details for each tool.
+
+        Returns
+        -------
+        dict
+            Maps tool name to a list of (label, value) tuples.
+            Only tools with availability >= 0 are included.
+        """
+        result = {}
+
+        core_avail = self.available_CADET_Core()
+        if core_avail >= 0:
+            details = []
+            if self.column_type == "Frustum":
+                details.append(("Spatial discretization", "WENO FV"))
+            elif self.resolution == "2D" and self.has_radial_coordinate:
+                # 2D: DG via ColumnModel2D; FV only for GRM-type (1D) particles
+                if self.N_p > 0 and all(p.resolution == "1D" for p in self.particle_models):
+                    details.append(("Spatial discretization", "WENO FV, DGSEM"))
+                else:
+                    details.append(("Spatial discretization", "DGSEM"))
+            elif not self.resolution == "0D":
+                details.append(("Spatial discretization", "WENO FV, DGSEM"))
+            details.append(("Time integration", "order adaptive BDF (IDAS, SUNDIALS)"))
+
+            if core_avail == 0:
+                par1D = any(p.resolution == "1D" for p in self.particle_models) if self.N_p > 0 else False
+                if self.resolution == "0D" and par1D and not self.nonlimiting_filmDiff:
+                    details.append(("Approximation", "Tank with pore diffusion approximated using a single finite volume cell"))
+                elif par1D and self.nonlimiting_filmDiff:
+                    details.append(("Approximation", "Nonlimiting film diffusion approximated via fast film diffusion kinetics"))
+            result["CADET-Core"] = details
+
+        # no meta info for cadet-process planned for now
+        # process_avail = self.available_CADET_Process()
+        # if process_avail >= 0:
+        #     result["CADET-Process"] = [("Solver", "CADET-Core")]
+
+        semi_avail = self.available_CADET_SemiAnalytic()
+        if semi_avail >= 0:
+            details = [("Solution method", "Numerical inverse Laplace transform")]
+            if semi_avail == 0:
+                if self.N_p > 0 and any(p.resolution == "1D" and p.nonlimiting_filmDiff for p in self.particle_models):
+                    details.append(("Approximation", "Nonlimiting film diffusion approximated via large film diffusion coefficient"))
+                elif self.has_radial_coordinate and self.N_p > 0:
+                    if any(p.nonlimiting_filmDiff for p in self.particle_models):
+                        details.append(("Approximation", "Approximated via fast film diffusion kinetic coefficient"))
+                    elif not all(p.resolution == "1D" for p in self.particle_models):
+                        details.append(("Approximation", "Approximated via fast pore diffusion kinetic coefficient"))
+                elif self.has_radial_coordinate and self.N_p == 0:
+                    details.append(("Approximation", "2D dispersive plug flow reactor approximated via zero film diffusion"))
+            result["CADET-Semi-Analytic"] = details
+
+        return result
+
     def fill_vars_and_params(self):
 
         without_pores_ = self.nonlimiting_filmDiff and self.has_binding and self.particle_models[0].resolution == "0D"
