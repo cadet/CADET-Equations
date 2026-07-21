@@ -1,10 +1,10 @@
-# -*- coding: utf-8 -*-
 """
 Unit tests for src/model_particle.py.
 Tests the Particle dataclass and its methods.
 """
 
 import pytest
+
 from src.model_particle import Particle
 
 
@@ -226,7 +226,7 @@ class TestParticleVarsAndParams:
             nonlimiting_filmDiff=False,
             interstitial_volume_resolution="1D",
         )
-        groups = [var.get("Group", float('inf')) for var in particle.vars_and_params]
+        groups = [var.get("Group", float("inf")) for var in particle.vars_and_params]
         # Check if sorted
         assert groups == sorted(groups)
 

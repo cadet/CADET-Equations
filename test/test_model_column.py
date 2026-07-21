@@ -1,12 +1,12 @@
-# -*- coding: utf-8 -*-
 """
 Unit tests for src/model_column.py.
 Tests the Column dataclass and its methods.
 """
 
-import pytest
-from unittest.mock import MagicMock, patch
 from collections import Counter
+
+import pytest
+
 from src.model_column import Column
 from src.model_particle import Particle
 
@@ -34,7 +34,7 @@ class TestColumnInitialization:
             advanced_mode=False,
             var_format="CADET",
         )
-        assert hasattr(col, 'vars_and_params')
+        assert hasattr(col, "vars_and_params")
         assert isinstance(col.vars_and_params, list)
 
     @pytest.mark.unit_test
@@ -69,7 +69,7 @@ class TestColumnResolutions:
             advanced_mode=False,
             var_format="CADET",
         )
-        assert hasattr(col, 'resolution')
+        assert hasattr(col, "resolution")
         assert col.resolution in ["0D", "1D", "2D", "3D"]
 
     @pytest.mark.unit_test
@@ -80,9 +80,9 @@ class TestColumnResolutions:
             advanced_mode=False,
             var_format="CADET",
         )
-        assert hasattr(col, 'has_axial_coordinate')
-        assert hasattr(col, 'has_radial_coordinate')
-        assert hasattr(col, 'has_angular_coordinate')
+        assert hasattr(col, "has_axial_coordinate")
+        assert hasattr(col, "has_radial_coordinate")
+        assert hasattr(col, "has_angular_coordinate")
 
 
 class TestColumnWithoutParticles:
@@ -96,7 +96,7 @@ class TestColumnWithoutParticles:
             advanced_mode=False,
             var_format="CADET",
         )
-        assert hasattr(col, 'particle_models')
+        assert hasattr(col, "particle_models")
 
     @pytest.mark.unit_test
     def test_column_has_binding_attribute(self):
@@ -106,7 +106,7 @@ class TestColumnWithoutParticles:
             advanced_mode=False,
             var_format="CADET",
         )
-        assert hasattr(col, 'has_binding')
+        assert hasattr(col, "has_binding")
         assert isinstance(col.has_binding, bool)
 
     @pytest.mark.unit_test
@@ -157,7 +157,7 @@ class TestColumnBindingConfiguration:
             advanced_mode=False,
             var_format="CADET",
         )
-        assert hasattr(col, 'binding_model')
+        assert hasattr(col, "binding_model")
 
     @pytest.mark.unit_test
     def test_column_has_binding_attribute(self):
@@ -167,7 +167,7 @@ class TestColumnBindingConfiguration:
             advanced_mode=False,
             var_format="CADET",
         )
-        assert hasattr(col, 'has_binding')
+        assert hasattr(col, "has_binding")
         assert isinstance(col.has_binding, bool)
 
     @pytest.mark.unit_test
@@ -178,7 +178,7 @@ class TestColumnBindingConfiguration:
             advanced_mode=False,
             var_format="CADET",
         )
-        assert hasattr(col, 'req_binding')
+        assert hasattr(col, "req_binding")
         assert isinstance(col.req_binding, bool)
 
 
@@ -193,7 +193,7 @@ class TestColumnDispersion:
             advanced_mode=False,
             var_format="CADET",
         )
-        assert hasattr(col, 'has_axial_dispersion')
+        assert hasattr(col, "has_axial_dispersion")
         assert isinstance(col.has_axial_dispersion, bool)
 
     @pytest.mark.unit_test
@@ -204,7 +204,7 @@ class TestColumnDispersion:
             advanced_mode=False,
             var_format="CADET",
         )
-        assert hasattr(col, 'has_radial_dispersion')
+        assert hasattr(col, "has_radial_dispersion")
         assert isinstance(col.has_radial_dispersion, bool)
 
     @pytest.mark.unit_test
@@ -215,7 +215,7 @@ class TestColumnDispersion:
             advanced_mode=False,
             var_format="CADET",
         )
-        assert hasattr(col, 'has_angular_dispersion')
+        assert hasattr(col, "has_angular_dispersion")
         assert isinstance(col.has_angular_dispersion, bool)
 
 
@@ -313,7 +313,8 @@ class TestColumnSemiAnalyticAvailability:
     @pytest.mark.unit_test
     def test_1d_grm_linear_binding_supported(self):
         col = _make_column(
-            N_p=1, has_binding=True,
+            N_p=1,
+            has_binding=True,
             particle_models=[_make_particle()],
         )
         assert col.available_CADET_SemiAnalytic() == 1
@@ -323,9 +324,9 @@ class TestColumnSemiAnalyticAvailability:
     def test_1d_lrm_and_lrmp_supported(self):
         for nonlimiting_filmDiff in [True, False]:
             col = _make_column(
-                N_p=1, has_binding=True,
-                particle_models=[_make_particle(
-                    resolution="0D", nonlimiting_filmDiff=nonlimiting_filmDiff)],
+                N_p=1,
+                has_binding=True,
+                particle_models=[_make_particle(resolution="0D", nonlimiting_filmDiff=nonlimiting_filmDiff)],
             )
             assert col.available_CADET_SemiAnalytic() == 1
 
@@ -333,7 +334,8 @@ class TestColumnSemiAnalyticAvailability:
     @pytest.mark.unit_test
     def test_arbitrary_binding_supported(self):
         col = _make_column(
-            N_p=1, has_binding=True,
+            N_p=1,
+            has_binding=True,
             particle_models=[_make_particle(binding_model="Arbitrary")],
         )
         assert col.available_CADET_SemiAnalytic() == 1
@@ -343,7 +345,8 @@ class TestColumnSemiAnalyticAvailability:
     def test_nonlinear_binding_not_supported(self):
         for binding_model in ["Langmuir", "SMA"]:
             col = _make_column(
-                N_p=1, has_binding=True,
+                N_p=1,
+                has_binding=True,
                 particle_models=[_make_particle(binding_model=binding_model)],
             )
             assert col.available_CADET_SemiAnalytic() == -1
@@ -352,7 +355,8 @@ class TestColumnSemiAnalyticAvailability:
     @pytest.mark.unit_test
     def test_multiple_bound_states_not_supported(self):
         col = _make_column(
-            N_p=1, has_binding=True,
+            N_p=1,
+            has_binding=True,
             particle_models=[_make_particle(has_mult_bnd_states=True)],
         )
         assert col.available_CADET_SemiAnalytic() == -1
@@ -362,7 +366,8 @@ class TestColumnSemiAnalyticAvailability:
     def test_non_spherical_particles_not_supported(self):
         for geometry in ["Cylinder", "Slab"]:
             col = _make_column(
-                N_p=1, has_binding=True,
+                N_p=1,
+                has_binding=True,
                 particle_models=[_make_particle(geometry=geometry)],
             )
             assert col.available_CADET_SemiAnalytic() == -1
@@ -383,8 +388,7 @@ class TestColumnSemiAnalyticAvailability:
     @pytest.mark.ci
     @pytest.mark.unit_test
     def test_reactions_not_supported(self):
-        for reaction_attr in ["has_reaction_bulk", "has_reaction_particle_liquid",
-                              "has_reaction_particle_solid"]:
+        for reaction_attr in ["has_reaction_bulk", "has_reaction_particle_liquid", "has_reaction_particle_solid"]:
             col = _make_column(**{reaction_attr: True})
             assert col.available_CADET_SemiAnalytic() == -1
 
@@ -393,7 +397,8 @@ class TestColumnSemiAnalyticAvailability:
     def test_2d_grm_supported(self):
         col = _make_column(
             has_radial_coordinate=True,
-            N_p=1, has_binding=True,
+            N_p=1,
+            has_binding=True,
             particle_models=[_make_particle()],
         )
         assert col.available_CADET_SemiAnalytic() == 1
@@ -403,7 +408,8 @@ class TestColumnSemiAnalyticAvailability:
     def test_2d_lrmp_approximated(self):
         col = _make_column(
             has_radial_coordinate=True,
-            N_p=1, has_binding=True,
+            N_p=1,
+            has_binding=True,
             particle_models=[_make_particle(resolution="0D")],
         )
         assert col.available_CADET_SemiAnalytic() == 0
@@ -415,7 +421,8 @@ class TestColumnSemiAnalyticAvailability:
         # diffusion coefficients
         col = _make_column(
             has_radial_coordinate=True,
-            N_p=1, has_binding=True,
+            N_p=1,
+            has_binding=True,
             particle_models=[_make_particle(resolution="0D", nonlimiting_filmDiff=True)],
         )
         assert col.available_CADET_SemiAnalytic() == 0
@@ -437,7 +444,8 @@ class TestColumnSemiAnalyticAvailability:
     def test_general_finite_bath_not_supported(self):
         col = _make_column(
             resolution="0D",
-            N_p=1, has_binding=True,
+            N_p=1,
+            has_binding=True,
             particle_models=[_make_particle(resolution="1D")],
         )
         assert col.available_CADET_SemiAnalytic() == -1
@@ -446,7 +454,8 @@ class TestColumnSemiAnalyticAvailability:
     @pytest.mark.unit_test
     def test_grm_nonlimiting_film_diffusion_approximated(self):
         col = _make_column(
-            N_p=1, has_binding=True,
+            N_p=1,
+            has_binding=True,
             particle_models=[_make_particle(nonlimiting_filmDiff=True)],
         )
         assert col.available_CADET_SemiAnalytic() == 0
@@ -455,7 +464,8 @@ class TestColumnSemiAnalyticAvailability:
     @pytest.mark.unit_test
     def test_surface_diffusion_supported(self):
         col = _make_column(
-            N_p=1, has_binding=True,
+            N_p=1,
+            has_binding=True,
             particle_models=[_make_particle(has_surfDiff=True)],
         )
         assert col.available_CADET_SemiAnalytic() == 1
@@ -464,14 +474,16 @@ class TestColumnSemiAnalyticAvailability:
     @pytest.mark.unit_test
     def test_multiple_particle_types_supported_within_limitations(self):
         col = _make_column(
-            N_p=2, has_binding=True,
+            N_p=2,
+            has_binding=True,
             particle_models=[_make_particle(), _make_particle(resolution="0D")],
         )
         assert col.available_CADET_SemiAnalytic() == 1
 
         # a single non-spherical particle type renders the model unsupported
         col = _make_column(
-            N_p=2, has_binding=True,
+            N_p=2,
+            has_binding=True,
             particle_models=[_make_particle(), _make_particle(geometry="Slab")],
         )
         assert col.available_CADET_SemiAnalytic() == -1
@@ -521,7 +533,7 @@ class TestColumnVarsAndParams:
             advanced_mode=False,
             var_format="CADET",
         )
-        groups = [var.get("Group", float('inf')) for var in col.vars_and_params]
+        groups = [var.get("Group", float("inf")) for var in col.vars_and_params]
         assert groups == sorted(groups)
 
 
@@ -751,7 +763,7 @@ class TestColumnFilmDiffusion:
             advanced_mode=False,
             var_format="CADET",
         )
-        assert hasattr(col, 'nonlimiting_filmDiff')
+        assert hasattr(col, "nonlimiting_filmDiff")
         assert isinstance(col.nonlimiting_filmDiff, bool)
 
 
@@ -766,7 +778,7 @@ class TestColumnSurfaceDiffusion:
             advanced_mode=False,
             var_format="CADET",
         )
-        assert hasattr(col, 'has_surfDiff')
+        assert hasattr(col, "has_surfDiff")
         assert isinstance(col.has_surfDiff, bool)
 
 
@@ -781,7 +793,7 @@ class TestColumnReactions:
             advanced_mode=False,
             var_format="CADET",
         )
-        assert hasattr(col, 'has_reaction_bulk')
+        assert hasattr(col, "has_reaction_bulk")
         assert isinstance(col.has_reaction_bulk, bool)
 
     @pytest.mark.unit_test
@@ -792,7 +804,7 @@ class TestColumnReactions:
             advanced_mode=False,
             var_format="CADET",
         )
-        assert hasattr(col, 'has_reaction_particle_liquid')
+        assert hasattr(col, "has_reaction_particle_liquid")
         assert isinstance(col.has_reaction_particle_liquid, bool)
 
     @pytest.mark.unit_test
@@ -803,7 +815,7 @@ class TestColumnReactions:
             advanced_mode=False,
             var_format="CADET",
         )
-        assert hasattr(col, 'has_reaction_particle_solid')
+        assert hasattr(col, "has_reaction_particle_solid")
         assert isinstance(col.has_reaction_particle_solid, bool)
 
 
@@ -883,7 +895,7 @@ class TestPerComponentConfiguration:
         groups = col.component_groups()
         assert groups is not None
         assert len(groups) == 1
-        assert groups[0]['components'] == [1, 2]
+        assert groups[0]["components"] == [1, 2]
 
     @pytest.mark.unit_test
     def test_component_groups_two_groups(self):
@@ -902,6 +914,6 @@ class TestPerComponentConfiguration:
         assert groups is not None
         assert len(groups) == 2
         # Components 1 and 3 share kinetic binding, component 2 has rapid-equilibrium
-        comp_sets = [sorted(g['components']) for g in groups]
+        comp_sets = [sorted(g["components"]) for g in groups]
         assert [1, 3] in comp_sets
         assert [2] in comp_sets

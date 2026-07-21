@@ -1,8 +1,7 @@
-# -*- coding: utf-8 -*-
 """Tests for per-particle-type parameterization of film diffusion and surface diffusion."""
 
-from streamlit.testing.v1 import AppTest
 import pytest
+from streamlit.testing.v1 import AppTest
 
 
 def setup_grm_ptd(at, per_partype_settings):
@@ -23,10 +22,12 @@ def setup_grm_ptd(at, per_partype_settings):
     at.selectbox(key="has_binding").set_value("Yes").run()
 
     for jj in range(n_p):
-        at.selectbox(key=f"parType_{jj+1}_resolution").set_value("1D (radial coordinate)").run()
-        at.selectbox(key=f"parType_{jj+1}_nonlimiting_filmDiff").set_value(per_partype_settings[jj]['nonlimiting_filmDiff']).run()
-        if 'has_surfDiff' in per_partype_settings[jj]:
-            at.selectbox(key=f"parType_{jj+1}_has_surfDiff").set_value(per_partype_settings[jj]['has_surfDiff']).run()
+        at.selectbox(key=f"parType_{jj + 1}_resolution").set_value("1D (radial coordinate)").run()
+        at.selectbox(key=f"parType_{jj + 1}_nonlimiting_filmDiff").set_value(
+            per_partype_settings[jj]["nonlimiting_filmDiff"]
+        ).run()
+        if "has_surfDiff" in per_partype_settings[jj]:
+            at.selectbox(key=f"parType_{jj + 1}_has_surfDiff").set_value(per_partype_settings[jj]["has_surfDiff"]).run()
 
 
 @pytest.mark.ci
@@ -37,10 +38,13 @@ def test_ptd_uniform_settings():
     at.run()
     assert not at.exception
 
-    setup_grm_ptd(at, [
-        {'nonlimiting_filmDiff': 'No', 'has_surfDiff': 'Yes'},
-        {'nonlimiting_filmDiff': 'No', 'has_surfDiff': 'Yes'},
-    ])
+    setup_grm_ptd(
+        at,
+        [
+            {"nonlimiting_filmDiff": "No", "has_surfDiff": "Yes"},
+            {"nonlimiting_filmDiff": "No", "has_surfDiff": "Yes"},
+        ],
+    )
 
     assert not at.exception
     latex = at.session_state.latex_string
@@ -56,10 +60,13 @@ def test_ptd_different_film_diffusion():
     at.run()
     assert not at.exception
 
-    setup_grm_ptd(at, [
-        {'nonlimiting_filmDiff': 'No', 'has_surfDiff': 'No'},
-        {'nonlimiting_filmDiff': 'Yes', 'has_surfDiff': 'No'},
-    ])
+    setup_grm_ptd(
+        at,
+        [
+            {"nonlimiting_filmDiff": "No", "has_surfDiff": "No"},
+            {"nonlimiting_filmDiff": "Yes", "has_surfDiff": "No"},
+        ],
+    )
 
     assert not at.exception
     latex = at.session_state.latex_string
@@ -76,10 +83,13 @@ def test_ptd_different_surface_diffusion():
     at.run()
     assert not at.exception
 
-    setup_grm_ptd(at, [
-        {'nonlimiting_filmDiff': 'No', 'has_surfDiff': 'Yes'},
-        {'nonlimiting_filmDiff': 'No', 'has_surfDiff': 'No'},
-    ])
+    setup_grm_ptd(
+        at,
+        [
+            {"nonlimiting_filmDiff": "No", "has_surfDiff": "Yes"},
+            {"nonlimiting_filmDiff": "No", "has_surfDiff": "No"},
+        ],
+    )
 
     assert not at.exception
     latex = at.session_state.latex_string
@@ -94,10 +104,13 @@ def test_ptd_all_nonlimiting():
     at.run()
     assert not at.exception
 
-    setup_grm_ptd(at, [
-        {'nonlimiting_filmDiff': 'Yes', 'has_surfDiff': 'No'},
-        {'nonlimiting_filmDiff': 'Yes', 'has_surfDiff': 'No'},
-    ])
+    setup_grm_ptd(
+        at,
+        [
+            {"nonlimiting_filmDiff": "Yes", "has_surfDiff": "No"},
+            {"nonlimiting_filmDiff": "Yes", "has_surfDiff": "No"},
+        ],
+    )
 
     assert not at.exception
     latex = at.session_state.latex_string
@@ -163,8 +176,8 @@ def test_ptd_different_binding_models():
     at.selectbox(key="has_binding").set_value("Yes").run()
 
     for jj in range(2):
-        at.selectbox(key=f"parType_{jj+1}_resolution").set_value("1D (radial coordinate)").run()
-        at.selectbox(key=f"parType_{jj+1}_nonlimiting_filmDiff").set_value("No").run()
+        at.selectbox(key=f"parType_{jj + 1}_resolution").set_value("1D (radial coordinate)").run()
+        at.selectbox(key=f"parType_{jj + 1}_nonlimiting_filmDiff").set_value("No").run()
 
     # Set different binding models per particle type
     at.selectbox(key="parType_1_binding_model").set_value("Linear").run()
@@ -194,9 +207,9 @@ def test_ptd_sma_binding():
     at.selectbox(key="has_binding").set_value("Yes").run()
 
     for jj in range(2):
-        at.selectbox(key=f"parType_{jj+1}_resolution").set_value("1D (radial coordinate)").run()
-        at.selectbox(key=f"parType_{jj+1}_nonlimiting_filmDiff").set_value("No").run()
-        at.selectbox(key=f"parType_{jj+1}_binding_model").set_value("SMA").run()
+        at.selectbox(key=f"parType_{jj + 1}_resolution").set_value("1D (radial coordinate)").run()
+        at.selectbox(key=f"parType_{jj + 1}_nonlimiting_filmDiff").set_value("No").run()
+        at.selectbox(key=f"parType_{jj + 1}_binding_model").set_value("SMA").run()
 
     assert not at.exception
     latex = at.session_state.latex_string
@@ -219,8 +232,8 @@ def test_ptd_mixed_binding_and_arbitrary():
     at.selectbox(key="has_binding").set_value("Yes").run()
 
     for jj in range(2):
-        at.selectbox(key=f"parType_{jj+1}_resolution").set_value("1D (radial coordinate)").run()
-        at.selectbox(key=f"parType_{jj+1}_nonlimiting_filmDiff").set_value("No").run()
+        at.selectbox(key=f"parType_{jj + 1}_resolution").set_value("1D (radial coordinate)").run()
+        at.selectbox(key=f"parType_{jj + 1}_nonlimiting_filmDiff").set_value("No").run()
 
     at.selectbox(key="parType_1_binding_model").set_value("Linear").run()
     at.selectbox(key="parType_2_binding_model").set_value("Arbitrary").run()
@@ -237,6 +250,7 @@ def test_ptd_mixed_binding_and_arbitrary():
 def test_format_partype_set_single():
     """format_partype_set with a single index."""
     from src.model_column import Column
+
     assert Column.format_partype_set([1]) == r"$j = 1$"
 
 
@@ -245,4 +259,5 @@ def test_format_partype_set_single():
 def test_format_partype_set_multiple():
     """format_partype_set with multiple indices."""
     from src.model_column import Column
+
     assert Column.format_partype_set([1, 3]) == r"$j \in \{1, 3\}$"

@@ -1,11 +1,11 @@
-# -*- coding: utf-8 -*-
 """
 Unit tests for format_variables() from Equation-Generator.py.
 Covers CADET format, Legacy format, and error handling.
 """
 
-import pytest
 from importlib import import_module
+
+import pytest
 
 # Equation-Generator.py has a hyphenated name, so we use importlib
 _eg = import_module("Equation-Generator")
@@ -14,14 +14,18 @@ format_variables = _eg.format_variables
 
 # %% CADET format
 
+
 @pytest.mark.ci
 @pytest.mark.unit_test
-@pytest.mark.parametrize("input_str, expected_frag", [
-    (r"c^{\b}",  r"\mathrm{b}"),
-    (r"c^{\p}",  r"\mathrm{p}"),
-    (r"c^{\s}",  r"\mathrm{s}"),
-    (r"c^{\l}",  r"\mathrm{\ell}"),
-])
+@pytest.mark.parametrize(
+    "input_str, expected_frag",
+    [
+        (r"c^{\b}", r"\mathrm{b}"),
+        (r"c^{\p}", r"\mathrm{p}"),
+        (r"c^{\s}", r"\mathrm{s}"),
+        (r"c^{\l}", r"\mathrm{\ell}"),
+    ],
+)
 def test_format_CADET_superscript_substitution(input_str, expected_frag):
     """CADET format should wrap short LaTeX phase commands in \\mathrm."""
     result = format_variables(input_str, "CADET")
@@ -36,6 +40,7 @@ def test_format_CADET_preserves_longer_commands():
 
 
 # %% Legacy format
+
 
 @pytest.mark.ci
 @pytest.mark.unit_test
@@ -60,6 +65,7 @@ def test_format_Legacy_solid_conc():
 
 
 # %% Error handling
+
 
 @pytest.mark.ci
 @pytest.mark.unit_test

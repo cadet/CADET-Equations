@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Unit tests for crystallization / population balance model equations and UI.
 """
@@ -8,8 +7,8 @@ from streamlit.testing.v1 import AppTest
 
 from src import equations as eq
 
-
 # %% Constitutive relations
+
 
 @pytest.mark.ci
 @pytest.mark.unit_test
@@ -21,10 +20,13 @@ def test_cry_supersaturation():
 
 @pytest.mark.ci
 @pytest.mark.unit_test
-@pytest.mark.parametrize("size_dep, expected_frag, not_expected", [
-    (True, r"\gamma", []),
-    (False, r"k_g", [r"\gamma"]),
-])
+@pytest.mark.parametrize(
+    "size_dep, expected_frag, not_expected",
+    [
+        (True, r"\gamma", []),
+        (False, r"k_g", [r"\gamma"]),
+    ],
+)
 def test_cry_growth_rate(size_dep, expected_frag, not_expected):
     result = eq.cry_growth_rate(size_dep)
     assert expected_frag in result
@@ -67,15 +69,19 @@ def test_cry_suspension_density():
 
 # %% PBE equations
 
+
 @pytest.mark.ci
 @pytest.mark.unit_test
-@pytest.mark.parametrize("has_primary, has_gd, has_agg, has_frag", [
-    (True, False, False, False),
-    (True, True, False, False),
-    (False, False, True, False),
-    (False, False, False, True),
-    (True, True, True, True),
-])
+@pytest.mark.parametrize(
+    "has_primary, has_gd, has_agg, has_frag",
+    [
+        (True, False, False, False),
+        (True, True, False, False),
+        (False, False, True, False),
+        (False, False, False, True),
+        (True, True, True, True),
+    ],
+)
 def test_cry_pbe_cstr(has_primary, has_gd, has_agg, has_frag):
     result = eq.cry_pbe_cstr(has_primary, has_gd, has_agg, has_frag)
     assert r"\begin{align}" in result
@@ -91,13 +97,16 @@ def test_cry_pbe_cstr(has_primary, has_gd, has_agg, has_frag):
 
 @pytest.mark.ci
 @pytest.mark.unit_test
-@pytest.mark.parametrize("has_primary, has_ax_disp, has_gd, has_agg, has_frag", [
-    (True, True, False, False, False),
-    (True, False, True, False, False),
-    (False, True, False, True, False),
-    (False, True, False, False, True),
-    (True, True, True, True, True),
-])
+@pytest.mark.parametrize(
+    "has_primary, has_ax_disp, has_gd, has_agg, has_frag",
+    [
+        (True, True, False, False, False),
+        (True, False, True, False, False),
+        (False, True, False, True, False),
+        (False, True, False, False, True),
+        (True, True, True, True, True),
+    ],
+)
 def test_cry_pbe_dpfr(has_primary, has_ax_disp, has_gd, has_agg, has_frag):
     result = eq.cry_pbe_dpfr(has_primary, has_ax_disp, has_gd, has_agg, has_frag)
     assert r"\begin{align}" in result
@@ -114,6 +123,7 @@ def test_cry_pbe_dpfr(has_primary, has_ax_disp, has_gd, has_agg, has_frag):
 
 # %% Mass balance
 
+
 @pytest.mark.ci
 @pytest.mark.unit_test
 @pytest.mark.parametrize("has_primary", [True, False])
@@ -126,9 +136,14 @@ def test_cry_mass_balance_cstr(has_primary):
 
 @pytest.mark.ci
 @pytest.mark.unit_test
-@pytest.mark.parametrize("has_primary, has_ax_disp", [
-    (True, True), (True, False), (False, True),
-])
+@pytest.mark.parametrize(
+    "has_primary, has_ax_disp",
+    [
+        (True, True),
+        (True, False),
+        (False, True),
+    ],
+)
 def test_cry_mass_balance_dpfr(has_primary, has_ax_disp):
     result = eq.cry_mass_balance_dpfr(has_primary, has_ax_disp)
     assert r"v_{\mathrm{ax}}" in result
@@ -140,11 +155,16 @@ def test_cry_mass_balance_dpfr(has_primary, has_ax_disp):
 
 # %% Boundary conditions
 
+
 @pytest.mark.ci
 @pytest.mark.unit_test
-@pytest.mark.parametrize("has_primary, has_gd", [
-    (True, True), (True, False),
-])
+@pytest.mark.parametrize(
+    "has_primary, has_gd",
+    [
+        (True, True),
+        (True, False),
+    ],
+)
 def test_cry_pbe_bc_internal(has_primary, has_gd):
     result = eq.cry_pbe_bc_internal(has_primary, has_gd)
     assert r"\begin{align}" in result
@@ -163,10 +183,13 @@ def test_cry_pbe_bc_internal_no_primary():
 
 @pytest.mark.ci
 @pytest.mark.unit_test
-@pytest.mark.parametrize("has_ax_disp, expected_frag", [
-    (True, r"D_{\mathrm{ax}}"),
-    (False, r"n_{\mathrm{in},x}"),
-])
+@pytest.mark.parametrize(
+    "has_ax_disp, expected_frag",
+    [
+        (True, r"D_{\mathrm{ax}}"),
+        (False, r"n_{\mathrm{in},x}"),
+    ],
+)
 def test_cry_pbe_bc_external_dpfr(has_ax_disp, expected_frag):
     result = eq.cry_pbe_bc_external_dpfr(has_ax_disp)
     assert expected_frag in result
@@ -174,16 +197,20 @@ def test_cry_pbe_bc_external_dpfr(has_ax_disp, expected_frag):
 
 @pytest.mark.ci
 @pytest.mark.unit_test
-@pytest.mark.parametrize("has_ax_disp, expected_frag", [
-    (True, r"D_{\mathrm{ax}}"),
-    (False, r"c_{\mathrm{in}}"),
-])
+@pytest.mark.parametrize(
+    "has_ax_disp, expected_frag",
+    [
+        (True, r"D_{\mathrm{ax}}"),
+        (False, r"c_{\mathrm{in}}"),
+    ],
+)
 def test_cry_solute_bc_dpfr(has_ax_disp, expected_frag):
     result = eq.cry_solute_bc_dpfr(has_ax_disp)
     assert expected_frag in result
 
 
 # %% Aggregation
+
 
 @pytest.mark.ci
 @pytest.mark.unit_test
@@ -212,6 +239,7 @@ def test_cry_aggregation_kernel_unknown_falls_back():
 
 # %% Fragmentation
 
+
 @pytest.mark.ci
 @pytest.mark.unit_test
 def test_cry_fragmentation_birth_death():
@@ -239,15 +267,19 @@ def test_cry_breakage_function():
 
 # %% Assumptions
 
+
 @pytest.mark.ci
 @pytest.mark.unit_test
-@pytest.mark.parametrize("col_type, has_primary, has_agg, has_frag", [
-    ("CSTR", True, False, False),
-    ("DPFR", True, False, False),
-    ("CSTR", False, True, False),
-    ("CSTR", False, False, True),
-    ("CSTR", True, True, True),
-])
+@pytest.mark.parametrize(
+    "col_type, has_primary, has_agg, has_frag",
+    [
+        ("CSTR", True, False, False),
+        ("DPFR", True, False, False),
+        ("CSTR", False, True, False),
+        ("CSTR", False, False, True),
+        ("CSTR", True, True, True),
+    ],
+)
 def test_cry_assumptions(col_type, has_primary, has_agg, has_frag):
     result = eq.cry_assumptions(col_type, has_primary, has_agg, has_frag)
     assert len(result) >= 3
@@ -264,6 +296,7 @@ def test_cry_assumptions(col_type, has_primary, has_agg, has_frag):
 
 
 # %% Streamlit UI smoke tests
+
 
 @pytest.mark.ci
 @pytest.mark.unit_test

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Generate a downloadable Python template script from a Column or Crystallization model.
 
@@ -8,68 +7,68 @@ currently specified equations, excluding numerics/discretization.
 """
 
 _DEFAULTS = {
-    'col_length': 0.014,
-    'col_porosity': 0.37,
-    'velocity': 5.75e-4,
-    'col_dispersion': 5.75e-8,
-    'col_radius_inner': 0.01,
-    'col_radius_outer': 0.024,
-    'velocity_coeff': 5.75e-4,
-    'init_volume': 1e-3,
-    'par_radius': 4.5e-5,
-    'par_coreradius': 1e-5,
-    'par_porosity': 0.75,
-    'film_diffusion': 6.9e-6,
-    'pore_diffusion': 6.07e-11,
-    'surface_diffusion': 1e-11,
+    "col_length": 0.014,
+    "col_porosity": 0.37,
+    "velocity": 5.75e-4,
+    "col_dispersion": 5.75e-8,
+    "col_radius_inner": 0.01,
+    "col_radius_outer": 0.024,
+    "velocity_coeff": 5.75e-4,
+    "init_volume": 1e-3,
+    "par_radius": 4.5e-5,
+    "par_coreradius": 1e-5,
+    "par_porosity": 0.75,
+    "film_diffusion": 6.9e-6,
+    "pore_diffusion": 6.07e-11,
+    "surface_diffusion": 1e-11,
 }
 
 _BINDING_DEFAULTS = {
-    'Linear': {
-        'cadet_name': 'LINEAR',
-        'per_comp': {'lin_ka': 3.55, 'lin_kd': 0.1},
-        'scalar': {},
+    "Linear": {
+        "cadet_name": "LINEAR",
+        "per_comp": {"lin_ka": 3.55, "lin_kd": 0.1},
+        "scalar": {},
     },
-    'Langmuir': {
-        'cadet_name': 'MULTI_COMPONENT_LANGMUIR',
-        'per_comp': {'mcl_ka': 1.14, 'mcl_kd': 0.002, 'mcl_qmax': 4.88},
-        'scalar': {},
+    "Langmuir": {
+        "cadet_name": "MULTI_COMPONENT_LANGMUIR",
+        "per_comp": {"mcl_ka": 1.14, "mcl_kd": 0.002, "mcl_qmax": 4.88},
+        "scalar": {},
     },
-    'SMA': {
-        'cadet_name': 'STERIC_MASS_ACTION',
-        'per_comp': {'sma_ka': 35.5, 'sma_kd': 1000.0, 'sma_nu': 4.7, 'sma_sigma': 11.83},
-        'salt': {'sma_ka': 0.0, 'sma_kd': 0.0, 'sma_nu': 0.0, 'sma_sigma': 0.0},
-        'scalar': {'sma_lambda': 1200.0},
+    "SMA": {
+        "cadet_name": "STERIC_MASS_ACTION",
+        "per_comp": {"sma_ka": 35.5, "sma_kd": 1000.0, "sma_nu": 4.7, "sma_sigma": 11.83},
+        "salt": {"sma_ka": 0.0, "sma_kd": 0.0, "sma_nu": 0.0, "sma_sigma": 0.0},
+        "scalar": {"sma_lambda": 1200.0},
     },
 }
 
 _REACTION_DEFAULTS = {
-    'Mass Action Law': {
-        'cadet_name': 'MASS_ACTION_LAW',
-        'nreact': 1,
-        'params': {
-            'mal_stoichiometry_bulk': '[0.0] * ncomp',
-            'mal_exponents_fwd_bulk': '[1.0] * ncomp',
-            'mal_exponents_bwd_bulk': '[1.0] * ncomp',
-            'mal_kfwd_bulk': '[1.0]',
-            'mal_kbwd_bulk': '[0.1]',
+    "Mass Action Law": {
+        "cadet_name": "MASS_ACTION_LAW",
+        "nreact": 1,
+        "params": {
+            "mal_stoichiometry_bulk": "[0.0] * ncomp",
+            "mal_exponents_fwd_bulk": "[1.0] * ncomp",
+            "mal_exponents_bwd_bulk": "[1.0] * ncomp",
+            "mal_kfwd_bulk": "[1.0]",
+            "mal_kbwd_bulk": "[0.1]",
         },
     },
-    'Michaelis Menten': {
-        'cadet_name': 'MICHAELIS_MENTEN',
-        'nreact': 1,
-        'params': {
-            'mm_stoichiometry': '[0.0] * ncomp',
-            'mm_km': '[1.0] * ncomp',
-            'mm_vmax': '[1.0]',
+    "Michaelis Menten": {
+        "cadet_name": "MICHAELIS_MENTEN",
+        "nreact": 1,
+        "params": {
+            "mm_stoichiometry": "[0.0] * ncomp",
+            "mm_km": "[1.0] * ncomp",
+            "mm_vmax": "[1.0]",
         },
     },
 }
 
 _PAR_GEOM_MAP = {
-    'Sphere': 'SPHERE',
-    'Cylinder': 'CYLINDER',
-    'Slab': 'SLAB',
+    "Sphere": "SPHERE",
+    "Cylinder": "CYLINDER",
+    "Slab": "SLAB",
 }
 
 
@@ -81,26 +80,26 @@ def _reaction_lines(reaction_model, ncomp_fixed, phase):
         return lines
 
     info = _REACTION_DEFAULTS[reaction_model]
-    nreact = info['nreact']
+    info["nreact"]
 
     if phase == "bulk":
         lines.append("")
         lines.append(f"unit['reaction_model'] = '{info['cadet_name']}'")
-        lines.append(f"unit['reaction_bulk'] = {{")
+        lines.append("unit['reaction_bulk'] = {")
     elif phase == "liquid":
         lines.append("")
         lines.append(f"par['reaction_model_liquid'] = '{info['cadet_name']}'")
-        lines.append(f"par['reaction_liquid'] = {{")
+        lines.append("par['reaction_liquid'] = {")
     else:
         lines.append("")
         lines.append(f"par['reaction_model_solid'] = '{info['cadet_name']}'")
-        lines.append(f"par['reaction_solid'] = {{")
+        lines.append("par['reaction_solid'] = {")
 
     ncomp_str = str(ncomp_fixed) if ncomp_fixed is not None else "ncomp"
-    for key, val in info['params'].items():
-        val_str = val.replace('ncomp', ncomp_str)
+    for key, val in info["params"].items():
+        val_str = val.replace("ncomp", ncomp_str)
         lines.append(f"    '{key}': {val_str},")
-    lines.append(f"}}")
+    lines.append("}")
 
     return lines
 
@@ -138,44 +137,43 @@ def _binding_params_lines(binding_model, ncomp_fixed, req_binding):
     is_kinetic = 0 if req_binding else 1
 
     if binding_model not in _BINDING_DEFAULTS:
-        lines.append(f"par['adsorption_model'] = 'UNKNOWN'")
-        lines.append(f"par['adsorption'] = {{")
+        lines.append("par['adsorption_model'] = 'UNKNOWN'")
+        lines.append("par['adsorption'] = {")
         lines.append(f"    'is_kinetic': {is_kinetic},")
-        lines.append(f"}}")
+        lines.append("}")
         return lines
 
     info = _BINDING_DEFAULTS[binding_model]
     lines.append(f"par['adsorption_model'] = '{info['cadet_name']}'")
-    lines.append(f"par['adsorption'] = {{")
+    lines.append("par['adsorption'] = {")
     lines.append(f"    'is_kinetic': {is_kinetic},")
 
     if binding_model == "SMA":
-        salt = info['salt']
-        comp = info['per_comp']
-        for key in info['per_comp']:
+        salt = info["salt"]
+        comp = info["per_comp"]
+        for key in info["per_comp"]:
             if ncomp_fixed is not None:
                 vals = [salt[key]] + [comp[key]] * (ncomp_fixed - 1)
                 lines.append(f"    '{key}': {vals},")
             else:
                 lines.append(f"    '{key}': [{salt[key]}] + [{comp[key]}] * (ncomp - 1),")
     else:
-        for key, val in info['per_comp'].items():
+        for key, val in info["per_comp"].items():
             lines.append(f"    '{key}': {_per_comp(ncomp_fixed, val)},")
 
-    for key, val in info['scalar'].items():
+    for key, val in info["scalar"].items():
         lines.append(f"    '{key}': {val},")
 
-    lines.append(f"}}")
+    lines.append("}")
     return lines
 
 
-def _particle_lines(particle, par_idx, ncomp_fixed, binding_model, req_binding,
-                     has_binding, has_mult_bnd_states):
+def _particle_lines(particle, par_idx, ncomp_fixed, binding_model, req_binding, has_binding, has_mult_bnd_states):
     lines = []
     var = f"par_{par_idx}" if par_idx > 0 else "par"
     idx_str = str(par_idx).zfill(3)
 
-    lines.append(f"")
+    lines.append("")
     lines.append(f"{var} = {{}}")
     lines.append(f"{var}['par_geom'] = '{_PAR_GEOM_MAP.get(particle.geometry, 'SPHERE')}'")
     lines.append(f"{var}['par_radius'] = {_DEFAULTS['par_radius']}")
@@ -209,10 +207,10 @@ def _particle_lines(particle, par_idx, ncomp_fixed, binding_model, req_binding,
     lines.append(f"{var}['init_cs'] = {_per_comp(ncomp_fixed, 0.0)}")
 
     if has_binding:
-        lines.append(f"")
+        lines.append("")
         lines.extend(_binding_params_lines(binding_model, ncomp_fixed, req_binding))
 
-    lines.append(f"")
+    lines.append("")
     lines.append(f"unit['particle_type_{idx_str}'] = {var}")
     return lines
 
@@ -227,10 +225,10 @@ def generate_unit_operation_script(column_model):
     lines = []
 
     # Module docstring
-    lines.append(f'"""')
+    lines.append('"""')
     lines.append(f"CADET unit operation template: {model_name}")
-    lines.append(f"Generated by CADET-Equations")
-    lines.append(f'"""')
+    lines.append("Generated by CADET-Equations")
+    lines.append('"""')
     lines.append("")
     lines.append("")
 
@@ -268,7 +266,7 @@ def generate_unit_operation_script(column_model):
     if column_model.resolution == "0D":
         body.append(f"unit['init_volume'] = {_DEFAULTS['init_volume']}")
         if column_model.has_filter:
-            body.append(f"unit['flowrate_filter'] = 0.0")
+            body.append("unit['flowrate_filter'] = 0.0")
     elif column_model.column_type == "Radial":
         body.append(f"unit['col_radius_inner'] = {_DEFAULTS['col_radius_inner']}")
         body.append(f"unit['col_radius_outer'] = {_DEFAULTS['col_radius_outer']}")
@@ -286,20 +284,20 @@ def generate_unit_operation_script(column_model):
     if column_model.N_p > 0:
         if column_model.nonlimiting_filmDiff and column_model.particle_models[0].resolution == "0D":
             total_por = round(
-                _DEFAULTS['col_porosity'] + (1.0 - _DEFAULTS['col_porosity']) * _DEFAULTS['par_porosity'], 4
+                _DEFAULTS["col_porosity"] + (1.0 - _DEFAULTS["col_porosity"]) * _DEFAULTS["par_porosity"], 4
             )
             body.append(f"unit['total_porosity'] = {total_por}")
         else:
             body.append(f"unit['col_porosity'] = {_DEFAULTS['col_porosity']}")
     elif column_model.resolution != "0D":
-        body.append(f"unit['col_porosity'] = 1.0")
-        body.append(f"unit['total_porosity'] = 1.0")
+        body.append("unit['col_porosity'] = 1.0")
+        body.append("unit['total_porosity'] = 1.0")
 
     # Dispersion
     if column_model.has_axial_dispersion:
         body.append(f"unit['col_dispersion'] = {_DEFAULTS['col_dispersion']}")
     elif column_model.resolution != "0D":
-        body.append(f"unit['col_dispersion'] = 0.0")
+        body.append("unit['col_dispersion'] = 0.0")
 
     if column_model.has_radial_dispersion:
         body.append(f"unit['col_dispersion_radial'] = {_DEFAULTS['col_dispersion']}")
@@ -312,7 +310,7 @@ def generate_unit_operation_script(column_model):
         body.append("")
         body.append(f"unit['npartype'] = {column_model.N_p}")
         if column_model.N_p == 1:
-            body.append(f"unit['par_type_volfrac'] = [1.0]")
+            body.append("unit['par_type_volfrac'] = [1.0]")
         else:
             volfrac = [round(1.0 / column_model.N_p, 4)] * column_model.N_p
             body.append(f"unit['par_type_volfrac'] = {volfrac}")
@@ -322,10 +320,17 @@ def generate_unit_operation_script(column_model):
             req_bnd = particle.req_binding if column_model.N_p > 1 else column_model.req_binding
             mult_bnd = particle.has_mult_bnd_states if column_model.N_p > 1 else column_model.has_mult_bnd_states
 
-            body.extend(_particle_lines(
-                particle, j, ncomp_fixed, bnd_model, req_bnd,
-                column_model.has_binding, mult_bnd,
-            ))
+            body.extend(
+                _particle_lines(
+                    particle,
+                    j,
+                    ncomp_fixed,
+                    bnd_model,
+                    req_bnd,
+                    column_model.has_binding,
+                    mult_bnd,
+                )
+            )
 
     if column_model.has_reaction_bulk and column_model.reaction_model != "Arbitrary":
         body.extend(_reaction_lines(column_model.reaction_model, ncomp_fixed, "bulk"))
@@ -340,24 +345,25 @@ def generate_unit_operation_script(column_model):
 
 
 _CRY_DEFAULTS = {
-    'nbins': 50,
-    'x_min': 1e-6,
-    'x_max': 1e-3,
-    'init_volume': 1e-3,
-    'col_length': 0.47,
-    'col_dispersion': 4.2e-5,
-    'cross_section_area': 3.066e-5,
-    'growth_rate_constant': 5e-6,
-    'growth_dispersion_rate': 2.5e-15,
-    'primary_nucleation_rate': 5.0,
-    'secondary_nucleation_rate': 4e8,
-    'nuclei_mass_density': 1200.0,
-    'vol_shape_factor': 0.524,
-    'aggregation_rate_constant': 5e-13,
-    'fragmentation_rate_constant': 6e10,
-    'fragmentation_kernel_gamma': 2,
-    'fragmentation_selection_alpha': 1,
+    "nbins": 50,
+    "x_min": 1e-6,
+    "x_max": 1e-3,
+    "init_volume": 1e-3,
+    "col_length": 0.47,
+    "col_dispersion": 4.2e-5,
+    "cross_section_area": 3.066e-5,
+    "growth_rate_constant": 5e-6,
+    "growth_dispersion_rate": 2.5e-15,
+    "primary_nucleation_rate": 5.0,
+    "secondary_nucleation_rate": 4e8,
+    "nuclei_mass_density": 1200.0,
+    "vol_shape_factor": 0.524,
+    "aggregation_rate_constant": 5e-13,
+    "fragmentation_rate_constant": 6e10,
+    "fragmentation_kernel_gamma": 2,
+    "fragmentation_selection_alpha": 1,
 }
+
 
 def generate_crystallization_script(cry_model):
     """Return a Python script string for the current Crystallization configuration."""
@@ -366,17 +372,17 @@ def generate_crystallization_script(cry_model):
 
     lines = []
 
-    lines.append(f'"""')
+    lines.append('"""')
     lines.append(f"CADET unit operation template: {model_name}")
-    lines.append(f"Generated by CADET-Equations")
-    lines.append(f'"""')
+    lines.append("Generated by CADET-Equations")
+    lines.append('"""')
     lines.append("")
     lines.append("import numpy as np")
     lines.append("")
     lines.append("")
 
-    nbins = _CRY_DEFAULTS['nbins']
-    ncomp = nbins + 1
+    nbins = _CRY_DEFAULTS["nbins"]
+    nbins + 1
 
     lines.append(f"def get_unit_operation(nbins={nbins}):")
 
@@ -425,7 +431,7 @@ def generate_crystallization_script(cry_model):
     else:
         reaction_var = "reaction"
 
-    body.append(f"cry = {{}}")
+    body.append("cry = {}")
     body.append(f"cry['cry_bins'] = np.linspace({_CRY_DEFAULTS['x_min']}, {_CRY_DEFAULTS['x_max']}, nbins).tolist()")
     body.append("")
 
@@ -471,7 +477,9 @@ def generate_crystallization_script(cry_model):
     if has_frag:
         body.append(f"cry['cry_fragmentation_rate_constant'] = {_CRY_DEFAULTS['fragmentation_rate_constant']}")
         body.append(f"cry['cry_fragmentation_kernel_gamma'] = {_CRY_DEFAULTS['fragmentation_kernel_gamma']}")
-        body.append(f"cry['cry_fragmentation_selection_function_alpha'] = {_CRY_DEFAULTS['fragmentation_selection_alpha']}")
+        body.append(
+            f"cry['cry_fragmentation_selection_function_alpha'] = {_CRY_DEFAULTS['fragmentation_selection_alpha']}"
+        )
 
     body.append("")
     body.append(f"unit['{reaction_var}'] = cry")

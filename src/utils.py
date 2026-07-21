@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 
 This file implements utility helpers
@@ -6,7 +5,6 @@ This file implements utility helpers
 """
 
 import re
-from typing import List
 
 _CADET_PATTERNS = [
     (re.compile(r"\\l(?![a-zA-Z])"), r"\\mathrm{\\ell}"),
@@ -31,6 +29,7 @@ _LEGACY_PATTERNS = [
     (re.compile(r"\\p(?![a-zA-Z])"), r"\\mathrm{p}"),
     (re.compile(r"\\s(?![a-zA-Z])"), r"\\mathrm{s}"),
 ]
+
 
 def format_variables(input_str: str, var_format: str, mul_pars: bool = False) -> str:
     """format variable symbols according to the chosen format.
