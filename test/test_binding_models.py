@@ -1,13 +1,14 @@
-# -*- coding: utf-8 -*-
 """
 Integration tests for explicit binding models (issue #15).
 """
 
-from streamlit.testing.v1 import AppTest
 import pytest
+from streamlit.testing.v1 import AppTest
 
 
-def setup_app_with_binding(binding_model="Arbitrary", particle_resolution="1D (radial coordinate)", req_binding="Kinetic"):
+def setup_app_with_binding(
+    binding_model="Arbitrary", particle_resolution="1D (radial coordinate)", req_binding="Kinetic"
+):
     at = AppTest.from_file("../Equation-Generator.py")
     at.run()
     assert not at.exception

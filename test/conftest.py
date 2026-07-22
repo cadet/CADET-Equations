@@ -1,11 +1,11 @@
-# -*- coding: utf-8 -*-
 """
 @author: jmbr
 """
 
-import streamlit as st
 import os
+
 import pytest
+import streamlit as st
 
 
 @pytest.fixture

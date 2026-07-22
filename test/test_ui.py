@@ -1,12 +1,27 @@
-# -*- coding: utf-8 -*-
 """
 This script implements tests iterating through all configurable states of the App and checking if an error is thrown
 """
 
-from streamlit.testing.v1 import AppTest
 import pytest
+from streamlit.testing.v1 import AppTest
 
-untested_variables = ["dev_mode", "advanced_mode", "var_format", "sym_table", "show_eq_description", "PSD", "PTD", "has_filter", "binding_model", "reaction_model", "has_reaction_bulk", "has_reaction_particle_liquid", "has_reaction_particle_solid", "N_c_choice", "model_type"]
+untested_variables = [
+    "dev_mode",
+    "advanced_mode",
+    "var_format",
+    "sym_table",
+    "show_eq_description",
+    "PSD",
+    "PTD",
+    "has_filter",
+    "binding_model",
+    "reaction_model",
+    "has_reaction_bulk",
+    "has_reaction_particle_liquid",
+    "has_reaction_particle_solid",
+    "N_c_choice",
+    "model_type",
+]
 # dev_mode is not tested, TODO: test the advanced_mode (which includes PSD, PTD). test filter
 
 # Some boxes are conditional, e.g. film_diffusion can only be configured when particles are present.
@@ -15,11 +30,11 @@ untested_variables = ["dev_mode", "advanced_mode", "var_format", "sym_table", "s
 # Sometimes, only specific options can be critical (e.g. 0D tank). Such options can be added here and handled independently later
 critical_variables = untested_variables + ["PSD", "has_binding", "particle_resolution", "Mixed tank", "column_type"]
 
+
 # We test every configuration by recursively iteratiing through all combinations
-def config_recursion(at, widgies, counter, test_file_generator_buttons:bool):
+def config_recursion(at, widgies, counter, test_file_generator_buttons: bool):
 
     if widgies[0] in at.session_state:
-
         widgyKey = widgies.pop(0)
         if any(key == widgyKey for key in [box.key for box in at.selectbox]):
             widgyKind = "selectbox"
@@ -30,14 +45,16 @@ def config_recursion(at, widgies, counter, test_file_generator_buttons:bool):
         else:
             raise ValueError(f"Error: {widgyKey} is neither a toggle nor a dropdown")
 
-        options = [opti for opti in widgy.options if opti not in critical_variables] if widgyKind == "selectbox" else [True, False]
+        options = (
+            [opti for opti in widgy.options if opti not in critical_variables]
+            if widgyKind == "selectbox"
+            else [True, False]
+        )
 
-        for opt in options: # Note: some values will be run repeatedly since the current value of that widget is applied again. Excluding this value here would make the recursion incomplete though
-
+        for opt in options:  # Note: some values will be run repeatedly since the current value of that widget is applied again. Excluding this value here would make the recursion incomplete though
             widgy.set_value(opt).run()
 
             if test_file_generator_buttons:
-
                 at.button(key="generate_pdf").click().run()
                 at.button(key="generate_config").click().run()
 
@@ -56,11 +73,10 @@ def config_recursion(at, widgies, counter, test_file_generator_buttons:bool):
     return counter
 
 
-def run_configs(at, toBeFixed:dict, configKeys:list, numConfigsToBeChecked:int):
+def run_configs(at, toBeFixed: dict, configKeys: list, numConfigsToBeChecked: int):
 
     # Check if we have the correct initial configuration
-    for fixKey in toBeFixed.keys():
-
+    for fixKey in toBeFixed:
         if any(key == fixKey for key in [box.key for box in at.selectbox]):
             widgyKind = "selectbox"
             widgy = at.selectbox(key=fixKey)
@@ -74,12 +90,14 @@ def run_configs(at, toBeFixed:dict, configKeys:list, numConfigsToBeChecked:int):
             widgy.set_value(toBeFixed[fixKey]).run()
 
     numConfigs = config_recursion(at, configKeys, 0, True)
-    assert numConfigs == numConfigsToBeChecked # Note: repetitive configs due to the setup of the recursion
+    assert numConfigs == numConfigsToBeChecked  # Note: repetitive configs due to the setup of the recursion
 
 
 def getInputToBeTested(at):
 
-    return [box.key for box in at.selectbox if box.key not in critical_variables] + [box.key for box in at.toggle if box.key not in critical_variables]
+    return [box.key for box in at.selectbox if box.key not in critical_variables] + [
+        box.key for box in at.toggle if box.key not in critical_variables
+    ]
 
 
 @pytest.mark.ci
@@ -97,7 +115,7 @@ def test_streamlit_app():
     # check if we are in the mode we support
     assert at.selectbox(key="advanced_mode").value == "Off"
     at.selectbox(key="advanced_mode").set_value("On").run()
-    assert at.button(key="dev_mode_button").value == False
+    assert not at.button(key="dev_mode_button").value
 
     # 1) test all configs with PSD = "No" -> no has_binding and no particle_resolution
     assert at.selectbox(key="PSD").value == "No"

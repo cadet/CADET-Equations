@@ -1,10 +1,12 @@
-# -*- coding: utf-8 -*-
 """
 Unit tests for src/model_particle.py.
 Tests the Particle dataclass and its methods.
 """
 
+from dataclasses import FrozenInstanceError
+
 import pytest
+
 from src.model_particle import Particle
 
 
@@ -103,7 +105,7 @@ class TestParticleInitialization:
             resolution="1D",
         )
         # Attempting to modify should raise an error
-        with pytest.raises(Exception):  # FrozenInstanceError
+        with pytest.raises(FrozenInstanceError):
             particle.geometry = "Cylinder"
 
 
@@ -226,7 +228,7 @@ class TestParticleVarsAndParams:
             nonlimiting_filmDiff=False,
             interstitial_volume_resolution="1D",
         )
-        groups = [var.get("Group", float('inf')) for var in particle.vars_and_params]
+        groups = [var.get("Group", float("inf")) for var in particle.vars_and_params]
         # Check if sorted
         assert groups == sorted(groups)
 

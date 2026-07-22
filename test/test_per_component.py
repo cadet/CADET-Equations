@@ -1,11 +1,10 @@
-# -*- coding: utf-8 -*-
 """
 Integration tests for per-component parameterization (issue #7).
 Tests the full Streamlit UI path with per-component configuration.
 """
 
-from streamlit.testing.v1 import AppTest
 import pytest
+from streamlit.testing.v1 import AppTest
 
 
 def setup_grm_with_per_component(at, n_comp, per_comp_settings, n_p=1):
@@ -32,16 +31,16 @@ def setup_grm_with_per_component(at, n_comp, per_comp_settings, n_p=1):
 
     # Set per-component transport in particle panel (parType_0 for single particle type)
     for i, settings in enumerate(per_comp_settings):
-        film_diff = "Yes" if settings.get('nonlimiting_filmDiff', False) else "No"
+        film_diff = "Yes" if settings.get("nonlimiting_filmDiff", False) else "No"
         at.selectbox(key=f"parType_0_filmDiff_comp_{i}").set_value(film_diff).run()
-        if settings.get('has_surfDiff', False) is not False:
-            surf_diff = "Yes" if settings['has_surfDiff'] else "No"
+        if settings.get("has_surfDiff", False) is not False:
+            surf_diff = "Yes" if settings["has_surfDiff"] else "No"
             at.selectbox(key=f"parType_0_surfDiff_comp_{i}").set_value(surf_diff).run()
 
     # Set per-component binding in binding panel
     for i, settings in enumerate(per_comp_settings):
-        at.selectbox(key=f"req_binding_comp_{i}").set_value(settings['req_binding']).run()
-        at.selectbox(key=f"has_mult_bnd_states_comp_{i}").set_value(settings['has_mult_bnd_states']).run()
+        at.selectbox(key=f"req_binding_comp_{i}").set_value(settings["req_binding"]).run()
+        at.selectbox(key=f"has_mult_bnd_states_comp_{i}").set_value(settings["has_mult_bnd_states"]).run()
 
 
 @pytest.mark.ci
@@ -53,8 +52,8 @@ def test_per_component_uniform_settings():
     assert not at.exception
 
     settings = [
-        {'req_binding': 'Kinetic', 'nonlimiting_filmDiff': False, 'has_surfDiff': True, 'has_mult_bnd_states': 'No'},
-        {'req_binding': 'Kinetic', 'nonlimiting_filmDiff': False, 'has_surfDiff': True, 'has_mult_bnd_states': 'No'},
+        {"req_binding": "Kinetic", "nonlimiting_filmDiff": False, "has_surfDiff": True, "has_mult_bnd_states": "No"},
+        {"req_binding": "Kinetic", "nonlimiting_filmDiff": False, "has_surfDiff": True, "has_mult_bnd_states": "No"},
     ]
     setup_grm_with_per_component(at, 2, settings)
 
@@ -74,8 +73,13 @@ def test_per_component_different_binding_kinetics():
     assert not at.exception
 
     settings = [
-        {'req_binding': 'Kinetic', 'nonlimiting_filmDiff': False, 'has_surfDiff': False, 'has_mult_bnd_states': 'No'},
-        {'req_binding': 'Rapid-equilibrium', 'nonlimiting_filmDiff': False, 'has_surfDiff': False, 'has_mult_bnd_states': 'No'},
+        {"req_binding": "Kinetic", "nonlimiting_filmDiff": False, "has_surfDiff": False, "has_mult_bnd_states": "No"},
+        {
+            "req_binding": "Rapid-equilibrium",
+            "nonlimiting_filmDiff": False,
+            "has_surfDiff": False,
+            "has_mult_bnd_states": "No",
+        },
     ]
     setup_grm_with_per_component(at, 2, settings)
 
@@ -96,9 +100,14 @@ def test_per_component_three_components_two_groups():
     assert not at.exception
 
     settings = [
-        {'req_binding': 'Kinetic', 'nonlimiting_filmDiff': False, 'has_surfDiff': False, 'has_mult_bnd_states': 'No'},
-        {'req_binding': 'Rapid-equilibrium', 'nonlimiting_filmDiff': False, 'has_surfDiff': False, 'has_mult_bnd_states': 'No'},
-        {'req_binding': 'Kinetic', 'nonlimiting_filmDiff': False, 'has_surfDiff': False, 'has_mult_bnd_states': 'No'},
+        {"req_binding": "Kinetic", "nonlimiting_filmDiff": False, "has_surfDiff": False, "has_mult_bnd_states": "No"},
+        {
+            "req_binding": "Rapid-equilibrium",
+            "nonlimiting_filmDiff": False,
+            "has_surfDiff": False,
+            "has_mult_bnd_states": "No",
+        },
+        {"req_binding": "Kinetic", "nonlimiting_filmDiff": False, "has_surfDiff": False, "has_mult_bnd_states": "No"},
     ]
     setup_grm_with_per_component(at, 3, settings)
 
@@ -120,8 +129,8 @@ def test_per_component_different_mult_bnd_states():
     assert not at.exception
 
     settings = [
-        {'req_binding': 'Kinetic', 'nonlimiting_filmDiff': False, 'has_surfDiff': False, 'has_mult_bnd_states': 'Yes'},
-        {'req_binding': 'Kinetic', 'nonlimiting_filmDiff': False, 'has_surfDiff': False, 'has_mult_bnd_states': 'No'},
+        {"req_binding": "Kinetic", "nonlimiting_filmDiff": False, "has_surfDiff": False, "has_mult_bnd_states": "Yes"},
+        {"req_binding": "Kinetic", "nonlimiting_filmDiff": False, "has_surfDiff": False, "has_mult_bnd_states": "No"},
     ]
     setup_grm_with_per_component(at, 2, settings)
 
@@ -169,8 +178,8 @@ def test_per_component_different_film_diffusion():
     assert not at.exception
 
     settings = [
-        {'req_binding': 'Kinetic', 'nonlimiting_filmDiff': True, 'has_surfDiff': False, 'has_mult_bnd_states': 'No'},
-        {'req_binding': 'Kinetic', 'nonlimiting_filmDiff': False, 'has_surfDiff': False, 'has_mult_bnd_states': 'No'},
+        {"req_binding": "Kinetic", "nonlimiting_filmDiff": True, "has_surfDiff": False, "has_mult_bnd_states": "No"},
+        {"req_binding": "Kinetic", "nonlimiting_filmDiff": False, "has_surfDiff": False, "has_mult_bnd_states": "No"},
     ]
     setup_grm_with_per_component(at, 2, settings)
 
@@ -192,8 +201,8 @@ def test_per_component_different_surface_diffusion():
     assert not at.exception
 
     settings = [
-        {'req_binding': 'Kinetic', 'nonlimiting_filmDiff': False, 'has_surfDiff': True, 'has_mult_bnd_states': 'No'},
-        {'req_binding': 'Kinetic', 'nonlimiting_filmDiff': False, 'has_surfDiff': False, 'has_mult_bnd_states': 'No'},
+        {"req_binding": "Kinetic", "nonlimiting_filmDiff": False, "has_surfDiff": True, "has_mult_bnd_states": "No"},
+        {"req_binding": "Kinetic", "nonlimiting_filmDiff": False, "has_surfDiff": False, "has_mult_bnd_states": "No"},
     ]
     setup_grm_with_per_component(at, 2, settings)
 

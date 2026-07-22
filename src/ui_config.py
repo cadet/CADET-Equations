@@ -1,22 +1,26 @@
-# -*- coding: utf-8 -*-
 """
 This file defines the configuration of the user interface, i.e. which states exist and how they depend on each other.
 """
 
-
-
 _NO_MODEL_CONFIG_STATES_ = [
-    "generate_pdf", "generate_config", "sym_table", "latex_string", "template_script", "h5_input_unit_index",
-    "dev_mode_button", "model_type_chromatography_button", "model_type_crystallization_button",
+    "generate_pdf",
+    "generate_config",
+    "sym_table",
+    "latex_string",
+    "template_script",
+    "h5_input_unit_index",
+    "dev_mode_button",
+    "model_type_chromatography_button",
+    "model_type_crystallization_button",
 ]
 
 
-#def state_exists_dep(state_key):
+# def state_exists_dep(state_key):
 #
-#	# states that always exist
-#	if state_key in ["advanced_mode", "generate_pdf", "generate_config", "sym_table"]
-#		return None
+# 	# states that always exist
+# 	if state_key in ["advanced_mode", "generate_pdf", "generate_config", "sym_table"]
+# 		return None
 #
-#	if state_key == "dev_mode"
-#		return ["advanced_mode"]
+# 	if state_key == "dev_mode"
+# 		return ["advanced_mode"]
 #

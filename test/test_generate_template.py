@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
 """
 Tests for src/generate_template.py.
 """
 
-from streamlit.testing.v1 import AppTest
 import pytest
+from streamlit.testing.v1 import AppTest
 
 
 def setup_app(**overrides):
@@ -23,7 +22,6 @@ def get_script(at):
 
 @pytest.mark.ci
 class TestGenerateTemplateIntegration:
-
     def test_template_in_session_state(self):
         at = setup_app()
         assert "template_script" in at.session_state
@@ -198,11 +196,11 @@ class TestGenerateTemplateIntegration:
         script = get_script(at)
         namespace = {}
         exec(script, namespace)
-        result = namespace['get_unit_operation']()
+        result = namespace["get_unit_operation"]()
         assert isinstance(result, dict)
-        assert result['UNIT_TYPE'] == 'COLUMN_MODEL_1D'
-        assert 'particle_type_000' in result
-        assert result['ncomp'] == 1
+        assert result["UNIT_TYPE"] == "COLUMN_MODEL_1D"
+        assert "particle_type_000" in result
+        assert result["ncomp"] == 1
 
     def test_generated_script_runs_with_ncomp(self):
         at = setup_app(
@@ -213,13 +211,13 @@ class TestGenerateTemplateIntegration:
         script = get_script(at)
         namespace = {}
         exec(script, namespace)
-        result = namespace['get_unit_operation'](ncomp=3)
-        assert result['ncomp'] == 3
-        assert len(result['init_c']) == 3
-        par = result['particle_type_000']
-        assert len(par['film_diffusion']) == 3
-        assert len(par['pore_diffusion']) == 3
-        assert len(par['nbound']) == 3
+        result = namespace["get_unit_operation"](ncomp=3)
+        assert result["ncomp"] == 3
+        assert len(result["init_c"]) == 3
+        par = result["particle_type_000"]
+        assert len(par["film_diffusion"]) == 3
+        assert len(par["pore_diffusion"]) == 3
+        assert len(par["nbound"]) == 3
 
     def test_sma_script_runs(self):
         at = setup_app(
@@ -232,18 +230,17 @@ class TestGenerateTemplateIntegration:
         script = get_script(at)
         namespace = {}
         exec(script, namespace)
-        result = namespace['get_unit_operation']()
-        assert result['ncomp'] == 4
-        par = result['particle_type_000']
-        assert par['adsorption_model'] == 'STERIC_MASS_ACTION'
-        assert len(par['adsorption']['sma_ka']) == 4
-        assert par['adsorption']['sma_ka'][0] == 0.0
+        result = namespace["get_unit_operation"]()
+        assert result["ncomp"] == 4
+        par = result["particle_type_000"]
+        assert par["adsorption_model"] == "STERIC_MASS_ACTION"
+        assert len(par["adsorption"]["sma_ka"]) == 4
+        assert par["adsorption"]["sma_ka"][0] == 0.0
 
 
 @pytest.mark.ci
 @pytest.mark.unit_test
 class TestGenerateCrystallizationTemplateIntegration:
-
     @staticmethod
     def _setup_cry_app(**overrides):
         at = AppTest.from_file("../Equation-Generator.py")

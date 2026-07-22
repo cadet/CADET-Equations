@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Script to create v6-format HDF5 test files from existing v5 files.
 These files use the new CADET v6 interface:
@@ -11,9 +10,10 @@ These files use the new CADET v6 interface:
 - adsorption subgroup inside particle_type_xxx
 """
 
+import os
+
 import h5py
 import numpy as np
-import os
 
 OUTPUT_DIR = os.path.join(os.path.dirname(__file__), "data", "CADET_configs")
 
@@ -42,7 +42,7 @@ def create_outlet(f, unit_idx, ncomp=1):
 def create_v6_PlugFlow():
     """Plug flow: COLUMN_MODEL_1D, NPARTYPE=0, no particles."""
     fname = os.path.join(OUTPUT_DIR, "v6_PlugFlow_1comp.h5")
-    with h5py.File(fname, 'w') as f:
+    with h5py.File(fname, "w") as f:
         create_base_structure(f)
         create_inlet(f, 0)
 
@@ -68,7 +68,7 @@ def create_v6_PlugFlow():
 def create_v6_LRM():
     """LRM: COLUMN_MODEL_1D with equilibrium particle (no film/pore/surface diffusion)."""
     fname = os.path.join(OUTPUT_DIR, "v6_LRM_dynLin_1comp.h5")
-    with h5py.File(fname, 'w') as f:
+    with h5py.File(fname, "w") as f:
         create_base_structure(f)
         create_inlet(f, 0)
 
@@ -108,7 +108,7 @@ def create_v6_LRM():
 def create_v6_LRMP():
     """LRMP: COLUMN_MODEL_1D with film diffusion only (homogeneous particle)."""
     fname = os.path.join(OUTPUT_DIR, "v6_LRMP_dynLin_1comp.h5")
-    with h5py.File(fname, 'w') as f:
+    with h5py.File(fname, "w") as f:
         create_base_structure(f)
         create_inlet(f, 0)
 
@@ -129,7 +129,7 @@ def create_v6_LRMP():
         disc.create_dataset("NELEM", data=1)
         disc.create_dataset("POLYDEG", data=3)
         disc.create_dataset("SPATIAL_METHOD", data="DG")
-        disc.create_dataset("PAR_GEOM", data=np.array([b'SPHERE']))
+        disc.create_dataset("PAR_GEOM", data=np.array([b"SPHERE"]))
 
         # particle_type_000: homogeneous particle (LRMP-like)
         pt = unit.create_group("particle_type_000")
@@ -154,7 +154,7 @@ def create_v6_LRMP():
 def create_v6_LRMP_reqLin():
     """LRMP with rapid-equilibrium Linear binding (IS_KINETIC=0)."""
     fname = os.path.join(OUTPUT_DIR, "v6_LRMP_reqLin_1comp.h5")
-    with h5py.File(fname, 'w') as f:
+    with h5py.File(fname, "w") as f:
         create_base_structure(f)
         create_inlet(f, 0)
 
@@ -175,7 +175,7 @@ def create_v6_LRMP_reqLin():
         disc.create_dataset("NELEM", data=1)
         disc.create_dataset("POLYDEG", data=3)
         disc.create_dataset("SPATIAL_METHOD", data="DG")
-        disc.create_dataset("PAR_GEOM", data=np.array([b'SPHERE']))
+        disc.create_dataset("PAR_GEOM", data=np.array([b"SPHERE"]))
 
         pt = unit.create_group("particle_type_000")
         pt.create_dataset("HAS_FILM_DIFFUSION", data=True)
@@ -199,7 +199,7 @@ def create_v6_LRMP_reqLin():
 def create_v6_GRM_arbitrary():
     """GRM with ARBITRARY binding model (unknown model fallback)."""
     fname = os.path.join(OUTPUT_DIR, "v6_GRM_arbBnd_1comp.h5")
-    with h5py.File(fname, 'w') as f:
+    with h5py.File(fname, "w") as f:
         create_base_structure(f)
         create_inlet(f, 0)
 
@@ -220,7 +220,7 @@ def create_v6_GRM_arbitrary():
         disc.create_dataset("NELEM", data=8)
         disc.create_dataset("POLYDEG", data=3)
         disc.create_dataset("SPATIAL_METHOD", data="DG")
-        disc.create_dataset("PAR_GEOM", data=np.array([b'SPHERE']))
+        disc.create_dataset("PAR_GEOM", data=np.array([b"SPHERE"]))
 
         pt = unit.create_group("particle_type_000")
         pt.create_dataset("HAS_FILM_DIFFUSION", data=True)
@@ -246,7 +246,7 @@ def create_v6_GRM_arbitrary():
 def create_v6_GRM():
     """GRM: COLUMN_MODEL_1D with film + pore diffusion, no surface diffusion."""
     fname = os.path.join(OUTPUT_DIR, "v6_GRM_dynLin_1comp.h5")
-    with h5py.File(fname, 'w') as f:
+    with h5py.File(fname, "w") as f:
         create_base_structure(f)
         create_inlet(f, 0)
 
@@ -267,7 +267,7 @@ def create_v6_GRM():
         disc.create_dataset("NELEM", data=8)
         disc.create_dataset("POLYDEG", data=3)
         disc.create_dataset("SPATIAL_METHOD", data="DG")
-        disc.create_dataset("PAR_GEOM", data=np.array([b'SPHERE']))
+        disc.create_dataset("PAR_GEOM", data=np.array([b"SPHERE"]))
 
         # particle_type_000: GRM particle (film + pore diffusion)
         pt = unit.create_group("particle_type_000")
@@ -294,7 +294,7 @@ def create_v6_GRM():
 def create_v6_GRMsd():
     """GRMsd: COLUMN_MODEL_1D with film + pore + surface diffusion."""
     fname = os.path.join(OUTPUT_DIR, "v6_GRMsd_dynLin_1comp.h5")
-    with h5py.File(fname, 'w') as f:
+    with h5py.File(fname, "w") as f:
         create_base_structure(f)
         create_inlet(f, 0)
 
@@ -315,7 +315,7 @@ def create_v6_GRMsd():
         disc.create_dataset("NELEM", data=8)
         disc.create_dataset("POLYDEG", data=3)
         disc.create_dataset("SPATIAL_METHOD", data="DG")
-        disc.create_dataset("PAR_GEOM", data=np.array([b'SPHERE']))
+        disc.create_dataset("PAR_GEOM", data=np.array([b"SPHERE"]))
 
         # particle_type_000: GRM particle with surface diffusion
         pt = unit.create_group("particle_type_000")
@@ -343,7 +343,7 @@ def create_v6_GRMsd():
 def create_v6_GRMsd_PSD():
     """GRMsd with 2 particle types (PSD)."""
     fname = os.path.join(OUTPUT_DIR, "v6_GRMsd_PSD_dynLin_1comp.h5")
-    with h5py.File(fname, 'w') as f:
+    with h5py.File(fname, "w") as f:
         create_base_structure(f)
         create_inlet(f, 0)
 
@@ -364,7 +364,7 @@ def create_v6_GRMsd_PSD():
         disc.create_dataset("NELEM", data=8)
         disc.create_dataset("POLYDEG", data=3)
         disc.create_dataset("SPATIAL_METHOD", data="DG")
-        disc.create_dataset("PAR_GEOM", data=np.array([b'SPHERE']))
+        disc.create_dataset("PAR_GEOM", data=np.array([b"SPHERE"]))
 
         # particle_type_000
         pt0 = unit.create_group("particle_type_000")
@@ -412,7 +412,7 @@ def create_v6_GRMsd2D():
     """GRMsd 2D: COLUMN_MODEL_2D with film + pore + surface diffusion.
     Mirrors the v5 2DGRMsd3Zone file: unit_000=column, units 1-3=inlets, units 4-6=outlets."""
     fname = os.path.join(OUTPUT_DIR, "v6_GRMsd2D_dynLin_1comp.h5")
-    with h5py.File(fname, 'w') as f:
+    with h5py.File(fname, "w") as f:
         f.create_dataset("input/model/NUNITS", data=7)
 
         unit = f.create_group("input/model/unit_000")
@@ -437,7 +437,7 @@ def create_v6_GRMsd2D():
         disc.create_dataset("NPAR", data=3)
         disc.create_dataset("NRAD", data=3)
         disc.create_dataset("SPATIAL_METHOD", data="FV")
-        disc.create_dataset("PAR_DISC_TYPE", data=np.array([b'EQUIDISTANT_PAR']))
+        disc.create_dataset("PAR_DISC_TYPE", data=np.array([b"EQUIDISTANT_PAR"]))
         disc.create_dataset("RADIAL_DISC_TYPE", data="EQUIDISTANT")
 
         # particle_type_000: GRM with surface diffusion
@@ -477,7 +477,7 @@ def create_v6_CSTR():
     """CSTR: stays as CSTR unit type, but with NPARTYPE=0 and no particles.
     Note: CSTR unit type name doesn't change in v6."""
     fname = os.path.join(OUTPUT_DIR, "v6_CSTR.h5")
-    with h5py.File(fname, 'w') as f:
+    with h5py.File(fname, "w") as f:
         create_base_structure(f)
         create_inlet(f, 0, ncomp=384)
 

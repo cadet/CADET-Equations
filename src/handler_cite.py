@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Bibliography utilities for parsing and formatting BibTeX entries.
 
@@ -6,10 +5,8 @@ This module provides functions to load a BibTeX file, extract author names,
 and format in-text citations and references for both plain text and LaTeX output.
 """
 
-
 import re
 from pathlib import Path
-from typing import List
 
 import streamlit as st
 
@@ -51,7 +48,7 @@ def load_bibliography(bib_path: str) -> dict:
     return entries
 
 
-def _author_last_names(author_field: str) -> List[str]:
+def _author_last_names(author_field: str) -> list[str]:
     """Extract author last names from a BibTeX author list."""
     if not author_field:
         return []

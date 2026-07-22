@@ -1,0 +1,34 @@
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.lint]
+select = [
+    "F",     # Pyflakes
+    "E",     # pycodestyle errors
+    "W",     # pycodestyle warnings
+    "I",     # isort
+    "UP",    # pyupgrade
+    "B",     # flake8-bugbear
+    "SIM",   # flake8-simplify
+    "RUF",   # Ruff-specific rules
+]
+ignore = [
+    "E501",   # line too long — handled by formatter
+    "SIM108", # ternary operator — often less readable for this codebase
+    "SIM114", # combine if branches — often less readable
+    "RUF001", # ambiguous unicode — LaTeX strings use special chars
+    "RUF002", # ambiguous unicode in docstrings
+    "RUF003", # ambiguous unicode in comments
+    "RUF005", # iterable unpacking — list concat is clearer in this codebase
+    "SIM102", # nested ifs — collapsing reduces readability
+    "SIM116", # dict instead of if-chain — often less readable for sort functions
+]
+
+[tool.ruff.lint.per-file-ignores]
+"test/*" = ["F841"]  # unused variables common in test fixtures
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false

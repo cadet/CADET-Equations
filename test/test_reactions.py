@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
 """
 Tests for dynamic reaction terms
 """
 
-from streamlit.testing.v1 import AppTest
 import pytest
+from streamlit.testing.v1 import AppTest
 
 
 def setup_app_with_dev_mode(add_particles="Yes", particle_resolution="1D (radial coordinate)", has_binding="Yes"):
@@ -140,6 +139,7 @@ def test_bulk_reaction_0D_tank():
 
 # === Rapid-equilibrium reaction unit tests ===
 
+
 @pytest.mark.ci
 @pytest.mark.unit_test
 def test_req_reaction_equation_functions():
@@ -178,6 +178,7 @@ def test_req_reaction_equation_functions():
 
 
 # === Rapid-equilibrium reaction integration tests ===
+
 
 @pytest.mark.ci
 @pytest.mark.unit_test
@@ -378,6 +379,7 @@ def test_req_reaction_assumptions_multiple_phases():
 
 # === Explicit reaction model unit tests ===
 
+
 @pytest.mark.ci
 @pytest.mark.unit_test
 def test_mass_action_law_equation_functions():
@@ -439,6 +441,7 @@ def test_reaction_model_assumptions():
 
 
 # === Explicit reaction model integration tests ===
+
 
 @pytest.mark.ci
 @pytest.mark.unit_test
@@ -557,15 +560,26 @@ def test_mass_action_law_no_particles():
 def test_particle_vars_mass_action_law_liquid():
     """Direct Particle unit test: Mass Action Law vars for particle liquid reaction."""
     from src.model_particle import Particle
+
     p = Particle(
-        geometry="Sphere", has_core=False, var_format="CADET",
-        resolution="1D", has_binding=True, req_binding=False,
-        has_mult_bnd_states=False, has_surfDiff=True,
-        nonlimiting_filmDiff=False, interstitial_volume_resolution="1D",
-        column_type="Axial", single_partype=True, PTD=False,
+        geometry="Sphere",
+        has_core=False,
+        var_format="CADET",
+        resolution="1D",
+        has_binding=True,
+        req_binding=False,
+        has_mult_bnd_states=False,
+        has_surfDiff=True,
+        nonlimiting_filmDiff=False,
+        interstitial_volume_resolution="1D",
+        column_type="Axial",
+        single_partype=True,
+        PTD=False,
         binding_model="Linear",
-        has_reaction_liquid=True, has_reaction_solid=False,
-        req_reaction_liquid=False, req_reaction_solid=False,
+        has_reaction_liquid=True,
+        has_reaction_solid=False,
+        req_reaction_liquid=False,
+        req_reaction_solid=False,
         reaction_model="Mass Action Law",
     )
     symbols = [v["Symbol"] for v in p.vars_and_params]
@@ -581,15 +595,26 @@ def test_particle_vars_mass_action_law_liquid():
 def test_particle_vars_michaelis_menten_liquid():
     """Direct Particle unit test: Michaelis-Menten vars for particle liquid reaction."""
     from src.model_particle import Particle
+
     p = Particle(
-        geometry="Sphere", has_core=False, var_format="CADET",
-        resolution="1D", has_binding=True, req_binding=False,
-        has_mult_bnd_states=False, has_surfDiff=True,
-        nonlimiting_filmDiff=False, interstitial_volume_resolution="1D",
-        column_type="Axial", single_partype=True, PTD=False,
+        geometry="Sphere",
+        has_core=False,
+        var_format="CADET",
+        resolution="1D",
+        has_binding=True,
+        req_binding=False,
+        has_mult_bnd_states=False,
+        has_surfDiff=True,
+        nonlimiting_filmDiff=False,
+        interstitial_volume_resolution="1D",
+        column_type="Axial",
+        single_partype=True,
+        PTD=False,
         binding_model="Linear",
-        has_reaction_liquid=True, has_reaction_solid=False,
-        req_reaction_liquid=False, req_reaction_solid=False,
+        has_reaction_liquid=True,
+        has_reaction_solid=False,
+        req_reaction_liquid=False,
+        req_reaction_solid=False,
         reaction_model="Michaelis Menten",
     )
     symbols = [v["Symbol"] for v in p.vars_and_params]
@@ -604,15 +629,26 @@ def test_particle_vars_michaelis_menten_liquid():
 def test_particle_vars_mass_action_law_solid():
     """Direct Particle unit test: Mass Action Law vars for particle solid reaction."""
     from src.model_particle import Particle
+
     p = Particle(
-        geometry="Sphere", has_core=False, var_format="CADET",
-        resolution="1D", has_binding=True, req_binding=False,
-        has_mult_bnd_states=False, has_surfDiff=True,
-        nonlimiting_filmDiff=False, interstitial_volume_resolution="1D",
-        column_type="Axial", single_partype=True, PTD=False,
+        geometry="Sphere",
+        has_core=False,
+        var_format="CADET",
+        resolution="1D",
+        has_binding=True,
+        req_binding=False,
+        has_mult_bnd_states=False,
+        has_surfDiff=True,
+        nonlimiting_filmDiff=False,
+        interstitial_volume_resolution="1D",
+        column_type="Axial",
+        single_partype=True,
+        PTD=False,
         binding_model="Linear",
-        has_reaction_liquid=False, has_reaction_solid=True,
-        req_reaction_liquid=False, req_reaction_solid=False,
+        has_reaction_liquid=False,
+        has_reaction_solid=True,
+        req_reaction_liquid=False,
+        req_reaction_solid=False,
         reaction_model="Mass Action Law",
     )
     symbols = [v["Symbol"] for v in p.vars_and_params]
@@ -626,15 +662,26 @@ def test_particle_vars_mass_action_law_solid():
 def test_particle_vars_michaelis_menten_solid():
     """Direct Particle unit test: Michaelis-Menten vars for particle solid reaction."""
     from src.model_particle import Particle
+
     p = Particle(
-        geometry="Sphere", has_core=False, var_format="CADET",
-        resolution="1D", has_binding=True, req_binding=False,
-        has_mult_bnd_states=False, has_surfDiff=True,
-        nonlimiting_filmDiff=False, interstitial_volume_resolution="1D",
-        column_type="Axial", single_partype=True, PTD=False,
+        geometry="Sphere",
+        has_core=False,
+        var_format="CADET",
+        resolution="1D",
+        has_binding=True,
+        req_binding=False,
+        has_mult_bnd_states=False,
+        has_surfDiff=True,
+        nonlimiting_filmDiff=False,
+        interstitial_volume_resolution="1D",
+        column_type="Axial",
+        single_partype=True,
+        PTD=False,
         binding_model="Linear",
-        has_reaction_liquid=False, has_reaction_solid=True,
-        req_reaction_liquid=False, req_reaction_solid=False,
+        has_reaction_liquid=False,
+        has_reaction_solid=True,
+        req_reaction_liquid=False,
+        req_reaction_solid=False,
         reaction_model="Michaelis Menten",
     )
     symbols = [v["Symbol"] for v in p.vars_and_params]

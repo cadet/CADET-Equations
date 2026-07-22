@@ -6,10 +6,8 @@ kept concise and focused on public behaviour.
 """
 
 import streamlit as st
-from typing import List
 
 from src.utils import format_variables
-
 
 _BADGE_TOOLTIP_CSS = """<style>
 .badge-container {
@@ -72,45 +70,38 @@ def availability_badge_html(name: str, available: int, details=None) -> str:
         icon = "approximation"
 
     badge_style = (
-        f'background-color:{color_bg};'
-        f'color:{color_fg};'
-        f'padding:4px 10px;'
-        f'border-radius:12px;'
-        f'font-size:0.85em;'
-        f'display:inline-block;'
-        f'cursor:default;'
+        f"background-color:{color_bg};"
+        f"color:{color_fg};"
+        f"padding:4px 10px;"
+        f"border-radius:12px;"
+        f"font-size:0.85em;"
+        f"display:inline-block;"
+        f"cursor:default;"
     )
 
     tooltip_html = ""
     if details:
-        rows = "".join(
-            f'<div style="margin:2px 0;"><b>{label}:</b> {value}</div>'
-            for label, value in details
-        )
+        rows = "".join(f'<div style="margin:2px 0;"><b>{label}:</b> {value}</div>' for label, value in details)
         tooltip_html = f'<span class="badge-tooltip">{rows}</span>'
 
-    return (
-        f'<span class="badge-container">'
-        f'<span style="{badge_style}">{name}: {icon}</span>'
-        f'{tooltip_html}'
-        f'</span>'
-    )
+    return f'<span class="badge-container"><span style="{badge_style}">{name}: {icon}</span>{tooltip_html}</span>'
 
 
 def render_availability_badges(model) -> None:
     """Render availability badges with hover tooltips for solver details."""
     solver_info = model.solver_details()
-    badges = availability_badge_html("CADET-Core", model.available_CADET_Core(),
-                                     solver_info.get("CADET-Core"))
-    badges += availability_badge_html("CADET-Process", model.available_CADET_Process(),
-                                      solver_info.get("CADET-Process"))
-    badges += availability_badge_html("CADET-Semi-Analytic", model.available_CADET_SemiAnalytic(),
-                                      solver_info.get("CADET-Semi-Analytic"))
+    badges = availability_badge_html("CADET-Core", model.available_CADET_Core(), solver_info.get("CADET-Core"))
+    badges += availability_badge_html(
+        "CADET-Process", model.available_CADET_Process(), solver_info.get("CADET-Process")
+    )
+    badges += availability_badge_html(
+        "CADET-Semi-Analytic", model.available_CADET_SemiAnalytic(), solver_info.get("CADET-Semi-Analytic")
+    )
     html = _BADGE_TOOLTIP_CSS + f'<div style="margin-bottom:1em;">{badges}</div>'
     st.markdown(html, unsafe_allow_html=True)
 
 
-def write_and_save(output: str, var_format: str, file_content: List[str], as_latex: bool = False):
+def write_and_save(output: str, var_format: str, file_content: list[str], as_latex: bool = False):
     """Format and render `output` while collecting it for export.
 
     The function applies variable formatting, appends the formatted

@@ -1,19 +1,22 @@
-# -*- coding: utf-8 -*-
 """
 Unit tests for the unit system module.
 """
 
 import pytest
+
 from src.units import (
-    get_unit, get_conversion_factor, format_conversion_factor,
-    UNIT_SYSTEMS, AVAILABLE_SYSTEMS, CONVERSION_FACTORS,
+    AVAILABLE_SYSTEMS,
+    CONVERSION_FACTORS,
+    UNIT_SYSTEMS,
+    format_conversion_factor,
+    get_conversion_factor,
+    get_unit,
 )
 
 
 @pytest.mark.ci
 @pytest.mark.unit_test
 class TestGetUnit:
-
     def test_si_time(self):
         assert get_unit("time", "SI") == r"s"
 
@@ -77,7 +80,6 @@ class TestGetUnit:
 @pytest.mark.ci
 @pytest.mark.unit_test
 class TestCGSSystem:
-
     def test_cgs_time(self):
         assert get_unit("time", "CGS") == r"s"
 
@@ -103,7 +105,6 @@ class TestCGSSystem:
 @pytest.mark.ci
 @pytest.mark.unit_test
 class TestPracticalSystem:
-
     def test_practical_time(self):
         assert get_unit("time", "Legacy") == r"min"
 
@@ -132,7 +133,6 @@ class TestPracticalSystem:
 @pytest.mark.ci
 @pytest.mark.unit_test
 class TestConversionFactors:
-
     def test_si_to_si_is_unity(self):
         for key in UNIT_SYSTEMS["SI"]:
             assert get_conversion_factor(key, "SI") == 1.0
@@ -187,15 +187,12 @@ class TestConversionFactors:
     def test_all_systems_have_factors_for_all_keys(self):
         si_keys = set(UNIT_SYSTEMS["SI"].keys())
         for name in CONVERSION_FACTORS:
-            assert set(CONVERSION_FACTORS[name].keys()) == si_keys, (
-                f"System '{name}' is missing conversion factors"
-            )
+            assert set(CONVERSION_FACTORS[name].keys()) == si_keys, f"System '{name}' is missing conversion factors"
 
 
 @pytest.mark.ci
 @pytest.mark.unit_test
 class TestFormatConversionFactor:
-
     def test_unity(self):
         assert format_conversion_factor(1.0) == "1"
 
@@ -214,7 +211,6 @@ class TestFormatConversionFactor:
 @pytest.mark.ci
 @pytest.mark.unit_test
 class TestRegistry:
-
     def test_si_in_available(self):
         assert "SI" in AVAILABLE_SYSTEMS
 
@@ -227,6 +223,4 @@ class TestRegistry:
     def test_all_systems_have_same_keys(self):
         si_keys = set(UNIT_SYSTEMS["SI"].keys())
         for name, system in UNIT_SYSTEMS.items():
-            assert set(system.keys()) == si_keys, (
-                f"System '{name}' has different keys than SI"
-            )
+            assert set(system.keys()) == si_keys, f"System '{name}' has different keys than SI"

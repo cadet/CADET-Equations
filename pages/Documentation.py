@@ -1,10 +1,9 @@
-# -*- coding: utf-8 -*-
 """
 @author: jmbr
 """
 
-import streamlit as st
 import bibtexparser
+import streamlit as st
 from bibtexparser.bparser import BibTexParser
 
 st.logo("images/logo_CADET.png", size="large", link=None, icon_image=None)
@@ -15,7 +14,7 @@ st.set_page_config(
 )
 
 # Helper funciton to use citations in standard markdown (streamlit)
-with open("CITATION.bib", "r", encoding="latin1") as bibtex_file:
+with open("CITATION.bib", encoding="latin1") as bibtex_file:
     parser = BibTexParser(common_strings=True)
     bib_database = bibtexparser.load(bibtex_file, parser=parser)
 
@@ -27,7 +26,7 @@ for entry in bib_database.entries:
     author = entry.get("author", "Unknown Author")
     title = entry.get("title", "Untitled")
     chapter = entry.get("chapter", "")
-    if not chapter == "":
+    if chapter != "":
         chapter = f", chapter {chapter}"
     year = entry.get("year", "n.d.")
     journal = entry.get("journal", "")
@@ -96,7 +95,7 @@ CADET-Equations provides a simplistic user interface that allows users to define
 )
 
 st.markdown(
-"""
+    r"""
     ## Features
 
     - Generation of comprehensive model equations used in packed-bed liquid chromatography
@@ -118,7 +117,8 @@ st.markdown(
     We welcome contributions - such as [reporting bugs](https://github.com/cadet/CADET-Equations/issues/new?template=bug_report.yml) or [requesting features](https://github.com/cadet/CADET-Equations/issues/new?template=feature_request.yml) on GitHub, or by reaching out with modeling questions on the [CADET forum](https://forum.cadet-web.de/).
 
 """,
-unsafe_allow_html=True)
+    unsafe_allow_html=True,
+)
 
 st.markdown("---")
 st.markdown("## References", unsafe_allow_html=True)
