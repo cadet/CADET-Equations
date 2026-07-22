@@ -15,7 +15,6 @@ select = [
 ]
 ignore = [
     "E501",   # line too long — handled by formatter
-    "E741",   # ambiguous variable name — common in math-heavy code
     "SIM108", # ternary operator — often less readable for this codebase
     "SIM114", # combine if branches — often less readable
     "RUF001", # ambiguous unicode — LaTeX strings use special chars
