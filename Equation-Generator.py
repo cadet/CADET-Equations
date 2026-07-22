@@ -256,6 +256,8 @@ if model_type_ == "Crystallization":
     if st.toggle("Show Model Assumptions", key=r"model_assumptions"):
         asmpts = cry_model.model_assumptions()
         for key in asmpts:
+            if not asmpts[key]:  # an empty itemize is invalid LaTeX
+                continue
             st.write(key + ":\n" + "\n".join(f"- {item}" for item in asmpts[key]))
             file_content.append(
                 key
@@ -434,6 +436,8 @@ else:  # Chromatography model family
         asmpts = column_model.model_assumptions()
 
         for key in asmpts:
+            if not asmpts[key]:  # an empty itemize is invalid LaTeX
+                continue
             st.write(key + ":\n" + "\n".join(f"- {item}" for item in asmpts[key]))
 
             file_content.append(
