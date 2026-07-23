@@ -1085,7 +1085,7 @@ render_references(bibliography_entries, used_citation_keys, file_content)
 st.session_state.latex_string = [
     r"""\documentclass{article}
 """,
-    r"""\usepackage{amssymb,amsmath,mleftright}
+    r"""\usepackage{amssymb,amsmath}
 """,
     r"""\begin{document}
 """,
