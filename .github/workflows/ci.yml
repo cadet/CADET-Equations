@@ -37,6 +37,69 @@ jobs:
       uses: actions/checkout@v4
 
     # --------------------
+    # Conda / Mamba setup
+    # --------------------
+    - name: Set up Conda
+      uses: conda-incubator/setup-miniconda@v3
+      with:
+        miniforge-version: latest
+        use-mamba: true
+        activate-environment: cadet-equations
+        channels: conda-forge
+
+    # --------------------
+    # Cache Conda env
+    # --------------------
+    - name: Cache Conda environment
+      id: conda-cache
+      uses: actions/cache@v4
+      with:
+        path: ${{ env.CONDA }}/envs/cadet-equations
+        key: conda-${{ runner.os }}-${{ hashFiles('requirements.txt') }}
+        restore-keys: |
+          conda-${{ runner.os }}-
+
+    # --------------------
+    # Environment install
+    # --------------------
+    - name: Update environment
+      if: steps.conda-cache.outputs.cache-hit != 'true'
+      run: |
+        conda install -n cadet-equations -y python=3.10 "setuptools>=69" "pip>=24"
+        conda run -n cadet-equations pip install -r requirements.txt
+
+    # --------------------
+    # Tests
+    # --------------------
+    - name: Run unit and (some) integration tests with coverage
+      run: |
+        conda run -n cadet-equations pytest -m "ci and (unit_test or reference)" \
+          -n auto --durations=10 \
+          --cov=src \
+          --cov-report=xml:coverage.xml \
+          --cov-report=term-missing
+
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v5
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        slug: cadet/CADET-Equations
+        files: coverage.xml
+        flags: unit
+        fail_ci_if_error: true
+
+  test-app-configs:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        shell: bash -l {0}
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    # --------------------
     # Minimal, robust LaTeX
     # --------------------
     - name: Install minimal LaTeX
@@ -83,22 +146,7 @@ jobs:
     # --------------------
     # Tests
     # --------------------
-    - name: Run unit and (some) integration tests with coverage
+    - name: Run all-config integration tests
       run: |
-        conda run -n cadet-equations pytest -m "ci and (unit_test or reference)" \
-          --cov=src \
-          --cov-report=xml:coverage.xml \
-          --cov-report=term-missing
-
-    - name: Upload coverage to Codecov
-      uses: codecov/codecov-action@v5
-      with:
-        token: ${{ secrets.CODECOV_TOKEN }}
-        slug: cadet/CADET-Equations
-        files: coverage.xml
-        flags: unit
-        fail_ci_if_error: true
-
-    - name: Run more integration tests without coverage
-      run: |
-        conda run -n cadet-equations pytest -m "ci and all_config_runs"
+        conda run -n cadet-equations pytest -m "ci and all_config_runs" \
+          -n auto --durations=10

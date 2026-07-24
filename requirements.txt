@@ -1,6 +1,7 @@
 streamlit
 pytest
 pytest-cov
+pytest-xdist
 h5py
 bibtexparser
 ruff
