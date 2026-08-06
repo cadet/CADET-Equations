@@ -939,7 +939,7 @@ class Column:
                     "Description": r"velocity coefficient",
                     "Unit": u("velocity_coeff"),
                     "Dependence": r"\text{constant}",
-                    "Property": r":= \frac{Q}{2 \pi L}",
+                    "Property": r":= \frac{Q}{2 \pi L^{\mathrm{b}}}",
                 }
             )
         elif self.column_type == "Frustum":
@@ -950,14 +950,14 @@ class Column:
                     "Description": r"axial coordinate",
                     "Unit": u("length"),
                     "Dependence": r"\text{independent variable}",
-                    "Property": r"\in (0, L)",
+                    "Property": r"\in (0, L^{\mathrm{b}})",
                 }
             )
             self.vars_and_params.append(
                 {
                     "Group": -1,
-                    "Symbol": r"L",
-                    "Description": r"length of column",
+                    "Symbol": r"L^{\mathrm{b}}",
+                    "Description": r"bed length",
                     "Unit": u("length"),
                     "Dependence": r"\text{constant}",
                     "Property": r" > 0",
@@ -976,7 +976,7 @@ class Column:
             self.vars_and_params.append(
                 {
                     "Group": -1,
-                    "Symbol": r"R^L",
+                    "Symbol": r"R^{\mathrm{L^b}}",
                     "Description": r"column radius at outlet",
                     "Unit": u("length"),
                     "Dependence": r"\text{constant}",
@@ -986,11 +986,11 @@ class Column:
             self.vars_and_params.append(
                 {
                     "Group": 3,
-                    "Symbol": r"R",
+                    "Symbol": r"r",
                     "Description": r"column radius function",
                     "Unit": u("length"),
                     "Dependence": r"x",
-                    "Property": r"(x) = R^0 + \frac{R^L - R^0}{L} x",
+                    "Property": r"(x) = R^0 + \frac{R^{\mathrm{L^b}} - R^0}{L^{\mathrm{b}}} x",
                 }
             )
             self.vars_and_params.append(
@@ -1021,14 +1021,14 @@ class Column:
                     "Description": r"axial cylinder coordinate",
                     "Unit": u("length"),
                     "Dependence": r"\text{independent variable}",
-                    "Property": r"\in (0, L)",
+                    "Property": r"\in (0, L^{\mathrm{b}})",
                 }
             )
             self.vars_and_params.append(
                 {
                     "Group": -1,
-                    "Symbol": r"L",
-                    "Description": r"length of cylinder",
+                    "Symbol": r"L^{\mathrm{b}}",
+                    "Description": r"bed length",
                     "Unit": u("length"),
                     "Dependence": r"\text{constant}",
                     "Property": r" > 0",
@@ -1107,7 +1107,7 @@ class Column:
                 self.vars_and_params.append(
                     {
                         "Group": 4,
-                        "Symbol": r"\varepsilon^{\mathrm{c}}",
+                        "Symbol": r"\varepsilon^{\mathrm{b}}",
                         "Description": r"column porosity",
                         "Unit": u("dimensionless"),
                         "Dependence": re.sub("t, ", "", state_deps),
@@ -1349,7 +1349,7 @@ class Column:
 
         else:
             equation = (
-                eq.bulk_time_derivative(r"\varepsilon^{\mathrm{c}}")
+                eq.bulk_time_derivative(r"\varepsilon^{\mathrm{b}}")
                 if not without_pores_
                 else eq.bulk_time_derivative()
             )
@@ -1373,15 +1373,15 @@ class Column:
             equation += (
                 eq_sign + convection_func()
                 if without_pores_
-                else eq_sign + convection_func(r"\varepsilon^{\mathrm{c}}")
+                else eq_sign + convection_func(r"\varepsilon^{\mathrm{b}}")
             )
 
             if self.has_axial_dispersion:
-                equation += " + " + dispersion_func(r"\varepsilon^{\mathrm{c}}")
+                equation += " + " + dispersion_func(r"\varepsilon^{\mathrm{b}}")
             if self.has_radial_dispersion:
-                equation += r" \nonumber \\ & + " + eq.radial_dispersion(r"\varepsilon^{\mathrm{c}}")
+                equation += r" \nonumber \\ & + " + eq.radial_dispersion(r"\varepsilon^{\mathrm{b}}")
             if self.has_angular_dispersion:
-                equation += r" \nonumber \\ & + " + eq.angular_dispersion(r"\varepsilon^{\mathrm{c}}")
+                equation += r" \nonumber \\ & + " + eq.angular_dispersion(r"\varepsilon^{\mathrm{b}}")
 
             if self.N_p == 0:  # remove occurencies of porosity, which is just constant one in this case
                 equation = re.sub(

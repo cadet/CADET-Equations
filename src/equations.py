@@ -390,13 +390,13 @@ def int_filmDiff_term(
 
     if singleParticle:
         term = (
-            r"- \left(1 - \varepsilon^{\mathrm{c}} \right) \frac{"
+            r"- \left(1 - \varepsilon^{\mathrm{b}} \right) \frac{"
             + str(particle.surface_volume_ratio)
             + r"}{R^{\mathrm{p}}} k^{\mathrm{f}}_{i} \left(c^{\b}_i - \left. c^{\p}_{i} \right|_{r = R^{\mathrm{p}}} \right)"
         )
     else:
         term = (
-            r"- \left(1 - \varepsilon^{\mathrm{c}} \right) \sum_{j="
+            r"- \left(1 - \varepsilon^{\mathrm{b}} \right) \sum_{j="
             + str(numIdxBegin)
             + r"}^{"
             + str(numIdxEnd)
@@ -621,19 +621,19 @@ def int_vol_BC(resolution: str, hasAxialDispersion: bool, column_type: str = "Ax
 
     if resolution == "2D":
         ax_bc_domain += r"\times (0, R^{\mathrm{c}})"
-        rad_bc_domain = r"(0, T^{\mathrm{end}}) \times (0, L)"
+        rad_bc_domain = r"(0, T^{\mathrm{end}}) \times (0, L^{\mathrm{b}})"
 
     elif resolution == "3D":
         ax_bc_domain += r"\times (0, R^{\mathrm{c}}) \times [0,2\pi)"
-        rad_bc_domain = r"(0, T^{\mathrm{end}}) \times (0, L) \times [0,2\pi)"
-        ang_bc_domain = r"(0, T^{\mathrm{end}}) \times (0, L) \times (0, R^{\mathrm{c}})"
+        rad_bc_domain = r"(0, T^{\mathrm{end}}) \times (0, L^{\mathrm{b}}) \times [0,2\pi)"
+        ang_bc_domain = r"(0, T^{\mathrm{end}}) \times (0, L^{\mathrm{b}}) \times (0, R^{\mathrm{c}})"
 
     if column_type == "Radial":
         # Radial flow: transport in rho direction, domain (R_in, R_out)
         radflow_bc_domain = r"(0, T^{\mathrm{end}})"
         diff_term = r"- D^{\mathrm{rad}}_{i} \frac{\partial c^{\b}_i}{\partial \rho}" if hasAxialDispersion else ""
         inflow_bc = (
-            r"v c_{\mathrm{in},i} &= \left.\left( v c^{\b}_i "
+            r"v c^{\mathrm{in}}_i &= \left.\left( v c^{\b}_i "
             + diff_term
             + r"\right)\right|_{\rho=R^{\mathrm{in}}} & &\qquad\text{on }"
             + radflow_bc_domain
@@ -655,13 +655,13 @@ def int_vol_BC(resolution: str, hasAxialDispersion: bool, column_type: str = "Ax
         # Frustum: transport in x direction with varying cross-section
         diff_term = r"- D^{\mathrm{ax}}_{i} \frac{\partial c^{\b}_i}{\partial x}" if hasAxialDispersion else ""
         inflow_bc = (
-            r"\frac{v}{r(x)^2} c_{\mathrm{in},i} &= \left.\left( \frac{v}{r(x)^2} c^{\b}_i "
+            r"\frac{v}{r(x)^2} c^{\mathrm{in}}_i &= \left.\left( \frac{v}{r(x)^2} c^{\b}_i "
             + diff_term
             + r"\right)\right|_{x=0} & &\qquad\text{on }"
             + ax_bc_domain
         )
         outflow_bc = (
-            r"0 &= - D^{\mathrm{ax}}_{i} \left. \frac{\partial c^{\b}_i}{\partial x} \right|_{x=L} & &\qquad\text{on }"
+            r"0 &= - D^{\mathrm{ax}}_{i} \left. \frac{\partial c^{\b}_i}{\partial x} \right|_{x=L^{\mathrm{b}}} & &\qquad\text{on }"
             + ax_bc_domain
         )
 
@@ -677,13 +677,13 @@ def int_vol_BC(resolution: str, hasAxialDispersion: bool, column_type: str = "Ax
         # Axial (default): standard cylindrical column
         ax_diff_term = r"- D^{\mathrm{ax}}_{i} \frac{\partial c^{\b}_i}{\partial z}" if hasAxialDispersion else ""
         inflow_bc = (
-            r"u c_{\mathrm{in},i} &= \left.\left( u c^{\b}_i "
+            r"u c^{\mathrm{in}}_i &= \left.\left( u c^{\b}_i "
             + ax_diff_term
             + r"\right)\right|_{z=0} & &\qquad\text{on }"
             + ax_bc_domain
         )
         outflow_bc = (
-            r"0 &= - D^{\mathrm{ax}}_{i} \left. \frac{\partial c^{\b}_i}{\partial z} \right|_{z=L} & &\qquad\text{on }"
+            r"0 &= - D^{\mathrm{ax}}_{i} \left. \frac{\partial c^{\b}_i}{\partial z} \right|_{z=L^{\mathrm{b}}} & &\qquad\text{on }"
             + ax_bc_domain
         )
 
@@ -738,16 +738,18 @@ def int_vol_BC(resolution: str, hasAxialDispersion: bool, column_type: str = "Ax
 def int_vol_initial(resolution: str, includeParLiquid: bool):
 
     if resolution == "1D":
-        bulk_liquid_eq = r"\left. c^{\b}_i \right|_{t = 0} &= c^{\b}_{\mathrm{init},i} & & \qquad\text{in } (0, L)"
-        par_liquid_eq = r"\left. c^{\p}_{j,i} \right|_{t = 0, r = R^{\mathrm{p}}_{j}} &= c^{\p}_{\mathrm{init},j,i} & & \qquad\text{in } (0, L)"
+        bulk_liquid_eq = (
+            r"\left. c^{\b}_i \right|_{t = 0} &= c^{\b}_{\mathrm{init},i} & & \qquad\text{in } (0, L^{\mathrm{b}})"
+        )
+        par_liquid_eq = r"\left. c^{\p}_{j,i} \right|_{t = 0, r = R^{\mathrm{p}}_{j}} &= c^{\p}_{\mathrm{init},j,i} & & \qquad\text{in } (0, L^{\mathrm{b}})"
 
     if resolution == "2D":
-        bulk_liquid_eq = r"\left. c^{\b}_i \right|_{t = 0} &= c^{\b}_{\mathrm{init},i} & & \qquad\text{in } (0, R^{\mathrm{c}}) \times (0, L)"
-        par_liquid_eq = r"\left. c^{\p}_{j,i} \right|_{t = 0, r = R^{\mathrm{p}}_{j}} &= c^{\p}_{\mathrm{init},j,i} & & \qquad\text{in } (0, R^{\mathrm{c}}) \times (0, L)"
+        bulk_liquid_eq = r"\left. c^{\b}_i \right|_{t = 0} &= c^{\b}_{\mathrm{init},i} & & \qquad\text{in } (0, R^{\mathrm{c}}) \times (0, L^{\mathrm{b}})"
+        par_liquid_eq = r"\left. c^{\p}_{j,i} \right|_{t = 0, r = R^{\mathrm{p}}_{j}} &= c^{\p}_{\mathrm{init},j,i} & & \qquad\text{in } (0, R^{\mathrm{c}}) \times (0, L^{\mathrm{b}})"
 
     if resolution == "3D":
-        bulk_liquid_eq = r"\left. c^{\b}_i \right|_{t = 0} &= c^{\b}_{\mathrm{init},i} & & \qquad\text{in } (0, R^{\mathrm{c}}) \times (0, L)\times [0,2\pi)"
-        par_liquid_eq = r"\left. c^{\p}_{j,i} \right|_{t = 0, r = (0, R^{\mathrm{p}}_{j})} &= c^{\p}_{\mathrm{init},j,i} & & \qquad\text{in } (0, R^{\mathrm{c}}) \times (0, L)\times [0,2\pi)"
+        bulk_liquid_eq = r"\left. c^{\b}_i \right|_{t = 0} &= c^{\b}_{\mathrm{init},i} & & \qquad\text{in } (0, R^{\mathrm{c}}) \times (0, L^{\mathrm{b}})\times [0,2\pi)"
+        par_liquid_eq = r"\left. c^{\p}_{j,i} \right|_{t = 0, r = (0, R^{\mathrm{p}}_{j})} &= c^{\p}_{\mathrm{init},j,i} & & \qquad\text{in } (0, R^{\mathrm{c}}) \times (0, L^{\mathrm{b}})\times [0,2\pi)"
 
     if includeParLiquid:
         equation = (
@@ -786,7 +788,7 @@ def int_vol_domain(resolution: str, with_time_domain=True, column_type: str = "A
                 r"\times (R^\mathrm{in}, R^\mathrm{out})" if with_time_domain else r"(R^\mathrm{in}, R^\mathrm{out})"
             )
         else:
-            domain_ += r"\times (0, L)" if with_time_domain else r"(0, L)"
+            domain_ += r"\times (0, L^{\mathrm{b}})" if with_time_domain else r"(0, L^{\mathrm{b}})"
     if int(re.search("\\d", resolution).group()) > 1:
         domain_ += r"\times (0, R^\mathrm{c})"
     if int(re.search("\\d", resolution).group()) > 2:
@@ -1273,7 +1275,7 @@ def full_particle_conc_domain(
         if column_type == "Radial":
             spatial = r"(R^\mathrm{in}, R^\mathrm{out})"
         else:
-            spatial = r"(0, L)"
+            spatial = r"(0, L^{\mathrm{b}})"
         domain = r"$(0, T^\mathrm{end}) \times " + spatial if with_time_domain else r"$\times " + spatial
     else:
         domain = r"$(0, T^\mathrm{end})" if with_time_domain else r"$"
@@ -1447,7 +1449,7 @@ def cry_pbe_bc_external_dpfr(has_axial_dispersion: bool):
         bcs.append(
             r"\left. \left( n v_{\mathrm{ax}} - D_{\mathrm{ax}} \frac{\partial n}{\partial z} \right) \right|_{z=0} &= v_{\mathrm{ax}} n_{\mathrm{in},x}"
         )
-        bcs.append(r"\left. \frac{\partial n}{\partial z} \right|_{z=L} &= 0")
+        bcs.append(r"\left. \frac{\partial n}{\partial z} \right|_{z=L^{\mathrm{b}}} &= 0")
     else:
         bcs.append(r"\left. n \right|_{z=0} &= n_{\mathrm{in},x}")
     return (
@@ -1466,7 +1468,7 @@ def cry_solute_bc_dpfr(has_axial_dispersion: bool):
         bcs.append(
             r"\left. \left( c \, v_{\mathrm{ax}} - D_{\mathrm{ax}} \frac{\partial c}{\partial z} \right) \right|_{z=0} &= v_{\mathrm{ax}} c_{\mathrm{in}}"
         )
-        bcs.append(r"\left. \frac{\partial c}{\partial z} \right|_{z=L} &= 0")
+        bcs.append(r"\left. \frac{\partial c}{\partial z} \right|_{z=L^{\mathrm{b}}} &= 0")
     else:
         bcs.append(r"\left. c \right|_{z=0} &= c_{\mathrm{in}}")
     return (
