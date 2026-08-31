@@ -682,7 +682,7 @@ class Column:
         if core_avail >= 0:
             details = []
             if self.column_type == "Frustum":
-                details.append(("Spatial discretization", "WENO FV"))
+                details.append(("Spatial discretization", "WENO FV, DGSEM"))
             elif self.resolution == "2D" and self.has_radial_coordinate:
                 # 2D: DG via ColumnModel2D; FV only for GRM-type (1D) particles
                 if self.N_p > 0 and all(p.resolution == "1D" for p in self.particle_models):
