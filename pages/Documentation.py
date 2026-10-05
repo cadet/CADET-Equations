@@ -6,12 +6,16 @@ import bibtexparser
 import streamlit as st
 from bibtexparser.bparser import BibTexParser
 
+from src.theme import apply_theme_css
+
 st.logo("images/logo_CADET.png", size="large", link=None, icon_image=None)
 
 st.set_page_config(
     page_title="Documentation",
     page_icon=":material/docs:",
 )
+
+apply_theme_css()
 
 # Helper funciton to use citations in standard markdown (streamlit)
 with open("CITATION.bib", encoding="latin1") as bibtex_file:
@@ -48,37 +52,27 @@ st.markdown(
     """
 <style>
 .cadet-hero {
-    background-color: #f0f4f8;
-    color: #0f172a;
+    background-color: var(--cadet-panel-bg);
+    color: var(--cadet-panel-fg);
     padding: 1.5rem;
-    border-left: 5px solid #023d6b;
+    border-left: 5px solid var(--cadet-accent);
     border-radius: 8px;
     line-height: 1.6;
-    color-scheme: light dark;
 }
 
 .cadet-hero-title {
     font-size: 2rem;
     font-weight: bold;
-    color: #023d6b;
+    color: var(--cadet-accent);
     font-family: serif;
 }
 
 .cadet-hero a {
-    color: #023d6b;
+    color: var(--cadet-link);
 }
 
-@media (prefers-color-scheme: dark) {
-    .cadet-hero {
-        background-color: #1A2230;
-        color: #e5e7eb;
-        border-left-color: #023d6b;
-    }
-
-    .cadet-hero-title,
-    .cadet-hero a {
-        color: #023d6b;
-    }
+.cadet-hero a:hover {
+    color: var(--cadet-link-hover);
 }
 </style>
 <div class="cadet-hero">
