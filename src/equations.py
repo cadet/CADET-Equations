@@ -96,7 +96,7 @@ def int_vol_continuum_asmpt(resolution: str, N_p: int, nonlimiting_filmDiff: boo
             r"the fluid only flows in the radial direction of the column (i.e., there is no flow in the axial and angular direction);"
         )
         asmpts.append(
-            r"the column is a hollow cylinder with inner radius $R^{\mathrm{in}}$ and outer radius $R^{\mathrm{out}}$;"
+            r"the column is a hollow cylinder with inner radius $R^{\mathrm{inner}}$ and outer radius $R^{\mathrm{outer}}$;"
         )
     elif column_type == "Frustum" and resolution != "0D":
         asmpts.append(
@@ -367,19 +367,19 @@ def radial_flow_dispersion(eps: str | None = None):
 # Frustum (conical) column transport terms (axial transport with varying cross-section)
 def frustum_convection(eps: str | None = None):
     if eps is None:
-        return r"- \frac{v}{r(x)^2} \frac{\partial c^{\b}_i}{\partial x}"
+        return r"- \frac{v}{r(z)^2} \frac{\partial c^{\b}_i}{\partial z}"
     else:
-        return r"- \frac{v}{r(x)^2} \frac{\partial \left( " + eps + r" c^{\b}_i \right)}{\partial x}"
+        return r"- \frac{v}{r(z)^2} \frac{\partial \left( " + eps + r" c^{\b}_i \right)}{\partial z}"
 
 
 def frustum_dispersion(eps: str | None = None):
     if eps is None:
-        return r"\frac{1}{r(x)^2} \frac{\partial}{\partial x} \left( r(x)^2 D^{\mathrm{ax}}_{i} \frac{\partial c^{\b}_i}{\partial x} \right)"
+        return r"\frac{1}{r(z)^2} \frac{\partial}{\partial z} \left( r(z)^2 D^{\mathrm{ax}}_{i} \frac{\partial c^{\b}_i}{\partial z} \right)"
     else:
         return (
-            r"\frac{1}{r(x)^2} \frac{\partial}{\partial x} \left( r(x)^2 "
+            r"\frac{1}{r(z)^2} \frac{\partial}{\partial z} \left( r(z)^2 "
             + eps
-            + r" D^{\mathrm{ax}}_{i} \frac{\partial c^{\b}_i}{\partial x} \right)"
+            + r" D^{\mathrm{ax}}_{i} \frac{\partial c^{\b}_i}{\partial z} \right)"
         )
 
 
@@ -390,13 +390,13 @@ def int_filmDiff_term(
 
     if singleParticle:
         term = (
-            r"- \left(1 - \varepsilon^{\mathrm{c}} \right) \frac{"
+            r"- \left(1 - \varepsilon^{\mathrm{b}} \right) \frac{"
             + str(particle.surface_volume_ratio)
             + r"}{R^{\mathrm{p}}} k^{\mathrm{f}}_{i} \left(c^{\b}_i - \left. c^{\p}_{i} \right|_{r = R^{\mathrm{p}}} \right)"
         )
     else:
         term = (
-            r"- \left(1 - \varepsilon^{\mathrm{c}} \right) \sum_{j="
+            r"- \left(1 - \varepsilon^{\mathrm{b}} \right) \sum_{j="
             + str(numIdxBegin)
             + r"}^{"
             + str(numIdxEnd)
@@ -612,7 +612,24 @@ def conserved_moiety_equation_particle_solid(singleParticle: bool):
 # Boundary conditions of the interstitial volume equations
 
 
-def int_vol_BC(resolution: str, hasAxialDispersion: bool, column_type: str = "Axial"):
+def homogenized_notation(expr: str) -> str:
+    """Rewrite an interstitial-volume expression for the lumped rate model without pores.
+
+    When film diffusion is non-limiting and the particle has no pore resolution, bulk and
+    particle liquid phases are homogenized into a single liquid phase, and velocity and
+    dispersion become apparent quantities (Model (PN) of the reference framework).
+    """
+    expr = expr.replace(r"c^{\b}", r"c^{\l}")
+    expr = expr.replace(r"D^{\mathrm{ax}}", r"\tilde{D}^{\mathrm{ax}}")
+    expr = expr.replace(r"D^{\mathrm{rad}}", r"\tilde{D}^{\mathrm{rad}}")
+    expr = expr.replace(r"D^{\mathrm{ang}}", r"\tilde{D}^{\mathrm{ang}}")
+    expr = expr.replace(r"- u \frac", r"- \tilde{u} \frac")
+    expr = expr.replace(r"u c^{\mathrm{in}}_{i}", r"\tilde{u} c^{\mathrm{in}}_{i}")
+    expr = expr.replace(r"\left( u c^{\l}_i", r"\left( \tilde{u} c^{\l}_i")
+    return expr
+
+
+def int_vol_BC(resolution: str, hasAxialDispersion: bool, column_type: str = "Axial", without_pores: bool = False):
 
     # handle domain the BC is defined on
     ax_bc_domain = r"(0, T^{\mathrm{end}})"
@@ -621,25 +638,25 @@ def int_vol_BC(resolution: str, hasAxialDispersion: bool, column_type: str = "Ax
 
     if resolution == "2D":
         ax_bc_domain += r"\times (0, R^{\mathrm{c}})"
-        rad_bc_domain = r"(0, T^{\mathrm{end}}) \times (0, L)"
+        rad_bc_domain = r"(0, T^{\mathrm{end}}) \times (0, L^{\mathrm{b}})"
 
     elif resolution == "3D":
         ax_bc_domain += r"\times (0, R^{\mathrm{c}}) \times [0,2\pi)"
-        rad_bc_domain = r"(0, T^{\mathrm{end}}) \times (0, L) \times [0,2\pi)"
-        ang_bc_domain = r"(0, T^{\mathrm{end}}) \times (0, L) \times (0, R^{\mathrm{c}})"
+        rad_bc_domain = r"(0, T^{\mathrm{end}}) \times (0, L^{\mathrm{b}}) \times [0,2\pi)"
+        ang_bc_domain = r"(0, T^{\mathrm{end}}) \times (0, L^{\mathrm{b}}) \times (0, R^{\mathrm{c}})"
 
     if column_type == "Radial":
         # Radial flow: transport in rho direction, domain (R_in, R_out)
         radflow_bc_domain = r"(0, T^{\mathrm{end}})"
         diff_term = r"- D^{\mathrm{rad}}_{i} \frac{\partial c^{\b}_i}{\partial \rho}" if hasAxialDispersion else ""
         inflow_bc = (
-            r"v c_{\mathrm{in},i} &= \left.\left( v c^{\b}_i "
+            r"v c^{\mathrm{in}}_{i} &= \left.\left( v c^{\b}_i "
             + diff_term
-            + r"\right)\right|_{\rho=R^{\mathrm{in}}} & &\qquad\text{on }"
+            + r"\right)\right|_{\rho=R^{\mathrm{inner}}} & &\qquad\text{on }"
             + radflow_bc_domain
         )
         outflow_bc = (
-            r"0 &= - D^{\mathrm{rad}}_{i} \left. \frac{\partial c^{\b}_i}{\partial \rho} \right|_{\rho=R^{\mathrm{out}}} & &\qquad\text{on }"
+            r"0 &= - D^{\mathrm{rad}}_{i} \left. \frac{\partial c^{\b}_i}{\partial \rho} \right|_{\rho=R^{\mathrm{outer}}} & &\qquad\text{on }"
             + radflow_bc_domain
         )
 
@@ -653,15 +670,15 @@ def int_vol_BC(resolution: str, hasAxialDispersion: bool, column_type: str = "Ax
 
     elif column_type == "Frustum":
         # Frustum: transport in x direction with varying cross-section
-        diff_term = r"- D^{\mathrm{ax}}_{i} \frac{\partial c^{\b}_i}{\partial x}" if hasAxialDispersion else ""
+        diff_term = r"- D^{\mathrm{ax}}_{i} \frac{\partial c^{\b}_i}{\partial z}" if hasAxialDispersion else ""
         inflow_bc = (
-            r"\frac{v}{r(x)^2} c_{\mathrm{in},i} &= \left.\left( \frac{v}{r(x)^2} c^{\b}_i "
+            r"\frac{v}{r(z)^2} c^{\mathrm{in}}_{i} &= \left.\left( \frac{v}{r(z)^2} c^{\b}_i "
             + diff_term
-            + r"\right)\right|_{x=0} & &\qquad\text{on }"
+            + r"\right)\right|_{z=0} & &\qquad\text{on }"
             + ax_bc_domain
         )
         outflow_bc = (
-            r"0 &= - D^{\mathrm{ax}}_{i} \left. \frac{\partial c^{\b}_i}{\partial x} \right|_{x=L} & &\qquad\text{on }"
+            r"0 &= - D^{\mathrm{ax}}_{i} \left. \frac{\partial c^{\b}_i}{\partial z} \right|_{z=L^{\mathrm{b}}} & &\qquad\text{on }"
             + ax_bc_domain
         )
 
@@ -677,13 +694,13 @@ def int_vol_BC(resolution: str, hasAxialDispersion: bool, column_type: str = "Ax
         # Axial (default): standard cylindrical column
         ax_diff_term = r"- D^{\mathrm{ax}}_{i} \frac{\partial c^{\b}_i}{\partial z}" if hasAxialDispersion else ""
         inflow_bc = (
-            r"u c_{\mathrm{in},i} &= \left.\left( u c^{\b}_i "
+            r"u c^{\mathrm{in}}_{i} &= \left.\left( u c^{\b}_i "
             + ax_diff_term
             + r"\right)\right|_{z=0} & &\qquad\text{on }"
             + ax_bc_domain
         )
         outflow_bc = (
-            r"0 &= - D^{\mathrm{ax}}_{i} \left. \frac{\partial c^{\b}_i}{\partial z} \right|_{z=L} & &\qquad\text{on }"
+            r"0 &= - D^{\mathrm{ax}}_{i} \left. \frac{\partial c^{\b}_i}{\partial z} \right|_{z=L^{\mathrm{b}}} & &\qquad\text{on }"
             + ax_bc_domain
         )
 
@@ -725,6 +742,9 @@ def int_vol_BC(resolution: str, hasAxialDispersion: bool, column_type: str = "Ax
                 + ang_periodic_bc
             )
 
+    if without_pores:
+        boundary_conditions = homogenized_notation(boundary_conditions)
+
     return (
         r"""
 \begin{alignat}{2}
@@ -735,19 +755,21 @@ def int_vol_BC(resolution: str, hasAxialDispersion: bool, column_type: str = "Ax
     )
 
 
-def int_vol_initial(resolution: str, includeParLiquid: bool):
+def int_vol_initial(resolution: str, includeParLiquid: bool, without_pores: bool = False):
 
     if resolution == "1D":
-        bulk_liquid_eq = r"\left. c^{\b}_i \right|_{t = 0} &= c^{\b}_{\mathrm{init},i} & & \qquad\text{in } (0, L)"
-        par_liquid_eq = r"\left. c^{\p}_{j,i} \right|_{t = 0, r = R^{\mathrm{p}}_{j}} &= c^{\p}_{\mathrm{init},j,i} & & \qquad\text{in } (0, L)"
+        bulk_liquid_eq = (
+            r"\left. c^{\b}_i \right|_{t = 0} &= c^{\b,\mathrm{init}}_{i} & & \qquad\text{in } (0, L^{\mathrm{b}})"
+        )
+        par_liquid_eq = r"\left. c^{\p}_{j,i} \right|_{t = 0, r = R^{\mathrm{p}}_{j}} &= c^{\p,\mathrm{init}}_{j,i} & & \qquad\text{in } (0, L^{\mathrm{b}})"
 
     if resolution == "2D":
-        bulk_liquid_eq = r"\left. c^{\b}_i \right|_{t = 0} &= c^{\b}_{\mathrm{init},i} & & \qquad\text{in } (0, R^{\mathrm{c}}) \times (0, L)"
-        par_liquid_eq = r"\left. c^{\p}_{j,i} \right|_{t = 0, r = R^{\mathrm{p}}_{j}} &= c^{\p}_{\mathrm{init},j,i} & & \qquad\text{in } (0, R^{\mathrm{c}}) \times (0, L)"
+        bulk_liquid_eq = r"\left. c^{\b}_i \right|_{t = 0} &= c^{\b,\mathrm{init}}_{i} & & \qquad\text{in } (0, R^{\mathrm{c}}) \times (0, L^{\mathrm{b}})"
+        par_liquid_eq = r"\left. c^{\p}_{j,i} \right|_{t = 0, r = R^{\mathrm{p}}_{j}} &= c^{\p,\mathrm{init}}_{j,i} & & \qquad\text{in } (0, R^{\mathrm{c}}) \times (0, L^{\mathrm{b}})"
 
     if resolution == "3D":
-        bulk_liquid_eq = r"\left. c^{\b}_i \right|_{t = 0} &= c^{\b}_{\mathrm{init},i} & & \qquad\text{in } (0, R^{\mathrm{c}}) \times (0, L)\times [0,2\pi)"
-        par_liquid_eq = r"\left. c^{\p}_{j,i} \right|_{t = 0, r = (0, R^{\mathrm{p}}_{j})} &= c^{\p}_{\mathrm{init},j,i} & & \qquad\text{in } (0, R^{\mathrm{c}}) \times (0, L)\times [0,2\pi)"
+        bulk_liquid_eq = r"\left. c^{\b}_i \right|_{t = 0} &= c^{\b,\mathrm{init}}_{i} & & \qquad\text{in } (0, R^{\mathrm{c}}) \times (0, L^{\mathrm{b}})\times [0,2\pi)"
+        par_liquid_eq = r"\left. c^{\p}_{j,i} \right|_{t = 0, r = (0, R^{\mathrm{p}}_{j})} &= c^{\p,\mathrm{init}}_{j,i} & & \qquad\text{in } (0, R^{\mathrm{c}}) \times (0, L^{\mathrm{b}})\times [0,2\pi)"
 
     if includeParLiquid:
         equation = (
@@ -773,7 +795,7 @@ def int_vol_initial(resolution: str, includeParLiquid: bool):
           """
         )
 
-    return equation
+    return homogenized_notation(equation) if without_pores else equation
 
 
 def int_vol_domain(resolution: str, with_time_domain=True, column_type: str = "Axial"):
@@ -783,10 +805,12 @@ def int_vol_domain(resolution: str, with_time_domain=True, column_type: str = "A
     if int(re.search("\\d", resolution).group()) > 0:
         if column_type == "Radial":
             domain_ += (
-                r"\times (R^\mathrm{in}, R^\mathrm{out})" if with_time_domain else r"(R^\mathrm{in}, R^\mathrm{out})"
+                r"\times (R^\mathrm{inner}, R^\mathrm{outer})"
+                if with_time_domain
+                else r"(R^\mathrm{inner}, R^\mathrm{outer})"
             )
         else:
-            domain_ += r"\times (0, L)" if with_time_domain else r"(0, L)"
+            domain_ += r"\times (0, L^{\mathrm{b}})" if with_time_domain else r"(0, L^{\mathrm{b}})"
     if int(re.search("\\d", resolution).group()) > 1:
         domain_ += r"\times (0, R^\mathrm{c})"
     if int(re.search("\\d", resolution).group()) > 2:
@@ -1214,7 +1238,7 @@ def particle_boundary(
 
     if singleParticle:
         boundary_condition = re.sub("j,", "", boundary_condition)
-        boundary_condition = re.sub(r"j}", r"}", boundary_condition)
+        boundary_condition = re.sub(r"_\{j\}", "", boundary_condition)
 
     return boundary_condition
 
@@ -1271,9 +1295,9 @@ def full_particle_conc_domain(
 
     if column_resolution != "0D":
         if column_type == "Radial":
-            spatial = r"(R^\mathrm{in}, R^\mathrm{out})"
+            spatial = r"(R^\mathrm{inner}, R^\mathrm{outer})"
         else:
-            spatial = r"(0, L)"
+            spatial = r"(0, L^{\mathrm{b}})"
         domain = r"$(0, T^\mathrm{end}) \times " + spatial if with_time_domain else r"$\times " + spatial
     else:
         domain = r"$(0, T^\mathrm{end})" if with_time_domain else r"$"
@@ -1332,7 +1356,7 @@ def cry_suspension_density():
 
 def cry_pbe_cstr(has_primary: bool, has_growth_dispersion: bool, has_aggregation: bool, has_fragmentation: bool):
     lhs = r"\frac{\partial (n V)}{\partial t}"
-    rhs = r"F_{\mathrm{in}} n_{\mathrm{in}} - F_{\mathrm{out}} n"
+    rhs = r"Q^{\mathrm{in}} n^{\mathrm{in}} - Q^{\mathrm{out}} n"
 
     primary_terms = []
     if has_primary:
@@ -1361,7 +1385,7 @@ def cry_pbe_dpfr(
     rhs = r"- v_{\mathrm{ax}} \frac{\partial n}{\partial z}"
 
     if has_axial_dispersion:
-        rhs += r" + D_{\mathrm{ax}} \frac{\partial^2 n}{\partial z^2}"
+        rhs += r" + D^{\mathrm{ax}} \frac{\partial^2 n}{\partial z^2}"
 
     if has_primary:
         rhs += r" - \frac{\partial (v_G n)}{\partial x}"
@@ -1377,7 +1401,7 @@ def cry_pbe_dpfr(
 
 
 def cry_volume_cstr():
-    vol_eq = r"\frac{\mathrm{d} V}{\mathrm{d} t} &= F_{\mathrm{in}} - F_{\mathrm{out}}"
+    vol_eq = r"\frac{\mathrm{d} V}{\mathrm{d} t} &= Q^{\mathrm{in}} - Q^{\mathrm{out}}"
 
     return (
         r"""\begin{align}
@@ -1391,7 +1415,7 @@ def cry_volume_cstr():
 def cry_mass_balance_cstr(has_primary: bool):
 
     conc_lhs = r"\frac{\partial (c V)}{\partial t}"
-    conc_rhs = r"F_{\mathrm{in}} c_{\mathrm{in}} - F_{\mathrm{out}} c"
+    conc_rhs = r"Q^{\mathrm{in}} c^{\mathrm{in}} - Q^{\mathrm{out}} c"
 
     if has_primary:
         conc_rhs += r" - \rho k_v V \left( B_0 x_c^3 + 3 \int_{x_c}^{\infty} v_G n \, x^2 \, \mathrm{d}x \right)"
@@ -1412,7 +1436,7 @@ def cry_mass_balance_dpfr(has_primary: bool, has_axial_dispersion: bool):
     rhs = r"- v_{\mathrm{ax}} \frac{\partial c}{\partial z}"
 
     if has_axial_dispersion:
-        rhs += r" + D_{\mathrm{ax}} \frac{\partial^2 c}{\partial z^2}"
+        rhs += r" + D^{\mathrm{ax}} \frac{\partial^2 c}{\partial z^2}"
 
     if has_primary:
         rhs += r" - \rho k_v \left( B_0 x_c^3 + 3 \int_{x_c}^{\infty} v_G n \, x^2 \, \mathrm{d}x \right)"
@@ -1445,11 +1469,11 @@ def cry_pbe_bc_external_dpfr(has_axial_dispersion: bool):
     bcs = []
     if has_axial_dispersion:
         bcs.append(
-            r"\left. \left( n v_{\mathrm{ax}} - D_{\mathrm{ax}} \frac{\partial n}{\partial z} \right) \right|_{z=0} &= v_{\mathrm{ax}} n_{\mathrm{in},x}"
+            r"\left. \left( n v_{\mathrm{ax}} - D^{\mathrm{ax}} \frac{\partial n}{\partial z} \right) \right|_{z=0} &= v_{\mathrm{ax}} n^{\mathrm{in}}"
         )
-        bcs.append(r"\left. \frac{\partial n}{\partial z} \right|_{z=L} &= 0")
+        bcs.append(r"\left. \frac{\partial n}{\partial z} \right|_{z=L^{\mathrm{b}}} &= 0")
     else:
-        bcs.append(r"\left. n \right|_{z=0} &= n_{\mathrm{in},x}")
+        bcs.append(r"\left. n \right|_{z=0} &= n^{\mathrm{in}}")
     return (
         r"""\begin{align}
 """
@@ -1464,11 +1488,11 @@ def cry_solute_bc_dpfr(has_axial_dispersion: bool):
     bcs = []
     if has_axial_dispersion:
         bcs.append(
-            r"\left. \left( c \, v_{\mathrm{ax}} - D_{\mathrm{ax}} \frac{\partial c}{\partial z} \right) \right|_{z=0} &= v_{\mathrm{ax}} c_{\mathrm{in}}"
+            r"\left. \left( c \, v_{\mathrm{ax}} - D^{\mathrm{ax}} \frac{\partial c}{\partial z} \right) \right|_{z=0} &= v_{\mathrm{ax}} c^{\mathrm{in}}"
         )
-        bcs.append(r"\left. \frac{\partial c}{\partial z} \right|_{z=L} &= 0")
+        bcs.append(r"\left. \frac{\partial c}{\partial z} \right|_{z=L^{\mathrm{b}}} &= 0")
     else:
-        bcs.append(r"\left. c \right|_{z=0} &= c_{\mathrm{in}}")
+        bcs.append(r"\left. c \right|_{z=0} &= c^{\mathrm{in}}")
     return (
         r"""\begin{align}
 """

@@ -32,17 +32,17 @@ Specific model assumptions:
 
 \section*{Finite Bath without Pores}
 Consider a continuous stirred tank packed with spherical particles, and observed over a time interval $(0, T^{\mathrm{end}})$.
-The evolution of the liquid volume $V^{\mathrm{\ell}}\colon (0, T^{\mathrm{end}}) \to \mathbb{R}$ and the concentrations $c_i\colon (0, T^{\mathrm{end}}) \to \mathbb{R}$ of the components in the tank is governed by
+The evolution of the bulk volume $V^{\mathrm{b}}\colon (0, T^{\mathrm{end}}) \to \mathbb{R}$ and the concentrations $c^{\mathrm{b}}_i\colon (0, T^{\mathrm{end}}) \to \mathbb{R}$ of the components in the tank is governed by
 \begin{align}
-\frac{\mathrm{d}V^{\mathrm{b}}}{\mathrm{d}t} &= Q_{\mathrm{in}} - Q_{\mathrm{out}},
+\frac{\mathrm{d}V^{\mathrm{b}}}{\mathrm{d}t} &= Q^{\mathrm{in}} - Q^{\mathrm{out}},
     \\
-    \frac{\mathrm{d}}{\mathrm{d} t} \left( V^{\mathrm{b}} c^{\mathrm{b}}_i \right) + V^{\mathrm{p}} \varepsilon^{\mathrm{p}} \frac{\partial c^{b}_i}{\partial t}&= Q_{\mathrm{in}} c^{\mathrm{b}}_{\mathrm{in},i} - Q_{\mathrm{out}} c^{\mathrm{b}}_i - V^{\mathrm{p}} \left( 1 - \varepsilon^{\mathrm{p}} \right) \frac{\partial c^{\mathrm{s}}_i}{\partial t},
+    \frac{\mathrm{d}}{\mathrm{d} t} \left( V^{\mathrm{b}} c^{\mathrm{b}}_i \right) + V^{\mathrm{p}} \varepsilon^{\mathrm{p}} \frac{\partial c^{\mathrm{b}}_i}{\partial t}&= Q^{\mathrm{in}} c^{\mathrm{in}}_{i} - Q^{\mathrm{out}} c^{\mathrm{b}}_i - V^{\mathrm{p}} \left( 1 - \varepsilon^{\mathrm{p}} \right) \frac{\partial c^{\mathrm{s}}_i}{\partial t},
 \end{align}
-Here, $t\in (0, T^{\mathrm{end}})$ is the time coordinate, $c^{\mathrm{b}}_i\colon (0, T^\mathrm{end}) \mapsto \mathbb{R}$ is the bulk liquid concentration, $Q^\mathrm{in}\geq 0$ is the volumetric flow rate into the tank, $Q^\mathrm{out}\geq 0$ is the volumetric flow rate out of the tank, and $\varepsilon^{\mathrm{t}}\in (0, 1)$ is the total porosity.
+Here, $t\in (0, T^{\mathrm{end}})$ is the time coordinate, $c^{\mathrm{\ell}}_i\colon (0, T^\mathrm{end}) \mapsto \mathbb{R}$ is the liquid concentration, $Q^\mathrm{in}\geq 0$ is the volumetric flow rate into the tank, $Q^\mathrm{out}\geq 0$ is the volumetric flow rate out of the tank, and $\varepsilon^{\mathrm{t}}\in (0, 1)$ is the total porosity.
 In the particles, mass transfer is governed by reaction equations in $(0, T^\mathrm{end})$ and for all components
 \begin{align}
           \frac{\partial c^{\mathrm{s}}_{i}}{\partial t}
           &= f^{\mathrm{bind}}_{i}\left( \vec{c}^{\mathrm{\ell}}, \vec{c}^{\mathrm{s}} \right), \end{align}
-Here, $c^{\mathrm{s}}_{i}\colon (0, T^\mathrm{end}) \mapsto \mathbb{R}$ is the particle solid concentration, $f^\mathrm{bind}_{i}$ is the adsorption isotherm function, $\vec{c}^\mathrm{p}$ is the particle liquid components vector, and $\vec{c}^\mathrm{s}$ is the particle solid components vector.
+Here, $c^{\mathrm{s}}_{i}\colon (0, T^\mathrm{end}) \mapsto \mathbb{R}$ is the particle solid concentration, $f^\mathrm{bind}_{i}$ is the adsorption isotherm function, $\vec{c}^\mathrm{\ell}$ is the liquid components vector, and $\vec{c}^\mathrm{s}$ is the particle solid components vector.
 Consistent initial values for all solution variables (concentrations) are defined at $t = 0$.
 \end{document}

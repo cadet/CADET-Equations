@@ -112,7 +112,7 @@ def test_cry_pbe_dpfr(has_primary, has_ax_disp, has_gd, has_agg, has_frag):
     assert r"\begin{align}" in result
     assert r"v_{\mathrm{ax}}" in result
     if has_ax_disp:
-        assert r"D_{\mathrm{ax}}" in result
+        assert r"D^{\mathrm{ax}}" in result
     if has_primary:
         assert r"v_G" in result
     if has_agg:
@@ -129,7 +129,7 @@ def test_cry_pbe_dpfr(has_primary, has_ax_disp, has_gd, has_agg, has_frag):
 @pytest.mark.parametrize("has_primary", [True, False])
 def test_cry_mass_balance_cstr(has_primary):
     result = eq.cry_mass_balance_cstr(has_primary)
-    assert r"F_{\mathrm{in}}" in result
+    assert r"Q^{\mathrm{in}}" in result
     if has_primary:
         assert r"\rho k_v" in result
 
@@ -148,7 +148,7 @@ def test_cry_mass_balance_dpfr(has_primary, has_ax_disp):
     result = eq.cry_mass_balance_dpfr(has_primary, has_ax_disp)
     assert r"v_{\mathrm{ax}}" in result
     if has_ax_disp:
-        assert r"D_{\mathrm{ax}}" in result
+        assert r"D^{\mathrm{ax}}" in result
     if has_primary:
         assert r"\rho k_v" in result
 
@@ -186,8 +186,8 @@ def test_cry_pbe_bc_internal_no_primary():
 @pytest.mark.parametrize(
     "has_ax_disp, expected_frag",
     [
-        (True, r"D_{\mathrm{ax}}"),
-        (False, r"n_{\mathrm{in},x}"),
+        (True, r"D^{\mathrm{ax}}"),
+        (False, r"n^{\mathrm{in}}"),
     ],
 )
 def test_cry_pbe_bc_external_dpfr(has_ax_disp, expected_frag):
@@ -200,8 +200,8 @@ def test_cry_pbe_bc_external_dpfr(has_ax_disp, expected_frag):
 @pytest.mark.parametrize(
     "has_ax_disp, expected_frag",
     [
-        (True, r"D_{\mathrm{ax}}"),
-        (False, r"c_{\mathrm{in}}"),
+        (True, r"D^{\mathrm{ax}}"),
+        (False, r"c^{\mathrm{in}}"),
     ],
 )
 def test_cry_solute_bc_dpfr(has_ax_disp, expected_frag):

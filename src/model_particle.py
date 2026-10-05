@@ -162,11 +162,17 @@ class Particle:
             )
 
             if self.binding_model == "Arbitrary":
+                # Without pores, the binding model acts on the homogenized liquid phase
+                without_pores_ = self.nonlimiting_filmDiff and self.resolution == "0D"
+                liquid_vec_ = r"\vec{c}^\mathrm{\ell}" if without_pores_ else r"\vec{c}^\mathrm{p}"
+                liquid_vec_desc_ = (
+                    r"liquid components vector" if without_pores_ else r"particle liquid components vector"
+                )
                 symbol_name_ = r"f^\mathrm{bind}_{j,i}" if self.PTD else r"f^\mathrm{bind}_{i}"
                 dep_ = (
-                    r"\vec{c}^\mathrm{p}, \vec{c}^\mathrm{s}; j, i"
+                    liquid_vec_ + r", \vec{c}^\mathrm{s}; j, i"
                     if self.PTD
-                    else r"\vec{c}^\mathrm{p}, \vec{c}^\mathrm{s}; i"
+                    else liquid_vec_ + r", \vec{c}^\mathrm{s}; i"
                 )
                 vars_and_params_.append(
                     {
@@ -180,8 +186,8 @@ class Particle:
                 vars_and_params_.append(
                     {
                         "Group": 10.1,
-                        "Symbol": r"\vec{c}^\mathrm{p}",
-                        "Description": r"particle liquid components vector",
+                        "Symbol": liquid_vec_,
+                        "Description": liquid_vec_desc_,
                         "Unit": u("concentration_molar_vec"),
                         "Dependence": state_deps,
                     }

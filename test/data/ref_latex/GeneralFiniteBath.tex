@@ -6,13 +6,13 @@
 
 \section*{General Finite Bath}
 Consider a continuous stirred tank packed with spherical particles, and observed over a time interval $(0, T^{\mathrm{end}})$.
-The evolution of the liquid volume $V^{\mathrm{\ell}}\colon (0, T^{\mathrm{end}}) \to \mathbb{R}$ and the concentrations $c_i\colon (0, T^{\mathrm{end}}) \to \mathbb{R}$ of the components in the tank is governed by
+The evolution of the bulk volume $V^{\mathrm{b}}\colon (0, T^{\mathrm{end}}) \to \mathbb{R}$ and the concentrations $c^{\mathrm{b}}_i\colon (0, T^{\mathrm{end}}) \to \mathbb{R}$ of the components in the tank is governed by
 \begin{align}
-\frac{\mathrm{d}V^{\mathrm{b}}}{\mathrm{d}t} &= Q_{\mathrm{in}} - Q_{\mathrm{out}},
+\frac{\mathrm{d}V^{\mathrm{b}}}{\mathrm{d}t} &= Q^{\mathrm{in}} - Q^{\mathrm{out}},
     \\
-    \frac{\mathrm{d}}{\mathrm{d} t} \left( V^{\mathrm{b}} c^{\mathrm{b}}_i \right)&= Q_{\mathrm{in}} c^{\mathrm{b}}_{\mathrm{in},i} - Q_{\mathrm{out}} c^{\mathrm{b}}_i- \left(1 - \varepsilon^{\mathrm{c}} \right) \frac{3}{R^{\mathrm{p}}} k^{\mathrm{f}}_{i} \left(c^{\mathrm{b}}_i - \left. c^{\mathrm{p}}_{i} \right|_{r = R^{\mathrm{p}}} \right),
+    \frac{\mathrm{d}}{\mathrm{d} t} \left( V^{\mathrm{b}} c^{\mathrm{b}}_i \right)&= Q^{\mathrm{in}} c^{\mathrm{in}}_{i} - Q^{\mathrm{out}} c^{\mathrm{b}}_i- V^{\mathrm{par}} \frac{3}{R^{\mathrm{p}}} k^{\mathrm{f}}_{i} \left(c^{\mathrm{b}}_i - \left. c^{\mathrm{p}}_{i} \right|_{r = R^{\mathrm{p}}} \right),
 \end{align}
-Here, $t\in (0, T^{\mathrm{end}})$ is the time coordinate, $R^\mathrm{p}> 0$ is the particle radius, $c^{\mathrm{b}}_i\colon (0, T^\mathrm{end}) \mapsto \mathbb{R}$ is the bulk liquid concentration, $Q^\mathrm{in}\geq 0$ is the volumetric flow rate into the tank, $Q^\mathrm{out}\geq 0$ is the volumetric flow rate out of the tank, $\varepsilon^{\mathrm{c}}\in (0, 1)$ is the column porosity, and $k^\mathrm{f}_{i}\geq 0$ is the film diffusion coefficient.
+Here, $t\in (0, T^{\mathrm{end}})$ is the time coordinate, $R^\mathrm{p}> 0$ is the particle radius, $c^{\mathrm{b}}_i\colon (0, T^\mathrm{end}) \mapsto \mathbb{R}$ is the bulk liquid concentration, $Q^\mathrm{in}\geq 0$ is the volumetric flow rate into the tank, $Q^\mathrm{out}\geq 0$ is the volumetric flow rate out of the tank, $V^{\mathrm{par}}\geq 0$ is the particle volume, and $k^\mathrm{f}_{i}\geq 0$ is the film diffusion coefficient.
 In the particles, mass transfer is governed by diffusion-reaction equations in $(0, T^\mathrm{end})\times (0, R^{\mathrm{p}})$ and for all components
 
 \begin{align}
@@ -23,8 +23,8 @@ with boundary conditions
 \begin{align}
 - \left. \left( D^{\mathrm{p}}_{i} \frac{\partial c^{\mathrm{p}}_{i}}{\partial r} \right) \right|_{r=0}
 &= 0, \\
-\varepsilon^{\mathrm{p}} \left. \left( D^{\mathrm{p}}_{i} \frac{\partial c^{\mathrm{p}}_{i}}{\partial r} \right)\right|_{r = R^{\mathrm{p}}_{}}
-               &= k^{\mathrm{f}}_{i} \left. \left( c^{\mathrm{b}}_i - c^{\mathrm{p}}_{i} \right|_{r = R^{\mathrm{p}}_{}} \right).\end{align}
+\varepsilon^{\mathrm{p}} \left. \left( D^{\mathrm{p}}_{i} \frac{\partial c^{\mathrm{p}}_{i}}{\partial r} \right)\right|_{r = R^{\mathrm{p}}}
+               &= k^{\mathrm{f}}_{i} \left. \left( c^{\mathrm{b}}_i - c^{\mathrm{p}}_{i} \right|_{r = R^{\mathrm{p}}} \right).\end{align}
 Here, $r$ is the radial particle coordinate, $c^{\mathrm{p}}_{i}\colon (0, T^\mathrm{end})\times (0, R^{\mathrm{p}}) \mapsto \mathbb{R}$ is the particle liquid concentration, $\varepsilon^{\mathrm{p}}\in (0, 1)$ is the particle porosity, and $D^\mathrm{p}_{i}> 0$ is the particle diffusion coefficient.
 Consistent initial values for all solution variables (concentrations) are defined at $t = 0$.
 \end{document}

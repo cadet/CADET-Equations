@@ -743,16 +743,14 @@ class Column:
         if self.resolution == "1D":
             if self.column_type == "Radial":
                 state_deps = r"t, \rho"
-            elif self.column_type == "Frustum":
-                state_deps = r"t, x"
             else:
                 state_deps = r"t, z"
         if self.resolution == "2D":
             state_deps = r"t, z, \rho"
             param_deps = r"\rho"
         if self.resolution == "3D":
-            state_deps = r"t, z, \rho, \phi"
-            param_deps = r"z, \rho, \phi"
+            state_deps = r"t, z, \rho, \varphi"
+            param_deps = r"z, \rho, \varphi"
 
         state_deps += "; i"
         param_deps_comp = r"i" if param_deps == r"\text{constant}" else param_deps + "; i"
@@ -771,8 +769,9 @@ class Column:
             },
             {
                 "Group": 1,
-                "Symbol": r"c^{\b}_i",
-                "Description": r"bulk liquid concentration",
+                # Without pores, bulk and particle liquid phases are homogenized into one liquid phase
+                "Symbol": r"c^{\l}_i" if without_pores_ else r"c^{\b}_i",
+                "Description": r"liquid concentration" if without_pores_ else r"bulk liquid concentration",
                 "Unit": u("concentration_molar"),
                 "Dependence": state_deps,
                 "Domain": eq.int_vol_domain(self.resolution, column_type=self.column_type),
@@ -899,13 +898,13 @@ class Column:
                     "Description": r"radial coordinate",
                     "Unit": u("length"),
                     "Dependence": r"\text{independent variable}",
-                    "Property": r"\in (R^{\mathrm{in}}, R^{\mathrm{out}})",
+                    "Property": r"\in (R^{\mathrm{inner}}, R^{\mathrm{outer}})",
                 }
             )
             self.vars_and_params.append(
                 {
                     "Group": -1,
-                    "Symbol": r"R^{\mathrm{in}}",
+                    "Symbol": r"R^{\mathrm{inner}}",
                     "Description": r"inner cylinder radius",
                     "Unit": u("length"),
                     "Dependence": r"\text{constant}",
@@ -915,11 +914,21 @@ class Column:
             self.vars_and_params.append(
                 {
                     "Group": -1,
-                    "Symbol": r"R^{\mathrm{out}}",
+                    "Symbol": r"R^{\mathrm{outer}}",
                     "Description": r"outer cylinder radius",
                     "Unit": u("length"),
                     "Dependence": r"\text{constant}",
-                    "Property": r" > R^{\mathrm{in}}",
+                    "Property": r" > R^{\mathrm{inner}}",
+                }
+            )
+            self.vars_and_params.append(
+                {
+                    "Group": -1,
+                    "Symbol": r"H^{\mathrm{b}}",
+                    "Description": r"axial bed height",
+                    "Unit": u("length"),
+                    "Dependence": r"\text{constant}",
+                    "Property": r" > 0",
                 }
             )
             self.vars_and_params.append(
@@ -939,25 +948,25 @@ class Column:
                     "Description": r"velocity coefficient",
                     "Unit": u("velocity_coeff"),
                     "Dependence": r"\text{constant}",
-                    "Property": r":= \frac{Q}{2 \pi L}",
+                    "Property": r":= \frac{Q}{2 \pi H^{\mathrm{b}}}",
                 }
             )
         elif self.column_type == "Frustum":
             self.vars_and_params.append(
                 {
                     "Group": 0,
-                    "Symbol": r"x",
-                    "Description": r"axial coordinate",
+                    "Symbol": r"z",
+                    "Description": r"axial frustum coordinate",
                     "Unit": u("length"),
                     "Dependence": r"\text{independent variable}",
-                    "Property": r"\in (0, L)",
+                    "Property": r"\in (0, L^{\mathrm{b}})",
                 }
             )
             self.vars_and_params.append(
                 {
                     "Group": -1,
-                    "Symbol": r"L",
-                    "Description": r"length of column",
+                    "Symbol": r"L^{\mathrm{b}}",
+                    "Description": r"column length",
                     "Unit": u("length"),
                     "Dependence": r"\text{constant}",
                     "Property": r" > 0",
@@ -966,7 +975,7 @@ class Column:
             self.vars_and_params.append(
                 {
                     "Group": -1,
-                    "Symbol": r"R^0",
+                    "Symbol": r"R^{\mathrm{0}}",
                     "Description": r"column radius at inlet",
                     "Unit": u("length"),
                     "Dependence": r"\text{constant}",
@@ -976,7 +985,7 @@ class Column:
             self.vars_and_params.append(
                 {
                     "Group": -1,
-                    "Symbol": r"R^L",
+                    "Symbol": r"R^{\mathrm{L^\mathrm{b}}}",
                     "Description": r"column radius at outlet",
                     "Unit": u("length"),
                     "Dependence": r"\text{constant}",
@@ -986,11 +995,11 @@ class Column:
             self.vars_and_params.append(
                 {
                     "Group": 3,
-                    "Symbol": r"R",
+                    "Symbol": r"r",
                     "Description": r"column radius function",
                     "Unit": u("length"),
-                    "Dependence": r"x",
-                    "Property": r"(x) = R^0 + \frac{R^L - R^0}{L} x",
+                    "Dependence": r"z",
+                    "Property": r"(z) = R^{\mathrm{0}} + \frac{R^{\mathrm{L^\mathrm{b}}} - R^{\mathrm{0}}}{L^{\mathrm{b}}} z",
                 }
             )
             self.vars_and_params.append(
@@ -1021,14 +1030,14 @@ class Column:
                     "Description": r"axial cylinder coordinate",
                     "Unit": u("length"),
                     "Dependence": r"\text{independent variable}",
-                    "Property": r"\in (0, L)",
+                    "Property": r"\in (0, L^{\mathrm{b}})",
                 }
             )
             self.vars_and_params.append(
                 {
                     "Group": -1,
-                    "Symbol": r"L",
-                    "Description": r"length of cylinder",
+                    "Symbol": r"L^{\mathrm{b}}",
+                    "Description": r"column length",
                     "Unit": u("length"),
                     "Dependence": r"\text{constant}",
                     "Property": r" > 0",
@@ -1083,7 +1092,7 @@ class Column:
             self.vars_and_params.append(
                 {
                     "Group": 0,
-                    "Symbol": r"\phi",
+                    "Symbol": r"\varphi",
                     "Description": r"angular cylinder coordinate",
                     "Unit": u("length"),
                     "Dependence": r"\text{independent variable}",
@@ -1103,12 +1112,24 @@ class Column:
                         "Property": r"> 0",
                     }
                 )
-            if not without_pores_:
+            if not without_pores_ and self.resolution == "0D":
+                # In a compartment the film diffusion term scales with the particle volume
                 self.vars_and_params.append(
                     {
                         "Group": 4,
-                        "Symbol": r"\varepsilon^{\mathrm{c}}",
-                        "Description": r"column porosity",
+                        "Symbol": r"V^{\mathrm{par}}",
+                        "Description": r"particle volume",
+                        "Unit": u("volume"),
+                        "Dependence": r"\text{constant}",
+                        "Property": r"\geq 0",
+                    }
+                )
+            elif not without_pores_:
+                self.vars_and_params.append(
+                    {
+                        "Group": 4,
+                        "Symbol": r"\varepsilon^{\mathrm{b}}",
+                        "Description": r"bulk porosity",
                         "Unit": u("dimensionless"),
                         "Dependence": re.sub("t, ", "", state_deps),
                         "Property": r"\in (0, 1)",
@@ -1319,11 +1340,11 @@ class Column:
         without_pores_ = nlf and self.has_binding and self.particle_models[0].resolution == "0D"
 
         if self.resolution == "0D":
-            filter_str = r" - Q_{\mathrm{filter}}" if self.has_filter else ""
+            filter_str = r" - Q^{\mathrm{filter}}" if self.has_filter else ""
 
             equation = (
                 r"""
-    \frac{\mathrm{d}V^{\b}}{\mathrm{d}t} &= Q_{\mathrm{in}} - Q_{\mathrm{out}}"""
+    \frac{\mathrm{d}V^{\b}}{\mathrm{d}t} &= Q^{\mathrm{in}} - Q^{\mathrm{out}}"""
                 + filter_str
                 + r""",
     \\
@@ -1331,13 +1352,13 @@ class Column:
             )
 
             if nlf and self.has_binding and self.particle_models[0].resolution == "0D":
-                equation += r" + V^{\p} \varepsilon^{\mathrm{p}} \frac{\partial c^{b}_i}{\partial t}"
+                equation += r" + V^{\p} \varepsilon^{\mathrm{p}} \frac{\partial c^{\b}_i}{\partial t}"
                 if self.req_binding:
                     equation += (
                         r" + V^{\p} \left( 1 - \varepsilon^{\mathrm{p}} \right) \frac{\partial c^{\s}_i}{\partial t}"
                     )
 
-            equation += r"&= Q_{\mathrm{in}} c^{\b}_{\mathrm{in},i} - Q_{\mathrm{out}} c^{\b}_i"
+            equation += r"&= Q^{\mathrm{in}} c^{\mathrm{in}}_{i} - Q^{\mathrm{out}} c^{\b}_i"
 
             if nlf and self.has_binding and self.particle_models[0].resolution == "0D" and not self.req_binding:
                 equation += (
@@ -1349,7 +1370,7 @@ class Column:
 
         else:
             equation = (
-                eq.bulk_time_derivative(r"\varepsilon^{\mathrm{c}}")
+                eq.bulk_time_derivative(r"\varepsilon^{\mathrm{b}}")
                 if not without_pores_
                 else eq.bulk_time_derivative()
             )
@@ -1373,21 +1394,25 @@ class Column:
             equation += (
                 eq_sign + convection_func()
                 if without_pores_
-                else eq_sign + convection_func(r"\varepsilon^{\mathrm{c}}")
+                else eq_sign + convection_func(r"\varepsilon^{\mathrm{b}}")
             )
 
+            # In the homogenized domain the porosity is absorbed into the apparent coefficients
+            porosity = None if without_pores_ else r"\varepsilon^{\mathrm{b}}"
+
             if self.has_axial_dispersion:
-                equation += " + " + dispersion_func(r"\varepsilon^{\mathrm{c}}")
+                equation += " + " + dispersion_func(porosity)
             if self.has_radial_dispersion:
-                equation += r" \nonumber \\ & + " + eq.radial_dispersion(r"\varepsilon^{\mathrm{c}}")
+                equation += r" \nonumber \\ & + " + eq.radial_dispersion(porosity)
             if self.has_angular_dispersion:
-                equation += r" \nonumber \\ & + " + eq.angular_dispersion(r"\varepsilon^{\mathrm{c}}")
+                equation += r" \nonumber \\ & + " + eq.angular_dispersion(porosity)
+
+            if without_pores_:
+                equation = eq.homogenized_notation(equation)
 
             if self.N_p == 0:  # remove occurencies of porosity, which is just constant one in this case
-                equation = re.sub(
-                    r"\\varepsilon^{\\mathrm{c}}",
-                    "",
-                    re.sub(r"\\left\( \\varepsilon^{\\mathrm{c}} c^{\\l}_i \\right\)", r"c^{\\l}_i", equation),
+                equation = equation.replace(r"\left( \varepsilon^{\mathrm{b}} c^{\b}_i \right)", r"c^{\b}_i").replace(
+                    r"\varepsilon^{\mathrm{b}} ", ""
                 )
 
         if nlf_override is not None:
@@ -1443,7 +1468,9 @@ class Column:
             equation += " + " + eq.bulk_reaction_term()
 
         if self.resolution == "0D":
-            equation = re.sub(r"\\left\(1 - \\varepsilon^{\\mathrm{c}} \\right\)", r"V^s", equation)
+            # In a compartment the film diffusion term scales with the particle volume,
+            # not with the bulk porosity (Model (B0) of the reference framework).
+            equation = equation.replace(r"\left(1 - \varepsilon^{\mathrm{b}} \right)", r"V^{\mathrm{par}}")
 
         equation = (
             r"""\begin{align}
@@ -1457,7 +1484,10 @@ class Column:
 
     def interstitial_volume_bc(self):
         if self.resolution != "0D":
-            return eq.int_vol_BC(self.resolution, self.has_axial_dispersion, self.column_type)
+            without_pores_ = (
+                self.nonlimiting_filmDiff and self.has_binding and self.particle_models[0].resolution == "0D"
+            )
+            return eq.int_vol_BC(self.resolution, self.has_axial_dispersion, self.column_type, without_pores_)
         else:
             return None
 

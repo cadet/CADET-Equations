@@ -323,7 +323,7 @@ if model_type_ == "Crystallization":
     else:
         disp_str = " with axial dispersion" if cry_model.has_axial_dispersion else ""
         write_and_save(
-            r"Consider a dispersive plug flow reactor (DPFR) of length $L > 0$"
+            r"Consider a dispersive plug flow reactor (DPFR) of length $L^{\mathrm{b}} > 0$"
             + disp_str
             + r", observed over a time interval $(0, T^{\mathrm{end}})$. "
             r"The particle population is described by the number density $n(t, x, z)$ "
@@ -500,11 +500,11 @@ else:  # Chromatography model family
     if column_model.resolution == "0D":
         intro_str = r"Consider a continuous stirred tank "
     elif column_model.column_type == "Radial":
-        intro_str = r"Consider a hollow cylindrical column with inner radius $R^{\mathrm{in}} > 0$ and outer radius $R^{\mathrm{out}} > R^{\mathrm{in}}$ "
+        intro_str = r"Consider a hollow cylindrical column of axial bed height $H^{\mathrm{b}} > 0$ with inner radius $R^{\mathrm{inner}} > 0$ and outer radius $R^{\mathrm{outer}} > R^{\mathrm{inner}}$ "
     elif column_model.column_type == "Frustum":
-        intro_str = r"Consider a conical frustum column of length $L > 0$ with inlet radius $R^0 > 0$ and outlet radius $R^L > 0$ "
+        intro_str = r"Consider a conical frustum column of length $L^{\mathrm{b}} > 0$ with inlet radius $R^{\mathrm{0}} > 0$ and outlet radius $R^{\mathrm{L^\mathrm{b}}} > 0$ "
     else:
-        intro_str = r"Consider a cylindrical column of length $L > 0$ "
+        intro_str = r"Consider a cylindrical column of length $L^{\mathrm{b}} > 0$ "
         if column_model.resolution == "2D" or column_model.resolution == "3D":
             intro_str += r" and radius $R^{\mathrm{c}} > 0$ "
 
@@ -557,7 +557,7 @@ else:  # Chromatography model family
             r"""
     \begin{equation*}
 """
-            + "\t    \\sum_{j=1}^{N_{\\mathrm{p}}} d_j"
+            + "\t    \\sum_{j=1}^{N^{\\mathrm{p}}} d_j"
             + d_j_dep
             + r" = 1 "
             + d_j_dep2
@@ -570,7 +570,7 @@ else:  # Chromatography model family
 
     if column_model.resolution == "0D":
         write_and_save(
-            r"The evolution of the liquid volume $V^{\l}\colon (0, T^{\mathrm{end}}) \to \mathbb{R}$ and the concentrations $c_i\colon (0, T^{\mathrm{end}}) \to \mathbb{R}$ of the components in the tank is governed by"
+            r"The evolution of the bulk volume $V^{\b}\colon (0, T^{\mathrm{end}}) \to \mathbb{R}$ and the concentrations $c^{\b}_i\colon (0, T^{\mathrm{end}}) \to \mathbb{R}$ of the components in the tank is governed by"
         )
         write_and_save(interstitial_volume_eq, as_latex=True)
     else:

@@ -299,8 +299,8 @@ def test_int_filmDiff_nonlimiting_with_surfDiff():
 @pytest.mark.parametrize(
     "resolution, hasAxDisp, expected, not_expected",
     [
-        ("1D", True, [r"D^{\mathrm{ax}}", r"z=0", r"z=L"], []),
-        ("1D", False, [r"c_{\mathrm{in}"], [r"z=L"]),
+        ("1D", True, [r"D^{\mathrm{ax}}", r"z=0", r"z=L^{\mathrm{b}}"], []),
+        ("1D", False, [r"c^{\mathrm{in}}_{i}"], [r"z=L"]),
         ("2D", True, [r"D^{\mathrm{rad}}", r"R^{\mathrm{c}}"], []),
         ("3D", True, [r"D^{\mathrm{ang}}", r"2\pi"], []),
     ],
@@ -360,10 +360,10 @@ def test_int_vol_initial_3D_domain():
     "resolution, with_time, expected, not_expected",
     [
         ("0D", True, [r"T^\mathrm{end}"], [r"L"]),
-        ("1D", True, [r"T^\mathrm{end}", r"(0, L)"], []),
+        ("1D", True, [r"T^\mathrm{end}", r"(0, L^{\mathrm{b}})"], []),
         ("2D", True, [r"R^\mathrm{c}"], []),
         ("3D", True, [r"2\pi"], []),
-        ("1D", False, [r"(0, L)"], [r"T^\mathrm{end}"]),
+        ("1D", False, [r"(0, L^{\mathrm{b}})"], [r"T^\mathrm{end}"]),
     ],
 )
 def test_int_vol_domain(resolution, with_time, expected, not_expected):
@@ -399,7 +399,7 @@ def test_particle_domain(hasCore, with_par_index, expected, not_expected):
 @pytest.mark.parametrize(
     "col_res, par_res, hasCore, with_time, expected, not_expected",
     [
-        ("1D", "1D", False, True, [r"(0, L)", r"R^{\mathrm{p}}"], []),
+        ("1D", "1D", False, True, [r"(0, L^{\mathrm{b}})", r"R^{\mathrm{p}}"], []),
         ("0D", "0D", False, True, [r"T^\mathrm{end}"], [r"R^{\mathrm{p}}"]),
         ("2D", "1D", False, True, [r"R^\mathrm{c}"], []),
         ("1D", "1D", True, True, [r"R^{\mathrm{pc}}"], []),
