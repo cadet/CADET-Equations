@@ -22,6 +22,7 @@ from src.model_column import Column
 from src.model_crystallization import Crystallization
 from src.renderer import render_availability_badges
 from src.renderer import write_and_save as renderer_write_and_save
+from src.theme import apply_theme_css
 from src.units import AVAILABLE_SYSTEMS, UNIT_SYSTEMS, format_conversion_factor, get_conversion_factor
 from src.utils import format_variables
 
@@ -34,6 +35,8 @@ st.set_page_config(
     page_icon=r":material/biotech:",  # ":material/modeling:",
     layout="wide",
 )
+
+apply_theme_css()
 
 # Custom CSS to fix equation tag overlap and improve responsiveness
 st.markdown(
@@ -65,10 +68,10 @@ st.markdown(
 
     /* CADET blue for all hyperlinks */
     .stMarkdown a, .stMarkdown a:visited {
-        color: #023d6b !important;
+        color: var(--cadet-link) !important;
     }
     .stMarkdown a:hover {
-        color: #145a86 !important;
+        color: var(--cadet-link-hover) !important;
     }
 
 </style>
@@ -133,15 +136,15 @@ st.markdown(
 
 /* Primary button */
 div.stButton > button[kind="primary"] {
-    background-color: #023d6b;
-    color: white;
+    background-color: var(--cadet-button-bg);
+    color: var(--cadet-button-fg);
     border: none;
 }
 
 /* Primary button hover */
 div.stButton > button[kind="primary"]:hover {
-    background-color: #145a86;
-    color: white;
+    background-color: var(--cadet-button-bg-hover);
+    color: var(--cadet-button-fg);
 }
 
 </style>

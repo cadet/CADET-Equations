@@ -23,16 +23,16 @@ _BADGE_TOOLTIP_CSS = """<style>
     top: 110%;
     left: 0;
     z-index: 1000;
-    background: white;
-    border: 1px solid #ddd;
+    background: var(--cadet-tooltip-bg);
+    border: 1px solid var(--cadet-tooltip-border);
     border-radius: 8px;
     padding: 8px 12px;
     font-size: 0.82em;
     min-width: 260px;
     max-width: 400px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+    box-shadow: 0 2px 8px var(--cadet-tooltip-shadow);
     white-space: normal;
-    color: #333;
+    color: var(--cadet-tooltip-fg);
 }
 .badge-container:hover .badge-tooltip {
     display: block;
@@ -58,17 +58,17 @@ def availability_badge_html(name: str, available: int, details=None) -> str:
         HTML snippet suitable for inline display in Streamlit.
     """
     # model not available default
-    color_bg = "#fdecea"
-    color_fg = "#b71c1c"
+    color_bg = "var(--cadet-badge-unsupported-bg)"
+    color_fg = "var(--cadet-badge-unsupported-fg)"
     icon = "not supported"
 
     if available == 1:
-        color_bg = "#dce7f0"
-        color_fg = "#023d6b"
+        color_bg = "var(--cadet-badge-supported-bg)"
+        color_fg = "var(--cadet-badge-supported-fg)"
         icon = "supported"
     elif available == 0:
-        color_bg = "#fff4e5"
-        color_fg = "#b26a00"
+        color_bg = "var(--cadet-badge-approx-bg)"
+        color_fg = "var(--cadet-badge-approx-fg)"
         icon = "approximation"
 
     badge_style = (
