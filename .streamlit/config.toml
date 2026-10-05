@@ -1,3 +1,23 @@
+# Theme configuration.
+#
+# Defining both [theme.light] and [theme.dark] makes Streamlit offer "Light",
+# "Dark" and "Use system setting" under Settings > Appearance (the "..." menu in
+# the top right). Until a user picks one, the app follows the browser/OS
+# preference. Options shared by both appearances go into [theme].
+
 [theme]
-base = "dark"
+# CADET blue
 primaryColor = "#023d6b"
+
+[theme.light]
+primaryColor = "#023d6b"
+backgroundColor = "#ffffff"
+secondaryBackgroundColor = "#f0f4f8"
+textColor = "#0f172a"
+
+[theme.dark]
+# Lightened CADET blue: the brand navy is too dark to read on a dark background
+primaryColor = "#6fb3e0"
+backgroundColor = "#0e1117"
+secondaryBackgroundColor = "#1a2230"
+textColor = "#e5e7eb"
