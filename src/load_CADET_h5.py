@@ -18,18 +18,65 @@ CADET_binding_model_map = {
 
 CADET_reaction_model_map = {
     "MASS_ACTION_LAW": "Mass Action Law",
+    "MASS_ACTION_LAW_CROSS_PHASE": "Mass Action Law",
     "MICHAELIS_MENTEN": "Michaelis Menten",
 }
 
+CADET_particle_geometry_map = {
+    "SPHERE": "Sphere",
+    "CYLINDER": "Cylinder",
+    "SLAB": "Slab",
+}
+
+# Marks a configuration that cannot be expressed outside developer mode.
+_DEV_MODE_REQUIRED = "_dev_mode_required"
+
+# Session state key of the particle type count, which developer mode uses in place of
+# the "Add particles" selectbox.
+_N_PAR_TYPE_KEY = "N^\\mathrm{p}"
+
+
+# Column geometry is a dedicated field since CADET-Core v6; before that it was encoded
+# in the unit type name. Keys are the values of GEOMETRY in /input/model/unit_XXX.
+CADET_geometry_map = {
+    "AXIAL_FLOW_CYLINDER": "Axial flow cylinder",
+    "RADIAL_FLOW_CYLINDER_SHELL": "Radial flow cylinder",
+    "AXIAL_FLOW_FRUSTUM": "Frustum",
+}
+
+# Geometries CADET-Core supports that have no counterpart in CADET-Equations.
+CADET_unsupported_geometries = {"SMOOTHLY_VARYING"}
 
 CADET_column_unit_types = [
     "CSTR",
     "COLUMN_MODEL_1D",
     "COLUMN_MODEL_2D",
     "GENERAL_RATE_MODEL",
+    "GRM",
     "LUMPED_RATE_MODEL_WITHOUT_PORES",
+    "LRM",
     "LUMPED_RATE_MODEL_WITH_PORES",
+    "LRMP",
+    "DISPERSIVE_PLUG_FLOW_REACTOR",
+    "DPFR",
     "GENERAL_RATE_MODEL_2D",
+    # unit operation identifiers, which encode discretization and (legacy) geometry
+    "AXIAL_COLUMN_MODEL_1D_COLLOCATION_DG",
+    "AXIAL_COLUMN_MODEL_1D_FV",
+    "RADIAL_COLUMN_MODEL_1D_FV",
+    "FRUSTUM_COLUMN_MODEL_1D_FV",
+    "VARIABLE_CROSS_SECTION_COLUMN_MODEL_1D_DG",
+    "GENERAL_RATE_MODEL_FV",
+    "RADIAL_GENERAL_RATE_MODEL_FV",
+    "FRUSTUM_GENERAL_RATE_MODEL_FV",
+    "LUMPED_RATE_MODEL_WITH_PORES_FV",
+    "RADIAL_LUMPED_RATE_MODEL_WITH_PORES_FV",
+    "FRUSTUM_LUMPED_RATE_MODEL_WITH_PORES_FV",
+    "LUMPED_RATE_MODEL_WITHOUT_PORES_FV",
+    "RADIAL_LUMPED_RATE_MODEL_WITHOUT_PORES_FV",
+    "FRUSTUM_LUMPED_RATE_MODEL_WITHOUT_PORES_FV",
+    "LUMPED_RATE_MODEL_WITHOUT_PORES_COLLOCATIONDG",
+    # old interface
     "FRUSTUM_COLUMN_MODEL_1D",
     "FRUSTUM_GENERAL_RATE_MODEL",
     "FRUSTUM_LUMPED_RATE_MODEL_WITHOUT_PORES",
@@ -38,7 +85,6 @@ CADET_column_unit_types = [
     "RADIAL_GENERAL_RATE_MODEL",
     "RADIAL_LUMPED_RATE_MODEL_WITHOUT_PORES",
     "RADIAL_LUMPED_RATE_MODEL_WITH_PORES",
-    # old interface
     "GENERAL_RATE_MODEL_DG",
     "LUMPED_RATE_MODEL_WITHOUT_PORES_DG",
     "LUMPED_RATE_MODEL_WITH_PORES_DG",
@@ -81,12 +127,31 @@ def get_h5_value(unit_group, key: str, firstEntryIfList=True):
     return value
 
 
-def map_unit_type_to_column_geometry(cadet_unit_type):
-    """Map a CADET unit type string to the generator's column geometry label."""
+def map_unit_type_to_column_geometry(cadet_unit_type, h5_unit_group=None):
+    """Return the generator's column geometry label for a CADET unit.
+
+    Since CADET-Core v6 the geometry is a dedicated GEOMETRY field and the unit type
+    no longer carries it, so GEOMETRY takes precedence over the unit type name.
+    """
 
     if re.search("CSTR", cadet_unit_type):
         return "Mixed tank"
-    elif re.search("RADIAL", cadet_unit_type):
+
+    geometry = get_h5_value(h5_unit_group, "GEOMETRY") if h5_unit_group is not None else None
+
+    if geometry is not None:
+        if geometry in CADET_geometry_map:
+            return CADET_geometry_map[geometry]
+        if geometry in CADET_unsupported_geometries:
+            st.sidebar.warning(
+                f"Column geometry {geometry} is not available in CADET-Equations, defaulting to an axial flow cylinder."
+            )
+            return "Axial flow cylinder"
+        st.sidebar.warning(f"Unknown column geometry {geometry}, defaulting to an axial flow cylinder.")
+        return "Axial flow cylinder"
+
+    # Pre-v6 files encode the geometry in the unit type name
+    if re.search("RADIAL", cadet_unit_type):
         return "Radial flow cylinder"
     elif re.search("FRUSTUM", cadet_unit_type):
         return "Frustum"
@@ -94,8 +159,8 @@ def map_unit_type_to_column_geometry(cadet_unit_type):
         return "Axial flow cylinder"
 
 
-def map_unit_type_to_column_model(cadet_unit_type):
-    """Map a CADET unit type string to the generator's column resolution label."""
+def map_unit_type_to_column_model(cadet_unit_type, h5_unit_group=None):
+    """Map a CADET unit to the generator's column resolution label."""
 
     if re.search("3D", cadet_unit_type):
         return "3D (axial, radial and angular coordinate)"
@@ -103,12 +168,14 @@ def map_unit_type_to_column_model(cadet_unit_type):
         return "2D (axial and radial coordinate)"
     elif re.search("CSTR", cadet_unit_type):
         return "0D (Homogeneous Tank)"
-    elif re.search("RADIAL", cadet_unit_type):
-        return "1D (radial coordinate)"
-    elif cadet_unit_type in CADET_column_unit_types:
-        return "1D (axial coordinate)"
-    else:
+    elif cadet_unit_type not in CADET_column_unit_types:
         raise ValueError(f"Invalid unit type: {cadet_unit_type}. Must be one of {CADET_column_unit_types}.")
+
+    # A radial flow column resolves the radial rather than the axial coordinate
+    if map_unit_type_to_column_geometry(cadet_unit_type, h5_unit_group) == "Radial flow cylinder":
+        return "1D (radial coordinate)"
+
+    return "1D (axial coordinate)"
 
 
 def map_unit_to_particle_model(cadet_unit_type, h5_unit_group):
@@ -170,8 +237,8 @@ def extract_config_data_from_unit(unit_type, h5_unit_group):
     config["show_eq_description"] = True
     config["model_assumptions"] = True
 
-    config["column_type"] = map_unit_type_to_column_geometry(unit_type)
-    config["column_resolution"] = map_unit_type_to_column_model(unit_type)
+    config["column_type"] = map_unit_type_to_column_geometry(unit_type, h5_unit_group)
+    config["column_resolution"] = map_unit_type_to_column_model(unit_type, h5_unit_group)
 
     if re.search("0D", config["column_resolution"]):
         flow_filter = get_h5_value(h5_unit_group, "FLOWRATE_FILTER")
@@ -180,7 +247,10 @@ def extract_config_data_from_unit(unit_type, h5_unit_group):
             config["has_filter"] = "Yes" if flow_filter > 0.0 else "No"
 
     if re.search("2D", config["column_resolution"]):
-        Dax = get_h5_value(h5_unit_group, "COL_DISPERSION")
+        # The 2D models renamed COL_DISPERSION to COL_DISPERSION_AXIAL
+        Dax = get_h5_value(h5_unit_group, "COL_DISPERSION_AXIAL")
+        if Dax is None:
+            Dax = get_h5_value(h5_unit_group, "COL_DISPERSION")
         if Dax is not None:
             config["has_axial_dispersion"] = "No" if Dax < 1e-20 else "Yes"
 
@@ -208,7 +278,20 @@ def extract_config_data_from_unit(unit_type, h5_unit_group):
     else:
         config["add_particles"] = "No"
 
-    if config["advanced_mode"] == "On":
+    dev_mode_required = config.pop(_DEV_MODE_REQUIRED, False)
+
+    if dev_mode_required:
+        # Developer mode implies the advanced options and replaces both the "Add particles"
+        # and the particle size distribution selectbox with a particle type count
+        config["advanced_mode"] = "On"
+        n_par_type = get_h5_value(h5_unit_group, "NPARTYPE")
+        if n_par_type is None:
+            n_par_type = 1 if config.get("add_particles") == "Yes" else 0
+        config.pop("add_particles", None)
+        config.pop("PSD", None)
+        config[_N_PAR_TYPE_KEY] = int(n_par_type)
+
+    elif config["advanced_mode"] == "On":
         # Advanced mode uses single PSD selectbox with 3 options
         add_par = config.pop("add_particles", "No")
         if add_par == "Yes":
@@ -224,6 +307,7 @@ def extract_config_data_from_unit(unit_type, h5_unit_group):
         config.pop("particle_has_core", None)
         config.pop("has_radial_dispersion", None)
         config.pop("has_mult_bnd_states", None)
+        config.pop("particle_geometry", None)
 
     return config
 
@@ -328,27 +412,115 @@ def _extract_v6_particle_config(config, h5_unit_group, par_model):
     if par_model == "1D (radial coordinate)":
         _extract_particle_core_config(config, pt_group)
 
+    _extract_particle_geometry(config, pt_group, h5_unit_group)
+
     _extract_reaction_config(config, h5_unit_group)
+    _extract_particle_reaction_config(config, pt_group)
+
+
+def get_reaction_type(group, phase):
+    """Return the reaction model of the first <phase>_reaction_XXX subgroup, if any.
+
+    This is the reaction interface of CADET-Core v6: a NREAC_<PHASE> count next to
+    one subgroup per reaction, each naming its model in TYPE. The phase is one of
+    "liquid", "solid" or "cross_phase".
+    """
+
+    if group is None:
+        return None
+
+    count = get_h5_value(group, "NREAC_" + phase.upper())
+    if count is None or count < 1:
+        return None
+
+    reaction_group = group.get(f"{phase}_reaction_000")
+    if reaction_group is None:
+        return None
+
+    return get_h5_value(reaction_group, "TYPE")
+
+
+def _apply_reaction_model(config, cadet_reaction_model):
+    """Store the generator's reaction model label, warning about unsupported models."""
+
+    mapped = CADET_reaction_model_map.get(cadet_reaction_model, "Arbitrary")
+    if mapped == "Arbitrary":
+        st.sidebar.warning(
+            f"Reaction model {cadet_reaction_model} not implemented in CADET-Equations, default to arbitrary reaction"
+        )
+    config["reaction_model"] = mapped
 
 
 def _extract_reaction_config(config, h5_unit_group):
-    """Extract reaction model configuration from an HDF5 unit group."""
-    reaction_model_bulk = None
-    reaction_bulk_group = h5_unit_group.get("reaction_bulk")
-    if reaction_bulk_group is not None:
-        reaction_model_bulk = get_h5_value(reaction_bulk_group, "REACTION_MODEL")
+    """Extract the bulk liquid reaction configuration from an HDF5 unit group."""
+
+    reaction_model_bulk = get_reaction_type(h5_unit_group, "liquid")
 
     if reaction_model_bulk is None:
-        reaction_model_bulk = get_h5_value(h5_unit_group, "REACTION_MODEL")
+        # pre-v6 interface: a single reaction model named at unit level
+        reaction_bulk_group = h5_unit_group.get("reaction_bulk")
+        if reaction_bulk_group is not None:
+            reaction_model_bulk = get_h5_value(reaction_bulk_group, "REACTION_MODEL")
+
+        if reaction_model_bulk is None:
+            reaction_model_bulk = get_h5_value(h5_unit_group, "REACTION_MODEL")
 
     if reaction_model_bulk is not None and reaction_model_bulk != "NONE":
-        mapped = CADET_reaction_model_map.get(reaction_model_bulk, "Arbitrary")
-        config["reaction_model"] = mapped
         config["has_reaction_bulk"] = "Yes"
-        if mapped == "Arbitrary":
-            st.sidebar.warning(
-                f"Reaction model {reaction_model_bulk} not implemented in CADET-Equations, default to arbitrary reaction"
-            )
+        _apply_reaction_model(config, reaction_model_bulk)
+
+
+def _extract_particle_reaction_config(config, pt_group):
+    """Extract particle reaction configuration from a particle_type_XXX group.
+
+    Cross-phase reactions are reported as solid phase reactions, since in CADET-Equations
+    the particle solid reaction term is the one that depends on both phases.
+    """
+
+    liquid = get_reaction_type(pt_group, "liquid")
+    solid = get_reaction_type(pt_group, "solid")
+    cross_phase = get_reaction_type(pt_group, "cross_phase")
+
+    if liquid is not None and liquid != "NONE":
+        config["has_reaction_particle_liquid"] = "Yes"
+        _apply_reaction_model(config, liquid)
+
+    solid_phase = solid if solid is not None and solid != "NONE" else cross_phase
+    if solid_phase is not None and solid_phase != "NONE":
+        config["has_reaction_particle_solid"] = "Yes"
+        _apply_reaction_model(config, solid_phase)
+
+    if "has_reaction_particle_liquid" in config or "has_reaction_particle_solid" in config:
+        # particle reactions are only offered in developer mode
+        config["dev_mode"] = True
+        config[_DEV_MODE_REQUIRED] = True
+
+
+def _extract_particle_geometry(config, pt_group, h5_unit_group):
+    """Map PAR_GEOM to the generator's particle geometry.
+
+    PAR_GEOM moved from the unit's discretization group into particle_type_XXX.
+    """
+
+    par_geom = get_h5_value(pt_group, "PAR_GEOM") if pt_group is not None else None
+
+    if par_geom is None:
+        disc_group = h5_unit_group.get("discretization") if h5_unit_group is not None else None
+        par_geom = get_h5_value(disc_group, "PAR_GEOM") if disc_group is not None else None
+
+    if par_geom is None:
+        return
+
+    geometry = CADET_particle_geometry_map.get(par_geom)
+    if geometry is None:
+        st.sidebar.warning(f"Particle geometry {par_geom} is not available in CADET-Equations, assuming a sphere.")
+        return
+
+    if geometry != "Sphere":
+        # non-spherical particles are only offered in developer mode
+        config["particle_geometry"] = geometry
+        config["dev_mode"] = True
+        config[_DEV_MODE_REQUIRED] = True
 
 
 def _extract_particle_core_config(config, group):
@@ -373,12 +545,14 @@ AGGREGATION_KERNEL_MAP = {
 
 
 def _is_crystallization_unit(h5_unit_group):
+    if get_reaction_type(h5_unit_group, "liquid") == "CRYSTALLIZATION":
+        return True
     reaction_model = get_h5_value(h5_unit_group, "REACTION_MODEL")
     return reaction_model == "CRYSTALLIZATION"
 
 
 def _get_crystallization_reaction_group(h5_unit_group):
-    for name in ("reaction_bulk", "reaction"):
+    for name in ("liquid_reaction_000", "reaction_bulk", "reaction"):
         grp = h5_unit_group.get(name)
         if grp is not None:
             return grp

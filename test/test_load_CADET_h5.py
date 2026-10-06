@@ -10,6 +10,8 @@ import pytest
 
 from src.load_CADET_h5 import (
     CADET_column_unit_types,
+    _extract_particle_geometry,
+    _extract_particle_reaction_config,
     _extract_reaction_config,
     _get_crystallization_reaction_group,
     _is_crystallization_unit,
@@ -168,6 +170,52 @@ def test_map_unit_type_to_column_model_invalid():
         map_unit_type_to_column_model("INVALID_MODEL")
 
 
+# %% GEOMETRY field (CADET-Core v6)
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+@pytest.mark.parametrize(
+    "geometry, expected_type, expected_resolution",
+    [
+        ("AXIAL_FLOW_CYLINDER", "Axial flow cylinder", "1D (axial coordinate)"),
+        ("RADIAL_FLOW_CYLINDER_SHELL", "Radial flow cylinder", "1D (radial coordinate)"),
+        ("AXIAL_FLOW_FRUSTUM", "Frustum", "1D (axial coordinate)"),
+    ],
+)
+def test_geometry_field_determines_column_type(geometry, expected_type, expected_resolution):
+    """Since v6 the geometry comes from GEOMETRY, not from the unit type name."""
+    group = _make_h5_group({"GEOMETRY": geometry})
+    assert map_unit_type_to_column_geometry("COLUMN_MODEL_1D", group) == expected_type
+    assert map_unit_type_to_column_model("COLUMN_MODEL_1D", group) == expected_resolution
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_geometry_field_overrides_unit_type_name():
+    """GEOMETRY wins over a geometry encoded in a legacy unit type name."""
+    group = _make_h5_group({"GEOMETRY": "RADIAL_FLOW_CYLINDER_SHELL"})
+    assert map_unit_type_to_column_geometry("FRUSTUM_COLUMN_MODEL_1D", group) == "Radial flow cylinder"
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_unsupported_geometry_falls_back_to_axial():
+    """A geometry without a CADET-Equations counterpart warns and falls back to axial."""
+    group = _make_h5_group({"GEOMETRY": "SMOOTHLY_VARYING"})
+    with patch("src.load_CADET_h5.st") as mock_st:
+        assert map_unit_type_to_column_geometry("COLUMN_MODEL_1D", group) == "Axial flow cylinder"
+    mock_st.sidebar.warning.assert_called_once()
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_geometry_ignored_for_tank():
+    """A CSTR stays a mixed tank regardless of any GEOMETRY entry."""
+    group = _make_h5_group({"GEOMETRY": "RADIAL_FLOW_CYLINDER_SHELL"})
+    assert map_unit_type_to_column_geometry("CSTR", group) == "Mixed tank"
+
+
 # %% map_unit_to_particle_model
 
 
@@ -208,13 +256,36 @@ def test_map_unit_to_particle_model_invalid():
 def test_CADET_column_unit_types_completeness():
     """The constant should contain all supported CADET column unit types (v5 + v6)."""
     expected = [
+        # unit types registered by CADET-Core
         "CSTR",
         "COLUMN_MODEL_1D",
         "COLUMN_MODEL_2D",
         "GENERAL_RATE_MODEL",
+        "GRM",
         "LUMPED_RATE_MODEL_WITHOUT_PORES",
+        "LRM",
         "LUMPED_RATE_MODEL_WITH_PORES",
+        "LRMP",
+        "DISPERSIVE_PLUG_FLOW_REACTOR",
+        "DPFR",
         "GENERAL_RATE_MODEL_2D",
+        # unit operation identifiers
+        "AXIAL_COLUMN_MODEL_1D_COLLOCATION_DG",
+        "AXIAL_COLUMN_MODEL_1D_FV",
+        "RADIAL_COLUMN_MODEL_1D_FV",
+        "FRUSTUM_COLUMN_MODEL_1D_FV",
+        "VARIABLE_CROSS_SECTION_COLUMN_MODEL_1D_DG",
+        "GENERAL_RATE_MODEL_FV",
+        "RADIAL_GENERAL_RATE_MODEL_FV",
+        "FRUSTUM_GENERAL_RATE_MODEL_FV",
+        "LUMPED_RATE_MODEL_WITH_PORES_FV",
+        "RADIAL_LUMPED_RATE_MODEL_WITH_PORES_FV",
+        "FRUSTUM_LUMPED_RATE_MODEL_WITH_PORES_FV",
+        "LUMPED_RATE_MODEL_WITHOUT_PORES_FV",
+        "RADIAL_LUMPED_RATE_MODEL_WITHOUT_PORES_FV",
+        "FRUSTUM_LUMPED_RATE_MODEL_WITHOUT_PORES_FV",
+        "LUMPED_RATE_MODEL_WITHOUT_PORES_COLLOCATIONDG",
+        # old interface
         "FRUSTUM_COLUMN_MODEL_1D",
         "FRUSTUM_GENERAL_RATE_MODEL",
         "FRUSTUM_LUMPED_RATE_MODEL_WITHOUT_PORES",
@@ -903,6 +974,104 @@ def test_extract_reaction_config_from_bulk_group():
     _extract_reaction_config(config, unit_group)
     assert config["reaction_model"] == "Mass Action Law"
     assert config["has_reaction_bulk"] == "Yes"
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_extract_reaction_config_v6_liquid_reaction_group():
+    """Since v6 a bulk reaction is NREAC_LIQUID plus a liquid_reaction_XXX group."""
+    reaction = _make_h5_group({"TYPE": b"MASS_ACTION_LAW"})
+    unit_group = _make_h5_group({"NREAC_LIQUID": 1}, subgroups={"liquid_reaction_000": reaction})
+    config = {}
+    _extract_reaction_config(config, unit_group)
+    assert config["reaction_model"] == "Mass Action Law"
+    assert config["has_reaction_bulk"] == "Yes"
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_extract_reaction_config_v6_no_reactions():
+    """NREAC_LIQUID of zero means no bulk reaction."""
+    unit_group = _make_h5_group({"NREAC_LIQUID": 0})
+    config = {}
+    _extract_reaction_config(config, unit_group)
+    assert "has_reaction_bulk" not in config
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_extract_particle_reaction_config_liquid_and_solid():
+    """Particle reactions are read from the particle group and require developer mode."""
+    liquid = _make_h5_group({"TYPE": b"MASS_ACTION_LAW"})
+    solid = _make_h5_group({"TYPE": b"MASS_ACTION_LAW"})
+    pt_group = _make_h5_group(
+        {"NREAC_LIQUID": 1, "NREAC_SOLID": 1},
+        subgroups={"liquid_reaction_000": liquid, "solid_reaction_000": solid},
+    )
+    config = {}
+    _extract_particle_reaction_config(config, pt_group)
+    assert config["has_reaction_particle_liquid"] == "Yes"
+    assert config["has_reaction_particle_solid"] == "Yes"
+    assert config["reaction_model"] == "Mass Action Law"
+    assert config["dev_mode"] is True
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_extract_particle_reaction_config_cross_phase_is_solid():
+    """A cross-phase reaction is reported as a particle solid reaction."""
+    cross = _make_h5_group({"TYPE": b"MASS_ACTION_LAW_CROSS_PHASE"})
+    pt_group = _make_h5_group({"NREAC_CROSS_PHASE": 1}, subgroups={"cross_phase_reaction_000": cross})
+    config = {}
+    _extract_particle_reaction_config(config, pt_group)
+    assert config["has_reaction_particle_solid"] == "Yes"
+    assert "has_reaction_particle_liquid" not in config
+    assert config["reaction_model"] == "Mass Action Law"
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_extract_particle_reaction_config_none():
+    """Without NREAC_* entries no particle reaction is configured."""
+    config = {}
+    _extract_particle_reaction_config(config, _make_h5_group({}))
+    assert config == {}
+
+
+# %% Particle geometry
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+@pytest.mark.parametrize("par_geom, expected", [(b"CYLINDER", "Cylinder"), (b"SLAB", "Slab")])
+def test_extract_particle_geometry_from_particle_group(par_geom, expected):
+    """PAR_GEOM moved into particle_type_XXX and needs developer mode when non-spherical."""
+    pt_group = _make_h5_group({"PAR_GEOM": par_geom})
+    config = {}
+    _extract_particle_geometry(config, pt_group, _make_h5_group({}))
+    assert config["particle_geometry"] == expected
+    assert config["dev_mode"] is True
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_extract_particle_geometry_sphere_is_default():
+    """A spherical particle needs no explicit setting and no developer mode."""
+    pt_group = _make_h5_group({"PAR_GEOM": b"SPHERE"})
+    config = {}
+    _extract_particle_geometry(config, pt_group, _make_h5_group({}))
+    assert config == {}
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_extract_particle_geometry_falls_back_to_discretization():
+    """Older files keep PAR_GEOM in the unit's discretization group."""
+    disc = _make_h5_group({"PAR_GEOM": b"SLAB"})
+    unit_group = _make_h5_group({}, subgroups={"discretization": disc})
+    config = {}
+    _extract_particle_geometry(config, _make_h5_group({}), unit_group)
+    assert config["particle_geometry"] == "Slab"
 
 
 @pytest.mark.ci
