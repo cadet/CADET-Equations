@@ -321,7 +321,7 @@ if model_type_ == "Crystallization":
             r"Consider a continuous stirred tank reactor (CSTR) with volume $V(t)$, "
             r"observed over a time interval $(0, T^{\mathrm{end}})$. "
             r"The particle population is described by the number density $n(t, x)$ "
-            r"over the internal coordinate (particle size) $x\in(x_0, \infty)$."
+            r"over the internal coordinate (particle size) $x\in(x_{0}, \infty)$."
         )
     else:
         disp_str = " with axial dispersion" if cry_model.has_axial_dispersion else ""
@@ -330,7 +330,7 @@ if model_type_ == "Crystallization":
             + disp_str
             + r", observed over a time interval $(0, T^{\mathrm{end}})$. "
             r"The particle population is described by the number density $n(t, x, z)$ "
-            r"over the internal coordinate (particle size) $x\in(x_0, \infty)$ and axial position $z$."
+            r"over the internal coordinate (particle size) $x\in(x_{0}, \infty)$ and axial position $z$."
         )
 
     # PBE
@@ -394,7 +394,7 @@ if model_type_ == "Crystallization":
         if cry_model.has_secondary_nucleation:
             write_and_save(r"\begin{align}" + eq.cry_total_nucleation() + r". \end{align}", as_latex=True)
         else:
-            write_and_save(r"\begin{align} B_0 = B_p. \end{align}", as_latex=True)
+            write_and_save(r"\begin{align} B_{0} = B_{p}. \end{align}", as_latex=True)
 
     # Aggregation details
     if has_agg:
@@ -505,7 +505,7 @@ else:  # Chromatography model family
     elif column_model.column_type == "Radial":
         intro_str = r"Consider a hollow cylindrical column of axial bed height $H^{\mathrm{b}} > 0$ with inner radius $R^{\mathrm{inner}} > 0$ and outer radius $R^{\mathrm{outer}} > R^{\mathrm{inner}}$ "
     elif column_model.column_type == "Frustum":
-        intro_str = r"Consider a conical frustum column of length $L^{\mathrm{b}} > 0$ with inlet radius $R^{\mathrm{0}} > 0$ and outlet radius $R^{\mathrm{L^\mathrm{b}}} > 0$ "
+        intro_str = r"Consider a conical frustum column of length $L^{\mathrm{b}} > 0$ with inlet radius $R^{\mathrm{0}} > 0$ and outlet radius $R^{\mathrm{L^{\mathrm{b}}}} > 0$ "
     else:
         intro_str = r"Consider a cylindrical column of length $L^{\mathrm{b}} > 0$ "
         if column_model.resolution == "2D" or column_model.resolution == "3D":
@@ -522,10 +522,10 @@ else:  # Chromatography model family
         )
     else:
         if column_model.resolution == "0D":
-            d_j_def = r"$d_j \in [0, 1]$"
+            d_j_def = r"$d_{j} \in [0, 1]$"
         else:
             d_j_def = (
-                r"$d_j \colon "
+                r"$d_{j} \colon "
                 + re.sub(r"\$", "", column_model.domain_interstitial(with_time_domain=False))
                 + r" \to [0, 1]$"
             )
@@ -560,7 +560,7 @@ else:  # Chromatography model family
             r"""
     \begin{equation*}
 """
-            + "\t    \\sum_{j=1}^{N^{\\mathrm{p}}} d_j"
+            + "\t    \\sum_{j=1}^{N^{\\mathrm{p}}} d_{j}"
             + d_j_dep
             + r" = 1 "
             + d_j_dep2
@@ -573,7 +573,7 @@ else:  # Chromatography model family
 
     if column_model.resolution == "0D":
         write_and_save(
-            r"The evolution of the bulk volume $V^{\b}\colon (0, T^{\mathrm{end}}) \to \mathbb{R}$ and the concentrations $c^{\b}_i\colon (0, T^{\mathrm{end}}) \to \mathbb{R}$ of the components in the tank is governed by"
+            r"The evolution of the bulk volume $V^{\b}\colon (0, T^{\mathrm{end}}) \to \mathbb{R}$ and the concentrations $c^{\b}_{i}\colon (0, T^{\mathrm{end}}) \to \mathbb{R}$ of the components in the tank is governed by"
         )
         write_and_save(interstitial_volume_eq, as_latex=True)
     else:
@@ -799,7 +799,7 @@ else:  # Chromatography model family
                     # SMA additional equations
                     if column_model.binding_model == "SMA" and column_model.has_binding:
                         PTD_ = column_model.PTD and column_model.N_p > 1
-                        write_and_save(r"The number of available binding sites $\bar{q}_0$ is given by")
+                        write_and_save(r"The number of available binding sites $\bar{q}_{0}$ is given by")
                         write_and_save(
                             r"\begin{align}" + eq.sma_free_binding_sites(PTD=PTD_) + r".\end{align}", as_latex=True
                         )
@@ -834,12 +834,12 @@ else:  # Chromatography model family
 
                         if particle_bc_salt[par_type] != "":
                             write_and_save(
-                                r"where the counter-ion concentration $c^{\s}_0$ satisfies the electroneutrality constraint. Boundary conditions are"
+                                r"where the counter-ion concentration $c^{\s}_{0}$ satisfies the electroneutrality constraint. Boundary conditions are"
                             )
                             write_and_save(particle_bc_salt[par_type], as_latex=True)
                         else:
                             write_and_save(
-                                r"where the counter-ion concentration $c^{\s}_0$ satisfies the electroneutrality constraint."
+                                r"where the counter-ion concentration $c^{\s}_{0}$ satisfies the electroneutrality constraint."
                             )
 
         else:
@@ -980,7 +980,7 @@ else:  # Chromatography model family
                 # Some more complicated binding models require additional equations
                 if par_type.binding_model == "SMA" and par_type.has_binding:
                     PTD_ = column_model.PTD and column_model.N_p > 1
-                    write_and_save(r"The number of available binding sites $\bar{q}_0$ is given by")
+                    write_and_save(r"The number of available binding sites $\bar{q}_{0}$ is given by")
                     write_and_save(
                         r"\begin{align}" + eq.sma_free_binding_sites(PTD=PTD_) + r".\end{align}", as_latex=True
                     )
@@ -1010,12 +1010,12 @@ else:  # Chromatography model family
 
                     if salt_bc != "":
                         write_and_save(
-                            r"where the counter-ion concentration $c^{\s}_0$ satisfies the electroneutrality constraint. Boundary conditions are"
+                            r"where the counter-ion concentration $c^{\s}_{0}$ satisfies the electroneutrality constraint. Boundary conditions are"
                         )
                         write_and_save(salt_bc, as_latex=True)
                     else:
                         write_and_save(
-                            r"where the counter-ion concentration $c^{\s}_0$ satisfies the electroneutrality constraint."
+                            r"where the counter-ion concentration $c^{\s}_{0}$ satisfies the electroneutrality constraint."
                         )
 
     # %% Reaction model definition section

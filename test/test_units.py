@@ -24,43 +24,43 @@ class TestGetUnit:
         assert get_unit("length", "SI") == r"m"
 
     def test_si_concentration_molar(self):
-        assert get_unit("concentration_molar", "SI") == r"\frac{mol}{m^3}"
+        assert get_unit("concentration_molar", "SI") == r"\frac{mol}{m^{3}}"
 
     def test_si_dimensionless(self):
         assert get_unit("dimensionless", "SI") == r"-"
 
     def test_si_diffusion(self):
-        assert get_unit("diffusion", "SI") == r"\frac{m^2}{s}"
+        assert get_unit("diffusion", "SI") == r"\frac{m^{2}}{s}"
 
     def test_si_velocity(self):
         assert get_unit("velocity", "SI") == r"\frac{m}{s}"
 
     def test_si_volumetric_flow(self):
-        assert get_unit("volumetric_flow", "SI") == r"\frac{m^3}{s}"
+        assert get_unit("volumetric_flow", "SI") == r"\frac{m^{3}}{s}"
 
     def test_si_volume(self):
-        assert get_unit("volume", "SI") == r"m^3"
+        assert get_unit("volume", "SI") == r"m^{3}"
 
     def test_si_concentration_mass(self):
-        assert get_unit("concentration_mass", "SI") == r"\frac{kg}{m^3}"
+        assert get_unit("concentration_mass", "SI") == r"\frac{kg}{m^{3}}"
 
     def test_si_reaction_rate_molar(self):
-        assert get_unit("reaction_rate_molar", "SI") == r"\frac{mol}{m^3 \cdot s}"
+        assert get_unit("reaction_rate_molar", "SI") == r"\frac{mol}{m^{3} \cdot s}"
 
     def test_si_rate_first_order(self):
         assert get_unit("rate_first_order", "SI") == r"\frac{1}{s}"
 
     def test_si_rate_second_order(self):
-        assert get_unit("rate_second_order", "SI") == r"\frac{m^3}{mol \cdot s}"
+        assert get_unit("rate_second_order", "SI") == r"\frac{m^{3}}{mol \cdot s}"
 
     def test_si_rate_nth_order(self):
-        assert get_unit("rate_nth_order", "SI") == r"\frac{1}{s} \cdot \left(\frac{m^3}{mol}\right)^{n}"
+        assert get_unit("rate_nth_order", "SI") == r"\frac{1}{s} \cdot \left(\frac{m^{3}}{mol}\right)^{n}"
 
     def test_si_nucleation_rate(self):
-        assert get_unit("nucleation_rate", "SI") == r"\frac{1}{m^3 \cdot s}"
+        assert get_unit("nucleation_rate", "SI") == r"\frac{1}{m^{3} \cdot s}"
 
     def test_si_number_density(self):
-        assert get_unit("number_density", "SI") == r"\frac{1}{m \cdot m^3}"
+        assert get_unit("number_density", "SI") == r"\frac{1}{m \cdot m^{3}}"
 
     def test_si_inverse_length(self):
         assert get_unit("inverse_length", "SI") == r"\frac{1}{m}"
@@ -87,19 +87,19 @@ class TestCGSSystem:
         assert get_unit("length", "CGS") == r"cm"
 
     def test_cgs_volume(self):
-        assert get_unit("volume", "CGS") == r"cm^3"
+        assert get_unit("volume", "CGS") == r"cm^{3}"
 
     def test_cgs_concentration_molar(self):
-        assert get_unit("concentration_molar", "CGS") == r"\frac{mol}{cm^3}"
+        assert get_unit("concentration_molar", "CGS") == r"\frac{mol}{cm^{3}}"
 
     def test_cgs_concentration_mass(self):
-        assert get_unit("concentration_mass", "CGS") == r"\frac{g}{cm^3}"
+        assert get_unit("concentration_mass", "CGS") == r"\frac{g}{cm^{3}}"
 
     def test_cgs_velocity(self):
         assert get_unit("velocity", "CGS") == r"\frac{cm}{s}"
 
     def test_cgs_diffusion(self):
-        assert get_unit("diffusion", "CGS") == r"\frac{cm^2}{s}"
+        assert get_unit("diffusion", "CGS") == r"\frac{cm^{2}}{s}"
 
 
 @pytest.mark.ci

@@ -115,7 +115,7 @@ class Particle:
                     "Property": r"",
                 }
             )
-            symbol_name_ = r"D^\mathrm{p}_{i}" if self.single_partype else r"D^\mathrm{p}_{j,i}"
+            symbol_name_ = r"D^{\mathrm{p}}_{i}" if self.single_partype else r"D^{\mathrm{p}}_{j,i}"
             vars_and_params_.append(
                 {
                     "Group": 6.1,
@@ -164,15 +164,15 @@ class Particle:
             if self.binding_model == "Arbitrary":
                 # Without pores, the binding model acts on the homogenized liquid phase
                 without_pores_ = self.nonlimiting_filmDiff and self.resolution == "0D"
-                liquid_vec_ = r"\vec{c}^\mathrm{\ell}" if without_pores_ else r"\vec{c}^\mathrm{p}"
+                liquid_vec_ = r"\vec{c}^{\mathrm{\ell}}" if without_pores_ else r"\vec{c}^{\mathrm{p}}"
                 liquid_vec_desc_ = (
                     r"liquid components vector" if without_pores_ else r"particle liquid components vector"
                 )
-                symbol_name_ = r"f^\mathrm{bind}_{j,i}" if self.PTD else r"f^\mathrm{bind}_{i}"
+                symbol_name_ = r"f^{\mathrm{bind}}_{j,i}" if self.PTD else r"f^{\mathrm{bind}}_{i}"
                 dep_ = (
-                    liquid_vec_ + r", \vec{c}^\mathrm{s}; j, i"
+                    liquid_vec_ + r", \vec{c}^{\mathrm{s}}; j, i"
                     if self.PTD
-                    else liquid_vec_ + r", \vec{c}^\mathrm{s}; i"
+                    else liquid_vec_ + r", \vec{c}^{\mathrm{s}}; i"
                 )
                 vars_and_params_.append(
                     {
@@ -195,7 +195,7 @@ class Particle:
                 vars_and_params_.append(
                     {
                         "Group": 10.1,
-                        "Symbol": r"\vec{c}^\mathrm{s}",
+                        "Symbol": r"\vec{c}^{\mathrm{s}}",
                         "Description": r"particle solid components vector",
                         "Unit": u("concentration_molar_vec"),
                         "Dependence": state_deps,
@@ -283,7 +283,7 @@ class Particle:
                 )
 
             if self.has_surfDiff:
-                symbol_name_ = r"D^\mathrm{s}_{i}" if self.single_partype else r"D^\mathrm{s}_{j,i}"
+                symbol_name_ = r"D^{\mathrm{s}}_{i}" if self.single_partype else r"D^{\mathrm{s}}_{j,i}"
                 vars_and_params_.append(
                     {
                         "Group": 6.1,
@@ -311,11 +311,11 @@ class Particle:
                 self.vars_and_params.append(
                     {
                         "Group": 0.1,
-                        "Symbol": r"R^\mathrm{pc}",
+                        "Symbol": r"R^{\mathrm{pc}}",
                         "Description": r"particle core radius",
                         "Unit": u("dimensionless"),
                         "Dependence": r"-",
-                        "Property": r"\in (0, R^\mathrm{p})",
+                        "Property": r"\in (0, R^{\mathrm{p}})",
                     }
                 )
 
@@ -629,7 +629,7 @@ class Particle:
             vars_and_params_.append(
                 {
                     "Group": 1.9,
-                    "Symbol": r"d_j",
+                    "Symbol": r"d_{j}",
                     "Description": r"particle type volume fraction",
                     "Unit": u("dimensionless"),
                     "Dependence": r"j",

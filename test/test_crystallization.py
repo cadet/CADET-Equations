@@ -24,7 +24,7 @@ def test_cry_supersaturation():
     "size_dep, expected_frag, not_expected",
     [
         (True, r"\gamma", []),
-        (False, r"k_g", [r"\gamma"]),
+        (False, r"k_{g}", [r"\gamma"]),
     ],
 )
 def test_cry_growth_rate(size_dep, expected_frag, not_expected):
@@ -38,31 +38,31 @@ def test_cry_growth_rate(size_dep, expected_frag, not_expected):
 @pytest.mark.unit_test
 def test_cry_primary_nucleation():
     result = eq.cry_primary_nucleation()
-    assert r"k_p" in result
-    assert r"s^u" in result
+    assert r"k_{p}" in result
+    assert r"s^{u}" in result
 
 
 @pytest.mark.ci
 @pytest.mark.unit_test
 def test_cry_secondary_nucleation():
     result = eq.cry_secondary_nucleation()
-    assert r"k_b" in result
-    assert r"M^k" in result
+    assert r"k_{b}" in result
+    assert r"M^{k}" in result
 
 
 @pytest.mark.ci
 @pytest.mark.unit_test
 def test_cry_total_nucleation():
     result = eq.cry_total_nucleation()
-    assert r"B_p" in result
-    assert r"B_s" in result
+    assert r"B_{p}" in result
+    assert r"B_{s}" in result
 
 
 @pytest.mark.ci
 @pytest.mark.unit_test
 def test_cry_suspension_density():
     result = eq.cry_suspension_density()
-    assert r"k_v" in result
+    assert r"k_{v}" in result
     assert r"\rho" in result
     assert r"\int" in result
 
@@ -86,9 +86,9 @@ def test_cry_pbe_cstr(has_primary, has_gd, has_agg, has_frag):
     result = eq.cry_pbe_cstr(has_primary, has_gd, has_agg, has_frag)
     assert r"\begin{align}" in result
     if has_primary:
-        assert r"v_G" in result
+        assert r"v_{G}" in result
     if has_gd:
-        assert r"D_g" in result
+        assert r"D_{g}" in result
     if has_agg:
         assert r"B_{\mathrm{agg}}" in result
     if has_frag:
@@ -114,7 +114,7 @@ def test_cry_pbe_dpfr(has_primary, has_ax_disp, has_gd, has_agg, has_frag):
     if has_ax_disp:
         assert r"D^{\mathrm{ax}}" in result
     if has_primary:
-        assert r"v_G" in result
+        assert r"v_{G}" in result
     if has_agg:
         assert r"B_{\mathrm{agg}}" in result
     if has_frag:
@@ -131,7 +131,7 @@ def test_cry_mass_balance_cstr(has_primary):
     result = eq.cry_mass_balance_cstr(has_primary)
     assert r"Q^{\mathrm{in}}" in result
     if has_primary:
-        assert r"\rho k_v" in result
+        assert r"\rho k_{v}" in result
 
 
 @pytest.mark.ci
@@ -150,7 +150,7 @@ def test_cry_mass_balance_dpfr(has_primary, has_ax_disp):
     if has_ax_disp:
         assert r"D^{\mathrm{ax}}" in result
     if has_primary:
-        assert r"\rho k_v" in result
+        assert r"\rho k_{v}" in result
 
 
 # %% Boundary conditions
@@ -169,9 +169,9 @@ def test_cry_pbe_bc_internal(has_primary, has_gd):
     result = eq.cry_pbe_bc_internal(has_primary, has_gd)
     assert r"\begin{align}" in result
     if has_gd:
-        assert r"D_g" in result
+        assert r"D_{g}" in result
     else:
-        assert r"v_G(x_c)" in result
+        assert r"v_{G}(x_{c})" in result
 
 
 @pytest.mark.ci
@@ -226,7 +226,7 @@ def test_cry_aggregation_birth_death():
 @pytest.mark.parametrize("kernel_idx", [0, 1, 2, 3, 4])
 def test_cry_aggregation_kernel(kernel_idx):
     result = eq.cry_aggregation_kernel(kernel_idx)
-    assert r"\beta_0" in result
+    assert r"\beta_{0}" in result
     assert r"\begin{align}" in result
 
 
@@ -234,7 +234,7 @@ def test_cry_aggregation_kernel(kernel_idx):
 @pytest.mark.unit_test
 def test_cry_aggregation_kernel_unknown_falls_back():
     result = eq.cry_aggregation_kernel(99)
-    assert r"\beta_0" in result
+    assert r"\beta_{0}" in result
 
 
 # %% Fragmentation
@@ -253,7 +253,7 @@ def test_cry_fragmentation_birth_death():
 @pytest.mark.unit_test
 def test_cry_selection_function():
     result = eq.cry_selection_function()
-    assert r"S_0" in result
+    assert r"S_{0}" in result
     assert r"\alpha" in result
 
 
@@ -372,7 +372,7 @@ def test_crystallization_secondary_nucleation():
     at.button(key="model_type_crystallization_button").click().run()
     at.selectbox(key="cry_has_secondary_nucleation").set_value("Yes").run()
     assert not at.exception
-    assert "k_b" in at.session_state.latex_string
+    assert "k_{b}" in at.session_state.latex_string
 
 
 @pytest.mark.ci
@@ -396,7 +396,7 @@ def test_crystallization_growth_dispersion():
     at.button(key="model_type_crystallization_button").click().run()
     at.selectbox(key="cry_has_growth_dispersion").set_value("Yes").run()
     assert not at.exception
-    assert "D_g" in at.session_state.latex_string
+    assert "D_{g}" in at.session_state.latex_string
 
 
 @pytest.mark.ci

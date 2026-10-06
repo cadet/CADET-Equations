@@ -24,16 +24,16 @@ Specific model assumptions:
 
 
 \section*{Frustum Plug Flow}
-Consider a conical frustum column of length $L^{\mathrm{b}} > 0$ with inlet radius $R^{\mathrm{0}} > 0$ and outlet radius $R^{\mathrm{L^\mathrm{b}}} > 0$ filled with a liquid phase, and observed over a time interval $(0, T^{\mathrm{end}})$.
-In the interstitial volume, mass transfer is governed by the following convection equations in $(0, T^\mathrm{end})\times (0, L^{\mathrm{b}})$ and for all components $i\in\{1, \dots, N^{\mathrm{c}} \}$
+Consider a conical frustum column of length $L^{\mathrm{b}} > 0$ with inlet radius $R^{\mathrm{0}} > 0$ and outlet radius $R^{\mathrm{L^{\mathrm{b}}}} > 0$ filled with a liquid phase, and observed over a time interval $(0, T^{\mathrm{end}})$.
+In the interstitial volume, mass transfer is governed by the following convection equations in $(0, T^{\mathrm{end}})\times (0, L^{\mathrm{b}})$ and for all components $i\in\{1, \dots, N^{\mathrm{c}} \}$
 \begin{align}
-\frac{\partial c^{\mathrm{b}}_i}{\partial t} = - \frac{v}{r(z)^2} \frac{\partial c^{\mathrm{b}}_i}{\partial z},
+\frac{\partial c^{\mathrm{b}}_{i}}{\partial t} = - \frac{v}{r(z)^{2}} \frac{\partial c^{\mathrm{b}}_{i}}{\partial z},
 \end{align}
 with boundary conditions
 
 \begin{alignat}{2}
-\frac{v}{r(z)^2} c^{\mathrm{in}}_{i} &= \left.\left( \frac{v}{r(z)^2} c^{\mathrm{b}}_i \right)\right|_{z=0} & &\qquad\text{on }(0, T^{\mathrm{end}}).
+\frac{v}{r(z)^{2}} c^{\mathrm{in}}_{i} &= \left.\left( \frac{v}{r(z)^{2}} c^{\mathrm{b}}_{i} \right)\right|_{z=0} & &\qquad\text{on }(0, T^{\mathrm{end}}).
 \end{alignat}
-Here, $t\in (0, T^{\mathrm{end}})$ is the time coordinate, $z\in (0, L^{\mathrm{b}})$ is the axial frustum coordinate, $c^{\mathrm{b}}_i\colon (0, T^\mathrm{end})\times (0, L^{\mathrm{b}}) \mapsto \mathbb{R}$ is the bulk liquid concentration, $Q> 0$ is the volumetric flow rate, $r(z) = R^{\mathrm{0}} + \frac{R^{\mathrm{L^\mathrm{b}}} - R^{\mathrm{0}}}{L^{\mathrm{b}}} z$ is the column radius function, and $v:= \frac{Q}{\pi}$ is the velocity coefficient.
+Here, $t\in (0, T^{\mathrm{end}})$ is the time coordinate, $z\in (0, L^{\mathrm{b}})$ is the axial frustum coordinate, $c^{\mathrm{b}}_{i}\colon (0, T^{\mathrm{end}})\times (0, L^{\mathrm{b}}) \mapsto \mathbb{R}$ is the bulk liquid concentration, $Q> 0$ is the volumetric flow rate, $r(z) = R^{\mathrm{0}} + \frac{R^{\mathrm{L^{\mathrm{b}}}} - R^{\mathrm{0}}}{L^{\mathrm{b}}} z$ is the column radius function, and $v:= \frac{Q}{\pi}$ is the velocity coefficient.
 Consistent initial values for all solution variables (concentrations) are defined at $t = 0$.
 \end{document}

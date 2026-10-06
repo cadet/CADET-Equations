@@ -209,8 +209,8 @@ def test_particle_asmpt_router(resolution, has_surfDiff):
 @pytest.mark.parametrize(
     "term_func, latex_fragment",
     [
-        (eq.bulk_time_derivative, r"\frac{\partial c^{\b}_i}{\partial t}"),
-        (eq.solid_time_derivative, r"\frac{\partial c^{\s}_i}{\partial t}"),
+        (eq.bulk_time_derivative, r"\frac{\partial c^{\b}_{i}}{\partial t}"),
+        (eq.solid_time_derivative, r"\frac{\partial c^{\s}_{i}}{\partial t}"),
         (eq.axial_convection, r"\partial z"),
         (eq.axial_dispersion, r"D^{\mathrm{ax}}"),
         (eq.radial_dispersion, r"D^{\mathrm{rad}}"),
@@ -359,11 +359,11 @@ def test_int_vol_initial_3D_domain():
 @pytest.mark.parametrize(
     "resolution, with_time, expected, not_expected",
     [
-        ("0D", True, [r"T^\mathrm{end}"], [r"L"]),
-        ("1D", True, [r"T^\mathrm{end}", r"(0, L^{\mathrm{b}})"], []),
-        ("2D", True, [r"R^\mathrm{c}"], []),
+        ("0D", True, [r"T^{\mathrm{end}}"], [r"L"]),
+        ("1D", True, [r"T^{\mathrm{end}}", r"(0, L^{\mathrm{b}})"], []),
+        ("2D", True, [r"R^{\mathrm{c}}"], []),
         ("3D", True, [r"2\pi"], []),
-        ("1D", False, [r"(0, L^{\mathrm{b}})"], [r"T^\mathrm{end}"]),
+        ("1D", False, [r"(0, L^{\mathrm{b}})"], [r"T^{\mathrm{end}}"]),
     ],
 )
 def test_int_vol_domain(resolution, with_time, expected, not_expected):
@@ -400,10 +400,10 @@ def test_particle_domain(hasCore, with_par_index, expected, not_expected):
     "col_res, par_res, hasCore, with_time, expected, not_expected",
     [
         ("1D", "1D", False, True, [r"(0, L^{\mathrm{b}})", r"R^{\mathrm{p}}"], []),
-        ("0D", "0D", False, True, [r"T^\mathrm{end}"], [r"R^{\mathrm{p}}"]),
-        ("2D", "1D", False, True, [r"R^\mathrm{c}"], []),
+        ("0D", "0D", False, True, [r"T^{\mathrm{end}}"], [r"R^{\mathrm{p}}"]),
+        ("2D", "1D", False, True, [r"R^{\mathrm{c}}"], []),
         ("1D", "1D", True, True, [r"R^{\mathrm{pc}}"], []),
-        ("1D", "1D", False, False, [], [r"T^\mathrm{end}"]),
+        ("1D", "1D", False, False, [], [r"T^{\mathrm{end}}"]),
     ],
 )
 def test_full_particle_conc_domain(col_res, par_res, hasCore, with_time, expected, not_expected):
@@ -425,7 +425,7 @@ def test_full_particle_conc_domain(col_res, par_res, hasCore, with_time, expecte
     [
         ("0D", "Sphere", True, r"\begin{align}"),
         ("0D", "Sphere", False, r"\begin{align}"),
-        ("1D", "Sphere", True, r"r^2"),
+        ("1D", "Sphere", True, r"r^{2}"),
     ],
 )
 def test_particle_transport_resolution_and_geometry(resolution, geometry, has_binding, expected_frag):
@@ -485,7 +485,7 @@ def test_particle_transport_multiple_keeps_j_index():
 @pytest.mark.parametrize(
     "geometry, expected_frag",
     [
-        ("Sphere", r"r^2"),
+        ("Sphere", r"r^{2}"),
         ("Cylinder", r"\frac{1}{r}"),
         ("Slab", r"\frac{\partial }{\partial r}"),
     ],
@@ -508,8 +508,8 @@ def test_particle_transport_radial_surfDiff_toggle():
     without_sd = eq.particle_transport_radial(
         "Sphere", has_surfDiff=False, has_binding=True, req_binding=False, has_mult_bnd_states=False
     )
-    assert r"D_{j,i}^{\s}" in with_sd
-    assert r"D_{j,i}^{\s}" not in without_sd
+    assert r"D^{\s}_{j,i}" in with_sd
+    assert r"D^{\s}_{j,i}" not in without_sd
 
 
 @pytest.mark.ci
@@ -633,7 +633,7 @@ def test_particle_boundary_nonlimiting():
         req_binding=False,
         has_mult_bnd_states=False,
     )
-    assert r"c^{\b}_i" in result
+    assert r"c^{\b}_{i}" in result
 
 
 @pytest.mark.ci
@@ -1027,5 +1027,5 @@ def test_particle_transport_radial_surfDiff_cylinder_slab(geometry, expected_fra
     result = eq.particle_transport_radial(
         geometry, has_surfDiff=True, has_binding=True, req_binding=False, has_mult_bnd_states=False
     )
-    assert r"D_{j,i}^{\s}" in result
+    assert r"D^{\s}_{j,i}" in result
     assert expected_frag in result
