@@ -181,7 +181,7 @@ class Crystallization:
             vp.append(
                 {
                     "Group": 2,
-                    "Symbol": r"F_{\mathrm{in}}",
+                    "Symbol": r"Q^{\mathrm{in}}",
                     "Description": "volumetric inflow rate",
                     "Unit": u("volumetric_flow"),
                     "Dependence": r"\text{constant}",
@@ -190,7 +190,7 @@ class Crystallization:
             vp.append(
                 {
                     "Group": 2,
-                    "Symbol": r"F_{\mathrm{out}}",
+                    "Symbol": r"Q^{\mathrm{out}}",
                     "Description": "volumetric outflow rate",
                     "Unit": u("volumetric_flow"),
                     "Dependence": r"\text{constant}",
@@ -211,6 +211,7 @@ class Crystallization:
             vp.append(
                 {
                     "Group": 2,
+                    # not the paper's u: u already denotes the primary nucleation exponent here
                     "Symbol": r"v_{\mathrm{ax}}",
                     "Description": "axial velocity",
                     "Unit": u("velocity"),
@@ -230,7 +231,7 @@ class Crystallization:
                 vp.append(
                     {
                         "Group": 6,
-                        "Symbol": r"D_{\mathrm{ax}}",
+                        "Symbol": r"D^{\mathrm{ax}}",
                         "Description": "axial dispersion coefficient",
                         "Unit": u("diffusion"),
                         "Dependence": r"\text{constant}",
