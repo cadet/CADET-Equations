@@ -459,7 +459,7 @@ class Column:
 
         has_core = (
             st.selectbox(
-                "Add impenetrable core-shell (i.e. " + r"$R^\mathrm{pc} > 0$)",
+                "Add impenetrable core-shell (i.e. " + r"$R^{\mathrm{pc}} > 0$)",
                 ["No", "Yes"],
                 key=geoPrefix + "has_core",
             )
@@ -770,7 +770,7 @@ class Column:
             {
                 "Group": 1,
                 # Without pores, bulk and particle liquid phases are homogenized into one liquid phase
-                "Symbol": r"c^{\l}_i" if without_pores_ else r"c^{\b}_i",
+                "Symbol": r"c^{\l}_{i}" if without_pores_ else r"c^{\b}_{i}",
                 "Description": r"liquid concentration" if without_pores_ else r"bulk liquid concentration",
                 "Unit": u("concentration_molar"),
                 "Dependence": state_deps,
@@ -786,7 +786,7 @@ class Column:
             },
             {
                 "Group": -0.2,
-                "Symbol": r"N^\mathrm{c}",
+                "Symbol": r"N^{\mathrm{c}}",
                 "Description": r"number of components",
                 "Unit": u("dimensionless"),
                 "Dependence": r"-",
@@ -804,14 +804,14 @@ class Column:
 
         if self.has_axial_dispersion:
             if self.column_type == "Radial":
-                disp_symbol = r"D^\mathrm{rad}_i"
+                disp_symbol = r"D^{\mathrm{rad}}_{i}"
                 disp_desc = r"radial dispersion coefficient"
-                disp_symbol_apparent = r"\tilde{D}^\mathrm{rad}_i"
+                disp_symbol_apparent = r"\tilde{D}^{\mathrm{rad}}_{i}"
                 disp_desc_apparent = r"apparent radial dispersion coefficient"
             else:
-                disp_symbol = r"D^\mathrm{ax}_i"
+                disp_symbol = r"D^{\mathrm{ax}}_{i}"
                 disp_desc = r"axial dispersion coefficient"
-                disp_symbol_apparent = r"\tilde{D}^\mathrm{ax}_i"
+                disp_symbol_apparent = r"\tilde{D}^{\mathrm{ax}}_{i}"
                 disp_desc_apparent = r"apparent axial dispersion coefficient"
             if not without_pores_:
                 self.vars_and_params.append(
@@ -839,7 +839,7 @@ class Column:
             self.vars_and_params.append(
                 {
                     "Group": 6,
-                    "Symbol": r"D^\mathrm{rad}_i",
+                    "Symbol": r"D^{\mathrm{rad}}_{i}",
                     "Description": r"radial dispersion coefficient",
                     "Unit": u("diffusion"),
                     "Dependence": param_deps_comp,
@@ -850,7 +850,7 @@ class Column:
             self.vars_and_params.append(
                 {
                     "Group": 6,
-                    "Symbol": r"D^\mathrm{ang}_i",
+                    "Symbol": r"D^{\mathrm{ang}}_{i}",
                     "Description": r"angular dispersion coefficient",
                     "Unit": u("diffusion"),
                     "Dependence": param_deps_comp,
@@ -862,7 +862,7 @@ class Column:
             self.vars_and_params.append(
                 {
                     "Group": 2,
-                    "Symbol": r"Q^\mathrm{in}",
+                    "Symbol": r"Q^{\mathrm{in}}",
                     "Description": r"volumetric flow rate into the tank",
                     "Unit": u("volumetric_flow"),
                     "Dependence": r"\text{constant}",
@@ -872,7 +872,7 @@ class Column:
             self.vars_and_params.append(
                 {
                     "Group": 2,
-                    "Symbol": r"Q^\mathrm{out}",
+                    "Symbol": r"Q^{\mathrm{out}}",
                     "Description": r"volumetric flow rate out of the tank",
                     "Unit": u("volumetric_flow"),
                     "Dependence": r"\text{constant}",
@@ -883,7 +883,7 @@ class Column:
                 self.vars_and_params.append(
                     {
                         "Group": 2,
-                        "Symbol": r"Q^\mathrm{filter}",
+                        "Symbol": r"Q^{\mathrm{filter}}",
                         "Description": r"volumetric flow rate out of the tank (solvent only)",
                         "Unit": u("volumetric_flow"),
                         "Dependence": r"\text{constant}",
@@ -985,7 +985,7 @@ class Column:
             self.vars_and_params.append(
                 {
                     "Group": -1,
-                    "Symbol": r"R^{\mathrm{L^\mathrm{b}}}",
+                    "Symbol": r"R^{\mathrm{L^{\mathrm{b}}}}",
                     "Description": r"column radius at outlet",
                     "Unit": u("length"),
                     "Dependence": r"\text{constant}",
@@ -999,7 +999,7 @@ class Column:
                     "Description": r"column radius function",
                     "Unit": u("length"),
                     "Dependence": r"z",
-                    "Property": r"(z) = R^{\mathrm{0}} + \frac{R^{\mathrm{L^\mathrm{b}}} - R^{\mathrm{0}}}{L^{\mathrm{b}}} z",
+                    "Property": r"(z) = R^{\mathrm{0}} + \frac{R^{\mathrm{L^{\mathrm{b}}}} - R^{\mathrm{0}}}{L^{\mathrm{b}}} z",
                 }
             )
             self.vars_and_params.append(
@@ -1105,7 +1105,7 @@ class Column:
                 self.vars_and_params.append(
                     {
                         "Group": 0.1,
-                        "Symbol": r"R^\mathrm{p}",
+                        "Symbol": r"R^{\mathrm{p}}",
                         "Description": r"particle radius",
                         "Unit": u("dimensionless"),
                         "Dependence": r"-",
@@ -1147,7 +1147,7 @@ class Column:
                     }
                 )
             if not self.nonlimiting_filmDiff:
-                symbol_name_ = r"k^\mathrm{f}_{i}" if self.N_p <= 1 else r"k^\mathrm{f}_{j,i}"
+                symbol_name_ = r"k^{\mathrm{f}}_{i}" if self.N_p <= 1 else r"k^{\mathrm{f}}_{j,i}"
                 self.vars_and_params.append(
                     {
                         "Group": 7,
@@ -1348,21 +1348,21 @@ class Column:
                 + filter_str
                 + r""",
     \\
-    \frac{\mathrm{d}}{\mathrm{d} t} \left( V^{\b} c^{\b}_i \right)"""
+    \frac{\mathrm{d}}{\mathrm{d} t} \left( V^{\b} c^{\b}_{i} \right)"""
             )
 
             if nlf and self.has_binding and self.particle_models[0].resolution == "0D":
-                equation += r" + V^{\p} \varepsilon^{\mathrm{p}} \frac{\partial c^{\b}_i}{\partial t}"
+                equation += r" + V^{\p} \varepsilon^{\mathrm{p}} \frac{\partial c^{\b}_{i}}{\partial t}"
                 if self.req_binding:
                     equation += (
-                        r" + V^{\p} \left( 1 - \varepsilon^{\mathrm{p}} \right) \frac{\partial c^{\s}_i}{\partial t}"
+                        r" + V^{\p} \left( 1 - \varepsilon^{\mathrm{p}} \right) \frac{\partial c^{\s}_{i}}{\partial t}"
                     )
 
-            equation += r"&= Q^{\mathrm{in}} c^{\mathrm{in}}_{i} - Q^{\mathrm{out}} c^{\b}_i"
+            equation += r"&= Q^{\mathrm{in}} c^{\mathrm{in}}_{i} - Q^{\mathrm{out}} c^{\b}_{i}"
 
             if nlf and self.has_binding and self.particle_models[0].resolution == "0D" and not self.req_binding:
                 equation += (
-                    r" - V^{\p} \left( 1 - \varepsilon^{\mathrm{p}} \right) \frac{\partial c^{\s}_i}{\partial t}"
+                    r" - V^{\p} \left( 1 - \varepsilon^{\mathrm{p}} \right) \frac{\partial c^{\s}_{i}}{\partial t}"
                 )
 
             if self.has_reaction_bulk and not self.req_reaction_bulk:
@@ -1411,9 +1411,9 @@ class Column:
                 equation = eq.homogenized_notation(equation)
 
             if self.N_p == 0:  # remove occurencies of porosity, which is just constant one in this case
-                equation = equation.replace(r"\left( \varepsilon^{\mathrm{b}} c^{\b}_i \right)", r"c^{\b}_i").replace(
-                    r"\varepsilon^{\mathrm{b}} ", ""
-                )
+                equation = equation.replace(
+                    r"\left( \varepsilon^{\mathrm{b}} c^{\b}_{i} \right)", r"c^{\b}_{i}"
+                ).replace(r"\varepsilon^{\mathrm{b}} ", "")
 
         if nlf_override is not None:
             # Per-component group: single particle type (N_p == 1)
@@ -1805,7 +1805,7 @@ class Column:
 
         if self.nonlimiting_filmDiff:
             asmpts["Specific model assumptions"].append(
-                r"the film around the particles does not limit mass transfer. That is, we assume $k^{\mathrm{f}}_i = \infty$)"
+                r"the film around the particles does not limit mass transfer. That is, we assume $k^{\mathrm{f}}_{i} = \infty$)"
             )
         if self.req_binding:
             asmpts["Specific model assumptions"].append(

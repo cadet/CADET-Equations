@@ -26,28 +26,28 @@ Specific model assumptions:
 \item the particles form a continuum inside the column (i.e., there is interstitial and particle volume at every point in the column);
 \item the column is radially symmetric and homogeneous (i.e., concentration profiles and parameters only depend on the axial position);
 \item the interstitial liquid phase concentration is spatially constant on the outer particle surface;
-\item the pore and surface diffusion are infinitely fast. That is, we assume $D_{i}^{\mathrm{p}} = D_{i}^{\mathrm{s}} = \infty$;
-\item the film around the particles does not limit mass transfer. That is, we assume $k^{\mathrm{f}}_i = \infty$)
+\item the pore and surface diffusion are infinitely fast. That is, we assume $D^{\mathrm{p}}_{i} = D^{\mathrm{s}}_{i} = \infty$;
+\item the film around the particles does not limit mass transfer. That is, we assume $k^{\mathrm{f}}_{i} = \infty$)
 \end{itemize}
 
 
 \section*{Lumped Rate Model without Pores}
 Consider a cylindrical column of length $L^{\mathrm{b}} > 0$ packed with spherical particles, and observed over a time interval $(0, T^{\mathrm{end}})$.
-In the interstitial volume, mass transfer is governed by the following convection-diffusion equations in $(0, T^\mathrm{end})\times (0, L^{\mathrm{b}})$ and for all components $i\in\{1, \dots, N^{\mathrm{c}} \}$
+In the interstitial volume, mass transfer is governed by the following convection-diffusion equations in $(0, T^{\mathrm{end}})\times (0, L^{\mathrm{b}})$ and for all components $i\in\{1, \dots, N^{\mathrm{c}} \}$
 \begin{align}
-\frac{\partial c^{\mathrm{\ell}}_i}{\partial t} + \frac{1 - \varepsilon^{\mathrm{t}}}{\varepsilon^{\mathrm{t}}} \frac{\partial c^{\mathrm{s}}_i}{\partial t} = - \tilde{u} \frac{\partial c^{\mathrm{\ell}}_i }{\partial z} + \frac{\partial}{\partial z} \left( \tilde{D}^{\mathrm{ax}}_{i} \frac{\partial c^{\mathrm{\ell}}_i}{\partial z} \right),
+\frac{\partial c^{\mathrm{\ell}}_{i}}{\partial t} + \frac{1 - \varepsilon^{\mathrm{t}}}{\varepsilon^{\mathrm{t}}} \frac{\partial c^{\mathrm{s}}_{i}}{\partial t} = - \tilde{u} \frac{\partial c^{\mathrm{\ell}}_{i} }{\partial z} + \frac{\partial}{\partial z} \left( \tilde{D}^{\mathrm{ax}}_{i} \frac{\partial c^{\mathrm{\ell}}_{i}}{\partial z} \right),
 \end{align}
 with boundary conditions
 
 \begin{alignat}{2}
-\tilde{u} c^{\mathrm{in}}_{i} &= \left.\left( \tilde{u} c^{\mathrm{\ell}}_i - \tilde{D}^{\mathrm{ax}}_{i} \frac{\partial c^{\mathrm{\ell}}_i}{\partial z}\right)\right|_{z=0} & &\qquad\text{on }(0, T^{\mathrm{end}}),\\
-               0 &= - \tilde{D}^{\mathrm{ax}}_{i} \left. \frac{\partial c^{\mathrm{\ell}}_i}{\partial z} \right|_{z=L^{\mathrm{b}}} & &\qquad\text{on }(0, T^{\mathrm{end}}).
+\tilde{u} c^{\mathrm{in}}_{i} &= \left.\left( \tilde{u} c^{\mathrm{\ell}}_{i} - \tilde{D}^{\mathrm{ax}}_{i} \frac{\partial c^{\mathrm{\ell}}_{i}}{\partial z}\right)\right|_{z=0} & &\qquad\text{on }(0, T^{\mathrm{end}}),\\
+               0 &= - \tilde{D}^{\mathrm{ax}}_{i} \left. \frac{\partial c^{\mathrm{\ell}}_{i}}{\partial z} \right|_{z=L^{\mathrm{b}}} & &\qquad\text{on }(0, T^{\mathrm{end}}).
 \end{alignat}
-Here, $t\in (0, T^{\mathrm{end}})$ is the time coordinate, $z\in (0, L^{\mathrm{b}})$ is the axial cylinder coordinate, $c^{\mathrm{\ell}}_i\colon (0, T^\mathrm{end})\times (0, L^{\mathrm{b}}) \mapsto \mathbb{R}$ is the liquid concentration, $\varepsilon^{\mathrm{t}}\in (0, 1)$ is the total porosity, $\tilde{u}> 0$ is the apparent interstitial velocity, and $\tilde{D}^\mathrm{ax}_i\geq 0$ is the apparent axial dispersion coefficient.
-In the particles, mass transfer is governed by reaction equations in $(0, T^\mathrm{end}) \times (0, L^{\mathrm{b}})$ and for all components
+Here, $t\in (0, T^{\mathrm{end}})$ is the time coordinate, $z\in (0, L^{\mathrm{b}})$ is the axial cylinder coordinate, $c^{\mathrm{\ell}}_{i}\colon (0, T^{\mathrm{end}})\times (0, L^{\mathrm{b}}) \mapsto \mathbb{R}$ is the liquid concentration, $\varepsilon^{\mathrm{t}}\in (0, 1)$ is the total porosity, $\tilde{u}> 0$ is the apparent interstitial velocity, and $\tilde{D}^{\mathrm{ax}}_{i}\geq 0$ is the apparent axial dispersion coefficient.
+In the particles, mass transfer is governed by reaction equations in $(0, T^{\mathrm{end}}) \times (0, L^{\mathrm{b}})$ and for all components
 \begin{align}
           \frac{\partial c^{\mathrm{s}}_{i}}{\partial t}
           &= f^{\mathrm{bind}}_{i}\left( \vec{c}^{\mathrm{\ell}}, \vec{c}^{\mathrm{s}} \right), \end{align}
-Here, $c^{\mathrm{s}}_{i}\colon (0, T^\mathrm{end}) \times (0, L^{\mathrm{b}}) \mapsto \mathbb{R}$ is the particle solid concentration, $f^\mathrm{bind}_{i}$ is the adsorption isotherm function, $\vec{c}^\mathrm{\ell}$ is the liquid components vector, and $\vec{c}^\mathrm{s}$ is the particle solid components vector.
+Here, $c^{\mathrm{s}}_{i}\colon (0, T^{\mathrm{end}}) \times (0, L^{\mathrm{b}}) \mapsto \mathbb{R}$ is the particle solid concentration, $f^{\mathrm{bind}}_{i}$ is the adsorption isotherm function, $\vec{c}^{\mathrm{\ell}}$ is the liquid components vector, and $\vec{c}^{\mathrm{s}}$ is the particle solid components vector.
 Consistent initial values for all solution variables (concentrations) are defined at $t = 0$.
 \end{document}

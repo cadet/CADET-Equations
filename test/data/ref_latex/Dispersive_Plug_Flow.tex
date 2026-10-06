@@ -23,16 +23,16 @@ Specific model assumptions:
 
 \section*{Dispersive Plug Flow}
 Consider a cylindrical column of length $L^{\mathrm{b}} > 0$ filled with a liquid phase, and observed over a time interval $(0, T^{\mathrm{end}})$.
-In the interstitial volume, mass transfer is governed by the following convection-diffusion equations in $(0, T^\mathrm{end})\times (0, L^{\mathrm{b}})$ and for all components $i\in\{1, \dots, N^{\mathrm{c}} \}$
+In the interstitial volume, mass transfer is governed by the following convection-diffusion equations in $(0, T^{\mathrm{end}})\times (0, L^{\mathrm{b}})$ and for all components $i\in\{1, \dots, N^{\mathrm{c}} \}$
 \begin{align}
-\frac{\partial c^{\mathrm{b}}_i}{\partial t} = - u \frac{\partial c^{\mathrm{b}}_i}{\partial z} + \frac{\partial}{\partial z} \left( D^{\mathrm{ax}}_{i} \frac{\partial c^{\mathrm{b}}_i}{\partial z} \right),
+\frac{\partial c^{\mathrm{b}}_{i}}{\partial t} = - u \frac{\partial c^{\mathrm{b}}_{i}}{\partial z} + \frac{\partial}{\partial z} \left( D^{\mathrm{ax}}_{i} \frac{\partial c^{\mathrm{b}}_{i}}{\partial z} \right),
 \end{align}
 with boundary conditions
 
 \begin{alignat}{2}
-u c^{\mathrm{in}}_{i} &= \left.\left( u c^{\mathrm{b}}_i - D^{\mathrm{ax}}_{i} \frac{\partial c^{\mathrm{b}}_i}{\partial z}\right)\right|_{z=0} & &\qquad\text{on }(0, T^{\mathrm{end}}),\\
-               0 &= - D^{\mathrm{ax}}_{i} \left. \frac{\partial c^{\mathrm{b}}_i}{\partial z} \right|_{z=L^{\mathrm{b}}} & &\qquad\text{on }(0, T^{\mathrm{end}}).
+u c^{\mathrm{in}}_{i} &= \left.\left( u c^{\mathrm{b}}_{i} - D^{\mathrm{ax}}_{i} \frac{\partial c^{\mathrm{b}}_{i}}{\partial z}\right)\right|_{z=0} & &\qquad\text{on }(0, T^{\mathrm{end}}),\\
+               0 &= - D^{\mathrm{ax}}_{i} \left. \frac{\partial c^{\mathrm{b}}_{i}}{\partial z} \right|_{z=L^{\mathrm{b}}} & &\qquad\text{on }(0, T^{\mathrm{end}}).
 \end{alignat}
-Here, $t\in (0, T^{\mathrm{end}})$ is the time coordinate, $z\in (0, L^{\mathrm{b}})$ is the axial cylinder coordinate, $c^{\mathrm{b}}_i\colon (0, T^\mathrm{end})\times (0, L^{\mathrm{b}}) \mapsto \mathbb{R}$ is the bulk liquid concentration, $u> 0$ is the interstitial velocity, and $D^\mathrm{ax}_i\geq 0$ is the axial dispersion coefficient.
+Here, $t\in (0, T^{\mathrm{end}})$ is the time coordinate, $z\in (0, L^{\mathrm{b}})$ is the axial cylinder coordinate, $c^{\mathrm{b}}_{i}\colon (0, T^{\mathrm{end}})\times (0, L^{\mathrm{b}}) \mapsto \mathbb{R}$ is the bulk liquid concentration, $u> 0$ is the interstitial velocity, and $D^{\mathrm{ax}}_{i}\geq 0$ is the axial dispersion coefficient.
 Consistent initial values for all solution variables (concentrations) are defined at $t = 0$.
 \end{document}

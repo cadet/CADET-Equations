@@ -221,7 +221,7 @@ class Crystallization:
             vp.append(
                 {
                     "Group": -1,
-                    "Symbol": r"L",
+                    "Symbol": r"L^{\mathrm{b}}",
                     "Description": "reactor length",
                     "Unit": u("length"),
                     "Dependence": r"\text{constant}",
@@ -242,7 +242,7 @@ class Crystallization:
             vp.append(
                 {
                     "Group": 3,
-                    "Symbol": r"v_G",
+                    "Symbol": r"v_{G}",
                     "Description": "growth rate",
                     "Unit": u("velocity"),
                     "Dependence": r"s, x",
@@ -269,7 +269,7 @@ class Crystallization:
             vp.append(
                 {
                     "Group": 3,
-                    "Symbol": r"B_0",
+                    "Symbol": r"B_{0}",
                     "Description": "total nucleation rate",
                     "Unit": u("nucleation_rate"),
                     "Dependence": r"s",
@@ -278,7 +278,7 @@ class Crystallization:
             vp.append(
                 {
                     "Group": 4,
-                    "Symbol": r"k_g",
+                    "Symbol": r"k_{g}",
                     "Description": "growth rate constant",
                     "Unit": u("velocity"),
                     "Dependence": r"\text{constant}",
@@ -325,7 +325,7 @@ class Crystallization:
                 vp.append(
                     {
                         "Group": 6,
-                        "Symbol": r"D_g",
+                        "Symbol": r"D_{g}",
                         "Description": "growth dispersion rate",
                         "Unit": u("diffusion"),
                         "Dependence": r"\text{constant}",
@@ -334,7 +334,7 @@ class Crystallization:
             vp.append(
                 {
                     "Group": 5,
-                    "Symbol": r"k_p",
+                    "Symbol": r"k_{p}",
                     "Description": "primary nucleation rate constant",
                     "Unit": u("nucleation_rate"),
                     "Dependence": r"\text{constant}",
@@ -353,7 +353,7 @@ class Crystallization:
                 vp.append(
                     {
                         "Group": 5,
-                        "Symbol": r"k_b",
+                        "Symbol": r"k_{b}",
                         "Description": "secondary nucleation rate constant",
                         "Unit": u("nucleation_rate"),
                         "Dependence": r"\text{constant}",
@@ -389,7 +389,7 @@ class Crystallization:
             vp.append(
                 {
                     "Group": 5,
-                    "Symbol": r"x_c",
+                    "Symbol": r"x_{c}",
                     "Description": "critical (minimum) particle size",
                     "Unit": u("length"),
                     "Dependence": r"\text{constant}",
@@ -407,7 +407,7 @@ class Crystallization:
             vp.append(
                 {
                     "Group": -1,
-                    "Symbol": r"k_v",
+                    "Symbol": r"k_{v}",
                     "Description": "volumetric shape factor",
                     "Unit": u("dimensionless"),
                     "Dependence": r"\text{constant}",
@@ -427,7 +427,7 @@ class Crystallization:
             vp.append(
                 {
                     "Group": 7,
-                    "Symbol": r"\beta_0",
+                    "Symbol": r"\beta_{0}",
                     "Description": "aggregation rate constant",
                     "Unit": u("volumetric_flow"),
                     "Dependence": r"\text{constant}",
@@ -456,7 +456,7 @@ class Crystallization:
             vp.append(
                 {
                     "Group": 8,
-                    "Symbol": r"S_0",
+                    "Symbol": r"S_{0}",
                     "Description": "fragmentation rate constant",
                     "Unit": u("rate_first_order"),
                     "Dependence": r"\text{constant}",
@@ -474,7 +474,7 @@ class Crystallization:
             vp.append(
                 {
                     "Group": 8.1,
-                    "Symbol": r"\gamma_f",
+                    "Symbol": r"\gamma_{f}",
                     "Description": "daughter distribution parameter",
                     "Unit": u("dimensionless"),
                     "Dependence": r"\text{constant}",
