@@ -494,6 +494,144 @@ def create_v6_CSTR():
     print(f"Created {fname}")
 
 
+def _add_grm_particle(unit, par_geom=None):
+    """Add a general rate particle (film + pore diffusion) with linear binding."""
+    pt = unit.create_group("particle_type_000")
+    pt.create_dataset("HAS_FILM_DIFFUSION", data=True)
+    pt.create_dataset("HAS_PORE_DIFFUSION", data=True)
+    pt.create_dataset("HAS_SURFACE_DIFFUSION", data=False)
+    pt.create_dataset("PAR_POROSITY", data=0.75)
+    pt.create_dataset("PAR_RADIUS", data=4.5e-05)
+    pt.create_dataset("PAR_CORERADIUS", data=0.0)
+    pt.create_dataset("FILM_DIFFUSION", data=np.array([6.9e-06]))
+    pt.create_dataset("PORE_DIFFUSION", data=np.array([6.07e-11]))
+    pt.create_dataset("ADSORPTION_MODEL", data="LINEAR")
+    pt.create_dataset("NBOUND", data=np.array([1]))
+    if par_geom is not None:
+        # since CADET-Core v6 the particle geometry lives in the particle group
+        pt.create_dataset("PAR_GEOM", data=par_geom)
+
+    ads = pt.create_group("adsorption")
+    ads.create_dataset("IS_KINETIC", data=True)
+    ads.create_dataset("LIN_KA", data=np.array([3.55]))
+    ads.create_dataset("LIN_KD", data=np.array([0.1]))
+    return pt
+
+
+def _add_bulk_discretization(unit):
+    disc = unit.create_group("discretization")
+    disc.create_dataset("NELEM", data=8)
+    disc.create_dataset("POLYDEG", data=3)
+    disc.create_dataset("SPATIAL_METHOD", data="DG")
+    return disc
+
+
+def create_v6_radial_GRM():
+    """Radial flow GRM: geometry comes from GEOMETRY, not from the unit type."""
+    fname = os.path.join(OUTPUT_DIR, "v6_radial_GRM_dynLin_1comp.h5")
+    with h5py.File(fname, "w") as f:
+        create_base_structure(f)
+        create_inlet(f, 0)
+
+        unit = f.create_group("input/model/unit_001")
+        unit.create_dataset("UNIT_TYPE", data="COLUMN_MODEL_1D")
+        unit.create_dataset("GEOMETRY", data="RADIAL_FLOW_CYLINDER_SHELL")
+        unit.create_dataset("NCOMP", data=1)
+        unit.create_dataset("NPARTYPE", data=1)
+        unit.create_dataset("COL_DISPERSION", data=5.75e-08)
+        unit.create_dataset("BED_LENGTH", data=0.014)
+        unit.create_dataset("COL_POROSITY", data=0.37)
+        unit.create_dataset("CROSS_SECTION_AREA_INNER", data=1.649336143134641e-05)
+        unit.create_dataset("CROSS_SECTION_AREA_OUTER", data=3.8484510006474965e-05)
+        unit.create_dataset("CYLINDER_HEIGHT", data=0.00025)
+        unit.create_dataset("INIT_C", data=np.array([0.0]))
+        unit.create_dataset("PAR_TYPE_VOLFRAC", data=1)
+
+        _add_bulk_discretization(unit)
+        _add_grm_particle(unit, par_geom="SPHERE")
+
+        create_outlet(f, 2)
+    print(f"Created {fname}")
+
+
+def create_v6_frustum_LRM():
+    """Frustum LRM: AXIAL_FLOW_FRUSTUM geometry with an equilibrium particle."""
+    fname = os.path.join(OUTPUT_DIR, "v6_frustum_LRM_dynLin_1comp.h5")
+    with h5py.File(fname, "w") as f:
+        create_base_structure(f)
+        create_inlet(f, 0)
+
+        unit = f.create_group("input/model/unit_001")
+        unit.create_dataset("UNIT_TYPE", data="COLUMN_MODEL_1D")
+        unit.create_dataset("GEOMETRY", data="AXIAL_FLOW_FRUSTUM")
+        unit.create_dataset("NCOMP", data=1)
+        unit.create_dataset("NPARTYPE", data=1)
+        unit.create_dataset("COL_DISPERSION", data=0.0001)
+        unit.create_dataset("BED_LENGTH", data=0.1)
+        unit.create_dataset("TOTAL_POROSITY", data=0.4)
+        unit.create_dataset("CROSS_SECTION_AREA_LARGE_END", data=0.0012566370614359172)
+        unit.create_dataset("CROSS_SECTION_AREA_SMALL_END", data=0.0009424777960769379)
+        unit.create_dataset("INIT_C", data=np.array([0.0]))
+        unit.create_dataset("PAR_TYPE_VOLFRAC", data=1)
+
+        _add_bulk_discretization(unit)
+
+        pt = unit.create_group("particle_type_000")
+        pt.create_dataset("HAS_FILM_DIFFUSION", data=False)
+        pt.create_dataset("HAS_PORE_DIFFUSION", data=False)
+        pt.create_dataset("HAS_SURFACE_DIFFUSION", data=False)
+        pt.create_dataset("PAR_POROSITY", data=0.75)
+        pt.create_dataset("PAR_RADIUS", data=4.5e-05)
+        pt.create_dataset("ADSORPTION_MODEL", data="LINEAR")
+        pt.create_dataset("NBOUND", data=np.array([1]))
+        ads = pt.create_group("adsorption")
+        ads.create_dataset("IS_KINETIC", data=True)
+        ads.create_dataset("LIN_KA", data=np.array([3.55]))
+        ads.create_dataset("LIN_KD", data=np.array([0.1]))
+
+        create_outlet(f, 2)
+    print(f"Created {fname}")
+
+
+def create_v6_GRM_reactions():
+    """GRM with the v6 reaction interface and a non-spherical particle."""
+    fname = os.path.join(OUTPUT_DIR, "v6_GRM_reactions_1comp.h5")
+    with h5py.File(fname, "w") as f:
+        create_base_structure(f)
+        create_inlet(f, 0)
+
+        unit = f.create_group("input/model/unit_001")
+        unit.create_dataset("UNIT_TYPE", data="COLUMN_MODEL_1D")
+        unit.create_dataset("GEOMETRY", data="AXIAL_FLOW_CYLINDER")
+        unit.create_dataset("NCOMP", data=1)
+        unit.create_dataset("NPARTYPE", data=1)
+        unit.create_dataset("COL_DISPERSION", data=5.75e-08)
+        unit.create_dataset("BED_LENGTH", data=0.014)
+        unit.create_dataset("COL_POROSITY", data=0.37)
+        unit.create_dataset("INIT_C", data=np.array([0.0]))
+        unit.create_dataset("PAR_TYPE_VOLFRAC", data=1)
+
+        # bulk liquid phase reaction
+        unit.create_dataset("NREAC_LIQUID", data=1)
+        bulk_reac = unit.create_group("liquid_reaction_000")
+        bulk_reac.create_dataset("TYPE", data="MASS_ACTION_LAW")
+
+        _add_bulk_discretization(unit)
+        pt = _add_grm_particle(unit, par_geom="CYLINDER")
+
+        # particle liquid and solid phase reactions
+        pt.create_dataset("NREAC_LIQUID", data=1)
+        par_liquid = pt.create_group("liquid_reaction_000")
+        par_liquid.create_dataset("TYPE", data="MASS_ACTION_LAW")
+
+        pt.create_dataset("NREAC_SOLID", data=1)
+        par_solid = pt.create_group("solid_reaction_000")
+        par_solid.create_dataset("TYPE", data="MASS_ACTION_LAW")
+
+        create_outlet(f, 2)
+    print(f"Created {fname}")
+
+
 if __name__ == "__main__":
     create_v6_PlugFlow()
     create_v6_LRM()
@@ -505,4 +643,7 @@ if __name__ == "__main__":
     create_v6_GRMsd_PSD()
     create_v6_GRMsd2D()
     create_v6_CSTR()
+    create_v6_radial_GRM()
+    create_v6_frustum_LRM()
+    create_v6_GRM_reactions()
     print("\nAll v6 HDF5 test files created successfully!")
