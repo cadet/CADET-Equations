@@ -23,6 +23,7 @@ from src.load_CADET_h5 import (
     map_unit_to_particle_model,
     map_unit_type_to_column_geometry,
     map_unit_type_to_column_model,
+    particle_type_groups,
 )
 
 # %% Helpers
@@ -780,8 +781,8 @@ def test_extract_binding_model_not_set_when_no_binding():
 
 @pytest.mark.ci
 @pytest.mark.unit_test
-def test_extract_binding_model_v6_multi_partype_uses_first():
-    """V6 multi-particle config should use first particle type's binding model as shared config."""
+def test_extract_binding_model_v6_multi_partype_per_type():
+    """Each stored particle type contributes its own binding configuration."""
     ads_group_0 = _make_h5_group({"IS_KINETIC": True})
     pt0_group = _make_h5_group(
         {
@@ -817,11 +818,152 @@ def test_extract_binding_model_v6_multi_partype_uses_first():
 
     config = extract_config_data_from_unit("COLUMN_MODEL_1D", group)
 
-    # Shared binding_model comes from first particle type
-    assert config["binding_model"] == "SMA"
-    # Per-particle-type keys are not extracted (only used in dev mode)
+    assert config["parType_1_binding_model"] == "SMA"
+    assert config["parType_2_binding_model"] == "Linear"
+    # the shared binding widget is replaced by the per-type ones
+    assert "binding_model" not in config
+
+
+# %% Multiple particle types
+
+
+def _pt_group(adsorption="LINEAR", kinetic=True, pore=False, surface=False, core=0.0, geom=b"SPHERE"):
+    """Build a mock particle_type_XXX group."""
+    return _make_h5_group(
+        {
+            "HAS_FILM_DIFFUSION": True,
+            "HAS_PORE_DIFFUSION": pore,
+            "HAS_SURFACE_DIFFUSION": surface,
+            "ADSORPTION_MODEL": adsorption.encode(),
+            "NBOUND": np.array([1]),
+            "PAR_CORERADIUS": core,
+            "PAR_GEOM": geom,
+        },
+        subgroups={"adsorption": _make_h5_group({"IS_KINETIC": kinetic})},
+    )
+
+
+def _unit_with_particle_types(pt_groups, n_par_type=None):
+    """Build a mock unit group holding the given particle type groups."""
+    subgroups = {f"particle_type_{j:03d}": g for j, g in enumerate(pt_groups)}
+    return _make_h5_group(
+        {
+            "NPARTYPE": len(pt_groups) if n_par_type is None else n_par_type,
+            "COL_POROSITY": 0.37,
+            "COL_DISPERSION": 5.75e-08,
+        },
+        subgroups=subgroups,
+    )
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_particle_type_groups_returns_all_present():
+    """All particle_type_XXX groups are returned in index order."""
+    groups = [_pt_group(), _pt_group(), _pt_group()]
+    unit = _unit_with_particle_types(groups)
+    assert particle_type_groups(unit, 3) == groups
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_particle_type_groups_stops_at_missing_group():
+    """A file announcing more types than it stores yields only the stored ones."""
+    groups = [_pt_group(), _pt_group()]
+    unit = _unit_with_particle_types(groups, n_par_type=4)
+    assert particle_type_groups(unit, 4) == groups
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_multiple_particle_types_are_read_per_type():
+    """Each particle type keeps its own transport, binding, core and geometry settings."""
+    unit = _unit_with_particle_types(
+        [
+            _pt_group(adsorption="STERIC_MASS_ACTION", kinetic=True, pore=True, surface=True, core=1e-05),
+            _pt_group(adsorption="LINEAR", kinetic=False, geom=b"SLAB"),
+        ]
+    )
+
+    config = extract_config_data_from_unit("COLUMN_MODEL_1D", unit)
+
+    # several types are only configurable in developer mode, which counts them
+    assert config["dev_mode"] is True
+    assert config["N^\\mathrm{p}"] == 2
+    assert "add_particles" not in config
+    assert "PSD" not in config
+
+    assert config["parType_1_resolution"] == "1D (radial coordinate)"
+    assert config["parType_1_has_surfDiff"] == "Yes"
+    assert config["parType_1_has_core"] == "Yes"
+    assert config["parType_1_binding_model"] == "SMA"
+    assert config["parType_1_req_binding"] == "Kinetic"
+
+    assert config["parType_2_resolution"] == "0D (homogeneous)"
+    assert config["parType_2_geometry"] == "Slab"
+    assert config["parType_2_binding_model"] == "Linear"
+    assert config["parType_2_req_binding"] == "Rapid-equilibrium"
+    # a homogeneous particle has neither surface diffusion nor a core
+    assert "parType_2_has_surfDiff" not in config
+    assert "parType_2_has_core" not in config
+
+    # the shared particle widgets are not rendered alongside the per-type ones
+    assert "particle_resolution" not in config
+    assert "particle_has_surfDiff" not in config
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_multiple_particle_types_without_binding():
+    """Binding stays off when no particle type adsorbs."""
+    unit = _unit_with_particle_types([_pt_group(adsorption="NONE", pore=True), _pt_group(adsorption="NONE")])
+
+    config = extract_config_data_from_unit("COLUMN_MODEL_1D", unit)
+
+    assert config["has_binding"] == "No"
+    assert config["parType_1_resolution"] == "1D (radial coordinate)"
+    assert config["parType_2_resolution"] == "0D (homogeneous)"
     assert "parType_1_binding_model" not in config
-    assert "parType_2_binding_model" not in config
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_identical_particle_types_stay_a_distribution():
+    """Types that CADET-Equations models identically are a particle size distribution."""
+    unit = _unit_with_particle_types([_pt_group(pore=True), _pt_group(pore=True)])
+
+    config = extract_config_data_from_unit("COLUMN_MODEL_1D", unit)
+
+    assert config["PSD"] == "Particle size distribution"
+    assert config["binding_model"] == "Linear"
+    assert "dev_mode" not in config
+    assert not any(key.startswith("parType_") for key in config)
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_more_types_announced_than_stored_falls_back_to_distribution():
+    """A single stored type with NPARTYPE > 1 stays a particle size distribution."""
+    unit = _unit_with_particle_types([_pt_group(pore=True)], n_par_type=2)
+
+    with patch("src.load_CADET_h5.st"):
+        config = extract_config_data_from_unit("COLUMN_MODEL_1D", unit)
+
+    assert config["PSD"] == "Particle size distribution"
+    assert config["advanced_mode"] == "On"
+    assert "parType_1_resolution" not in config
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_particle_type_count_follows_stored_groups():
+    """The particle type count reflects what the file stores, not what it announces."""
+    unit = _unit_with_particle_types([_pt_group(pore=True), _pt_group()], n_par_type=5)
+
+    with patch("src.load_CADET_h5.st"):
+        config = extract_config_data_from_unit("COLUMN_MODEL_1D", unit)
+
+    assert config["N^\\mathrm{p}"] == 2
 
 
 # %% Crystallization detection and extraction
@@ -1166,3 +1308,27 @@ def test_get_config_auto_search_no_column_unit(mock_h5file, mock_st):
     result = get_config_from_CADET_h5("dummy.h5", "-01")
     assert result is None
     mock_st.sidebar.error.assert_called_once_with("No supported column unit type was found in the file.")
+
+
+# %% Multiple particle types read from a real HDF5 file
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_multiple_particle_types_from_h5_file(test_dir):
+    """Loading a two-particle-type file keeps both types distinct."""
+    config = get_config_from_CADET_h5(test_dir + "/data/CADET_configs/v6_GRM_PTD_1comp.h5", "-01")
+
+    assert config["N^\\mathrm{p}"] == 2
+    assert config["dev_mode"] is True
+    assert config["has_binding"] == "Yes"
+
+    assert config["parType_1_resolution"] == "1D (radial coordinate)"
+    assert config["parType_1_binding_model"] == "SMA"
+    assert config["parType_1_has_core"] == "Yes"
+    assert config["parType_1_has_surfDiff"] == "Yes"
+
+    assert config["parType_2_resolution"] == "0D (homogeneous)"
+    assert config["parType_2_binding_model"] == "Linear"
+    assert config["parType_2_req_binding"] == "Rapid-equilibrium"
+    assert config["parType_2_geometry"] == "Slab"

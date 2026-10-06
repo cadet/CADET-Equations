@@ -28,6 +28,9 @@ CADET_particle_geometry_map = {
     "SLAB": "Slab",
 }
 
+# Binding widgets are not prefixed with particle_ when a single configuration is shared.
+_BINDING_KEYS = {"binding_model", "req_binding", "has_mult_bnd_states"}
+
 # Marks a configuration that cannot be expressed outside developer mode.
 _DEV_MODE_REQUIRED = "_dev_mode_required"
 
@@ -203,6 +206,23 @@ def map_unit_to_particle_model(cadet_unit_type, h5_unit_group):
         raise ValueError(f"Invalid unit type: {cadet_unit_type}. Must be one of {CADET_column_unit_types}.")
 
 
+def _particle_resolution(pt_group):
+    """Return the generator's particle resolution for one particle type group.
+
+    Mirrors the particle transport type CADET-Core derives from the HAS_* flags: only a
+    general rate particle resolves the particle radius, the homogeneous and equilibrium
+    particles do not.
+    """
+
+    has_pore_diff = get_h5_value(pt_group, "HAS_PORE_DIFFUSION")
+    has_surf_diff = get_h5_value(pt_group, "HAS_SURFACE_DIFFUSION")
+
+    if has_pore_diff or has_surf_diff:
+        return "1D (radial coordinate)"
+
+    return "0D (homogeneous)"
+
+
 def _map_v6_particle_model(h5_unit_group):
     """Determine particle model for v6 interface using HAS_* flags in particle_type_000."""
 
@@ -214,18 +234,7 @@ def _map_v6_particle_model(h5_unit_group):
     if pt_group is None:
         return None
 
-    has_pore_diff = get_h5_value(pt_group, "HAS_PORE_DIFFUSION")
-    has_surf_diff = get_h5_value(pt_group, "HAS_SURFACE_DIFFUSION")
-
-    if has_pore_diff or has_surf_diff:
-        return "1D (radial coordinate)"
-
-    has_film_diff = get_h5_value(pt_group, "HAS_FILM_DIFFUSION")
-    if has_film_diff:
-        return "0D (homogeneous)"
-
-    # Equilibrium particle (no film/pore/surface diffusion) — LRM-like
-    return "0D (homogeneous)"
+    return _particle_resolution(pt_group)
 
 
 def extract_config_data_from_unit(unit_type, h5_unit_group):
@@ -284,12 +293,13 @@ def extract_config_data_from_unit(unit_type, h5_unit_group):
         # Developer mode implies the advanced options and replaces both the "Add particles"
         # and the particle size distribution selectbox with a particle type count
         config["advanced_mode"] = "On"
-        n_par_type = get_h5_value(h5_unit_group, "NPARTYPE")
-        if n_par_type is None:
-            n_par_type = 1 if config.get("add_particles") == "Yes" else 0
+        if _N_PAR_TYPE_KEY not in config:
+            n_par_type = get_h5_value(h5_unit_group, "NPARTYPE")
+            if n_par_type is None:
+                n_par_type = 1 if config.get("add_particles") == "Yes" else 0
+            config[_N_PAR_TYPE_KEY] = int(n_par_type)
         config.pop("add_particles", None)
         config.pop("PSD", None)
-        config[_N_PAR_TYPE_KEY] = int(n_par_type)
 
     elif config["advanced_mode"] == "On":
         # Advanced mode uses single PSD selectbox with 3 options
@@ -365,24 +375,92 @@ def _extract_v5_particle_config(config, unit_type, h5_unit_group, par_model):
     _extract_reaction_config(config, h5_unit_group)
 
 
+def particle_type_groups(h5_unit_group, n_par_type):
+    """Return the particle_type_XXX groups of a unit, in index order.
+
+    Stops at the first missing group, so a file that announces more types than it
+    stores yields only the ones actually present.
+    """
+
+    groups = []
+    for j in range(n_par_type):
+        group = h5_unit_group.get(f"particle_type_{j:03d}")
+        if group is None:
+            break
+        groups.append(group)
+    return groups
+
+
 def _extract_v6_particle_config(config, h5_unit_group, par_model):
-    """Extract particle configuration from v6 interface (particle info in particle_type_xxx subgroups)."""
+    """Extract particle configuration from v6 interface (particle info in particle_type_xxx subgroups).
+
+    Particle types that share all settings CADET-Equations models are a particle size
+    distribution and keep the shared widgets. Types that genuinely differ are written to
+    their own parType_X_ keys, which the generator only offers in developer mode.
+    """
 
     nParType = get_h5_value(h5_unit_group, "NPARTYPE")
-    nParType = 1 if nParType is None else nParType
+    nParType = 1 if nParType is None else int(nParType)
 
-    if nParType > 1:
-        config["advanced_mode"] = "On"
-        config["PSD"] = "Yes"
+    pt_groups = particle_type_groups(h5_unit_group, nParType)
 
-    pt_group = h5_unit_group["particle_type_000"]
+    if not pt_groups:
+        return
+
+    if len(pt_groups) < nParType:
+        st.sidebar.warning(
+            f"The file announces {nParType} particle types but only stores {len(pt_groups)}; "
+            "the stored configuration is applied to all of them."
+        )
+
+    type_configs = [_particle_type_config(pt_group, h5_unit_group) for pt_group in pt_groups]
+
+    several_types = nParType > 1
+    types_differ = any(type_config != type_configs[0] for type_config in type_configs[1:])
+
+    # Flags describe the model as a whole rather than a single particle type
+    for type_config in type_configs:
+        for flag in ("dev_mode", _DEV_MODE_REQUIRED, "advanced_mode"):
+            if flag in type_config:
+                config[flag] = type_config.pop(flag)
+
+    binding = [type_config.pop("has_binding", "No") for type_config in type_configs]
+    config["has_binding"] = "Yes" if "Yes" in binding else "No"
+
+    if types_differ:
+        # distinct particle types can only be configured in developer mode
+        config["dev_mode"] = True
+        config[_DEV_MODE_REQUIRED] = True
+        config[_N_PAR_TYPE_KEY] = len(type_configs)
+        # the shared particle widgets are replaced by the per-type ones
+        config.pop("particle_resolution", None)
+        for j, type_config in enumerate(type_configs):
+            for key, value in type_config.items():
+                config[f"parType_{j + 1}_{key}"] = value
+    else:
+        if several_types:
+            # types that differ only in size are a particle size distribution
+            config["advanced_mode"] = "On"
+            config["PSD"] = "Yes"
+        for key, value in type_configs[0].items():
+            config[key if key in _BINDING_KEYS else "particle_" + key] = value
+
+    # Reactions are configured once; particle reactions are read from the first type
+    _extract_reaction_config(config, h5_unit_group)
+    _extract_particle_reaction_config(config, pt_groups[0])
+
+
+def _particle_type_config(pt_group, h5_unit_group):
+    """Return the generator settings of one particle type, keyed without any prefix."""
+
+    config = {}
+    resolution = _particle_resolution(pt_group)
+    config["resolution"] = resolution
 
     has_film_diff = get_h5_value(pt_group, "HAS_FILM_DIFFUSION")
-    config["particle_nonlimiting_filmDiff"] = "No" if has_film_diff else "Yes"
+    config["nonlimiting_filmDiff"] = "No" if has_film_diff else "Yes"
 
     binding_model = get_h5_value(pt_group, "ADSORPTION_MODEL", firstEntryIfList=False)
-
-    config["has_binding"] = "No"
 
     if binding_model is not None:
         if not isinstance(binding_model, str):
@@ -392,7 +470,8 @@ def _extract_v6_particle_config(config, h5_unit_group, par_model):
         if binding_model != "NONE":
             config["has_binding"] = "Yes"
 
-            config["binding_model"] = CADET_binding_model_map.get(binding_model, "Arbitrary")
+            mapped_binding = CADET_binding_model_map.get(binding_model, "Arbitrary")
+            config["binding_model"] = mapped_binding
             if binding_model not in CADET_binding_model_map:
                 st.sidebar.warning(
                     f"Binding model {binding_model} not implemented in CADET-Equations, default to arbitrary binding"
@@ -400,22 +479,20 @@ def _extract_v6_particle_config(config, h5_unit_group, par_model):
 
             ads_group = pt_group["adsorption"]
             config["req_binding"] = "Kinetic" if get_h5_value(ads_group, "IS_KINETIC") else "Rapid-equilibrium"
-            if config["binding_model"] == "Arbitrary":
-                config["has_mult_bnd_states"] = "No"
-                if get_h5_value(pt_group, "NBOUND") is not None:
-                    config["has_mult_bnd_states"] = "Yes" if get_h5_value(pt_group, "NBOUND") > 1 else "No"
+            if mapped_binding == "Arbitrary":
+                nbound = get_h5_value(pt_group, "NBOUND")
+                config["has_mult_bnd_states"] = "Yes" if nbound is not None and nbound > 1 else "No"
 
-            if par_model == "1D (radial coordinate)":
+            if resolution == "1D (radial coordinate)":
                 has_surf_diff = get_h5_value(pt_group, "HAS_SURFACE_DIFFUSION")
-                config["particle_has_surfDiff"] = "Yes" if has_surf_diff else "No"
+                config["has_surfDiff"] = "Yes" if has_surf_diff else "No"
 
-    if par_model == "1D (radial coordinate)":
-        _extract_particle_core_config(config, pt_group)
+    if resolution == "1D (radial coordinate)":
+        _extract_particle_core_config(config, pt_group, prefix="")
 
-    _extract_particle_geometry(config, pt_group, h5_unit_group)
+    _extract_particle_geometry(config, pt_group, h5_unit_group, prefix="")
 
-    _extract_reaction_config(config, h5_unit_group)
-    _extract_particle_reaction_config(config, pt_group)
+    return config
 
 
 def get_reaction_type(group, phase):
@@ -496,7 +573,7 @@ def _extract_particle_reaction_config(config, pt_group):
         config[_DEV_MODE_REQUIRED] = True
 
 
-def _extract_particle_geometry(config, pt_group, h5_unit_group):
+def _extract_particle_geometry(config, pt_group, h5_unit_group, prefix="particle_"):
     """Map PAR_GEOM to the generator's particle geometry.
 
     PAR_GEOM moved from the unit's discretization group into particle_type_XXX.
@@ -518,18 +595,18 @@ def _extract_particle_geometry(config, pt_group, h5_unit_group):
 
     if geometry != "Sphere":
         # non-spherical particles are only offered in developer mode
-        config["particle_geometry"] = geometry
+        config[prefix + "geometry"] = geometry
         config["dev_mode"] = True
         config[_DEV_MODE_REQUIRED] = True
 
 
-def _extract_particle_core_config(config, group):
+def _extract_particle_core_config(config, group, prefix="particle_"):
     """Extract particle core radius config. Shared between v5 (unit group) and v6 (particle_type group)."""
-    config["particle_has_core"] = "No"
+    config[prefix + "has_core"] = "No"
     parCore = get_h5_value(group, "PAR_CORERADIUS")
     if parCore is not None:
         if parCore > 0.0:
-            config["particle_has_core"] = "Yes"
+            config[prefix + "has_core"] = "Yes"
             config["advanced_mode"] = "On"
 
 
