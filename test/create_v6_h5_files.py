@@ -632,6 +632,62 @@ def create_v6_GRM_reactions():
     print(f"Created {fname}")
 
 
+def create_v6_PTD():
+    """Two distinct particle types: a general rate and a homogeneous particle."""
+    fname = os.path.join(OUTPUT_DIR, "v6_GRM_PTD_1comp.h5")
+    with h5py.File(fname, "w") as f:
+        create_base_structure(f)
+        create_inlet(f, 0)
+
+        unit = f.create_group("input/model/unit_001")
+        unit.create_dataset("UNIT_TYPE", data="COLUMN_MODEL_1D")
+        unit.create_dataset("GEOMETRY", data="AXIAL_FLOW_CYLINDER")
+        unit.create_dataset("NCOMP", data=1)
+        unit.create_dataset("NPARTYPE", data=2)
+        unit.create_dataset("COL_DISPERSION", data=5.75e-08)
+        unit.create_dataset("BED_LENGTH", data=0.014)
+        unit.create_dataset("COL_POROSITY", data=0.37)
+        unit.create_dataset("INIT_C", data=np.array([0.0]))
+        unit.create_dataset("PAR_TYPE_VOLFRAC", data=np.array([0.5, 0.5]))
+
+        _add_bulk_discretization(unit)
+
+        # type 1: general rate particle with surface diffusion, a core and SMA binding
+        pt0 = unit.create_group("particle_type_000")
+        pt0.create_dataset("HAS_FILM_DIFFUSION", data=True)
+        pt0.create_dataset("HAS_PORE_DIFFUSION", data=True)
+        pt0.create_dataset("HAS_SURFACE_DIFFUSION", data=True)
+        pt0.create_dataset("PAR_POROSITY", data=0.75)
+        pt0.create_dataset("PAR_RADIUS", data=4.5e-05)
+        pt0.create_dataset("PAR_CORERADIUS", data=1.0e-05)
+        pt0.create_dataset("PAR_GEOM", data="SPHERE")
+        pt0.create_dataset("FILM_DIFFUSION", data=np.array([6.9e-06]))
+        pt0.create_dataset("PORE_DIFFUSION", data=np.array([6.07e-11]))
+        pt0.create_dataset("SURFACE_DIFFUSION", data=np.array([1.0e-11]))
+        pt0.create_dataset("ADSORPTION_MODEL", data="STERIC_MASS_ACTION")
+        pt0.create_dataset("NBOUND", data=np.array([1]))
+        ads0 = pt0.create_group("adsorption")
+        ads0.create_dataset("IS_KINETIC", data=True)
+
+        # type 2: homogeneous particle, slab shaped, with rapid-equilibrium linear binding
+        pt1 = unit.create_group("particle_type_001")
+        pt1.create_dataset("HAS_FILM_DIFFUSION", data=True)
+        pt1.create_dataset("HAS_PORE_DIFFUSION", data=False)
+        pt1.create_dataset("HAS_SURFACE_DIFFUSION", data=False)
+        pt1.create_dataset("PAR_POROSITY", data=0.4)
+        pt1.create_dataset("PAR_RADIUS", data=9.0e-05)
+        pt1.create_dataset("PAR_CORERADIUS", data=0.0)
+        pt1.create_dataset("PAR_GEOM", data="SLAB")
+        pt1.create_dataset("FILM_DIFFUSION", data=np.array([3.3e-06]))
+        pt1.create_dataset("ADSORPTION_MODEL", data="LINEAR")
+        pt1.create_dataset("NBOUND", data=np.array([1]))
+        ads1 = pt1.create_group("adsorption")
+        ads1.create_dataset("IS_KINETIC", data=False)
+
+        create_outlet(f, 2)
+    print(f"Created {fname}")
+
+
 if __name__ == "__main__":
     create_v6_PlugFlow()
     create_v6_LRM()
@@ -646,4 +702,5 @@ if __name__ == "__main__":
     create_v6_radial_GRM()
     create_v6_frustum_LRM()
     create_v6_GRM_reactions()
+    create_v6_PTD()
     print("\nAll v6 HDF5 test files created successfully!")
