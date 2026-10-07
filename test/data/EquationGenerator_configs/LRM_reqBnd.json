@@ -9,5 +9,5 @@
     "req_binding": "Rapid-equilibrium",
     "show_eq_description": true,
     "var_format": "CADET",
-    "particle_nonlimiting_filmDiff": "Yes"
+    "particle_nonlimiting_filmDiff": "Rapid-equilibrium"
 }

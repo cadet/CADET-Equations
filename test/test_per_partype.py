@@ -41,8 +41,8 @@ def test_ptd_uniform_settings():
     setup_grm_ptd(
         at,
         [
-            {"nonlimiting_filmDiff": "No", "has_surfDiff": "Yes"},
-            {"nonlimiting_filmDiff": "No", "has_surfDiff": "Yes"},
+            {"nonlimiting_filmDiff": "Kinetic", "has_surfDiff": "Yes"},
+            {"nonlimiting_filmDiff": "Kinetic", "has_surfDiff": "Yes"},
         ],
     )
 
@@ -63,8 +63,8 @@ def test_ptd_different_film_diffusion():
     setup_grm_ptd(
         at,
         [
-            {"nonlimiting_filmDiff": "No", "has_surfDiff": "No"},
-            {"nonlimiting_filmDiff": "Yes", "has_surfDiff": "No"},
+            {"nonlimiting_filmDiff": "Kinetic", "has_surfDiff": "No"},
+            {"nonlimiting_filmDiff": "Rapid-equilibrium", "has_surfDiff": "No"},
         ],
     )
 
@@ -86,8 +86,8 @@ def test_ptd_different_surface_diffusion():
     setup_grm_ptd(
         at,
         [
-            {"nonlimiting_filmDiff": "No", "has_surfDiff": "Yes"},
-            {"nonlimiting_filmDiff": "No", "has_surfDiff": "No"},
+            {"nonlimiting_filmDiff": "Kinetic", "has_surfDiff": "Yes"},
+            {"nonlimiting_filmDiff": "Kinetic", "has_surfDiff": "No"},
         ],
     )
 
@@ -107,8 +107,8 @@ def test_ptd_all_nonlimiting():
     setup_grm_ptd(
         at,
         [
-            {"nonlimiting_filmDiff": "Yes", "has_surfDiff": "No"},
-            {"nonlimiting_filmDiff": "Yes", "has_surfDiff": "No"},
+            {"nonlimiting_filmDiff": "Rapid-equilibrium", "has_surfDiff": "No"},
+            {"nonlimiting_filmDiff": "Rapid-equilibrium", "has_surfDiff": "No"},
         ],
     )
 
@@ -131,7 +131,7 @@ def test_psd_shared_config():
     at.selectbox(key="PSD").set_value("Particle size distribution").run()
     at.selectbox(key="has_binding").set_value("Yes").run()
     at.selectbox(key="particle_resolution").set_value("1D (radial coordinate)").run()
-    at.selectbox(key="particle_nonlimiting_filmDiff").set_value("No").run()
+    at.selectbox(key="particle_nonlimiting_filmDiff").set_value("Kinetic").run()
     at.selectbox(key="particle_has_surfDiff").set_value("Yes").run()
 
     assert not at.exception
@@ -152,7 +152,7 @@ def test_single_particle_unchanged():
     at.selectbox(key="PSD").set_value("Yes").run()
     at.selectbox(key="has_binding").set_value("Yes").run()
     at.selectbox(key="particle_resolution").set_value("1D (radial coordinate)").run()
-    at.selectbox(key="particle_nonlimiting_filmDiff").set_value("No").run()
+    at.selectbox(key="particle_nonlimiting_filmDiff").set_value("Kinetic").run()
     at.selectbox(key="particle_has_surfDiff").set_value("Yes").run()
 
     assert not at.exception
@@ -177,7 +177,7 @@ def test_ptd_different_binding_models():
 
     for jj in range(2):
         at.selectbox(key=f"parType_{jj + 1}_resolution").set_value("1D (radial coordinate)").run()
-        at.selectbox(key=f"parType_{jj + 1}_nonlimiting_filmDiff").set_value("No").run()
+        at.selectbox(key=f"parType_{jj + 1}_nonlimiting_filmDiff").set_value("Kinetic").run()
 
     # Set different binding models per particle type
     at.selectbox(key="parType_1_binding_model").set_value("Linear").run()
@@ -208,7 +208,7 @@ def test_ptd_sma_binding():
 
     for jj in range(2):
         at.selectbox(key=f"parType_{jj + 1}_resolution").set_value("1D (radial coordinate)").run()
-        at.selectbox(key=f"parType_{jj + 1}_nonlimiting_filmDiff").set_value("No").run()
+        at.selectbox(key=f"parType_{jj + 1}_nonlimiting_filmDiff").set_value("Kinetic").run()
         at.selectbox(key=f"parType_{jj + 1}_binding_model").set_value("SMA").run()
 
     assert not at.exception
@@ -233,7 +233,7 @@ def test_ptd_mixed_binding_and_arbitrary():
 
     for jj in range(2):
         at.selectbox(key=f"parType_{jj + 1}_resolution").set_value("1D (radial coordinate)").run()
-        at.selectbox(key=f"parType_{jj + 1}_nonlimiting_filmDiff").set_value("No").run()
+        at.selectbox(key=f"parType_{jj + 1}_nonlimiting_filmDiff").set_value("Kinetic").run()
 
     at.selectbox(key="parType_1_binding_model").set_value("Linear").run()
     at.selectbox(key="parType_2_binding_model").set_value("Arbitrary").run()

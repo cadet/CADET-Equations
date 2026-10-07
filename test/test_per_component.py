@@ -31,7 +31,7 @@ def setup_grm_with_per_component(at, n_comp, per_comp_settings, n_p=1):
 
     # Set per-component transport in particle panel (parType_0 for single particle type)
     for i, settings in enumerate(per_comp_settings):
-        film_diff = "Yes" if settings.get("nonlimiting_filmDiff", False) else "No"
+        film_diff = "Rapid-equilibrium" if settings.get("nonlimiting_filmDiff", False) else "Kinetic"
         at.selectbox(key=f"parType_0_filmDiff_comp_{i}").set_value(film_diff).run()
         if settings.get("has_surfDiff", False) is not False:
             surf_diff = "Yes" if settings["has_surfDiff"] else "No"
@@ -155,8 +155,8 @@ def test_per_component_0d_particle_resolution():
     at.selectbox(key="has_binding").set_value("Yes").run()
 
     # Film diffusion per component (parType_0 for single particle)
-    at.selectbox(key="parType_0_filmDiff_comp_0").set_value("No").run()
-    at.selectbox(key="parType_0_filmDiff_comp_1").set_value("No").run()
+    at.selectbox(key="parType_0_filmDiff_comp_0").set_value("Kinetic").run()
+    at.selectbox(key="parType_0_filmDiff_comp_1").set_value("Kinetic").run()
 
     # Binding per component
     at.selectbox(key="req_binding_comp_0").set_value("Kinetic").run()
@@ -228,8 +228,8 @@ def test_per_component_no_binding_film_diffusion():
     at.selectbox(key="particle_resolution").set_value("1D (radial coordinate)").run()
     at.selectbox(key="has_binding").set_value("No").run()
 
-    at.selectbox(key="parType_0_filmDiff_comp_0").set_value("Yes").run()
-    at.selectbox(key="parType_0_filmDiff_comp_1").set_value("No").run()
+    at.selectbox(key="parType_0_filmDiff_comp_0").set_value("Rapid-equilibrium").run()
+    at.selectbox(key="parType_0_filmDiff_comp_1").set_value("Kinetic").run()
 
     assert not at.exception
     latex = at.session_state.latex_string

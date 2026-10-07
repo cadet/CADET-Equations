@@ -9,7 +9,7 @@
     "req_binding": "Rapid-equilibrium",
     "show_eq_description": true,
     "var_format": "CADET",
-    "particle_nonlimiting_filmDiff": "No",
+    "particle_nonlimiting_filmDiff": "Kinetic",
     "binding_model": "Linear",
     "column_type": "Axial flow cylinder"
 }

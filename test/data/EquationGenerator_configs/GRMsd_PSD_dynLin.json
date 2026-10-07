@@ -8,7 +8,7 @@
     "PSD": "Particle size distribution",
     "particle_resolution": "1D (radial coordinate)",
     "particle_has_core": "No",
-    "particle_nonlimiting_filmDiff": "No",
+    "particle_nonlimiting_filmDiff": "Kinetic",
     "has_binding": "Yes",
     "req_binding": "Kinetic",
     "particle_has_surfDiff": "Yes",

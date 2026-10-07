@@ -10,6 +10,6 @@
     "req_binding": "Kinetic",
     "show_eq_description": true,
     "var_format": "CADET",
-    "particle_nonlimiting_filmDiff": "No",
+    "particle_nonlimiting_filmDiff": "Kinetic",
     "particle_has_surfDiff": "No"
 }
