@@ -34,18 +34,18 @@ Specific model assumptions:
 
 
 \section*{Frustum Lumped Rate Model without Pores}
-Consider a conical frustum column of length $L^{\mathrm{b}} > 0$ with inlet radius $R^{\mathrm{0}} > 0$ and outlet radius $R^{\mathrm{L^{\mathrm{b}}}} > 0$ packed with spherical particles, and observed over a time interval $(0, T^{\mathrm{end}})$.
+Consider a conical frustum column of length $L^{\mathrm{b}} > 0$ with inlet radius $P^{\mathrm{0}} > 0$ and outlet radius $P^{\mathrm{L^{\mathrm{b}}}} > 0$ packed with spherical particles, and observed over a time interval $(0, T^{\mathrm{end}})$.
 In the interstitial volume, mass transfer is governed by the following convection-diffusion equations in $(0, T^{\mathrm{end}})\times (0, L^{\mathrm{b}})$ and for all components $i\in\{1, \dots, N^{\mathrm{c}} \}$
 \begin{align}
-\frac{\partial c^{\mathrm{\ell}}_{i}}{\partial t} + \frac{1 - \varepsilon^{\mathrm{t}}}{\varepsilon^{\mathrm{t}}} \frac{\partial c^{\mathrm{s}}_{i}}{\partial t} = - \frac{v}{r(z)^{2}} \frac{\partial c^{\mathrm{\ell}}_{i}}{\partial z} + \frac{1}{r(z)^{2}} \frac{\partial}{\partial z} \left( r(z)^{2} \tilde{D}^{\mathrm{ax}}_{i} \frac{\partial c^{\mathrm{\ell}}_{i}}{\partial z} \right),
+\frac{\partial c^{\mathrm{\ell}}_{i}}{\partial t} + \frac{1 - \varepsilon^{\mathrm{t}}}{\varepsilon^{\mathrm{t}}} \frac{\partial c^{\mathrm{s}}_{i}}{\partial t} = - \frac{v}{\rho(z)^{2}} \frac{\partial c^{\mathrm{\ell}}_{i}}{\partial z} + \frac{1}{\rho(z)^{2}} \frac{\partial}{\partial z} \left( \rho(z)^{2} \tilde{D}^{\mathrm{ax}}_{i} \frac{\partial c^{\mathrm{\ell}}_{i}}{\partial z} \right),
 \end{align}
 with boundary conditions
 
 \begin{alignat}{2}
-\frac{v}{r(z)^{2}} c^{\mathrm{in}}_{i} &= \left.\left( \frac{v}{r(z)^{2}} c^{\mathrm{\ell}}_{i} - \tilde{D}^{\mathrm{ax}}_{i} \frac{\partial c^{\mathrm{\ell}}_{i}}{\partial z}\right)\right|_{z=0} & &\qquad\text{on }(0, T^{\mathrm{end}}),\\
+\frac{v}{\rho(z)^{2}} c^{\mathrm{in}}_{i} &= \left.\left( \frac{v}{\rho(z)^{2}} c^{\mathrm{\ell}}_{i} - \tilde{D}^{\mathrm{ax}}_{i} \frac{\partial c^{\mathrm{\ell}}_{i}}{\partial z}\right)\right|_{z=0} & &\qquad\text{on }(0, T^{\mathrm{end}}),\\
                0 &= - \tilde{D}^{\mathrm{ax}}_{i} \left. \frac{\partial c^{\mathrm{\ell}}_{i}}{\partial z} \right|_{z=L^{\mathrm{b}}} & &\qquad\text{on }(0, T^{\mathrm{end}}).
 \end{alignat}
-Here, $t\in (0, T^{\mathrm{end}})$ is the time coordinate, $z\in (0, L^{\mathrm{b}})$ is the axial frustum coordinate, $c^{\mathrm{\ell}}_{i}\colon (0, T^{\mathrm{end}})\times (0, L^{\mathrm{b}}) \mapsto \mathbb{R}$ is the liquid concentration, $Q> 0$ is the volumetric flow rate, $r(z) = R^{\mathrm{0}} + \frac{R^{\mathrm{L^{\mathrm{b}}}} - R^{\mathrm{0}}}{L^{\mathrm{b}}} z$ is the column radius function, $\varepsilon^{\mathrm{t}}\in (0, 1)$ is the total porosity, $v:= \frac{Q}{\pi}$ is the velocity coefficient, and $\tilde{D}^{\mathrm{ax}}_{i}\geq 0$ is the apparent axial dispersion coefficient.
+Here, $t\in (0, T^{\mathrm{end}})$ is the time coordinate, $z\in (0, L^{\mathrm{b}})$ is the axial frustum coordinate, $c^{\mathrm{\ell}}_{i}\colon (0, T^{\mathrm{end}})\times (0, L^{\mathrm{b}}) \mapsto \mathbb{R}$ is the liquid concentration, $Q> 0$ is the volumetric flow rate, $\rho(z) = P^{\mathrm{0}} + \frac{P^{\mathrm{L^{\mathrm{b}}}} - P^{\mathrm{0}}}{L^{\mathrm{b}}} z$ is the column radius function, $\varepsilon^{\mathrm{t}}\in (0, 1)$ is the total porosity, $v:= \frac{Q}{\pi}$ is the velocity coefficient, and $\tilde{D}^{\mathrm{ax}}_{i}\geq 0$ is the apparent axial dispersion coefficient.
 In the particles, mass transfer is governed by reaction equations in $(0, T^{\mathrm{end}}) \times (0, L^{\mathrm{b}})$ and for all components
 \begin{align}
           \frac{\partial c^{\mathrm{s}}_{i}}{\partial t}

@@ -33,18 +33,18 @@ Specific model assumptions:
 
 
 \section*{Frustum Lumped Rate Model with Pores}
-Consider a conical frustum column of length $L^{\mathrm{b}} > 0$ with inlet radius $R^{\mathrm{0}} > 0$ and outlet radius $R^{\mathrm{L^{\mathrm{b}}}} > 0$ packed with spherical particles, and observed over a time interval $(0, T^{\mathrm{end}})$.
+Consider a conical frustum column of length $L^{\mathrm{b}} > 0$ with inlet radius $P^{\mathrm{0}} > 0$ and outlet radius $P^{\mathrm{L^{\mathrm{b}}}} > 0$ packed with spherical particles, and observed over a time interval $(0, T^{\mathrm{end}})$.
 In the interstitial volume, mass transfer is governed by the following convection-diffusion-reaction equations in $(0, T^{\mathrm{end}})\times (0, L^{\mathrm{b}})$ and for all components $i\in\{1, \dots, N^{\mathrm{c}} \}$
 \begin{align}
-\varepsilon^{\mathrm{b}} \frac{\partial c^{\mathrm{b}}_{i}}{\partial t} = - \frac{v}{r(z)^{2}} \frac{\partial \left( \varepsilon^{\mathrm{b}} c^{\mathrm{b}}_{i} \right)}{\partial z} + \frac{1}{r(z)^{2}} \frac{\partial}{\partial z} \left( r(z)^{2} \varepsilon^{\mathrm{b}} D^{\mathrm{ax}}_{i} \frac{\partial c^{\mathrm{b}}_{i}}{\partial z} \right)- \left(1 - \varepsilon^{\mathrm{b}} \right) \frac{3}{R^{\mathrm{p}}} k^{\mathrm{f}}_{i} \left(c^{\mathrm{b}}_{i} - \left. c^{\mathrm{p}}_{i} \right|_{r = R^{\mathrm{p}}} \right),
+\varepsilon^{\mathrm{b}} \frac{\partial c^{\mathrm{b}}_{i}}{\partial t} = - \frac{v}{\rho(z)^{2}} \frac{\partial \left( \varepsilon^{\mathrm{b}} c^{\mathrm{b}}_{i} \right)}{\partial z} + \frac{1}{\rho(z)^{2}} \frac{\partial}{\partial z} \left( \rho(z)^{2} \varepsilon^{\mathrm{b}} D^{\mathrm{ax}}_{i} \frac{\partial c^{\mathrm{b}}_{i}}{\partial z} \right)- \left(1 - \varepsilon^{\mathrm{b}} \right) \frac{3}{R^{\mathrm{p}}} k^{\mathrm{f}}_{i} \left(c^{\mathrm{b}}_{i} - \left. c^{\mathrm{p}}_{i} \right|_{r = R^{\mathrm{p}}} \right),
 \end{align}
 with boundary conditions
 
 \begin{alignat}{2}
-\frac{v}{r(z)^{2}} c^{\mathrm{in}}_{i} &= \left.\left( \frac{v}{r(z)^{2}} c^{\mathrm{b}}_{i} - D^{\mathrm{ax}}_{i} \frac{\partial c^{\mathrm{b}}_{i}}{\partial z}\right)\right|_{z=0} & &\qquad\text{on }(0, T^{\mathrm{end}}),\\
+\frac{v}{\rho(z)^{2}} c^{\mathrm{in}}_{i} &= \left.\left( \frac{v}{\rho(z)^{2}} c^{\mathrm{b}}_{i} - D^{\mathrm{ax}}_{i} \frac{\partial c^{\mathrm{b}}_{i}}{\partial z}\right)\right|_{z=0} & &\qquad\text{on }(0, T^{\mathrm{end}}),\\
                0 &= - D^{\mathrm{ax}}_{i} \left. \frac{\partial c^{\mathrm{b}}_{i}}{\partial z} \right|_{z=L^{\mathrm{b}}} & &\qquad\text{on }(0, T^{\mathrm{end}}).
 \end{alignat}
-Here, $t\in (0, T^{\mathrm{end}})$ is the time coordinate, $z\in (0, L^{\mathrm{b}})$ is the axial frustum coordinate, $R^{\mathrm{p}}> 0$ is the particle radius, $c^{\mathrm{b}}_{i}\colon (0, T^{\mathrm{end}})\times (0, L^{\mathrm{b}}) \mapsto \mathbb{R}$ is the bulk liquid concentration, $Q> 0$ is the volumetric flow rate, $r(z) = R^{\mathrm{0}} + \frac{R^{\mathrm{L^{\mathrm{b}}}} - R^{\mathrm{0}}}{L^{\mathrm{b}}} z$ is the column radius function, $\varepsilon^{\mathrm{b}}\in (0, 1)$ is the bulk porosity, $v:= \frac{Q}{\pi}$ is the velocity coefficient, $D^{\mathrm{ax}}_{i}\geq 0$ is the axial dispersion coefficient, and $k^{\mathrm{f}}_{i}\geq 0$ is the film diffusion coefficient.
+Here, $t\in (0, T^{\mathrm{end}})$ is the time coordinate, $z\in (0, L^{\mathrm{b}})$ is the axial frustum coordinate, $R^{\mathrm{p}}> 0$ is the particle radius, $c^{\mathrm{b}}_{i}\colon (0, T^{\mathrm{end}})\times (0, L^{\mathrm{b}}) \mapsto \mathbb{R}$ is the bulk liquid concentration, $Q> 0$ is the volumetric flow rate, $\rho(z) = P^{\mathrm{0}} + \frac{P^{\mathrm{L^{\mathrm{b}}}} - P^{\mathrm{0}}}{L^{\mathrm{b}}} z$ is the column radius function, $\varepsilon^{\mathrm{b}}\in (0, 1)$ is the bulk porosity, $v:= \frac{Q}{\pi}$ is the velocity coefficient, $D^{\mathrm{ax}}_{i}\geq 0$ is the axial dispersion coefficient, and $k^{\mathrm{f}}_{i}\geq 0$ is the film diffusion coefficient.
 In the particles, mass transfer is governed by reaction equations in $(0, T^{\mathrm{end}}) \times (0, L^{\mathrm{b}})$ and for all components
 
 \begin{align}

@@ -503,13 +503,13 @@ else:  # Chromatography model family
     if column_model.resolution == "0D":
         intro_str = r"Consider a continuous stirred tank "
     elif column_model.column_type == "Radial":
-        intro_str = r"Consider a hollow cylindrical column of axial bed height $H^{\mathrm{b}} > 0$ with inner radius $R^{\mathrm{inner}} > 0$ and outer radius $R^{\mathrm{outer}} > R^{\mathrm{inner}}$ "
+        intro_str = r"Consider a hollow cylindrical column of axial bed height $H^{\mathrm{b}} > 0$ with inner radius $P^{\mathrm{inner}} > 0$ and outer radius $P^{\mathrm{outer}} > P^{\mathrm{inner}}$ "
     elif column_model.column_type == "Frustum":
-        intro_str = r"Consider a conical frustum column of length $L^{\mathrm{b}} > 0$ with inlet radius $R^{\mathrm{0}} > 0$ and outlet radius $R^{\mathrm{L^{\mathrm{b}}}} > 0$ "
+        intro_str = r"Consider a conical frustum column of length $L^{\mathrm{b}} > 0$ with inlet radius $P^{\mathrm{0}} > 0$ and outlet radius $P^{\mathrm{L^{\mathrm{b}}}} > 0$ "
     else:
         intro_str = r"Consider a cylindrical column of length $L^{\mathrm{b}} > 0$ "
         if column_model.resolution == "2D" or column_model.resolution == "3D":
-            intro_str += r" and radius $R^{\mathrm{c}} > 0$ "
+            intro_str += r" and radius $P^{\mathrm{c}} > 0$ "
 
     if column_model.N_p == 0:
         write_and_save(

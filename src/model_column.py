@@ -459,7 +459,7 @@ class Column:
 
         has_core = (
             st.selectbox(
-                "Add impenetrable core-shell (i.e. " + r"$R^{\mathrm{pc}} > 0$)",
+                "Add impenetrable core-shell (i.e. " + r"$R^{\mathrm{c}} > 0$)",
                 ["No", "Yes"],
                 key=geoPrefix + "has_core",
             )
@@ -898,13 +898,13 @@ class Column:
                     "Description": r"radial coordinate",
                     "Unit": u("length"),
                     "Dependence": r"\text{independent variable}",
-                    "Property": r"\in (R^{\mathrm{inner}}, R^{\mathrm{outer}})",
+                    "Property": r"\in (P^{\mathrm{inner}}, P^{\mathrm{outer}})",
                 }
             )
             self.vars_and_params.append(
                 {
                     "Group": -1,
-                    "Symbol": r"R^{\mathrm{inner}}",
+                    "Symbol": r"P^{\mathrm{inner}}",
                     "Description": r"inner cylinder radius",
                     "Unit": u("length"),
                     "Dependence": r"\text{constant}",
@@ -914,11 +914,11 @@ class Column:
             self.vars_and_params.append(
                 {
                     "Group": -1,
-                    "Symbol": r"R^{\mathrm{outer}}",
+                    "Symbol": r"P^{\mathrm{outer}}",
                     "Description": r"outer cylinder radius",
                     "Unit": u("length"),
                     "Dependence": r"\text{constant}",
-                    "Property": r" > R^{\mathrm{inner}}",
+                    "Property": r" > P^{\mathrm{inner}}",
                 }
             )
             self.vars_and_params.append(
@@ -975,7 +975,7 @@ class Column:
             self.vars_and_params.append(
                 {
                     "Group": -1,
-                    "Symbol": r"R^{\mathrm{0}}",
+                    "Symbol": r"P^{\mathrm{0}}",
                     "Description": r"column radius at inlet",
                     "Unit": u("length"),
                     "Dependence": r"\text{constant}",
@@ -985,7 +985,7 @@ class Column:
             self.vars_and_params.append(
                 {
                     "Group": -1,
-                    "Symbol": r"R^{\mathrm{L^{\mathrm{b}}}}",
+                    "Symbol": r"P^{\mathrm{L^{\mathrm{b}}}}",
                     "Description": r"column radius at outlet",
                     "Unit": u("length"),
                     "Dependence": r"\text{constant}",
@@ -995,11 +995,11 @@ class Column:
             self.vars_and_params.append(
                 {
                     "Group": 3,
-                    "Symbol": r"r",
+                    "Symbol": r"\rho",
                     "Description": r"column radius function",
                     "Unit": u("length"),
                     "Dependence": r"z",
-                    "Property": r"(z) = R^{\mathrm{0}} + \frac{R^{\mathrm{L^{\mathrm{b}}}} - R^{\mathrm{0}}}{L^{\mathrm{b}}} z",
+                    "Property": r"(z) = P^{\mathrm{0}} + \frac{P^{\mathrm{L^{\mathrm{b}}}} - P^{\mathrm{0}}}{L^{\mathrm{b}}} z",
                 }
             )
             self.vars_and_params.append(
@@ -1074,13 +1074,13 @@ class Column:
                     "Description": r"radial cylinder coordinate",
                     "Unit": u("length"),
                     "Dependence": r"\text{independent variable}",
-                    "Property": r"\in (0, R^{\mathrm{c}})",
+                    "Property": r"\in (0, P^{\mathrm{c}})",
                 }
             )
             self.vars_and_params.append(
                 {
                     "Group": -1,
-                    "Symbol": r"R^{\mathrm{c}}",
+                    "Symbol": r"P^{\mathrm{c}}",
                     "Description": r"cylinder radius",
                     "Unit": u("length"),
                     "Dependence": r"\text{constant}",
