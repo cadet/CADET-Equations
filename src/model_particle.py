@@ -31,6 +31,13 @@ class Particle:
     has_mult_bnd_states: bool = None
     has_surfDiff: bool = None
     nonlimiting_filmDiff: bool = None
+    # Side-cavity model (Model PC): the pore phase is partitioned into a main
+    # pore network and n_side_cavities cavity types, each of which may carry its
+    # own binding model. Tuples keep the dataclass hashable.
+    has_side_cavities: bool = False
+    n_side_cavities: int = 0
+    side_cavity_binding_models: tuple = ()
+    side_cavity_req_binding: tuple = ()
     surface_volume_ratio: float = None
     interstitial_volume_resolution: str = None
     column_type: str = "Axial"
@@ -140,6 +147,58 @@ class Particle:
                         "Property": r"\in (0, 1)",
                     }
                 )
+
+        if self.has_side_cavities:
+            vars_and_params_ += [
+                {
+                    "Group": 0.2,
+                    "Symbol": r"N^{\mathrm{sc}}",
+                    "Description": r"number of side-cavity types",
+                    "Unit": u("dimensionless"),
+                    "Dependence": r"\text{constant}",
+                    "Property": r"\geq 1",
+                },
+                {
+                    "Group": 4,
+                    "Symbol": r"\varepsilon^{\mathrm{mp}}",
+                    "Description": r"main pore network porosity",
+                    "Unit": u("dimensionless"),
+                    "Dependence": r"\text{constant}",
+                    "Property": r"\in (0, 1)",
+                },
+                {
+                    "Group": 4,
+                    "Symbol": r"\varepsilon^{\mathrm{sc}}_{m}",
+                    "Description": r"side-cavity porosity",
+                    "Unit": u("dimensionless"),
+                    "Dependence": r"m",
+                    "Property": r"\in (0, 1)",
+                },
+                {
+                    "Group": 4,
+                    "Symbol": r"d^{\mathrm{mp}}",
+                    "Description": r"main pore network volume fraction",
+                    "Unit": u("dimensionless"),
+                    "Dependence": r"\text{constant}",
+                    "Property": r"\in (0, 1)",
+                },
+                {
+                    "Group": 4,
+                    "Symbol": r"d^{\mathrm{sc}}_{m}",
+                    "Description": r"side-cavity volume fraction",
+                    "Unit": u("dimensionless"),
+                    "Dependence": r"m",
+                    "Property": r"\in (0, 1), \; d^{\mathrm{mp}} + \sum_{m=1}^{N^{\mathrm{sc}}} d^{\mathrm{sc}}_{m} = 1",
+                },
+                {
+                    "Group": 6.2,
+                    "Symbol": r"k^{\mathrm{sc}}_{m,i}",
+                    "Description": r"cavity exchange coefficient",
+                    "Unit": u("rate_first_order"),
+                    "Dependence": r"m, i",
+                    "Property": r"\geq 0",
+                },
+            ]
 
         if self.has_binding:
             symbol_name_ = r"c^{\s}_{i}" if self.single_partype else r"c^{\s}_{j,i}"

@@ -167,10 +167,10 @@ def binding_term_linear(PTD: bool = True):
 def binding_term_langmuir(PTD: bool = True):
     """Return the multi-component Langmuir binding model equation."""
     idx = "j,i" if PTD else "i"
-    idx_sum = "j,m" if PTD else "m"
+    idx_sum = "j,n" if PTD else "n"
     return (
         r"k^{\mathrm{a}}_{" + idx + r"} c^{\p}_{" + idx + r"} q^{\mathrm{max}}_{" + idx + r"}"
-        r" \left( 1 - \sum_{m=0}^{N^{\mathrm{c}} - 1} \frac{c^{\s}_{"
+        r" \left( 1 - \sum_{n=0}^{N^{\mathrm{c}} - 1} \frac{c^{\s}_{"
         + idx_sum
         + r"}}{q^{\mathrm{max}}_{"
         + idx_sum
@@ -193,20 +193,20 @@ def binding_term_sma(PTD: bool = True):
 
 def sma_free_binding_sites(PTD: bool = True):
     """Return the SMA free binding sites equation (steric availability)."""
-    idx = "j,m" if PTD else "m"
+    idx = "j,n" if PTD else "n"
     idx_0 = "j,0" if PTD else "0"
     return (
-        r"\bar{q}_{" + idx_0 + r"} = \Lambda - \sum_{m=1}^{N^{\mathrm{c}} - 1}"
+        r"\bar{q}_{" + idx_0 + r"} = \Lambda - \sum_{n=1}^{N^{\mathrm{c}} - 1}"
         r" \left( \nu_{" + idx + r"} + \sigma_{" + idx + r"} \right) c^{\s}_{" + idx + r"}"
     )
 
 
 def sma_electroneutrality(PTD: bool = True):
     """Return the SMA counter-ion/electroneutrality constraint."""
-    idx = "j,m" if PTD else "m"
+    idx = "j,n" if PTD else "n"
     idx_0 = "j,0" if PTD else "0"
     return (
-        r"- c^{\s}_{" + idx_0 + r"} + \Lambda - \sum_{m=1}^{N^{\mathrm{c}} - 1}"
+        r"- c^{\s}_{" + idx_0 + r"} + \Lambda - \sum_{n=1}^{N^{\mathrm{c}} - 1}"
         r" \nu_{" + idx + r"} c^{\s}_{" + idx + r"}"
     )
 
@@ -388,11 +388,20 @@ def int_filmDiff_term(
     particle, numIdxBegin, numIdxEnd, singleParticle: bool, nonLimitingFilmDiff: bool, hasSurfDiff: bool
 ):
 
+    # With side-cavities only the main pore network reaches the particle surface,
+    # so its volume fraction enters the coupling and the surface concentration is
+    # that of the main pore network (compartment index 0).
+    side_cavities = getattr(particle, "has_side_cavities", False)
+    mp_frac = r" d^{\mathrm{mp}}" if side_cavities else r""
+
     if singleParticle:
         term = (
             r"- \left(1 - \varepsilon^{\mathrm{b}} \right) \frac{"
             + str(particle.surface_volume_ratio)
-            + r"}{R^{\mathrm{p}}} k^{\mathrm{f}}_{i} \left(c^{\b}_{i} - \left. c^{\p}_{i} \right|_{r = R^{\mathrm{p}}} \right)"
+            + mp_frac
+            + r"}{R^{\mathrm{p}}} k^{\mathrm{f}}_{i} \left(c^{\b}_{i} - \left. "
+            + (r"c^{\p}_{0,i}" if side_cavities else r"c^{\p}_{i}")
+            + r" \right|_{r = R^{\mathrm{p}}} \right)"
         )
     else:
         term = (
@@ -402,7 +411,11 @@ def int_filmDiff_term(
             + str(numIdxEnd)
             + r"} \frac{"
             + str(particle.surface_volume_ratio)
-            + r"d_{j}}{R^{\mathrm{p}}_{j}} k^{\mathrm{f}}_{j,i} \left(c^{\b}_{i} - \left. c^{\p}_{j,i} \right|_{r = R^{\mathrm{p}}_{j}} \right)"
+            + r"d_{j}"
+            + (r" d^{\mathrm{mp}}_{j}" if side_cavities else r"")
+            + r"}{R^{\mathrm{p}}_{j}} k^{\mathrm{f}}_{j,i} \left(c^{\b}_{i} - \left. "
+            + (r"c^{\p}_{j,0,i}" if side_cavities else r"c^{\p}_{j,i}")
+            + r" \right|_{r = R^{\mathrm{p}}_{j}} \right)"
         )
 
     if nonLimitingFilmDiff:
@@ -831,6 +844,174 @@ int_vol_inlet_domain = {
 }
 int_vol_vars = {"1D": r"z", "2D": r"z, \rho", "3D": r"z, \rho, \varphi"}
 
+# Particle transport terms with side-cavities (Model PC of the modeling paper)
+#
+# The pore phase is partitioned into a main pore network (index m = 0) and
+# N^sc side-cavity types (m = 1, ..., N^sc). Pore diffusion along the radial
+# coordinate happens only in the main pore network; the cavities are reached
+# solely through cavity exchange with it. Each cavity type may carry its own
+# binding model, so one equation pair is emitted per cavity type.
+
+
+def cavity_exchange_term():
+    """Cavity exchange sink in the main pore network liquid balance."""
+    return (
+        r"\sum_{m=1}^{N^{\mathrm{sc}}} "
+        r"\frac{d^{\mathrm{sc}}_{m} \varepsilon^{\mathrm{sc}}_{m}}{d^{\mathrm{mp}} \varepsilon^{\mathrm{mp}}} "
+        r"k^{\mathrm{sc}}_{m,i} \left( c^{\p}_{j,0,i} - c^{\p}_{j,m,i} \right)"
+    )
+
+
+def _bnd_sum(has_mult_bnd_states: bool):
+    return r"\sum_{k=1}^{N^{\mathrm{b}}_{i}} " if has_mult_bnd_states else ""
+
+
+def _cavity_binding_term(binding_model: str, cavity: str, has_mult_bnd_states: bool):
+    """Binding term of one pore-phase compartment, indexed by the cavity index."""
+    term = get_binding_term(binding_model, PTD=True)
+    # Every pore-phase quantity of this compartment carries the compartment index
+    # right after the particle-type index. Matching on "_{j," rather than on
+    # "_{j,i}" also catches the salt index of SMA and the competition sum of
+    # Langmuir, which belong to the same compartment.
+    term = re.sub(r"_\{j,", r"_{j," + cavity + r",", term)
+    if has_mult_bnd_states:
+        term = re.sub(r"_\{j," + cavity + r",i\}", r"_{j," + cavity + r",i,k}", term)
+    if binding_model != "Arbitrary":
+        term = r"\left(" + term + r"\right)"
+    return term
+
+
+def side_cavity_equations(
+    cavity_index: str,
+    binding_model: str,
+    req_binding: bool,
+    has_mult_bnd_states: bool,
+):
+    """Liquid and solid balance of a single side-cavity type.
+
+    The cavity has no spatial resolution of its own: it exchanges with the main
+    pore network and otherwise only binds.
+    """
+    m = cavity_index
+    bnd = _cavity_binding_term(binding_model, m, has_mult_bnd_states)
+    exchange = r"k^{\mathrm{sc}}_{" + m + r",i} \left( c^{\p}_{j,0,i} - c^{\p}_{j," + m + r",i} \right)"
+    solid_c = r"c^{\s}_{j," + m + r",i,k}" if has_mult_bnd_states else r"c^{\s}_{j," + m + r",i}"
+
+    liquid_lhs = r"\frac{\partial c^{\p}_{j," + m + r",i}}{\partial t} "
+    if req_binding:
+        # the cavity is in rapid equilibrium: carry the conserved moiety
+        liquid_lhs += (
+            r"+ "
+            + _bnd_sum(has_mult_bnd_states)
+            + r"\frac{1 - \varepsilon^{\mathrm{sc}}_{"
+            + m
+            + r"}}{\varepsilon^{\mathrm{sc}}_{"
+            + m
+            + r"}} "
+            r"\frac{\partial " + solid_c + r"}{\partial t} "
+        )
+        liquid_rhs = exchange
+        solid_lhs = r"0 "
+    else:
+        liquid_rhs = (
+            exchange
+            + r" - \frac{1 - \varepsilon^{\mathrm{sc}}_{"
+            + m
+            + r"}}{\varepsilon^{\mathrm{sc}}_{"
+            + m
+            + r"}} "
+            + _bnd_sum(has_mult_bnd_states)
+            + bnd
+        )
+        solid_lhs = r"\frac{\partial " + solid_c + r"}{\partial t} "
+
+    return (liquid_lhs + r"&= " + liquid_rhs, solid_lhs + r"&= " + bnd)
+
+
+def particle_transport_side_cavities(
+    particle,
+    has_surfDiff: bool,
+    req_binding: bool,
+    has_mult_bnd_states: bool,
+    side_cavity_binding_models: tuple = (),
+    side_cavity_req_binding: tuple = (),
+    binding_model: str = "Arbitrary",
+):
+    """Full particle transport for the side-cavity model, both resolutions."""
+
+    radial = particle.resolution == "1D"
+    mp_bnd = _cavity_binding_term(binding_model, "0", has_mult_bnd_states)
+    solid_c0 = r"c^{\s}_{j,0,i,k}" if has_mult_bnd_states else r"c^{\s}_{j,0,i}"
+    solid_D = r"D^{\s}_{j,i,k}" if has_mult_bnd_states else r"D^{\s}_{j,i}"
+
+    # --- main pore network ------------------------------------------------
+    if radial:
+        liquid_lhs = r"\frac{\partial c^{\p}_{j,0,i}}{\partial t} "
+        liquid_rhs = (
+            r"\frac{1}{r^{2}} \frac{\partial }{\partial r} "
+            r"\left( r^{2} D^{\p}_{j,i} \frac{\partial c^{\p}_{j,0,i}}{\partial r} \right)"
+        )
+    else:
+        # radially homogeneous: the surface flux becomes a source term, written
+        # in the porosity-weighted form used throughout the generator
+        liquid_lhs = r"d^{\mathrm{mp}} \varepsilon^{\mathrm{mp}} \frac{\partial c^{\p}_{j,0,i}}{\partial t} "
+        liquid_rhs = r"\frac{3}{R^{\mathrm{p}}_{j}} k^{\mathrm{f}}_{j,i} \left( c^{\b}_{i} - c^{\p}_{j,0,i} \right)"
+
+    if req_binding:
+        liquid_lhs += (
+            r"+ " + _bnd_sum(has_mult_bnd_states) + r"\frac{1 - \varepsilon^{\mathrm{mp}}}{\varepsilon^{\mathrm{mp}}} "
+            r"\frac{\partial " + solid_c0 + r"}{\partial t} "
+        )
+        solid_lhs = r"0 "
+        solid_rhs = mp_bnd
+        if radial and has_surfDiff:
+            liquid_rhs += (
+                r" - \frac{1 - \varepsilon^{\mathrm{mp}}}{\varepsilon^{\mathrm{mp}}}"
+                + _bnd_sum(has_mult_bnd_states)
+                + r" \frac{1}{r^{2}} \frac{\partial }{\partial r} "
+                + r"\left( r^{2} "
+                + solid_D
+                + r" \frac{\partial "
+                + solid_c0
+                + r"}{\partial r} \right) "
+            )
+    else:
+        liquid_rhs += (
+            r" - \frac{1 - \varepsilon^{\mathrm{mp}}}{\varepsilon^{\mathrm{mp}}}"
+            + _bnd_sum(has_mult_bnd_states)
+            + mp_bnd
+        )
+        solid_lhs = r"\frac{\partial " + solid_c0 + r"}{\partial t} "
+        solid_rhs = ""
+        if radial and has_surfDiff:
+            solid_rhs += (
+                r"\frac{1}{r^{2}} \frac{\partial }{\partial r} "
+                r"\left( r^{2} " + solid_D + r" \frac{\partial " + solid_c0 + r"}{\partial r} \right) + "
+            )
+        solid_rhs += mp_bnd
+
+    liquid_rhs += r" - " + cavity_exchange_term()
+
+    lines = [liquid_lhs + r"&= " + liquid_rhs, solid_lhs + r"&= " + solid_rhs]
+
+    # --- side-cavity types -------------------------------------------------
+    for idx, model in enumerate(side_cavity_binding_models, start=1):
+        req_m = side_cavity_req_binding[idx - 1] if idx - 1 < len(side_cavity_req_binding) else False
+        liquid_eq, solid_eq = side_cavity_equations(str(idx), model, req_m, has_mult_bnd_states)
+        lines.extend([liquid_eq, solid_eq])
+
+    return (
+        r"""
+\begin{align}
+"""
+        + r""", \\
+""".join(lines)
+        + r""".
+\end{align}
+"""
+    )
+
+
 # Particle transport terms
 
 
@@ -849,6 +1030,22 @@ def particle_transport(
 ):
 
     ret_term = ""
+
+    if getattr(particle, "has_side_cavities", False):
+        ret_term = particle_transport_side_cavities(
+            particle,
+            has_surfDiff,
+            req_binding,
+            has_mult_bnd_states,
+            side_cavity_binding_models=particle.side_cavity_binding_models,
+            side_cavity_req_binding=particle.side_cavity_req_binding,
+            binding_model=binding_model,
+        )
+        if singleParticle:
+            ret_term = re.sub(",j", "", ret_term)
+            ret_term = re.sub("j,", "", ret_term)
+            ret_term = re.sub(r"_\{j\}", "", ret_term)
+        return ret_term
 
     if particle.resolution == "0D":
         if nonlimiting_filmDiff and has_binding:
@@ -1184,6 +1381,50 @@ def particle_boundary(
 
     if particle.resolution == "0D":
         return ""
+
+    if getattr(particle, "has_side_cavities", False):
+        # Only the main pore network is radially resolved, so only it carries
+        # boundary conditions. Its share of the particle surface is d^mp.
+        solid_c = r"c^{\s}_{j,0,i,k}" if has_mult_bnd_states else r"c^{\s}_{j,0,i}"
+        solid_D = r"D^{\s}_{j,i,k}" if has_mult_bnd_states else r"D^{\s}_{j,i}"
+        inner = r"R^{\mathrm{c}}_{j}" if particle.has_core else r"0"
+        bcs = [
+            r"- \varepsilon^{\mathrm{mp}} \left. \left( D^{\p}_{j,i} "
+            r"\frac{\partial c^{\p}_{j,0,i}}{\partial r} \right) \right|_{r=" + inner + r"} &= 0",
+            r"d^{\mathrm{mp}} \varepsilon^{\mathrm{mp}} \left. \left( D^{\p}_{j,i} "
+            r"\frac{\partial c^{\p}_{j,0,i}}{\partial r} \right) \right|_{r = R^{\mathrm{p}}_{j}} "
+            r"&= k^{\mathrm{f}}_{j,i} \left( c^{\b}_{i} - \left. c^{\p}_{j,0,i} \right|_{r = R^{\mathrm{p}}_{j}} \right)",
+        ]
+        if has_binding and has_surfDiff:
+            bcs += [
+                r"- \left( 1 - \varepsilon^{\mathrm{mp}} \right) \left. \left( "
+                + solid_D
+                + r" \frac{\partial "
+                + solid_c
+                + r"}{\partial r} \right) \right|_{r="
+                + inner
+                + r"} &= 0",
+                r"\left( 1 - \varepsilon^{\mathrm{mp}} \right) \left. \left( "
+                + solid_D
+                + r" \frac{\partial "
+                + solid_c
+                + r"}{\partial r} \right) \right|_{r = R^{\mathrm{p}}_{j}} &= 0",
+            ]
+        ret = (
+            r"""
+\begin{align}
+"""
+            + r""", \\
+""".join(bcs)
+            + r""".
+\end{align}
+"""
+        )
+        if singleParticle:
+            ret = re.sub(",j", "", ret)
+            ret = re.sub("j,", "", ret)
+            ret = re.sub(r"_\{j\}", "", ret)
+        return ret
 
     if nonlimiting_filmDiff:
         outerLiquidBC = r"\left. c^{\p}_{j,i} \right|_{r = R^{\mathrm{p}}_{j}} &= c^{\b}_{i}"

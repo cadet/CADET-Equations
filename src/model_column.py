@@ -321,6 +321,10 @@ class Column:
                         has_mult_bnd_states=cfg.get("has_mult_bnd_states", self.has_mult_bnd_states),
                         has_surfDiff=cfg["has_surfDiff"],
                         nonlimiting_filmDiff=cfg["nonlimiting_filmDiff"],
+                        has_side_cavities=cfg.get("has_side_cavities", False),
+                        n_side_cavities=cfg.get("n_side_cavities", 0),
+                        side_cavity_binding_models=cfg.get("side_cavity_binding_models", ()),
+                        side_cavity_req_binding=cfg.get("side_cavity_req_binding", ()),
                         interstitial_volume_resolution=self.resolution,
                         column_type=self.column_type,
                         single_partype=(self.N_p == 1),
@@ -468,6 +472,41 @@ class Column:
             else False
         )
 
+        # Side-cavity model (Model PC): splits the pore phase into a main pore
+        # network and a number of side-cavity types, each with its own binding
+        # model. Developer mode only.
+        has_side_cavities = (
+            st.selectbox("Add side-cavities", ["No", "Yes"], key=geoPrefix + "has_side_cavities") == "Yes"
+            if self.dev_mode
+            else False
+        )
+        n_side_cavities = 0
+        side_cavity_binding_models = ()
+        side_cavity_req_binding = ()
+        if has_side_cavities:
+            n_side_cavities = st.number_input(
+                "Number of side-cavity types",
+                min_value=1,
+                max_value=5,
+                value=1,
+                step=1,
+                key=geoPrefix + "n_side_cavities",
+            )
+            models, reqs = [], []
+            for m in range(1, int(n_side_cavities) + 1):
+                st.write(f"**Side-cavity type {m}**")
+                models.append(st.selectbox("Binding model", eq.BINDING_MODELS, key=f"{geoPrefix}sc_{m}_binding_model"))
+                reqs.append(
+                    st.selectbox(
+                        "Binding kinetics mode",
+                        ["Kinetic", "Rapid-equilibrium"],
+                        key=f"{geoPrefix}sc_{m}_req_binding",
+                    )
+                    == "Rapid-equilibrium"
+                )
+            side_cavity_binding_models = tuple(models)
+            side_cavity_req_binding = tuple(reqs)
+
         if self.N_c <= 0:
             nonlimiting_filmDiff_j = (
                 st.selectbox(
@@ -500,6 +539,10 @@ class Column:
             "has_core": has_core,
             "nonlimiting_filmDiff": nonlimiting_filmDiff_j,
             "has_surfDiff": has_surfDiff_j,
+            "has_side_cavities": has_side_cavities,
+            "n_side_cavities": int(n_side_cavities),
+            "side_cavity_binding_models": side_cavity_binding_models,
+            "side_cavity_req_binding": side_cavity_req_binding,
         }
 
         return config
