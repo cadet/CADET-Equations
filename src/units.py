@@ -9,6 +9,7 @@ Conversion factors are stored relative to SI:
 UNIT_SYSTEMS: dict[str, dict[str, str]] = {
     "SI": {
         "dimensionless": r"-",
+        "angle": r"rad",
         "time": r"s",
         "length": r"m",
         "volume": r"m^{3}",
@@ -29,6 +30,7 @@ UNIT_SYSTEMS: dict[str, dict[str, str]] = {
     },
     "Legacy": {
         "dimensionless": r"-",
+        "angle": r"rad",
         "time": r"min",
         "length": r"cm",
         "volume": r"mL",
@@ -49,6 +51,7 @@ UNIT_SYSTEMS: dict[str, dict[str, str]] = {
     },
     "CGS": {
         "dimensionless": r"-",
+        "angle": r"rad",
         "time": r"s",
         "length": r"cm",
         "volume": r"cm^{3}",
@@ -78,6 +81,7 @@ CONVERSION_FACTORS: dict[str, dict[str, float | None]] = {
     "SI": {key: 1.0 for key in UNIT_SYSTEMS["SI"]},
     "Legacy": {
         "dimensionless": 1.0,
+        "angle": 1.0,  # radians in every system
         "time": 1.0 / 60,  # 1 s = 1/60 min
         "length": 1e2,  # 1 m = 100 cm
         "volume": 1e6,  # 1 m³ = 10⁶ mL
@@ -98,6 +102,7 @@ CONVERSION_FACTORS: dict[str, dict[str, float | None]] = {
     },
     "CGS": {
         "dimensionless": 1.0,
+        "angle": 1.0,  # radians in every system
         "time": 1.0,  # 1 s = 1 s
         "length": 1e2,  # 1 m = 100 cm
         "volume": 1e6,  # 1 m³ = 10⁶ cm³

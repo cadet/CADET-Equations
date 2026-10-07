@@ -1094,7 +1094,7 @@ class Column:
                     "Group": 0,
                     "Symbol": r"\varphi",
                     "Description": r"angular cylinder coordinate",
-                    "Unit": u("dimensionless"),
+                    "Unit": u("angle"),
                     "Dependence": r"\text{independent variable}",
                     "Property": r"\in (0, 2\pi)",
                 }
