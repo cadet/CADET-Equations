@@ -313,7 +313,7 @@ class Particle:
                         "Group": 0.1,
                         "Symbol": r"R^{\mathrm{c}}",
                         "Description": r"particle core radius",
-                        "Unit": u("dimensionless"),
+                        "Unit": u("length"),
                         "Dependence": r"-",
                         "Property": r"\in (0, R^{\mathrm{p}})",
                     }

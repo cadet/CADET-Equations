@@ -1094,7 +1094,7 @@ class Column:
                     "Group": 0,
                     "Symbol": r"\varphi",
                     "Description": r"angular cylinder coordinate",
-                    "Unit": u("length"),
+                    "Unit": u("dimensionless"),
                     "Dependence": r"\text{independent variable}",
                     "Property": r"\in (0, 2\pi)",
                 }
@@ -1107,7 +1107,7 @@ class Column:
                         "Group": 0.1,
                         "Symbol": r"R^{\mathrm{p}}",
                         "Description": r"particle radius",
-                        "Unit": u("dimensionless"),
+                        "Unit": u("length"),
                         "Dependence": r"-",
                         "Property": r"> 0",
                     }
