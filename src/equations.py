@@ -1184,12 +1184,11 @@ def particle_boundary(
     if nonlimiting_filmDiff:
         outerLiquidBC = r"\left. c^{\p}_{j,i} \right|_{r = R^{\mathrm{p}}_{j}} &= c^{\b}_{i}"
     else:
-        outerLiquidBC = r"\varepsilon^{\mathrm{p}}"
         if not (req_binding and has_surfDiff):
-            outerLiquidBC += r""" \left. \left( D^{\p}_{j,i} \frac{\partial c^{\p}_{j,i}}{\partial r} \right)\right|_{r = R^{\mathrm{p}}_{j}}
+            outerLiquidBC = r"""\varepsilon^{\mathrm{p}} \left. \left( D^{\p}_{j,i} \frac{\partial c^{\p}_{j,i}}{\partial r} \right)\right|_{r = R^{\mathrm{p}}_{j}}
                &= k^{\mathrm{f}}_{j,i} \left. \left( c^{\b}_{i} - c^{\p}_{j,i} \right|_{r = R^{\mathrm{p}}_{j}} \right)"""
         else:
-            outerLiquidBC += r""" \left. \left( \varepsilon^{\mathrm{p}}  D^{\p}_{j,i} \frac{\partial c^{\p}_{j,i}}{\partial r} + (1 - \varepsilon^{\mathrm{p}} ) D^{\s}_{j,i} \frac{\partial c^{\s}_{j,i}}{\partial r} \right)\right|_{r = R^{\mathrm{p}}_{j}}
+            outerLiquidBC = r"""\left. \left( \varepsilon^{\mathrm{p}} D^{\p}_{j,i} \frac{\partial c^{\p}_{j,i}}{\partial r} + (1 - \varepsilon^{\mathrm{p}} ) D^{\s}_{j,i} \frac{\partial c^{\s}_{j,i}}{\partial r} \right)\right|_{r = R^{\mathrm{p}}_{j}}
                &= k^{\mathrm{f}}_{j,i} \left. \left( c^{\b}_{i} - c^{\p}_{j,i} \right|_{r = R^{\mathrm{p}}_{j}} \right)"""
 
     inner_boundary = r"R^{\mathrm{pc}}_{j}" if particle.has_core else r"0"
