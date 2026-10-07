@@ -11,75 +11,78 @@ CADET-Equations is [hosted on Streamlit](https://cadet-equations-74ko8eryoxmsbqs
 
 ## Installation
 
-To get started with CADET-Equations, you need to install the required Python dependencies and a LaTeX compiler.
+To get started with CADET-Equations, you need to clone the repository and install the
+required Python dependencies and a LaTeX compiler.
 
-### Step 1: Install Python Dependencies
+### Step 1: Clone the Repository
+
+```
+git clone https://github.com/cadet/CADET-Equations.git
+```
+
+```
+cd CADET-Equations
+```
+
+### Step 2: Install Python Dependencies
 
 Create a new Conda environment with Python 3.10:
 
-```bash
+```
 conda create -n cadet-equations python=3.10
+```
 
-Next, install the necessary Python packages using `pip` by running the following commands:
+Activate the environment:
 
-```bash
+```
 conda activate cadet-equations
+```
 
+Install `pip`:
+
+```
 conda install pip
+```
 
+Install the required packages:
+
+```
 pip install -r requirements.txt
 ```
 
-### Step 2: Install LaTeX Compiler
+### Step 3: Install LaTeX Compiler
 
-CADET-Equations requires a LaTeX compiler to generate mathematical equations in LaTeX format. 
-1. If you are using a Linux-based system, you can install the necessary LaTeX packages using the following command:
+CADET-Equations requires a LaTeX compiler to generate mathematical equations in LaTeX format.
 
-```bash
-# Install LaTeX compiler
+#### Linux
+
+Install the necessary LaTeX packages:
+
+```
 sudo apt-get install texlive-latex-base texlive-fonts-recommended texlive-fonts-extra texlive-latex-extra
 ```
-2. If you use windows, do as follows:
-### 1. Download MiKTeX
 
-Download the MiKTeX installer for Windows from the official site:
+#### Windows
 
-👉 https://miktex.org/download
+1. Download the MiKTeX installer from https://miktex.org/download and choose the
+   **"Net Installer"** for Windows (64-bit).
+2. Run the downloaded `.exe` installer.
+3. Choose **"Install for just me"** (unless you need a system-wide installation).
+4. Enable **"Install missing packages on-the-fly"**. This lets MiKTeX fetch any required
+   LaTeX packages automatically when the app needs them.
 
-Choose the **"Net Installer"** for Windows (64-bit).
+Then open a **new Command Prompt** (or Miniforge Prompt) and verify the installation:
 
----
-
-### 2. Install MiKTeX
-
-- Run the downloaded `.exe` installer.
-- Choose **"Install for just me"** (unless you need system-wide installation).
-- During installation, make sure to enable:
-
-  ✅ **"Install missing packages on-the-fly"**
-
-> This is important: it allows MiKTeX to automatically fetch any required LaTeX packages when needed by your app or script.
-
----
-
-### 3. Verify the Installation
-
-After installation is complete:
-
-- Open a **new Command Prompt** (or Miniforge Prompt)
-- Run the following command:
-
-```bash
+```
 pdflatex --version
-
-This will install the required LaTeX components needed to render equations properly.
+```
 
 ## Usage
 
-Once you have installed the necessary dependencies, you can use the tool to generate packed-bed chromatography modeling equations.
+Once you have installed the necessary dependencies, run the tool from the repository root
+to generate packed-bed chromatography modeling equations:
 
-```bash
-# Run the tool (replace with your script or command)
+```
 streamlit run Equation-Generator.py
 ```
 
