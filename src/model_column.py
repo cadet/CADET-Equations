@@ -1066,7 +1066,7 @@ class Column:
                     }
                 )
 
-        if self.resolution == "2D":
+        if self.resolution in ("2D", "3D"):
             self.vars_and_params.append(
                 {
                     "Group": 0,
