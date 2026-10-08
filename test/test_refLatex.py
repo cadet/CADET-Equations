@@ -3,6 +3,7 @@ This script implements tests comparing generated latex output to reference data
 """
 
 import json
+import re
 
 import pytest
 from streamlit.testing.v1 import AppTest
@@ -38,6 +39,7 @@ def _config_key_order(key):
         "column_type": 1.5,
         "column_resolution": 2,
         "add_particles": 3,
+        r"N^\mathrm{p}": 3,  # dev mode replaces "Add particles" by a type count
         "PSD": 3.2,
         "has_binding": 3.3,
         "particle_resolution": 3.5,
@@ -55,7 +57,20 @@ def _config_key_order(key):
         "cry_aggregation_kernel": 7.1,
         "cry_has_fragmentation": 8,
     }
-    return order.get(key, 10)
+    if key in order:
+        return order[key]
+
+    # Side-cavity widgets: the type count only appears once side-cavities are
+    # enabled, and the per-type widgets only once the count is known.
+    if key.endswith("has_side_cavities"):
+        return 3.51
+    if key.endswith("n_side_cavities"):
+        return 3.52
+    cavity = re.search(r"_sc_(\d+)_", key)
+    if cavity:
+        return 3.53 + 0.02 * int(cavity.group(1)) + (0.01 if key.endswith("req_binding") else 0.0)
+
+    return 10
 
 
 def apply_model_from_config(at, model_config):
@@ -71,12 +86,15 @@ def apply_model_from_config(at, model_config):
             at.toggle(key=config).set_value(model_config[config]).run()
         elif config in [box.key for box in at.selectbox]:
             at.selectbox(key=config).set_value(model_config[config]).run()
+        elif config in [box.key for box in at.number_input]:
+            at.number_input(key=config).set_value(model_config[config]).run()
         elif config in [box.key for box in at.button]:
             if model_config[config]:
                 at.button(key=config).click().run()
         else:
             raise ValueError(
-                f"Error: {config} is neither a toggle nor a selectbox nor a button in the current session state"
+                f"Error: {config} is neither a toggle, selectbox, number input nor a button "
+                "in the current session state"
             )
 
     return model_config
@@ -113,6 +131,11 @@ def apply_model_from_config(at, model_config):
         "GRMsd_multBndStates",
         "GRMsd_nonLimFD_parCore",
         "GRMsd_nonLimFD_reqBnd",
+        # Side-cavity models (Model PC), both particle resolutions
+        "GRM_sideCavities",
+        "LRMP_sideCavities",
+        "LRMP_sideCavities_noBnd",
+        "GRM_sideCavities_nonLimFD",
         # 2D models
         "2D_Plug_Flow",
         "2D_LRM",

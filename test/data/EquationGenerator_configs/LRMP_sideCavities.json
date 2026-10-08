@@ -1,0 +1,22 @@
+{
+    "dev_mode": true,
+    "column_type": "Axial flow cylinder",
+    "column_resolution": "1D (axial coordinate)",
+    "N^\\mathrm{p}": 1,
+    "has_binding": "Yes",
+    "has_axial_dispersion": "Yes",
+    "model_assumptions": true,
+    "particle_resolution": "0D (homogeneous)",
+    "particle_has_side_cavities": "Yes",
+    "particle_n_side_cavities": 2,
+    "particle_sc_1_binding_model": "Arbitrary",
+    "particle_sc_1_req_binding": "Kinetic",
+    "particle_sc_2_binding_model": "Arbitrary",
+    "particle_sc_2_req_binding": "Kinetic",
+    "req_binding": "Kinetic",
+    "show_eq_description": true,
+    "var_format": "CADET",
+    "particle_nonlimiting_filmDiff": "Kinetic",
+    "particle_geometry": "Sphere",
+    "binding_model": "Arbitrary"
+}
