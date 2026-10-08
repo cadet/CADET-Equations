@@ -311,7 +311,7 @@ class Particle:
                 self.vars_and_params.append(
                     {
                         "Group": 0.1,
-                        "Symbol": r"R^{\mathrm{pc}}",
+                        "Symbol": r"R^{\mathrm{c}}",
                         "Description": r"particle core radius",
                         "Unit": u("dimensionless"),
                         "Dependence": r"-",

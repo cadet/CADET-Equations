@@ -24,7 +24,7 @@ General model assumptions:
 Specific model assumptions:
 \begin{itemize}
 \item the fluid only flows in the radial direction of the column (i.e., there is no flow in the axial and angular direction);
-\item the column is a hollow cylinder with inner radius $R^{\mathrm{inner}}$ and outer radius $R^{\mathrm{outer}}$;
+\item the column is a hollow cylinder with inner radius $P^{\mathrm{inner}}$ and outer radius $P^{\mathrm{outer}}$;
 \item the particles form a continuum inside the column (i.e., there is interstitial and particle volume at every point in the column);
 \item the column is radially symmetric and homogeneous (i.e., concentration profiles and parameters only depend on the axial position);
 \item the interstitial liquid phase concentration is spatially constant on the outer particle surface;
@@ -33,19 +33,19 @@ Specific model assumptions:
 
 
 \section*{Radial Flow Lumped Rate Model with Pores}
-Consider a hollow cylindrical column of axial bed height $H^{\mathrm{b}} > 0$ with inner radius $R^{\mathrm{inner}} > 0$ and outer radius $R^{\mathrm{outer}} > R^{\mathrm{inner}}$ packed with spherical particles, and observed over a time interval $(0, T^{\mathrm{end}})$.
-In the interstitial volume, mass transfer is governed by the following convection-diffusion-reaction equations in $(0, T^{\mathrm{end}})\times (R^{\mathrm{inner}}, R^{\mathrm{outer}})$ and for all components $i\in\{1, \dots, N^{\mathrm{c}} \}$
+Consider a hollow cylindrical column of axial bed height $H^{\mathrm{b}} > 0$ with inner radius $P^{\mathrm{inner}} > 0$ and outer radius $P^{\mathrm{outer}} > P^{\mathrm{inner}}$ packed with spherical particles, and observed over a time interval $(0, T^{\mathrm{end}})$.
+In the interstitial volume, mass transfer is governed by the following convection-diffusion-reaction equations in $(0, T^{\mathrm{end}})\times (P^{\mathrm{inner}}, P^{\mathrm{outer}})$ and for all components $i\in\{1, \dots, N^{\mathrm{c}} \}$
 \begin{align}
 \varepsilon^{\mathrm{b}} \frac{\partial c^{\mathrm{b}}_{i}}{\partial t} = - \frac{v}{\rho} \frac{\partial \left( \varepsilon^{\mathrm{b}} c^{\mathrm{b}}_{i} \right)}{\partial \rho} + \frac{1}{\rho} \frac{\partial}{\partial \rho} \left( \rho \varepsilon^{\mathrm{b}} D^{\mathrm{rad}}_{i} \frac{\partial c^{\mathrm{b}}_{i}}{\partial \rho} \right)- \left(1 - \varepsilon^{\mathrm{b}} \right) \frac{3}{R^{\mathrm{p}}} k^{\mathrm{f}}_{i} \left(c^{\mathrm{b}}_{i} - \left. c^{\mathrm{p}}_{i} \right|_{r = R^{\mathrm{p}}} \right),
 \end{align}
 with boundary conditions
 
 \begin{alignat}{2}
-v c^{\mathrm{in}}_{i} &= \left.\left( v c^{\mathrm{b}}_{i} - D^{\mathrm{rad}}_{i} \frac{\partial c^{\mathrm{b}}_{i}}{\partial \rho}\right)\right|_{\rho=R^{\mathrm{inner}}} & &\qquad\text{on }(0, T^{\mathrm{end}}),\\
-               0 &= - D^{\mathrm{rad}}_{i} \left. \frac{\partial c^{\mathrm{b}}_{i}}{\partial \rho} \right|_{\rho=R^{\mathrm{outer}}} & &\qquad\text{on }(0, T^{\mathrm{end}}).
+v c^{\mathrm{in}}_{i} &= \left.\left( v c^{\mathrm{b}}_{i} - D^{\mathrm{rad}}_{i} \frac{\partial c^{\mathrm{b}}_{i}}{\partial \rho}\right)\right|_{\rho=P^{\mathrm{inner}}} & &\qquad\text{on }(0, T^{\mathrm{end}}),\\
+               0 &= - D^{\mathrm{rad}}_{i} \left. \frac{\partial c^{\mathrm{b}}_{i}}{\partial \rho} \right|_{\rho=P^{\mathrm{outer}}} & &\qquad\text{on }(0, T^{\mathrm{end}}).
 \end{alignat}
-Here, $t\in (0, T^{\mathrm{end}})$ is the time coordinate, $\rho\in (R^{\mathrm{inner}}, R^{\mathrm{outer}})$ is the radial coordinate, $R^{\mathrm{p}}> 0$ is the particle radius, $c^{\mathrm{b}}_{i}\colon (0, T^{\mathrm{end}})\times (R^{\mathrm{inner}}, R^{\mathrm{outer}}) \mapsto \mathbb{R}$ is the bulk liquid concentration, $Q> 0$ is the volumetric flow rate, $\varepsilon^{\mathrm{b}}\in (0, 1)$ is the bulk porosity, $v:= \frac{Q}{2 \pi H^{\mathrm{b}}}$ is the velocity coefficient, $D^{\mathrm{rad}}_{i}\geq 0$ is the radial dispersion coefficient, and $k^{\mathrm{f}}_{i}\geq 0$ is the film diffusion coefficient.
-In the particles, mass transfer is governed by reaction equations in $(0, T^{\mathrm{end}}) \times (R^{\mathrm{inner}}, R^{\mathrm{outer}})$ and for all components
+Here, $t\in (0, T^{\mathrm{end}})$ is the time coordinate, $\rho\in (P^{\mathrm{inner}}, P^{\mathrm{outer}})$ is the radial coordinate, $R^{\mathrm{p}}> 0$ is the particle radius, $c^{\mathrm{b}}_{i}\colon (0, T^{\mathrm{end}})\times (P^{\mathrm{inner}}, P^{\mathrm{outer}}) \mapsto \mathbb{R}$ is the bulk liquid concentration, $Q> 0$ is the volumetric flow rate, $\varepsilon^{\mathrm{b}}\in (0, 1)$ is the bulk porosity, $v:= \frac{Q}{2 \pi H^{\mathrm{b}}}$ is the velocity coefficient, $D^{\mathrm{rad}}_{i}\geq 0$ is the radial dispersion coefficient, and $k^{\mathrm{f}}_{i}\geq 0$ is the film diffusion coefficient.
+In the particles, mass transfer is governed by reaction equations in $(0, T^{\mathrm{end}}) \times (P^{\mathrm{inner}}, P^{\mathrm{outer}})$ and for all components
 
 \begin{align}
 \varepsilon^{\mathrm{p}}\frac{\partial c^{\mathrm{p}}_{i}}{\partial t} 
@@ -54,6 +54,6 @@ In the particles, mass transfer is governed by reaction equations in $(0, T^{\ma
           &= f^{\mathrm{bind}}_{i}\left( \vec{c}^{\mathrm{p}}, \vec{c}^{\mathrm{s}} \right).
 \end{align}
 
-Here, $c^{\mathrm{p}}_{i}\colon (0, T^{\mathrm{end}}) \times (R^{\mathrm{inner}}, R^{\mathrm{outer}}) \mapsto \mathbb{R}$ is the particle liquid concentration, $c^{\mathrm{s}}_{i}\colon (0, T^{\mathrm{end}}) \times (R^{\mathrm{inner}}, R^{\mathrm{outer}}) \mapsto \mathbb{R}$ is the particle solid concentration, $f^{\mathrm{bind}}_{i}$ is the adsorption isotherm function, $\vec{c}^{\mathrm{p}}$ is the particle liquid components vector, and $\vec{c}^{\mathrm{s}}$ is the particle solid components vector.
+Here, $c^{\mathrm{p}}_{i}\colon (0, T^{\mathrm{end}}) \times (P^{\mathrm{inner}}, P^{\mathrm{outer}}) \mapsto \mathbb{R}$ is the particle liquid concentration, $c^{\mathrm{s}}_{i}\colon (0, T^{\mathrm{end}}) \times (P^{\mathrm{inner}}, P^{\mathrm{outer}}) \mapsto \mathbb{R}$ is the particle solid concentration, $f^{\mathrm{bind}}_{i}$ is the adsorption isotherm function, $\vec{c}^{\mathrm{p}}$ is the particle liquid components vector, and $\vec{c}^{\mathrm{s}}$ is the particle solid components vector.
 Consistent initial values for all solution variables (concentrations) are defined at $t = 0$.
 \end{document}
