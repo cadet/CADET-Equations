@@ -389,16 +389,16 @@ def int_filmDiff_term(
 ):
 
     # With side-cavities only the main pore network reaches the particle surface,
-    # so its volume fraction enters the coupling and the surface concentration is
-    # that of the main pore network (compartment index 0).
+    # so the surface concentration is that of the main pore network (compartment
+    # index 0). The prefactor is unchanged: k^f is defined per unit of total
+    # external particle surface, and the main pore network's share of it, d^mp,
+    # sits in the particle boundary condition instead.
     side_cavities = getattr(particle, "has_side_cavities", False)
-    mp_frac = r" d^{\mathrm{mp}}" if side_cavities else r""
 
     if singleParticle:
         term = (
             r"- \left(1 - \varepsilon^{\mathrm{b}} \right) \frac{"
             + str(particle.surface_volume_ratio)
-            + mp_frac
             + r"}{R^{\mathrm{p}}} k^{\mathrm{f}}_{i} \left(c^{\b}_{i} - \left. "
             + (r"c^{\p}_{0,i}" if side_cavities else r"c^{\p}_{i}")
             + r" \right|_{r = R^{\mathrm{p}}} \right)"
@@ -412,7 +412,6 @@ def int_filmDiff_term(
             + r"} \frac{"
             + str(particle.surface_volume_ratio)
             + r"d_{j}"
-            + (r" d^{\mathrm{mp}}_{j}" if side_cavities else r"")
             + r"}{R^{\mathrm{p}}_{j}} k^{\mathrm{f}}_{j,i} \left(c^{\b}_{i} - \left. "
             + (r"c^{\p}_{j,0,i}" if side_cavities else r"c^{\p}_{j,i}")
             + r" \right|_{r = R^{\mathrm{p}}_{j}} \right)"
@@ -421,6 +420,19 @@ def int_filmDiff_term(
     if nonLimitingFilmDiff:
         if particle.resolution == "0D":
             return ""
+        elif side_cavities:
+            # Substitute the main pore network boundary condition, whose
+            # left-hand side carries the share d^mp of the particle surface
+            # that opens into the main pore network.
+            substitute = r"\\left( d^{\\mathrm{mp}} \\varepsilon^{\\mathrm{mp}} D^{\\mathrm{p}}_{j,i} \\left. \\frac{\\partial c^{\\p}_{j,0,i}}{\\partial r}"
+            if hasSurfDiff:
+                substitute += r" + d^{\\mathrm{mp}} (1 - \\varepsilon^{\\mathrm{mp}}) D^{\\mathrm{s}}_{j,i} \\frac{\\partial c^{\\s}_{j,0,i}}{\\partial r}"
+            substitute += r"\\right)\\right|_{r = R^{\\mathrm{p},j}}"
+            term = re.sub(r"k\^.*?right.$", substitute, term)
+            if singleParticle:
+                term = re.sub(",j", "", term)
+                term = re.sub("j,", "", term)
+                term = re.sub("_{j}", "", term)
         else:
             # substitute boundary condition into equation
             substitute = r"\\left( \\varepsilon^{\\mathrm{p}}_{j} D^{\\mathrm{p}}_{j,i} \\left. \\frac{\\partial c^{\\p}_{j,i}}{\\partial r}"
@@ -874,6 +886,10 @@ def _cavity_binding_term(binding_model: str, cavity: str, has_mult_bnd_states: b
     # "_{j,i}" also catches the salt index of SMA and the competition sum of
     # Langmuir, which belong to the same compartment.
     term = re.sub(r"_\{j,", r"_{j," + cavity + r",", term)
+    # The isotherm of a compartment only sees the concentrations of that
+    # compartment, so its argument vectors carry the index as well.
+    for phase in (r"\p", r"\s"):
+        term = term.replace(r"\vec{c}^{" + phase + r"}", r"\vec{c}^{" + phase + r"}_{" + cavity + r"}")
     if has_mult_bnd_states:
         term = re.sub(r"_\{j," + cavity + r",i\}", r"_{j," + cavity + r",i,k}", term)
     if binding_model != "Arbitrary":
@@ -886,11 +902,13 @@ def side_cavity_equations(
     binding_model: str,
     req_binding: bool,
     has_mult_bnd_states: bool,
+    has_binding: bool = True,
 ):
     """Liquid and solid balance of a single side-cavity type.
 
     The cavity has no spatial resolution of its own: it exchanges with the main
-    pore network and otherwise only binds.
+    pore network and otherwise only binds. Without binding there is no solid
+    phase, so only the liquid balance is returned.
     """
     m = cavity_index
     bnd = _cavity_binding_term(binding_model, m, has_mult_bnd_states)
@@ -898,6 +916,9 @@ def side_cavity_equations(
     solid_c = r"c^{\s}_{j," + m + r",i,k}" if has_mult_bnd_states else r"c^{\s}_{j," + m + r",i}"
 
     liquid_lhs = r"\frac{\partial c^{\p}_{j," + m + r",i}}{\partial t} "
+    if not has_binding:
+        return (liquid_lhs + r"&= " + exchange,)
+
     if req_binding:
         # the cavity is in rapid equilibrium: carry the conserved moiety
         liquid_lhs += (
@@ -936,6 +957,7 @@ def particle_transport_side_cavities(
     side_cavity_binding_models: tuple = (),
     side_cavity_req_binding: tuple = (),
     binding_model: str = "Arbitrary",
+    has_binding: bool = True,
 ):
     """Full particle transport for the side-cavity model, both resolutions."""
 
@@ -952,12 +974,20 @@ def particle_transport_side_cavities(
             r"\left( r^{2} D^{\p}_{j,i} \frac{\partial c^{\p}_{j,0,i}}{\partial r} \right)"
         )
     else:
-        # radially homogeneous: the surface flux becomes a source term, written
-        # in the porosity-weighted form used throughout the generator
-        liquid_lhs = r"d^{\mathrm{mp}} \varepsilon^{\mathrm{mp}} \frac{\partial c^{\p}_{j,0,i}}{\partial t} "
-        liquid_rhs = r"\frac{3}{R^{\mathrm{p}}_{j}} k^{\mathrm{f}}_{j,i} \left( c^{\b}_{i} - c^{\p}_{j,0,i} \right)"
+        # radially homogeneous: the surface flux becomes a source term. The
+        # binding and cavity exchange terms below are shared with the radial
+        # case, so the main pore volume fraction stays in the film diffusion
+        # coefficient instead of being multiplied onto the time derivative.
+        liquid_lhs = r"\frac{\partial c^{\p}_{j,0,i}}{\partial t} "
+        liquid_rhs = (
+            r"\frac{3}{R^{\mathrm{p}}_{j} d^{\mathrm{mp}} \varepsilon^{\mathrm{mp}}} "
+            r"k^{\mathrm{f}}_{j,i} \left( c^{\b}_{i} - c^{\p}_{j,0,i} \right)"
+        )
 
-    if req_binding:
+    if not has_binding:
+        # no solid phase at all, so the main pore network only exchanges
+        solid_lhs = solid_rhs = None
+    elif req_binding:
         liquid_lhs += (
             r"+ " + _bnd_sum(has_mult_bnd_states) + r"\frac{1 - \varepsilon^{\mathrm{mp}}}{\varepsilon^{\mathrm{mp}}} "
             r"\frac{\partial " + solid_c0 + r"}{\partial t} "
@@ -992,13 +1022,14 @@ def particle_transport_side_cavities(
 
     liquid_rhs += r" - " + cavity_exchange_term()
 
-    lines = [liquid_lhs + r"&= " + liquid_rhs, solid_lhs + r"&= " + solid_rhs]
+    lines = [liquid_lhs + r"&= " + liquid_rhs]
+    if solid_lhs is not None:
+        lines.append(solid_lhs + r"&= " + solid_rhs)
 
     # --- side-cavity types -------------------------------------------------
     for idx, model in enumerate(side_cavity_binding_models, start=1):
         req_m = side_cavity_req_binding[idx - 1] if idx - 1 < len(side_cavity_req_binding) else False
-        liquid_eq, solid_eq = side_cavity_equations(str(idx), model, req_m, has_mult_bnd_states)
-        lines.extend([liquid_eq, solid_eq])
+        lines.extend(side_cavity_equations(str(idx), model, req_m, has_mult_bnd_states, has_binding=has_binding))
 
     return (
         r"""
@@ -1040,6 +1071,7 @@ def particle_transport(
             side_cavity_binding_models=particle.side_cavity_binding_models,
             side_cavity_req_binding=particle.side_cavity_req_binding,
             binding_model=binding_model,
+            has_binding=has_binding,
         )
         if singleParticle:
             ret_term = re.sub(",j", "", ret_term)
@@ -1388,12 +1420,22 @@ def particle_boundary(
         solid_c = r"c^{\s}_{j,0,i,k}" if has_mult_bnd_states else r"c^{\s}_{j,0,i}"
         solid_D = r"D^{\s}_{j,i,k}" if has_mult_bnd_states else r"D^{\s}_{j,i}"
         inner = r"R^{\mathrm{c}}_{j}" if particle.has_core else r"0"
+        if nonlimiting_filmDiff:
+            # Rapid equilibrium across the film: the main pore network takes the
+            # bulk concentration at the particle surface. The cavities are
+            # unaffected, since they never touch the surface.
+            outerLiquidBC = r"\left. c^{\p}_{j,0,i} \right|_{r = R^{\mathrm{p}}_{j}} &= c^{\b}_{i}"
+        else:
+            outerLiquidBC = (
+                r"d^{\mathrm{mp}} \varepsilon^{\mathrm{mp}} \left. \left( D^{\p}_{j,i} "
+                r"\frac{\partial c^{\p}_{j,0,i}}{\partial r} \right) \right|_{r = R^{\mathrm{p}}_{j}} "
+                r"&= k^{\mathrm{f}}_{j,i} \left( c^{\b}_{i} - "
+                r"\left. c^{\p}_{j,0,i} \right|_{r = R^{\mathrm{p}}_{j}} \right)"
+            )
         bcs = [
             r"- \varepsilon^{\mathrm{mp}} \left. \left( D^{\p}_{j,i} "
             r"\frac{\partial c^{\p}_{j,0,i}}{\partial r} \right) \right|_{r=" + inner + r"} &= 0",
-            r"d^{\mathrm{mp}} \varepsilon^{\mathrm{mp}} \left. \left( D^{\p}_{j,i} "
-            r"\frac{\partial c^{\p}_{j,0,i}}{\partial r} \right) \right|_{r = R^{\mathrm{p}}_{j}} "
-            r"&= k^{\mathrm{f}}_{j,i} \left( c^{\b}_{i} - \left. c^{\p}_{j,0,i} \right|_{r = R^{\mathrm{p}}_{j}} \right)",
+            outerLiquidBC,
         ]
         if has_binding and has_surfDiff:
             bcs += [

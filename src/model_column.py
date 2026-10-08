@@ -476,7 +476,12 @@ class Column:
         # network and a number of side-cavity types, each with its own binding
         # model. Developer mode only.
         has_side_cavities = (
-            st.selectbox("Add side-cavities", ["No", "Yes"], key=geoPrefix + "has_side_cavities") == "Yes"
+            st.selectbox(
+                "Add side-cavities (enables simultaneous component-specific pore accessibility and competitive binding)",
+                ["No", "Yes"],
+                key=geoPrefix + "has_side_cavities",
+            )
+            == "Yes"
             if self.dev_mode
             else False
         )
@@ -494,6 +499,13 @@ class Column:
             )
             models, reqs = [], []
             for m in range(1, int(n_side_cavities) + 1):
+                # Without binding the cavities only exchange, so there is
+                # nothing to configure per type, but the tuple still has to
+                # carry one entry per type to size the equation system.
+                if not self.has_binding:
+                    models.append("Arbitrary")
+                    reqs.append(False)
+                    continue
                 st.write(f"**Side-cavity type {m}**")
                 models.append(st.selectbox("Binding model", eq.BINDING_MODELS, key=f"{geoPrefix}sc_{m}_binding_model"))
                 reqs.append(
@@ -516,6 +528,18 @@ class Column:
                 )
                 == "Rapid-equilibrium"
             )
+            if nonlimiting_filmDiff_j and has_side_cavities and resolution == "0D":
+                # For a radially resolved main pore network rapid equilibrium is
+                # just the Dirichlet condition c^p_0|_{R^p} = c^b, orthogonal to
+                # the cavities. For a homogeneous one it merges the main pore
+                # network into the interstitial volume, which needs porosity
+                # bookkeeping that the total porosity no longer expresses once
+                # the pore phase is partitioned. So only block the latter.
+                st.warning(
+                    "Rapid-equilibrium film diffusion is not available for a radially homogeneous "
+                    "side-cavity particle. Falling back to kinetic film diffusion."
+                )
+                nonlimiting_filmDiff_j = False
             self.nonlimiting_filmDiff = nonlimiting_filmDiff_j
 
             has_surfDiff_j = False
@@ -582,6 +606,10 @@ class Column:
              1 if model is present.
         """
         if self.has_angular_coordinate:
+            return -1
+
+        # the side-cavity model has no implementation in any of the solvers
+        if any(p.has_side_cavities for p in self.particle_models):
             return -1
 
         availability = 1
@@ -659,6 +687,10 @@ class Column:
         """
 
         if self.has_reaction_bulk or self.has_reaction_particle_liquid or self.has_reaction_particle_solid:
+            return -1
+
+        # the side-cavity model has no implementation in any of the solvers
+        if any(p.has_side_cavities for p in self.particle_models):
             return -1
 
         # only axial flow columns and tanks
@@ -1472,6 +1504,7 @@ class Column:
                     self.particle_models[0].has_core,
                     self.var_format,
                     self.particle_models[0].resolution,
+                    has_side_cavities=self.particle_models[0].has_side_cavities,
                 ),
                 1,
                 1,
@@ -1489,6 +1522,7 @@ class Column:
                             self.particle_models[par_added].has_core,
                             self.var_format,
                             self.particle_models[par_added].resolution,
+                            has_side_cavities=self.particle_models[par_added].has_side_cavities,
                         ),
                         1 + par_added,
                         par_added + self.par_unique_intV_contribution_counts[par_uniq],
@@ -1503,6 +1537,7 @@ class Column:
                             self.particle_models[0].has_core,
                             self.var_format,
                             self.particle_models[0].resolution,
+                            has_side_cavities=self.particle_models[0].has_side_cavities,
                         ),
                         1,
                         r"N^{\mathrm{p}}",
@@ -1824,6 +1859,10 @@ class Column:
                 if self.has_axial_dispersion or self.has_radial_dispersion or self.has_angular_dispersion:
                     model_name += "Dispersive "
                 model_name += "Plug Flow"  # Reactor if we have reactions
+
+        if self.N_p > 0 and any(p.has_side_cavities for p in self.particle_models):
+            # "Lumped Rate Model with Pores" already carries a "with"
+            model_name += " and side cavities" if " with " in model_name else " with side cavities"
 
         if self.has_binding:
             unique_models = set(p.binding_model for p in self.particle_models if p.binding_model != "Arbitrary")

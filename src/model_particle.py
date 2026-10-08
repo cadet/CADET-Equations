@@ -134,7 +134,10 @@ class Particle:
                 }
             )
 
-            if not self.nonlimiting_filmDiff:
+            # With side-cavities the pore phase is partitioned into a main pore
+            # network and the cavity types, each carrying its own porosity, so
+            # the overall particle porosity does not appear in the equations.
+            if not self.nonlimiting_filmDiff and not self.has_side_cavities:
                 vars_and_params_.append(
                     {
                         "Group": 4,
