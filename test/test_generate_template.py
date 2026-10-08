@@ -53,7 +53,7 @@ class TestGenerateTemplateIntegration:
             add_particles="Yes",
             has_binding="Yes",
             particle_resolution="0D (homogeneous)",
-            particle_nonlimiting_filmDiff="No",
+            particle_nonlimiting_filmDiff="Kinetic",
         )
         script = get_script(at)
         assert "'has_film_diffusion'] = 1" in script
@@ -65,7 +65,7 @@ class TestGenerateTemplateIntegration:
             add_particles="Yes",
             has_binding="Yes",
             particle_resolution="0D (homogeneous)",
-            particle_nonlimiting_filmDiff="Yes",
+            particle_nonlimiting_filmDiff="Rapid-equilibrium",
         )
         script = get_script(at)
         assert "'has_film_diffusion'] = 0" in script

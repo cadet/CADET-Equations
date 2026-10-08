@@ -477,7 +477,7 @@ def test_extract_v6_config_grm_with_surface_diff_and_core():
     assert config["PSD"] == "Yes"
     assert "add_particles" not in config
     assert config["particle_resolution"] == "1D (radial coordinate)"
-    assert config["particle_nonlimiting_filmDiff"] == "No"
+    assert config["particle_nonlimiting_filmDiff"] == "Kinetic"
     assert config["has_binding"] == "Yes"
     assert config["particle_has_surfDiff"] == "Yes"
     assert config["particle_has_core"] == "Yes"

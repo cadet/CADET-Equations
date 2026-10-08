@@ -334,7 +334,7 @@ def _extract_v5_particle_config(config, unit_type, h5_unit_group, par_model):
         config["advanced_mode"] = "On"
         config["PSD"] = "Yes"
 
-    config["particle_nonlimiting_filmDiff"] = "Yes" if nonlimiting else "No"
+    config["particle_nonlimiting_filmDiff"] = "Rapid-equilibrium" if nonlimiting else "Kinetic"
 
     binding_model = get_h5_value(h5_unit_group, "ADSORPTION_MODEL", firstEntryIfList=False)
 
@@ -458,7 +458,7 @@ def _particle_type_config(pt_group, h5_unit_group):
     config["resolution"] = resolution
 
     has_film_diff = get_h5_value(pt_group, "HAS_FILM_DIFFUSION")
-    config["nonlimiting_filmDiff"] = "No" if has_film_diff else "Yes"
+    config["nonlimiting_filmDiff"] = "Kinetic" if has_film_diff else "Rapid-equilibrium"
 
     binding_model = get_h5_value(pt_group, "ADSORPTION_MODEL", firstEntryIfList=False)
 
