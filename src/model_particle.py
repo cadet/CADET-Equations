@@ -241,7 +241,7 @@ class Particle:
                         "Group": 10,
                         "Symbol": symbol_name_,
                         "Description": r"adsorption isotherm function",
-                        "Unit": u("rate_first_order"),
+                        "Unit": u("reaction_rate_molar"),
                         "Dependence": dep_,
                     }
                 )

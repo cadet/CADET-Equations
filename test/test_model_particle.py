@@ -411,6 +411,12 @@ class TestParticleBindingUnits:
         assert entry["Unit"] == r"\frac{1}{s}"
 
     @pytest.mark.unit_test
+    def test_isotherm_function_is_a_molar_rate(self):
+        """f^bind equals the solid phase time derivative, not a 1/s rate."""
+        entry = self._entry("Arbitrary", r"f^{\mathrm{bind}}_{i}")
+        assert entry["Unit"] == r"\frac{mol}{m^{3} \cdot s}"
+
+    @pytest.mark.unit_test
     @pytest.mark.parametrize(
         "symbol, unit",
         [
