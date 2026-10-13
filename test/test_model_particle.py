@@ -373,6 +373,59 @@ class TestParticleBindingModels:
         assert particle.binding_model == "SMA"
 
 
+class TestParticleBindingUnits:
+    """Units of the binding parameters, cross-checked against the CADET-Core docs."""
+
+    @staticmethod
+    def _entry(binding_model, symbol):
+        particle = Particle(
+            geometry="Sphere",
+            has_core=False,
+            var_format="CADET",
+            resolution="1D",
+            has_binding=True,
+            binding_model=binding_model,
+            nonlimiting_filmDiff=False,
+            interstitial_volume_resolution="1D",
+        )
+        return next(e for e in particle.vars_and_params if e["Symbol"] == symbol)
+
+    @pytest.mark.unit_test
+    @pytest.mark.parametrize("binding_model", ["Linear", "SMA"])
+    def test_adsorption_rate_is_first_order(self, binding_model):
+        """k^a multiplies c^p alone (LIN_KA, SMA_KA), so it is a 1/s rate."""
+        entry = self._entry(binding_model, r"k^{\mathrm{a}}_{i}")
+        assert entry["Unit"] == r"\frac{1}{s}"
+
+    @pytest.mark.unit_test
+    def test_langmuir_adsorption_rate_is_second_order(self):
+        """k^a multiplies c^p q^max (MCL_KA), so it carries a volume per mole."""
+        entry = self._entry("Langmuir", r"k^{\mathrm{a}}_{i}")
+        assert entry["Unit"] == r"\frac{m^{3}}{mol \cdot s}"
+
+    @pytest.mark.unit_test
+    @pytest.mark.parametrize("binding_model", ["Linear", "Langmuir", "SMA"])
+    def test_desorption_rate_is_first_order(self, binding_model):
+        """k^d multiplies c^s alone in every model, so it is a 1/s rate."""
+        entry = self._entry(binding_model, r"k^{\mathrm{d}}_{i}")
+        assert entry["Unit"] == r"\frac{1}{s}"
+
+    @pytest.mark.unit_test
+    @pytest.mark.parametrize(
+        "symbol, unit",
+        [
+            (r"\nu_{i}", r"-"),
+            (r"\sigma_{i}", r"-"),
+            (r"\Lambda", r"\frac{mol}{m^{3}}"),
+            (r"q^{\mathrm{ref}}", r"\frac{mol}{m^{3}}"),
+            (r"c^{\mathrm{ref}}", r"\frac{mol}{m^{3}}"),
+        ],
+    )
+    def test_sma_parameter_units(self, symbol, unit):
+        """The other SMA parameters follow SMA_NU, SMA_SIGMA, SMA_LAMBDA, SMA_REFQ, SMA_REFC0."""
+        assert self._entry("SMA", symbol)["Unit"] == unit
+
+
 class TestParticleParallelParticleDistribution:
     """Test particle type distribution (PTD) configuration."""
 
