@@ -265,12 +265,16 @@ class Particle:
                 )
             else:
                 idx_ = "i" if self.single_partype else "j,i"
+                # k^a multiplies c^p alone in the Linear and SMA models (the
+                # SMA salt term is normalized by q^ref and c^ref and is thus
+                # dimensionless), but c^p q^max in the Langmuir model.
+                ka_unit_ = "rate_second_order" if self.binding_model == "Langmuir" else "rate_first_order"
                 vars_and_params_.append(
                     {
                         "Group": 10,
                         "Symbol": r"k^{\mathrm{a}}_{" + idx_ + r"}",
                         "Description": r"adsorption rate constant",
-                        "Unit": u("rate_second_order"),
+                        "Unit": u(ka_unit_),
                         "Dependence": idx_,
                     }
                 )
