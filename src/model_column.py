@@ -877,7 +877,7 @@ class Column:
                 "Group": -0.1,
                 "Symbol": r"i",
                 "Description": r"component index",
-                "Unit": u("time"),
+                "Unit": u("dimensionless"),
                 "Dependence": r"-",
                 "Property": r"-",
             },

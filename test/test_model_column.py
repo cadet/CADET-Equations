@@ -917,3 +917,30 @@ class TestPerComponentConfiguration:
         comp_sets = [sorted(g["components"]) for g in groups]
         assert [1, 3] in comp_sets
         assert [2] in comp_sets
+
+
+class TestColumnVarsParamsUnits:
+    """Units of the generic column variables."""
+
+    @staticmethod
+    def _entry(symbol):
+        col = Column(
+            dev_mode=False,
+            advanced_mode=False,
+            var_format="CADET",
+        )
+        return next(e for e in col.vars_and_params if e["Symbol"] == symbol)
+
+    @pytest.mark.unit_test
+    def test_component_index_is_dimensionless(self):
+        """The component index is a counter, not a time."""
+        assert self._entry(r"i")["Unit"] == r"-"
+
+    @pytest.mark.unit_test
+    def test_number_of_components_is_dimensionless(self):
+        assert self._entry(r"N^{\mathrm{c}}")["Unit"] == r"-"
+
+    @pytest.mark.unit_test
+    @pytest.mark.parametrize("symbol", [r"t", r"T^{\mathrm{end}}"])
+    def test_time_variables_carry_a_time_unit(self, symbol):
+        assert self._entry(symbol)["Unit"] == r"s"
