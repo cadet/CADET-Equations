@@ -1083,6 +1083,19 @@ else:  # Chromatography model family
 
     write_and_save("Consistent initial values for all solution variables (concentrations) are defined at $t = 0$.")
 
+    # %% Modeling framework reference
+
+    write_html_and_save(
+        "This model is a particular instance of the unified mathematical framework introduced in "
+        + cite_html("breuer2026unified", bibliography_entries, used_citation_keys)
+        + ", which provides a rigorous justification of its assumptions "
+        "and a systematic derivation of its governing equations.",
+        "This model is a particular instance of the unified mathematical framework introduced in "
+        + cite("breuer2026unified", bibliography_entries, used_citation_keys)
+        + ", which provides a rigorous justification of its assumptions "
+        "and a systematic derivation of its governing equations.",
+    )
+
 render_references(bibliography_entries, used_citation_keys, file_content)
 
 st.session_state.latex_string = [

@@ -9,6 +9,12 @@ CADET-Equations is a Python tool designed to generate modeling equations for pac
 It provides a simple user interface that allows users to configure the model, and outputs the corresponding mathematical equations in LaTeX format.
 CADET-Equations is [hosted on Streamlit](https://cadet-equations-74ko8eryoxmsbqspggxrj2.streamlit.app).
 
+If you find the tool useful and use it for your own work, please cite the corresponding publication of the underlying unified and composable modeling framework https://doi.org/10.48550/arXiv.2610.33269:
+
+> Breuer, J. M., Leweke, S., Schmölder, J., Berger, A., Gassner, G. J., von Lieres, E. (2026).
+> *A unified and composable framework for modeling packed-bed liquid chromatography*.
+> arXiv:2610.33269. https://doi.org/10.48550/arXiv.2610.33269
+
 ## Installation
 
 To get started with CADET-Equations, you need to clone the repository and install the

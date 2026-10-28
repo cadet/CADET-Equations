@@ -12,12 +12,18 @@ import streamlit as st
 
 
 def _strip_bibtex_value(value: str) -> str:
-    """Remove outer braces/quotes and collapse whitespace for BibTeX values."""
+    """Remove braces/quotes and collapse whitespace for BibTeX values.
+
+    Inner braces, e.g. the grouping braces in ``Eric {von Lieres}``, are BibTeX
+    markup rather than text and are dropped so that they do not show up
+    literally in the rendered references.
+    """
     if value is None:
         return ""
     value = value.strip().rstrip(",")
     if (value.startswith("{") and value.endswith("}")) or (value.startswith('"') and value.endswith('"')):
         value = value[1:-1]
+    value = value.replace("{", "").replace("}", "")
     value = re.sub(r"\s+", " ", value)
     return value.strip()
 
@@ -65,7 +71,7 @@ def _author_last_names(author_field: str) -> list[str]:
 
 
 def format_intext_citation(entry: dict) -> str:
-    """Return an author-year in-text citation like 'Leweke et al. (2021)'."""
+    """Return an author-year in-text citation like 'Breuer et al. (2026)'."""
     authors = _author_last_names(entry.get("author", ""))
     year = entry.get("year", "n.d.")
 
