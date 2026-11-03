@@ -3,6 +3,6 @@ pytest
 pytest-cov
 pytest-xdist
 h5py
-bibtexparser
+bibtexparser>=2
 ruff
 pre-commit

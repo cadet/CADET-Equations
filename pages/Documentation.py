@@ -4,7 +4,6 @@
 
 import bibtexparser
 import streamlit as st
-from bibtexparser.bparser import BibTexParser
 
 from src.theme import apply_theme_css
 
@@ -18,9 +17,7 @@ st.set_page_config(
 apply_theme_css()
 
 # Helper funciton to use citations in standard markdown (streamlit)
-with open("CITATION.bib", encoding="utf-8") as bibtex_file:
-    parser = BibTexParser(common_strings=True)
-    bib_database = bibtexparser.load(bibtex_file, parser=parser)
+bib_library = bibtexparser.parse_file("CITATION.bib")
 
 citation_links = {}
 formatted_refs = []
@@ -31,19 +28,25 @@ def strip_braces(value: str) -> str:
     return value.replace("{", "").replace("}", "")
 
 
-for entry in bib_database.entries:
-    key = entry.get("ID", "unknown").lower()
-    author = strip_braces(entry.get("author", "Unknown Author"))
-    title = strip_braces(entry.get("title", "Untitled"))
-    chapter = entry.get("chapter", "")
+def field(entry: bibtexparser.model.Entry, name: str, default: str = "") -> str:
+    """Return the value of a BibTeX field, or `default` if the entry does not have it."""
+    bib_field = entry.fields_dict.get(name)
+    return default if bib_field is None else str(bib_field.value)
+
+
+for entry in bib_library.entries:
+    key = entry.key.lower()
+    author = strip_braces(field(entry, "author", "Unknown Author"))
+    title = strip_braces(field(entry, "title", "Untitled"))
+    chapter = field(entry, "chapter")
     if chapter != "":
         chapter = f", chapter {chapter}"
-    year = entry.get("year", "n.d.")
-    journal = entry.get("journal", "")
+    year = field(entry, "year", "n.d.")
+    journal = field(entry, "journal")
     if journal == "":
-        journal = entry.get("publisher", "")
+        journal = field(entry, "publisher")
     journal = strip_braces(journal)
-    doi = entry.get("doi", "").removeprefix("https://doi.org/")
+    doi = field(entry, "doi").removeprefix("https://doi.org/")
 
     main_author = author.split(" and ")[0].split(",")[0]
     label = f"{main_author} et al., {year}" if "and" in author else f"{main_author}, {year}"
