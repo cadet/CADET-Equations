@@ -72,7 +72,9 @@ def int_vol_2DContinuum_asmpt(N_p: int, nonlimiting_filmDiff: bool):
 def int_vol_1DContinuum_asmpt(N_p: int, nonlimiting_filmDiff: bool):
 
     return int_vol_3DContinuum_asmpt(N_p, nonlimiting_filmDiff) + [
-        r"the column is radially symmetric and homogeneous (i.e., concentration profiles and parameters only depend on the axial position);"
+        r"the column is radially symmetric and homogeneous (i.e., concentration profiles and parameters only depend on the axial position);",
+        r"transverse concentration variations equilibrate sufficiently rapidly relative to the flow-directional transport "
+        r"for their effects to be represented by an effective flow-directional dispersion coefficient;",
     ]
 
 
