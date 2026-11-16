@@ -375,7 +375,7 @@ class TestColumnSemiAnalyticAvailability:
     @pytest.mark.ci
     @pytest.mark.unit_test
     def test_non_axial_flow_not_supported(self):
-        for column_type in ["Radial", "Frustum"]:
+        for column_type in ["Radial", "Frustum", "Generalized"]:
             col = _make_column(column_type=column_type)
             assert col.available_CADET_SemiAnalytic() == -1
 

@@ -12,6 +12,7 @@ UNIT_SYSTEMS: dict[str, dict[str, str]] = {
         "angle": r"rad",
         "time": r"s",
         "length": r"m",
+        "area": r"m^{2}",
         "volume": r"m^{3}",
         "velocity": r"\frac{m}{s}",
         "velocity_coeff": r"\frac{m^{2}}{s}",
@@ -33,6 +34,7 @@ UNIT_SYSTEMS: dict[str, dict[str, str]] = {
         "angle": r"rad",
         "time": r"min",
         "length": r"cm",
+        "area": r"cm^{2}",
         "volume": r"mL",
         "velocity": r"\frac{cm}{min}",
         "velocity_coeff": r"\frac{cm^{2}}{min}",
@@ -54,6 +56,7 @@ UNIT_SYSTEMS: dict[str, dict[str, str]] = {
         "angle": r"rad",
         "time": r"s",
         "length": r"cm",
+        "area": r"cm^{2}",
         "volume": r"cm^{3}",
         "velocity": r"\frac{cm}{s}",
         "velocity_coeff": r"\frac{cm^{2}}{s}",
@@ -84,6 +87,7 @@ CONVERSION_FACTORS: dict[str, dict[str, float | None]] = {
         "angle": 1.0,  # radians in every system
         "time": 1.0 / 60,  # 1 s = 1/60 min
         "length": 1e2,  # 1 m = 100 cm
+        "area": 1e4,  # 1 m² = 10⁴ cm²
         "volume": 1e6,  # 1 m³ = 10⁶ mL
         "velocity": 6e3,  # 1 m/s = 6000 cm/min
         "velocity_coeff": 6e5,  # 1 m²/s = 6×10⁵ cm²/min
@@ -105,6 +109,7 @@ CONVERSION_FACTORS: dict[str, dict[str, float | None]] = {
         "angle": 1.0,  # radians in every system
         "time": 1.0,  # 1 s = 1 s
         "length": 1e2,  # 1 m = 100 cm
+        "area": 1e4,  # 1 m² = 10⁴ cm²
         "volume": 1e6,  # 1 m³ = 10⁶ cm³
         "velocity": 1e2,  # 1 m/s = 100 cm/s
         "velocity_coeff": 1e4,  # 1 m²/s = 10⁴ cm²/s

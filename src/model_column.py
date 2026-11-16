@@ -31,7 +31,7 @@ class Column:
     N_c: int = -1
     N_p: int = -1
 
-    column_type: Literal["Axial", "Radial", "Frustum"] = "Axial"
+    column_type: Literal["Axial", "Radial", "Frustum", "Generalized"] = "Axial"
 
     has_axial_coordinate: bool = False
     has_radial_coordinate: bool = False
@@ -93,7 +93,7 @@ class Column:
         with col1:
             column_type_label = st.sidebar.selectbox(
                 "Column geometry",
-                ["Axial flow cylinder", "Mixed tank", "Radial flow cylinder", "Frustum"],
+                ["Axial flow cylinder", "Mixed tank", "Radial flow cylinder", "Frustum", "Generalized"],
                 key=r"column_type",
             )
             # note that internally the mixed tank is handled as axial unit
@@ -102,6 +102,7 @@ class Column:
                 "Mixed tank": "Axial",
                 "Radial flow cylinder": "Radial",
                 "Frustum": "Frustum",
+                "Generalized": "Generalized",
             }[column_type_label]
 
             resolution_options = {
@@ -112,6 +113,7 @@ class Column:
                 ],
                 "Radial flow cylinder": ["1D (radial coordinate)"],
                 "Frustum": ["1D (axial coordinate)"],
+                "Generalized": ["1D (flow direction coordinate)"],
                 "Mixed tank": ["0D (Homogeneous Tank)"],
             }
             self.resolution = re.search(
@@ -149,7 +151,10 @@ class Column:
 
         if self.has_axial_coordinate:
             with col2:
-                dispersion_label = "Add radial Dispersion" if self.column_type == "Radial" else "Add axial Dispersion"
+                dispersion_label = {
+                    "Radial": "Add radial Dispersion",
+                    "Generalized": "Add flow-directional Dispersion",
+                }.get(self.column_type, "Add axial Dispersion")
                 self.has_axial_dispersion = (
                     st.sidebar.selectbox(dispersion_label, ["No", "Yes"], key=r"has_axial_dispersion") == "Yes"
                 )
@@ -668,7 +673,7 @@ class Column:
         if self.has_radial_coordinate:
             return -1
 
-        if self.column_type in ["Radial", "Frustum"]:
+        if self.column_type in ["Radial", "Frustum", "Generalized"]:
             return -1
 
         else:
@@ -694,7 +699,7 @@ class Column:
             return -1
 
         # only axial flow columns and tanks
-        if self.column_type in ["Radial", "Frustum"]:
+        if self.column_type in ["Radial", "Frustum", "Generalized"]:
             return -1
 
         if self.has_angular_coordinate:
@@ -764,6 +769,9 @@ class Column:
             details = []
             if self.column_type == "Frustum":
                 details.append(("Spatial discretization", "WENO FV, DGSEM"))
+            elif self.column_type == "Generalized":
+                # the smoothly varying cross section is only implemented for DGSEM
+                details.append(("Spatial discretization", "DGSEM"))
             elif self.resolution == "2D" and self.has_radial_coordinate:
                 # 2D: DG via ColumnModel2D; FV only for GRM-type (1D) particles
                 if self.N_p > 0 and all(p.resolution == "1D" for p in self.particle_models):
@@ -824,6 +832,8 @@ class Column:
         if self.resolution == "1D":
             if self.column_type == "Radial":
                 state_deps = r"t, \rho"
+            elif self.column_type == "Generalized":
+                state_deps = r"t, x"
             else:
                 state_deps = r"t, z"
         if self.resolution == "2D":
@@ -889,6 +899,11 @@ class Column:
                 disp_desc = r"radial dispersion coefficient"
                 disp_symbol_apparent = r"\tilde{D}^{\mathrm{rad}}_{i}"
                 disp_desc_apparent = r"apparent radial dispersion coefficient"
+            elif self.column_type == "Generalized":
+                disp_symbol = r"D^{\mathrm{x}}_{i}"
+                disp_desc = r"flow-directional dispersion coefficient"
+                disp_symbol_apparent = r"\tilde{D}^{\mathrm{x}}_{i}"
+                disp_desc_apparent = r"apparent flow-directional dispersion coefficient"
             else:
                 disp_symbol = r"D^{\mathrm{ax}}_{i}"
                 disp_desc = r"axial dispersion coefficient"
@@ -1030,6 +1045,57 @@ class Column:
                     "Unit": u("velocity_coeff"),
                     "Dependence": r"\text{constant}",
                     "Property": r":= \frac{Q}{2 \pi H^{\mathrm{b}}}",
+                }
+            )
+        elif self.column_type == "Generalized":
+            self.vars_and_params.append(
+                {
+                    "Group": 0,
+                    "Symbol": r"x",
+                    "Description": r"flow direction coordinate",
+                    "Unit": u("length"),
+                    "Dependence": r"\text{independent variable}",
+                    "Property": r"\in (x^{\mathrm{in}}, x^{\mathrm{out}})",
+                }
+            )
+            self.vars_and_params.append(
+                {
+                    "Group": -1,
+                    "Symbol": r"x^{\mathrm{in}}",
+                    "Description": r"column inlet position",
+                    "Unit": u("length"),
+                    "Dependence": r"\text{constant}",
+                    "Property": r" > 0",
+                }
+            )
+            self.vars_and_params.append(
+                {
+                    "Group": -1,
+                    "Symbol": r"x^{\mathrm{out}}",
+                    "Description": r"column outlet position",
+                    "Unit": u("length"),
+                    "Dependence": r"\text{constant}",
+                    "Property": r" > x^{\mathrm{in}}",
+                }
+            )
+            self.vars_and_params.append(
+                {
+                    "Group": 3,
+                    "Symbol": r"A",
+                    "Description": r"column cross section area function",
+                    "Unit": u("area"),
+                    "Dependence": r"x",
+                    "Property": r"(x) > 0",
+                }
+            )
+            self.vars_and_params.append(
+                {
+                    "Group": 2,
+                    "Symbol": r"Q",
+                    "Description": r"volumetric flow rate",
+                    "Unit": u("volumetric_flow"),
+                    "Dependence": r"\text{constant}",
+                    "Property": r"> 0",
                 }
             )
         elif self.column_type == "Frustum":
@@ -1468,6 +1534,9 @@ class Column:
             elif self.column_type == "Frustum":
                 convection_func = eq.frustum_convection
                 dispersion_func = eq.frustum_dispersion
+            elif self.column_type == "Generalized":
+                convection_func = eq.generalized_convection
+                dispersion_func = eq.generalized_dispersion
             else:
                 convection_func = eq.axial_convection
                 dispersion_func = eq.axial_dispersion

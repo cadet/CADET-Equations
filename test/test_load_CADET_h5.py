@@ -182,6 +182,7 @@ def test_map_unit_type_to_column_model_invalid():
         ("AXIAL_FLOW_CYLINDER", "Axial flow cylinder", "1D (axial coordinate)"),
         ("RADIAL_FLOW_CYLINDER_SHELL", "Radial flow cylinder", "1D (radial coordinate)"),
         ("AXIAL_FLOW_FRUSTUM", "Frustum", "1D (axial coordinate)"),
+        ("SMOOTHLY_VARYING", "Generalized", "1D (flow direction coordinate)"),
     ],
 )
 def test_geometry_field_determines_column_type(geometry, expected_type, expected_resolution):
@@ -201,9 +202,9 @@ def test_geometry_field_overrides_unit_type_name():
 
 @pytest.mark.ci
 @pytest.mark.unit_test
-def test_unsupported_geometry_falls_back_to_axial():
+def test_unknown_geometry_falls_back_to_axial():
     """A geometry without a CADET-Equations counterpart warns and falls back to axial."""
-    group = _make_h5_group({"GEOMETRY": "SMOOTHLY_VARYING"})
+    group = _make_h5_group({"GEOMETRY": "NOT_A_GEOMETRY"})
     with patch("src.load_CADET_h5.st") as mock_st:
         assert map_unit_type_to_column_geometry("COLUMN_MODEL_1D", group) == "Axial flow cylinder"
     mock_st.sidebar.warning.assert_called_once()

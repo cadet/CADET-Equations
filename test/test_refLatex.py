@@ -154,6 +154,12 @@ def apply_model_from_config(at, model_config):
         "Frustum_GRM",
         "Frustum_LRM",
         "Frustum_LRMP",
+        # Generalized (smoothly varying cross section) models
+        "Generalized_Plug_Flow",
+        "Generalized_Dispersive_Plug_Flow",
+        "Generalized_GRM",
+        "Generalized_LRM",
+        "Generalized_LRMP",
         # Crystallization
         "cry_CSTR_primaryGrowth",
         "cry_CSTR_Agg_Frag",

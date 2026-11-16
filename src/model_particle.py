@@ -78,7 +78,7 @@ class Particle:
         if self.interstitial_volume_resolution == "1D":
             if self.column_type == "Radial":
                 state_deps = r"t, \rho"
-            elif self.column_type == "Frustum":
+            elif self.column_type == "Generalized":
                 state_deps = r"t, x"
             else:
                 state_deps = r"t, z"

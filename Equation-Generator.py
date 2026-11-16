@@ -506,6 +506,11 @@ else:  # Chromatography model family
         intro_str = r"Consider a hollow cylindrical column of axial bed height $H^{\mathrm{b}} > 0$ with inner radius $P^{\mathrm{inner}} > 0$ and outer radius $P^{\mathrm{outer}} > P^{\mathrm{inner}}$ "
     elif column_model.column_type == "Frustum":
         intro_str = r"Consider a conical frustum column of length $L^{\mathrm{b}} > 0$ with inlet radius $P^{\mathrm{0}} > 0$ and outlet radius $P^{\mathrm{L^{\mathrm{b}}}} > 0$ "
+    elif column_model.column_type == "Generalized":
+        intro_str = (
+            r"Consider a column whose cross section area $A(x) > 0$ varies smoothly along the flow direction "
+            r"$x \in (x^{\mathrm{in}}, x^{\mathrm{out}})$, with $0 < x^{\mathrm{in}} < x^{\mathrm{out}}$, "
+        )
     else:
         intro_str = r"Consider a cylindrical column of length $L^{\mathrm{b}} > 0$ "
         if column_model.resolution == "2D" or column_model.resolution == "3D":
@@ -541,7 +546,8 @@ else:  # Chromatography model family
             d_j_dep2 = r""
         else:
             if column_model.resolution == "1D":
-                d_j_dep = r"z"
+                # the 1D coordinate is the one the column geometry resolves
+                d_j_dep = {"Radial": r"\rho", "Generalized": r"x"}.get(column_model.column_type, r"z")
             elif column_model.resolution == "2D":
                 d_j_dep = r"z, \rho"
             elif column_model.resolution == "3D":
