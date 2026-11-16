@@ -13,6 +13,7 @@ _DEFAULTS = {
     "col_dispersion": 5.75e-8,
     "col_radius_inner": 0.01,
     "col_radius_outer": 0.024,
+    "cross_section_area": 3.066e-5,
     "velocity_coeff": 5.75e-4,
     "init_volume": 1e-3,
     "par_radius": 4.5e-5,
@@ -107,6 +108,9 @@ def _reaction_lines(reaction_model, ncomp_fixed, phase):
 def _get_unit_type(column_model):
     if column_model.resolution == "0D":
         return "CSTR"
+    if column_model.column_type == "Generalized":
+        # the smoothly varying cross section is only implemented for DGSEM
+        return f"VARIABLE_CROSS_SECTION_COLUMN_MODEL_{column_model.resolution}_DG"
     prefix = ""
     if column_model.column_type == "Radial":
         prefix = "RADIAL_"
@@ -276,6 +280,12 @@ def generate_unit_operation_script(column_model):
         body.append(f"unit['col_radius_inlet'] = {_DEFAULTS['col_radius_inner']}")
         body.append(f"unit['col_radius_outlet'] = {_DEFAULTS['col_radius_outer']}")
         body.append(f"unit['velocity'] = {_DEFAULTS['velocity']}")
+    elif column_model.column_type == "Generalized":
+        body.append(f"unit['col_length'] = {_DEFAULTS['col_length']}")
+        body.append("# One cross section area per DG node, element by element, from the column")
+        body.append("# inlet to the outlet. The list length must be (polydeg + 1) * nelem of the")
+        body.append("# spatial discretization, and shared element interface nodes must repeat.")
+        body.append(f"unit['cross_sectional_area_at_nodes'] = [{_DEFAULTS['cross_section_area']}] * 4")
     else:
         body.append(f"unit['col_length'] = {_DEFAULTS['col_length']}")
         body.append(f"unit['velocity'] = {_DEFAULTS['velocity']}")

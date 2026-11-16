@@ -1,0 +1,45 @@
+\documentclass{article}
+
+\usepackage{amssymb,amsmath}
+
+\begin{document}
+
+General model assumptions:
+\begin{itemize}
+\item the fluid density and viscosity are constant in time and space (implies incompressibility);
+\item the fluid flow is laminar;
+\item the column is operated under constant conditions (e.g., temperature, flow rate);
+\item the process is isothermal (i.e., there are no thermal effects);
+\item diffusion does not depend on the concentration of the components, viscosity of the fluid, or pressure;
+\item there is no solid phase in the column (and thus no adsorption);
+\end{itemize}
+
+
+Specific model assumptions:
+\begin{itemize}
+\item the fluid only flows in the flow direction $x$ of the column (i.e., there is no transverse flow);
+\item the column has a smoothly varying cross section area $A(x) > 0$ in flow direction $x \in (x^{\mathrm{in}}, x^{\mathrm{out}})$ with $0 < x^{\mathrm{in}} < x^{\mathrm{out}}$;
+\item the column is radially symmetric and homogeneous (i.e., concentration profiles and parameters only depend on the axial position);
+\item transverse concentration variations equilibrate sufficiently rapidly relative to the flow-directional transport for their effects to be represented by an effective flow-directional dispersion coefficient;
+\end{itemize}
+
+
+\section*{Dispersive Plug Flow}
+Consider a column whose cross section area $A(x) > 0$ varies smoothly along the flow direction $x \in (x^{\mathrm{in}}, x^{\mathrm{out}})$, with $0 < x^{\mathrm{in}} < x^{\mathrm{out}}$, filled with a liquid phase, and observed over a time interval $(0, T^{\mathrm{end}})$.
+In the interstitial volume, mass transfer is governed by the following convection-diffusion equations in $(0, T^{\mathrm{end}})\times (x^{\mathrm{in}}, x^{\mathrm{out}})$ and for all components $i\in\{1, \dots, N^{\mathrm{c}} \}$
+\begin{align}
+\frac{\partial c^{\mathrm{b}}_{i}}{\partial t} = - \frac{Q}{A(x)} \frac{\partial c^{\mathrm{b}}_{i}}{\partial x} + \frac{1}{A(x)} \frac{\partial}{\partial x} \left( A(x) D^{\mathrm{x}}_{i} \frac{\partial c^{\mathrm{b}}_{i}}{\partial x} \right),
+\end{align}
+with boundary conditions
+
+\begin{alignat}{2}
+\frac{Q}{A(x^{\mathrm{in}})} c^{\mathrm{in}}_{i} &= \left.\left( \frac{Q}{A(x)} c^{\mathrm{b}}_{i} - D^{\mathrm{x}}_{i} \frac{\partial c^{\mathrm{b}}_{i}}{\partial x}\right)\right|_{x=x^{\mathrm{in}}} & &\qquad\text{on }(0, T^{\mathrm{end}}),\\
+               0 &= - D^{\mathrm{x}}_{i} \left. \frac{\partial c^{\mathrm{b}}_{i}}{\partial x} \right|_{x=x^{\mathrm{out}}} & &\qquad\text{on }(0, T^{\mathrm{end}}).
+\end{alignat}
+Here, $t\in (0, T^{\mathrm{end}})$ is the time coordinate, $x\in (x^{\mathrm{in}}, x^{\mathrm{out}})$ is the flow direction coordinate, $c^{\mathrm{b}}_{i}\colon (0, T^{\mathrm{end}})\times (x^{\mathrm{in}}, x^{\mathrm{out}}) \mapsto \mathbb{R}$ is the bulk liquid concentration, $Q> 0$ is the volumetric flow rate, $A(x) > 0$ is the column cross section area function, and $D^{\mathrm{x}}_{i}\geq 0$ is the flow-directional dispersion coefficient.
+Consistent initial values for all solution variables (concentrations) are defined at $t = 0$.
+This model is a particular instance of the unified mathematical framework introduced in Breuer et al. (2026), which provides a rigorous justification of its assumptions and a systematic derivation of its governing equations.
+\begin{thebibliography}{99}
+\bibitem{breuer2026unified} Jan Michael Breuer and Samuel Leweke and Johannes Schmölder and Antonia Berger and Gregor J. Gassner and Eric von Lieres (2026). A unified and composable framework for modeling packed-bed liquid chromatography. arXiv preprint arXiv:2610.33269. DOI: https://doi.org/10.48550/arXiv.2610.33269.
+\end{thebibliography}
+\end{document}

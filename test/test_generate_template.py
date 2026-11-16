@@ -174,6 +174,14 @@ class TestGenerateTemplateIntegration:
         assert "'col_radius_outlet'" in script
         _assert_valid_python(script)
 
+    def test_generalized_template(self):
+        at = setup_app(column_type="Generalized")
+        script = get_script(at)
+        assert "'VARIABLE_CROSS_SECTION_COLUMN_MODEL_1D_DG'" in script
+        assert "'col_length'" in script
+        assert "'cross_sectional_area_at_nodes'" in script
+        _assert_valid_python(script)
+
     def test_rapid_equilibrium_binding(self):
         at = setup_app(
             advanced_mode="On",

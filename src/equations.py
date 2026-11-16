@@ -105,6 +105,14 @@ def int_vol_continuum_asmpt(resolution: str, N_p: int, nonlimiting_filmDiff: boo
             r"the fluid only flows in the axial direction of the column (i.e., there is no flow in the radial and angular direction);"
         )
         asmpts.append(r"the column has a conical frustum shape with linearly varying radius;")
+    elif column_type == "Generalized" and resolution != "0D":
+        asmpts.append(
+            r"the fluid only flows in the flow direction $x$ of the column (i.e., there is no transverse flow);"
+        )
+        asmpts.append(
+            r"the column has a smoothly varying cross section area $A(x) > 0$ in flow direction "
+            r"$x \in (x^{\mathrm{in}}, x^{\mathrm{out}})$ with $0 < x^{\mathrm{in}} < x^{\mathrm{out}}$;"
+        )
 
     if resolution == "3D":
         return asmpts + int_vol_3DContinuum_asmpt(N_p, nonlimiting_filmDiff)
@@ -385,6 +393,30 @@ def frustum_dispersion(eps: str | None = None):
         )
 
 
+# Generalized column transport terms (flow-directional transport through a smoothly
+# varying cross section area A(x)). The volumetric flow rate Q is constant along the
+# column, hence the interstitial velocity in flow direction is Q / A(x).
+def generalized_convection(eps: str | None = None):
+    if eps is None:
+        return r"- \frac{Q}{A(x)} \frac{\partial c^{\b}_{i}}{\partial x}"
+    else:
+        return r"- \frac{Q}{A(x)} \frac{\partial \left( " + eps + r" c^{\b}_{i} \right)}{\partial x}"
+
+
+def generalized_dispersion(eps: str | None = None):
+    if eps is None:
+        return (
+            r"\frac{1}{A(x)} \frac{\partial}{\partial x} \left( A(x) "
+            r"D^{\mathrm{x}}_{i} \frac{\partial c^{\b}_{i}}{\partial x} \right)"
+        )
+    else:
+        return (
+            r"\frac{1}{A(x)} \frac{\partial}{\partial x} \left( A(x) "
+            + eps
+            + r" D^{\mathrm{x}}_{i} \frac{\partial c^{\b}_{i}}{\partial x} \right)"
+        )
+
+
 # Film diffusion in the interstitial volume
 def int_filmDiff_term(
     particle, numIdxBegin, numIdxEnd, singleParticle: bool, nonLimitingFilmDiff: bool, hasSurfDiff: bool
@@ -648,6 +680,7 @@ def homogenized_notation(expr: str) -> str:
     """
     expr = expr.replace(r"c^{\b}", r"c^{\l}")
     expr = expr.replace(r"D^{\mathrm{ax}}", r"\tilde{D}^{\mathrm{ax}}")
+    expr = expr.replace(r"D^{\mathrm{x}}", r"\tilde{D}^{\mathrm{x}}")
     expr = expr.replace(r"D^{\mathrm{rad}}", r"\tilde{D}^{\mathrm{rad}}")
     expr = expr.replace(r"D^{\mathrm{ang}}", r"\tilde{D}^{\mathrm{ang}}")
     expr = expr.replace(r"- u \frac", r"- \tilde{u} \frac")
@@ -707,6 +740,29 @@ def int_vol_BC(resolution: str, hasAxialDispersion: bool, column_type: str = "Ax
         outflow_bc = (
             r"0 &= - D^{\mathrm{ax}}_{i} \left. \frac{\partial c^{\b}_{i}}{\partial z} \right|_{z=L^{\mathrm{b}}} & &\qquad\text{on }"
             + ax_bc_domain
+        )
+
+        boundary_conditions = inflow_bc
+        if hasAxialDispersion:
+            boundary_conditions += (
+                r""",\\
+               """
+                + outflow_bc
+            )
+
+    elif column_type == "Generalized":
+        # Generalized: flow-directional transport through a smoothly varying cross section
+        genflow_bc_domain = r"(0, T^{\mathrm{end}})"
+        diff_term = r"- D^{\mathrm{x}}_{i} \frac{\partial c^{\b}_{i}}{\partial x}" if hasAxialDispersion else ""
+        inflow_bc = (
+            r"\frac{Q}{A(x^{\mathrm{in}})} c^{\mathrm{in}}_{i} &= \left.\left( \frac{Q}{A(x)} c^{\b}_{i} "
+            + diff_term
+            + r"\right)\right|_{x=x^{\mathrm{in}}} & &\qquad\text{on }"
+            + genflow_bc_domain
+        )
+        outflow_bc = (
+            r"0 &= - D^{\mathrm{x}}_{i} \left. \frac{\partial c^{\b}_{i}}{\partial x} \right|_{x=x^{\mathrm{out}}} & &\qquad\text{on }"
+            + genflow_bc_domain
         )
 
         boundary_conditions = inflow_bc
@@ -839,6 +895,12 @@ def int_vol_domain(resolution: str, with_time_domain=True, column_type: str = "A
                 r"\times (P^{\mathrm{inner}}, P^{\mathrm{outer}})"
                 if with_time_domain
                 else r"(P^{\mathrm{inner}}, P^{\mathrm{outer}})"
+            )
+        elif column_type == "Generalized":
+            domain_ += (
+                r"\times (x^{\mathrm{in}}, x^{\mathrm{out}})"
+                if with_time_domain
+                else r"(x^{\mathrm{in}}, x^{\mathrm{out}})"
             )
         else:
             domain_ += r"\times (0, L^{\mathrm{b}})" if with_time_domain else r"(0, L^{\mathrm{b}})"
@@ -1584,6 +1646,8 @@ def full_particle_conc_domain(
     if column_resolution != "0D":
         if column_type == "Radial":
             spatial = r"(P^{\mathrm{inner}}, P^{\mathrm{outer}})"
+        elif column_type == "Generalized":
+            spatial = r"(x^{\mathrm{in}}, x^{\mathrm{out}})"
         else:
             spatial = r"(0, L^{\mathrm{b}})"
         domain = r"$(0, T^{\mathrm{end}}) \times " + spatial if with_time_domain else r"$\times " + spatial

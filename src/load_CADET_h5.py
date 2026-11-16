@@ -45,10 +45,11 @@ CADET_geometry_map = {
     "AXIAL_FLOW_CYLINDER": "Axial flow cylinder",
     "RADIAL_FLOW_CYLINDER_SHELL": "Radial flow cylinder",
     "AXIAL_FLOW_FRUSTUM": "Frustum",
+    "SMOOTHLY_VARYING": "Generalized",
 }
 
 # Geometries CADET-Core supports that have no counterpart in CADET-Equations.
-CADET_unsupported_geometries = {"SMOOTHLY_VARYING"}
+CADET_unsupported_geometries = set()
 
 CADET_column_unit_types = [
     "CSTR",
@@ -158,6 +159,8 @@ def map_unit_type_to_column_geometry(cadet_unit_type, h5_unit_group=None):
         return "Radial flow cylinder"
     elif re.search("FRUSTUM", cadet_unit_type):
         return "Frustum"
+    elif re.search("VARIABLE_CROSS_SECTION", cadet_unit_type):
+        return "Generalized"
     else:
         return "Axial flow cylinder"
 
@@ -174,9 +177,13 @@ def map_unit_type_to_column_model(cadet_unit_type, h5_unit_group=None):
     elif cadet_unit_type not in CADET_column_unit_types:
         raise ValueError(f"Invalid unit type: {cadet_unit_type}. Must be one of {CADET_column_unit_types}.")
 
-    # A radial flow column resolves the radial rather than the axial coordinate
-    if map_unit_type_to_column_geometry(cadet_unit_type, h5_unit_group) == "Radial flow cylinder":
+    # A radial flow column resolves the radial rather than the axial coordinate, and a
+    # column of smoothly varying cross section resolves the flow direction coordinate
+    geometry = map_unit_type_to_column_geometry(cadet_unit_type, h5_unit_group)
+    if geometry == "Radial flow cylinder":
         return "1D (radial coordinate)"
+    if geometry == "Generalized":
+        return "1D (flow direction coordinate)"
 
     return "1D (axial coordinate)"
 
