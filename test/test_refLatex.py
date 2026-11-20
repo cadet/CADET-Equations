@@ -38,6 +38,7 @@ def _config_key_order(key):
         "advanced_mode": 0,
         "column_type": 1.5,
         "column_resolution": 2,
+        "N_c_choice": 2.5,  # per-component widgets only appear once the count is known
         "add_particles": 3,
         r"N^\mathrm{p}": 3,  # dev mode replaces "Add particles" by a type count
         "PSD": 3.2,
@@ -120,9 +121,12 @@ def apply_model_from_config(at, model_config):
         "LRMP",
         "LRMP_dynLin",
         "LRMP_reqLin",
+        "LRMP_noBnd",
         "GRM",
         "GRM_dynLin",
         "GRM_reqBnd",
+        "GRM_Langmuir",
+        "GRM_SMA",
         "GRMsd",
         "GRMsd_dynLin",
         "GRMsd_PSD",
@@ -131,17 +135,24 @@ def apply_model_from_config(at, model_config):
         "GRMsd_multBndStates",
         "GRMsd_nonLimFD_parCore",
         "GRMsd_nonLimFD_reqBnd",
+        "GRMsd_legacyFormat",
+        # Particle geometries other than a sphere
+        "GRMsd_cylinderPar",
+        "GRMsd_slabPar",
+        # Per-component configuration: the components differ in film diffusion
+        "GRM_perComponent",
         # Side-cavity models (Model PC), both particle resolutions
         "GRM_sideCavities",
         "LRMP_sideCavities",
         "LRMP_sideCavities_noBnd",
         "GRM_sideCavities_nonLimFD",
-        # 2D models
+        # 2D and 3D models
         "2D_Plug_Flow",
         "2D_LRM",
         "2D_LRMP",
         "GRMsd2D",
         "GRMsd2D_dynLin",
+        "3D_GRM",
         # Radial flow models
         "Radial_Plug_Flow",
         "Radial_Dispersive_Plug_Flow",
@@ -168,6 +179,7 @@ def apply_model_from_config(at, model_config):
         # reactions
         "GRMsd_MassActionLaw",
         "GRMsd_MichaelisMenten",
+        "GRM_reqReactions",
     ],
 )
 def test_json_config_output_against_latex_reference(model_name, test_dir):
