@@ -1,0 +1,13 @@
+{
+    "advanced_mode": "Off",
+    "column_type": "Axial flow cylinder",
+    "column_resolution": "1D (axial coordinate)",
+    "add_particles": "Yes",
+    "has_binding": "No",
+    "has_axial_dispersion": "Yes",
+    "model_assumptions": true,
+    "particle_resolution": "0D (homogeneous)",
+    "particle_nonlimiting_filmDiff": "Kinetic",
+    "show_eq_description": true,
+    "var_format": "CADET"
+}
