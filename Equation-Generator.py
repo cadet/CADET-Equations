@@ -18,6 +18,7 @@ from src import equations as eq
 from src import load_CADET_h5, ui_config
 from src.generate_template import generate_crystallization_script, generate_unit_operation_script
 from src.handler_cite import cite, cite_html, load_bibliography, render_references
+from src.latex_format import display_equation, normalize_document
 from src.model_column import Column
 from src.model_crystallization import Crystallization
 from src.renderer import render_availability_badges
@@ -251,28 +252,31 @@ def write_html_and_save(html_output: str, export_output: str):
     st.markdown(html_output, unsafe_allow_html=True)
 
 
+def write_assumptions_and_save(assumptions: dict):
+    """Render each group of model assumptions as a bullet list and an itemize block."""
+    for heading, items in assumptions.items():
+        if not items:  # an empty itemize is invalid LaTeX
+            continue
+        st.write(heading + ":\n" + "\n".join(f"- {item}" for item in items))
+        file_content.append(
+            heading
+            + ":\n"
+            + r"\begin{itemize}"
+            + "\n"
+            + "\n".join(r"\item " + item for item in items)
+            + "\n"
+            + r"\end{itemize}"
+            + "\n"
+        )
+
+
 if model_type_ == "Crystallization":
     cry_model = Crystallization(var_format=var_format_, unit_system=unit_system_)
 
     show_eq_description = st.toggle("Show equation description", key=r"show_eq_description", value=True)
 
     if st.toggle("Show Model Assumptions", key=r"model_assumptions"):
-        asmpts = cry_model.model_assumptions()
-        for key in asmpts:
-            if not asmpts[key]:  # an empty itemize is invalid LaTeX
-                continue
-            st.write(key + ":\n" + "\n".join(f"- {item}" for item in asmpts[key]))
-            file_content.append(
-                key
-                + r""":
-\begin{itemize}
-"""
-                + "\n".join(f"\\item {item}" for item in asmpts[key])
-                + r"""
-\end{itemize}
-
-"""
-            )
+        write_assumptions_and_save(cry_model.model_assumptions())
 
     if st.toggle("Show symbol table", key=r"sym_table"):
         df = pd.DataFrame(cry_model.vars_and_params)
@@ -374,27 +378,25 @@ if model_type_ == "Crystallization":
             r"The constitutive relations for growth and nucleation are defined as follows. "
             r"The relative supersaturation is"
         )
-        write_and_save(r"\begin{align}" + eq.cry_supersaturation() + r". \end{align}", as_latex=True)
+        write_and_save(display_equation(eq.cry_supersaturation() + "."), as_latex=True)
 
         write_and_save("The growth rate is")
-        write_and_save(
-            r"\begin{align}" + eq.cry_growth_rate(cry_model.size_dependent_growth) + r". \end{align}", as_latex=True
-        )
+        write_and_save(display_equation(eq.cry_growth_rate(cry_model.size_dependent_growth) + "."), as_latex=True)
 
         write_and_save("The primary nucleation rate is")
-        write_and_save(r"\begin{align}" + eq.cry_primary_nucleation() + r". \end{align}", as_latex=True)
+        write_and_save(display_equation(eq.cry_primary_nucleation() + "."), as_latex=True)
 
         if cry_model.has_secondary_nucleation:
             write_and_save("The secondary nucleation rate is")
-            write_and_save(r"\begin{align}" + eq.cry_secondary_nucleation() + r". \end{align}", as_latex=True)
+            write_and_save(display_equation(eq.cry_secondary_nucleation() + "."), as_latex=True)
             write_and_save("where the suspension density is")
-            write_and_save(r"\begin{align}" + eq.cry_suspension_density() + r". \end{align}", as_latex=True)
+            write_and_save(display_equation(eq.cry_suspension_density() + "."), as_latex=True)
 
         write_and_save("The total nucleation rate is")
         if cry_model.has_secondary_nucleation:
-            write_and_save(r"\begin{align}" + eq.cry_total_nucleation() + r". \end{align}", as_latex=True)
+            write_and_save(display_equation(eq.cry_total_nucleation() + "."), as_latex=True)
         else:
-            write_and_save(r"\begin{align} B_{0} = B_{p}. \end{align}", as_latex=True)
+            write_and_save(display_equation(r"B_{0} &= B_{p}."), as_latex=True)
 
     # Aggregation details
     if has_agg:
@@ -408,9 +410,9 @@ if model_type_ == "Crystallization":
         write_and_save(r"The fragmentation birth and death terms are")
         write_and_save(eq.cry_fragmentation_birth_death(), as_latex=True)
         write_and_save("The selection (fragmentation rate) function is")
-        write_and_save(r"\begin{align}" + eq.cry_selection_function() + r". \end{align}", as_latex=True)
+        write_and_save(display_equation(eq.cry_selection_function() + "."), as_latex=True)
         write_and_save("The breakage probability density function is")
-        write_and_save(r"\begin{align}" + eq.cry_breakage_function() + r". \end{align}", as_latex=True)
+        write_and_save(display_equation(eq.cry_breakage_function() + "."), as_latex=True)
 
     if show_eq_description:
         write_and_save("Here, " + cry_model.vars_params_description())
@@ -436,24 +438,7 @@ else:  # Chromatography model family
     show_eq_description = st.toggle("Show equation description", key=r"show_eq_description", value=True)
 
     if st.toggle("Show Model Assumptions", key=r"model_assumptions"):
-        asmpts = column_model.model_assumptions()
-
-        for key in asmpts:
-            if not asmpts[key]:  # an empty itemize is invalid LaTeX
-                continue
-            st.write(key + ":\n" + "\n".join(f"- {item}" for item in asmpts[key]))
-
-            file_content.append(
-                key
-                + r""":
-\begin{itemize}
-"""
-                + "\n".join(f"\\item {item}" for item in asmpts[key])
-                + r"""
-\end{itemize}
-
-"""
-            )
+        write_assumptions_and_save(column_model.model_assumptions())
 
     if st.toggle("Show symbol table", key=r"sym_table"):
         df = pd.DataFrame(column_model.vars_and_params)
@@ -563,17 +548,7 @@ else:  # Chromatography model family
             d_j_dep = "(" + d_j_dep + ")"
 
         write_and_save(
-            r"""
-    \begin{equation*}
-"""
-            + "\t    \\sum_{j=1}^{N^{\\mathrm{p}}} d_{j}"
-            + d_j_dep
-            + r" = 1 "
-            + d_j_dep2
-            + r""".
-    \end{equation*}
-
-    """,
+            display_equation(r"\sum_{j=1}^{N^{\mathrm{p}}} d_{j}" + d_j_dep + r" &= 1" + d_j_dep2 + r"."),
             as_latex=True,
         )
 
@@ -639,13 +614,7 @@ else:  # Chromatography model family
             r"Specifically, $N^{\mathrm{react,eq},\b}$ of the component equations are replaced by algebraic equilibrium constraints"
         )
         write_and_save(
-            r"""
-\begin{align}
-"""
-            + eq.req_reaction_bulk_constraint()
-            + r""", \quad k = 1, \ldots, N^{\mathrm{react,eq},\b}.
-\end{align}
-""",
+            display_equation(eq.req_reaction_bulk_constraint() + r", \quad k = 1, \ldots, N^{\mathrm{react,eq},\b}."),
             as_latex=True,
         )
         write_and_save(
@@ -655,13 +624,10 @@ else:  # Chromatography model family
             r"whose rows span the left null space of the stoichiometric matrix"
         )
         write_and_save(
-            r"""
-\begin{align}
-"""
-            + eq.conserved_moiety_equation_bulk()
-            + r""", \quad l = 1, \ldots, N^{\mathrm{c}} - N^{\mathrm{react,eq},\b}.
-\end{align}
-""",
+            display_equation(
+                eq.conserved_moiety_equation_bulk()
+                + r", \quad l = 1, \ldots, N^{\mathrm{c}} - N^{\mathrm{react,eq},\b}."
+            ),
             as_latex=True,
         )
         write_and_save(r"By construction, the reaction terms cancel in the conserved moiety equations.")
@@ -747,13 +713,10 @@ else:  # Chromatography model family
                             r"$N^{\mathrm{react,eq},\p}$ algebraic equilibrium constraints"
                         )
                         write_and_save(
-                            r"""
-\begin{align}
-"""
-                            + eq.req_reaction_particle_liquid_constraint(column_model.N_p == 1)
-                            + r""", \quad k = 1, \ldots, N^{\mathrm{react,eq},\p}
-\end{align}
-""",
+                            display_equation(
+                                eq.req_reaction_particle_liquid_constraint(column_model.N_p == 1)
+                                + r", \quad k = 1, \ldots, N^{\mathrm{react,eq},\p}"
+                            ),
                             as_latex=True,
                         )
                         write_and_save(
@@ -761,13 +724,10 @@ else:  # Chromatography model family
                             r"The remaining $N^{\mathrm{c}} - N^{\mathrm{react,eq},\p}$ equations are conserved moiety equations"
                         )
                         write_and_save(
-                            r"""
-\begin{align}
-"""
-                            + eq.conserved_moiety_equation_particle_liquid(column_model.N_p == 1)
-                            + r""", \quad l = 1, \ldots, N^{\mathrm{c}} - N^{\mathrm{react,eq},\p}.
-\end{align}
-""",
+                            display_equation(
+                                eq.conserved_moiety_equation_particle_liquid(column_model.N_p == 1)
+                                + r", \quad l = 1, \ldots, N^{\mathrm{c}} - N^{\mathrm{react,eq},\p}."
+                            ),
                             as_latex=True,
                         )
 
@@ -778,13 +738,10 @@ else:  # Chromatography model family
                             r"$N^{\mathrm{react,eq},\s}$ algebraic equilibrium constraints"
                         )
                         write_and_save(
-                            r"""
-\begin{align}
-"""
-                            + eq.req_reaction_particle_solid_constraint(column_model.N_p == 1)
-                            + r""", \quad k = 1, \ldots, N^{\mathrm{react,eq},\s}
-\end{align}
-""",
+                            display_equation(
+                                eq.req_reaction_particle_solid_constraint(column_model.N_p == 1)
+                                + r", \quad k = 1, \ldots, N^{\mathrm{react,eq},\s}"
+                            ),
                             as_latex=True,
                         )
                         write_and_save(
@@ -792,13 +749,10 @@ else:  # Chromatography model family
                             r"The remaining $N^{\mathrm{c}} - N^{\mathrm{react,eq},\s}$ equations are conserved moiety equations"
                         )
                         write_and_save(
-                            r"""
-\begin{align}
-"""
-                            + eq.conserved_moiety_equation_particle_solid(column_model.N_p == 1)
-                            + r""", \quad l = 1, \ldots, N^{\mathrm{c}} - N^{\mathrm{react,eq},\s}.
-\end{align}
-""",
+                            display_equation(
+                                eq.conserved_moiety_equation_particle_solid(column_model.N_p == 1)
+                                + r", \quad l = 1, \ldots, N^{\mathrm{c}} - N^{\mathrm{react,eq},\s}."
+                            ),
                             as_latex=True,
                         )
 
@@ -806,9 +760,7 @@ else:  # Chromatography model family
                     if column_model.binding_model == "SMA" and column_model.has_binding:
                         PTD_ = column_model.PTD and column_model.N_p > 1
                         write_and_save(r"The number of available binding sites $\bar{q}_{0}$ is given by")
-                        write_and_save(
-                            r"\begin{align}" + eq.sma_free_binding_sites(PTD=PTD_) + r".\end{align}", as_latex=True
-                        )
+                        write_and_save(display_equation(eq.sma_free_binding_sites(PTD=PTD_) + "."), as_latex=True)
 
                         write_and_save(
                             "For the salt component, mass transfer is governed by "
@@ -928,13 +880,10 @@ else:  # Chromatography model family
                         r"$N^{\mathrm{react,eq},\p}$ algebraic equilibrium constraints"
                     )
                     write_and_save(
-                        r"""
-\begin{align}
-"""
-                        + eq.req_reaction_particle_liquid_constraint(column_model.N_p == 1)
-                        + r""", \quad k = 1, \ldots, N^{\mathrm{react,eq},\p}
-\end{align}
-""",
+                        display_equation(
+                            eq.req_reaction_particle_liquid_constraint(column_model.N_p == 1)
+                            + r", \quad k = 1, \ldots, N^{\mathrm{react,eq},\p}"
+                        ),
                         as_latex=True,
                     )
                     write_and_save(
@@ -942,13 +891,10 @@ else:  # Chromatography model family
                         r"The remaining $N^{\mathrm{c}} - N^{\mathrm{react,eq},\p}$ equations are conserved moiety equations"
                     )
                     write_and_save(
-                        r"""
-\begin{align}
-"""
-                        + eq.conserved_moiety_equation_particle_liquid(column_model.N_p == 1)
-                        + r""", \quad l = 1, \ldots, N^{\mathrm{c}} - N^{\mathrm{react,eq},\p}.
-\end{align}
-""",
+                        display_equation(
+                            eq.conserved_moiety_equation_particle_liquid(column_model.N_p == 1)
+                            + r", \quad l = 1, \ldots, N^{\mathrm{c}} - N^{\mathrm{react,eq},\p}."
+                        ),
                         as_latex=True,
                     )
 
@@ -959,13 +905,10 @@ else:  # Chromatography model family
                         r"$N^{\mathrm{react,eq},\s}$ algebraic equilibrium constraints"
                     )
                     write_and_save(
-                        r"""
-\begin{align}
-"""
-                        + eq.req_reaction_particle_solid_constraint(column_model.N_p == 1)
-                        + r""", \quad k = 1, \ldots, N^{\mathrm{react,eq},\s}
-\end{align}
-""",
+                        display_equation(
+                            eq.req_reaction_particle_solid_constraint(column_model.N_p == 1)
+                            + r", \quad k = 1, \ldots, N^{\mathrm{react,eq},\s}"
+                        ),
                         as_latex=True,
                     )
                     write_and_save(
@@ -973,13 +916,10 @@ else:  # Chromatography model family
                         r"The remaining $N^{\mathrm{c}} - N^{\mathrm{react,eq},\s}$ equations are conserved moiety equations"
                     )
                     write_and_save(
-                        r"""
-\begin{align}
-"""
-                        + eq.conserved_moiety_equation_particle_solid(column_model.N_p == 1)
-                        + r""", \quad l = 1, \ldots, N^{\mathrm{c}} - N^{\mathrm{react,eq},\s}.
-\end{align}
-""",
+                        display_equation(
+                            eq.conserved_moiety_equation_particle_solid(column_model.N_p == 1)
+                            + r", \quad l = 1, \ldots, N^{\mathrm{c}} - N^{\mathrm{react,eq},\s}."
+                        ),
                         as_latex=True,
                     )
 
@@ -987,9 +927,7 @@ else:  # Chromatography model family
                 if par_type.binding_model == "SMA" and par_type.has_binding:
                     PTD_ = column_model.PTD and column_model.N_p > 1
                     write_and_save(r"The number of available binding sites $\bar{q}_{0}$ is given by")
-                    write_and_save(
-                        r"\begin{align}" + eq.sma_free_binding_sites(PTD=PTD_) + r".\end{align}", as_latex=True
-                    )
+                    write_and_save(display_equation(eq.sma_free_binding_sites(PTD=PTD_) + "."), as_latex=True)
 
                     write_and_save(
                         "For the salt component, mass transfer is governed by "
@@ -1066,24 +1004,12 @@ else:  # Chromatography model family
                     + ").",
                 )
                 write_and_save(
-                    r"""
-\begin{align}
-"""
-                    + main_eq
-                    + r"""
-\end{align}
-""",
+                    display_equation(main_eq),
                     as_latex=True,
                 )
                 write_and_save("where")
                 write_and_save(
-                    r"""
-\begin{align}
-"""
-                    + flux_eq
-                    + r""".
-\end{align}
-""",
+                    display_equation(flux_eq + r"."),
                     as_latex=True,
                 )
 
@@ -1104,18 +1030,18 @@ else:  # Chromatography model family
 
 render_references(bibliography_entries, used_citation_keys, file_content)
 
-st.session_state.latex_string = [
-    r"""\documentclass{article}
-""",
-    r"""\usepackage{amssymb,amsmath}
-""",
-    r"""\begin{document}
-""",
+preamble = [
+    r"\documentclass{article}",
+    "",
+    r"\usepackage{amssymb,amsmath}",
+    "",
+    r"\begin{document}",
+    "",
 ]
-st.session_state.latex_string.extend(file_content + [r"\end{document}"])
-st.session_state.latex_string = "\n".join(st.session_state.latex_string)
 
-st.session_state.latex_string = str(st.session_state.latex_string)  # for testing purposes
+# The document is assembled from many snippets, so its layout is normalized
+# once at the end; see src/latex_format.py for the rules that are enforced.
+st.session_state.latex_string = normalize_document("\n".join(preamble + file_content + ["", r"\end{document}"]))
 
 st.download_button("Download .tex", st.session_state.latex_string, "model.tex", "text/plain")
 

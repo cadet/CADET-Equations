@@ -15,7 +15,7 @@ from src import equations as eq
 def test_cry_supersaturation():
     result = eq.cry_supersaturation()
     assert r"c_{\mathrm{eq}}" in result
-    assert r"s =" in result
+    assert r"s &=" in result
 
 
 @pytest.mark.ci

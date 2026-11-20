@@ -5,10 +5,9 @@ availability badges and formatted equation text. Documentation is
 kept concise and focused on public behaviour.
 """
 
-import re
-
 import streamlit as st
 
+from src.latex_format import normalize
 from src.utils import format_variables
 
 _BADGE_TOOLTIP_CSS = """<style>
@@ -103,35 +102,17 @@ def render_availability_badges(model) -> None:
     st.markdown(html, unsafe_allow_html=True)
 
 
-_MATH_ENV_NAMES = r"(?:align\*?|alignat\*?|equation\*?|gather\*?|eqnarray\*?)"
-_MATH_ENV_RE = re.compile(
-    r"(\\begin\{" + _MATH_ENV_NAMES + r"\}(?:\{\d+\})?)(.*?)(\\end\{" + _MATH_ENV_NAMES + r"\})",
-    re.DOTALL,
-)
-
-
-def remove_blank_lines_in_math_envs(latex: str) -> str:
-    """Remove blank lines inside math environments.
-
-    LaTeX forbids paragraph breaks (blank lines) inside math environments;
-    pdflatex fails with "Paragraph ended before \\align was complete".
-    """
-    return _MATH_ENV_RE.sub(
-        lambda m: m.group(1) + re.sub(r"\n[ \t]*(?:\n[ \t]*)+", "\n", m.group(2)) + m.group(3),
-        latex,
-    )
-
-
 def write_and_save(output: str, var_format: str, file_content: list[str], as_latex: bool = False):
     """Format and render `output` while collecting it for export.
 
-    The function applies variable formatting, appends the formatted
-    string to ``file_content`` and writes it to the Streamlit app
-    as LaTeX or plain text.
+    The function applies variable formatting, brings the snippet into the
+    canonical layout of :mod:`src.latex_format`, appends it to
+    ``file_content`` and writes it to the Streamlit app as LaTeX or plain
+    text.
     """
     output = format_variables(output, var_format)
     if output is not None:
-        output = remove_blank_lines_in_math_envs(output)
+        output = normalize(output)
 
     if output is not None:
         file_content.append(output)
@@ -143,7 +124,6 @@ def write_and_save(output: str, var_format: str, file_content: list[str], as_lat
 
 __all__ = [
     "availability_badge_html",
-    "remove_blank_lines_in_math_envs",
     "render_availability_badges",
     "write_and_save",
 ]

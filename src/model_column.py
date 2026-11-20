@@ -10,6 +10,7 @@ from typing import Literal
 import streamlit as st
 
 from src import equations as eq
+from src.latex_format import display_equation
 from src.model_particle import Particle
 from src.units import get_unit
 from src.utils import format_variables
@@ -1524,8 +1525,7 @@ class Column:
             if without_pores_:
                 equation += r" + " + eq.solid_time_derivative(r"\varepsilon^{\mathrm{t}}")
 
-            needs_linebreak = self.has_radial_dispersion or self.has_angular_dispersion
-            eq_sign = " &= " if needs_linebreak else " = "
+            eq_sign = " &= "
 
             # Select convection and dispersion terms based on column geometry
             if self.column_type == "Radial":
@@ -1553,9 +1553,9 @@ class Column:
             if self.has_axial_dispersion:
                 equation += " + " + dispersion_func(porosity)
             if self.has_radial_dispersion:
-                equation += r" \nonumber \\ & + " + eq.radial_dispersion(porosity)
+                equation += r" \nonumber \\ &+ " + eq.radial_dispersion(porosity)
             if self.has_angular_dispersion:
-                equation += r" \nonumber \\ & + " + eq.angular_dispersion(porosity)
+                equation += r" \nonumber \\ &+ " + eq.angular_dispersion(porosity)
 
             if without_pores_:
                 equation = eq.homogenized_notation(equation)
@@ -1625,15 +1625,7 @@ class Column:
             # not with the bulk porosity (Model (B0) of the reference framework).
             equation = equation.replace(r"\left(1 - \varepsilon^{\mathrm{b}} \right)", r"V^{\mathrm{par}}")
 
-        equation = (
-            r"""\begin{align}
-"""
-            + equation
-            + r""",
-\end{align}"""
-        )
-
-        return equation
+        return display_equation(equation + ",")
 
     def interstitial_volume_bc(self):
         if self.resolution != "0D":

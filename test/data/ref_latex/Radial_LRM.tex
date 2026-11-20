@@ -6,55 +6,62 @@
 
 General model assumptions:
 \begin{itemize}
-\item the fluid density and viscosity are constant in time and space (implies incompressibility);
-\item the fluid flow is laminar;
-\item the column is operated under constant conditions (e.g., temperature, flow rate);
-\item the process is isothermal (i.e., there are no thermal effects);
-\item diffusion does not depend on the concentration of the components, viscosity of the fluid, or pressure;
-\item the fluid in the particles is stagnant (i.e., there is no convective flow);
-\item the porous particles are spherical, rigid, and do not move;
-\item the particles are homogeneous and of uniform porosity;
-\item all components access the same particle volume;
-\item the partial molar volumes are the same in mobile and solid phase;
-\item the binding model parameters do not depend on pressure and are constant along the column;
-\item the solvent is not adsorbed;
+    \item the fluid density and viscosity are constant in time and space (implies incompressibility);
+    \item the fluid flow is laminar;
+    \item the column is operated under constant conditions (e.g., temperature, flow rate);
+    \item the process is isothermal (i.e., there are no thermal effects);
+    \item diffusion does not depend on the concentration of the components, viscosity of the fluid, or pressure;
+    \item the fluid in the particles is stagnant (i.e., there is no convective flow);
+    \item the porous particles are spherical, rigid, and do not move;
+    \item the particles are homogeneous and of uniform porosity;
+    \item all components access the same particle volume;
+    \item the partial molar volumes are the same in mobile and solid phase;
+    \item the binding model parameters do not depend on pressure and are constant along the column;
+    \item the solvent is not adsorbed;
 \end{itemize}
-
 
 Specific model assumptions:
 \begin{itemize}
-\item the fluid only flows in the radial direction of the column (i.e., there is no flow in the axial and angular direction);
-\item the column is a hollow cylinder with inner radius $P^{\mathrm{inner}}$ and outer radius $P^{\mathrm{outer}}$;
-\item the particles form a continuum inside the column (i.e., there is interstitial and particle volume at every point in the column);
-\item the column is radially symmetric and homogeneous (i.e., concentration profiles and parameters only depend on the axial position);
-\item transverse concentration variations equilibrate sufficiently rapidly relative to the flow-directional transport for their effects to be represented by an effective flow-directional dispersion coefficient;
-\item the interstitial liquid phase concentration is spatially constant on the outer particle surface;
-\item the pore and surface diffusion are infinitely fast. That is, we assume $D^{\mathrm{p}}_{i} = D^{\mathrm{s}}_{i} = \infty$;
-\item the film around the particles does not limit mass transfer. That is, we assume $k^{\mathrm{f}}_{i} = \infty$)
+    \item the fluid only flows in the radial direction of the column (i.e., there is no flow in the axial and angular direction);
+    \item the column is a hollow cylinder with inner radius $P^{\mathrm{inner}}$ and outer radius $P^{\mathrm{outer}}$;
+    \item the particles form a continuum inside the column (i.e., there is interstitial and particle volume at every point in the column);
+    \item the column is radially symmetric and homogeneous (i.e., concentration profiles and parameters only depend on the axial position);
+    \item transverse concentration variations equilibrate sufficiently rapidly relative to the flow-directional transport for their effects to be represented by an effective flow-directional dispersion coefficient;
+    \item the interstitial liquid phase concentration is spatially constant on the outer particle surface;
+    \item the pore and surface diffusion are infinitely fast. That is, we assume $D^{\mathrm{p}}_{i} = D^{\mathrm{s}}_{i} = \infty$;
+    \item the film around the particles does not limit mass transfer. That is, we assume $k^{\mathrm{f}}_{i} = \infty$)
 \end{itemize}
-
 
 \section*{Radial Flow Lumped Rate Model without Pores}
 Consider a hollow cylindrical column of axial bed height $H^{\mathrm{b}} > 0$ with inner radius $P^{\mathrm{inner}} > 0$ and outer radius $P^{\mathrm{outer}} > P^{\mathrm{inner}}$ packed with spherical particles, and observed over a time interval $(0, T^{\mathrm{end}})$.
 In the interstitial volume, mass transfer is governed by the following convection-diffusion equations in $(0, T^{\mathrm{end}})\times (P^{\mathrm{inner}}, P^{\mathrm{outer}})$ and for all components $i\in\{1, \dots, N^{\mathrm{c}} \}$
 \begin{align}
-\frac{\partial c^{\mathrm{\ell}}_{i}}{\partial t} + \frac{1 - \varepsilon^{\mathrm{t}}}{\varepsilon^{\mathrm{t}}} \frac{\partial c^{\mathrm{s}}_{i}}{\partial t} = - \frac{v}{\rho} \frac{\partial c^{\mathrm{\ell}}_{i}}{\partial \rho} + \frac{1}{\rho} \frac{\partial}{\partial \rho} \left( \rho \tilde{D}^{\mathrm{rad}}_{i} \frac{\partial c^{\mathrm{\ell}}_{i}}{\partial \rho} \right),
+    \frac{\partial c^{\mathrm{\ell}}_{i}}{\partial t}
+        + \frac{1 - \varepsilon^{\mathrm{t}}}{\varepsilon^{\mathrm{t}}} \frac{\partial c^{\mathrm{s}}_{i}}{\partial t}
+    &= - \frac{v}{\rho} \frac{\partial c^{\mathrm{\ell}}_{i}}{\partial \rho}
+        + \frac{1}{\rho} \frac{\partial}{\partial \rho} \left( \rho \tilde{D}^{\mathrm{rad}}_{i} \frac{\partial c^{\mathrm{\ell}}_{i}}{\partial \rho} \right),
 \end{align}
 with boundary conditions
-
 \begin{alignat}{2}
-v c^{\mathrm{in}}_{i} &= \left.\left( v c^{\mathrm{\ell}}_{i} - \tilde{D}^{\mathrm{rad}}_{i} \frac{\partial c^{\mathrm{\ell}}_{i}}{\partial \rho}\right)\right|_{\rho=P^{\mathrm{inner}}} & &\qquad\text{on }(0, T^{\mathrm{end}}),\\
-               0 &= - \tilde{D}^{\mathrm{rad}}_{i} \left. \frac{\partial c^{\mathrm{\ell}}_{i}}{\partial \rho} \right|_{\rho=P^{\mathrm{outer}}} & &\qquad\text{on }(0, T^{\mathrm{end}}).
+    v c^{\mathrm{in}}_{i}
+    &= \left.\left( v c^{\mathrm{\ell}}_{i} - \tilde{D}^{\mathrm{rad}}_{i} \frac{\partial c^{\mathrm{\ell}}_{i}}{\partial \rho}\right)\right|_{\rho=P^{\mathrm{inner}}}
+    & & \qquad\text{on }(0, T^{\mathrm{end}}),
+    \\
+    0
+    &= - \tilde{D}^{\mathrm{rad}}_{i} \left. \frac{\partial c^{\mathrm{\ell}}_{i}}{\partial \rho} \right|_{\rho=P^{\mathrm{outer}}}
+    & & \qquad\text{on }(0, T^{\mathrm{end}}).
 \end{alignat}
 Here, $t\in (0, T^{\mathrm{end}})$ is the time coordinate, $\rho\in (P^{\mathrm{inner}}, P^{\mathrm{outer}})$ is the radial coordinate, $c^{\mathrm{\ell}}_{i}\colon (0, T^{\mathrm{end}})\times (P^{\mathrm{inner}}, P^{\mathrm{outer}}) \mapsto \mathbb{R}$ is the liquid concentration, $Q> 0$ is the volumetric flow rate, $\varepsilon^{\mathrm{t}}\in (0, 1)$ is the total porosity, $v:= \frac{Q}{2 \pi H^{\mathrm{b}}}$ is the velocity coefficient, and $\tilde{D}^{\mathrm{rad}}_{i}\geq 0$ is the apparent radial dispersion coefficient.
 In the particles, mass transfer is governed by reaction equations in $(0, T^{\mathrm{end}}) \times (P^{\mathrm{inner}}, P^{\mathrm{outer}})$ and for all components
 \begin{align}
-          \frac{\partial c^{\mathrm{s}}_{i}}{\partial t}
-          &= f^{\mathrm{bind}}_{i}\left( \vec{c}^{\mathrm{\ell}}, \vec{c}^{\mathrm{s}} \right), \end{align}
+    \frac{\partial c^{\mathrm{s}}_{i}}{\partial t}
+    &= f^{\mathrm{bind}}_{i}\left( \vec{c}^{\mathrm{\ell}}, \vec{c}^{\mathrm{s}} \right),
+\end{align}
 Here, $c^{\mathrm{s}}_{i}\colon (0, T^{\mathrm{end}}) \times (P^{\mathrm{inner}}, P^{\mathrm{outer}}) \mapsto \mathbb{R}$ is the particle solid concentration, $f^{\mathrm{bind}}_{i}$ is the adsorption isotherm function, $\vec{c}^{\mathrm{\ell}}$ is the liquid components vector, and $\vec{c}^{\mathrm{s}}$ is the particle solid components vector.
 Consistent initial values for all solution variables (concentrations) are defined at $t = 0$.
 This model is a particular instance of the unified mathematical framework introduced in Breuer et al. (2026), which provides a rigorous justification of its assumptions and a systematic derivation of its governing equations.
 \begin{thebibliography}{99}
-\bibitem{breuer2026unified} Jan Michael Breuer and Samuel Leweke and Johannes Schmölder and Antonia Berger and Gregor J. Gassner and Eric von Lieres (2026). A unified and composable framework for modeling packed-bed liquid chromatography. arXiv preprint arXiv:2610.33269. DOI: https://doi.org/10.48550/arXiv.2610.33269.
+    \bibitem{breuer2026unified} Jan Michael Breuer and Samuel Leweke and Johannes Schmölder and Antonia Berger and Gregor J. Gassner and Eric von Lieres (2026). A unified and composable framework for modeling packed-bed liquid chromatography. arXiv preprint arXiv:2610.33269. DOI: https://doi.org/10.48550/arXiv.2610.33269.
 \end{thebibliography}
+
 \end{document}

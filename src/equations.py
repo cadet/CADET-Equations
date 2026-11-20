@@ -8,6 +8,7 @@ modeling assumptions and equation terms.
 import re
 
 from src.handler_cite import cite, cite_html
+from src.latex_format import display_equation, display_rows
 
 
 def HRM_asmpt(N_p: int, nonlimiting_filmDiff: bool, has_binding: bool, has_surfDiff: bool, column_resolution: str):
@@ -206,7 +207,7 @@ def sma_free_binding_sites(PTD: bool = True):
     idx = "j,n" if PTD else "n"
     idx_0 = "j,0" if PTD else "0"
     return (
-        r"\bar{q}_{" + idx_0 + r"} = \Lambda - \sum_{n=1}^{N^{\mathrm{c}} - 1}"
+        r"\bar{q}_{" + idx_0 + r"} &= \Lambda - \sum_{n=1}^{N^{\mathrm{c}} - 1}"
         r" \left( \nu_{" + idx + r"} + \sigma_{" + idx + r"} \right) c^{\s}_{" + idx + r"}"
     )
 
@@ -626,46 +627,46 @@ def particle_solid_reaction_term(singleParticle: bool):
 
 def req_reaction_bulk_constraint():
     """Return the algebraic equilibrium constraint for bulk rapid-equilibrium reactions."""
-    return r"0 = g^{\mathrm{react,eq},\b}_{k}\left( \vec{c}^{\b} \right)"
+    return r"0 &= g^{\mathrm{react,eq},\b}_{k}\left( \vec{c}^{\b} \right)"
 
 
 def req_reaction_particle_liquid_constraint(singleParticle: bool):
     """Return the algebraic equilibrium constraint for particle liquid rapid-equilibrium reactions."""
     if singleParticle:
-        return r"0 = g^{\mathrm{react,eq},\p}_{k}\left( \vec{c}^{\p}, \vec{c}^{\s} \right)"
+        return r"0 &= g^{\mathrm{react,eq},\p}_{k}\left( \vec{c}^{\p}, \vec{c}^{\s} \right)"
     else:
-        return r"0 = g^{\mathrm{react,eq},\p}_{j,k}\left( \vec{c}^{\p}, \vec{c}^{\s} \right)"
+        return r"0 &= g^{\mathrm{react,eq},\p}_{j,k}\left( \vec{c}^{\p}, \vec{c}^{\s} \right)"
 
 
 def req_reaction_particle_solid_constraint(singleParticle: bool):
     """Return the algebraic equilibrium constraint for particle solid rapid-equilibrium reactions."""
     if singleParticle:
-        return r"0 = g^{\mathrm{react,eq},\s}_{k}\left( \vec{c}^{\p}, \vec{c}^{\s} \right)"
+        return r"0 &= g^{\mathrm{react,eq},\s}_{k}\left( \vec{c}^{\p}, \vec{c}^{\s} \right)"
     else:
-        return r"0 = g^{\mathrm{react,eq},\s}_{j,k}\left( \vec{c}^{\p}, \vec{c}^{\s} \right)"
+        return r"0 &= g^{\mathrm{react,eq},\s}_{j,k}\left( \vec{c}^{\p}, \vec{c}^{\s} \right)"
 
 
 def conserved_moiety_equation_bulk():
     """Return the conserved moiety transport equation for bulk rapid-equilibrium reactions."""
     return (
-        r"""\sum_{i=0}^{N^{\mathrm{c}}-1} M^{\b}_{l,i} \left[ \text{transport equation of component } i \right] = 0"""
+        r"""\sum_{i=0}^{N^{\mathrm{c}}-1} M^{\b}_{l,i} \left[ \text{transport equation of component } i \right] &= 0"""
     )
 
 
 def conserved_moiety_equation_particle_liquid(singleParticle: bool):
     """Return the conserved moiety transport equation for particle liquid rapid-equilibrium reactions."""
     if singleParticle:
-        return r"""\sum_{i=0}^{N^{\mathrm{c}}-1} M^{\p}_{l,i} \left[ \text{transport equation of component } i \right] = 0"""
+        return r"""\sum_{i=0}^{N^{\mathrm{c}}-1} M^{\p}_{l,i} \left[ \text{transport equation of component } i \right] &= 0"""
     else:
-        return r"""\sum_{i=0}^{N^{\mathrm{c}}-1} M^{\p}_{j,l,i} \left[ \text{transport equation of component } i \right] = 0"""
+        return r"""\sum_{i=0}^{N^{\mathrm{c}}-1} M^{\p}_{j,l,i} \left[ \text{transport equation of component } i \right] &= 0"""
 
 
 def conserved_moiety_equation_particle_solid(singleParticle: bool):
     """Return the conserved moiety transport equation for particle solid rapid-equilibrium reactions."""
     if singleParticle:
-        return r"""\sum_{i=0}^{N^{\mathrm{c}}-1} M^{\s}_{l,i} \left[ \text{transport equation of component } i \right] = 0"""
+        return r"""\sum_{i=0}^{N^{\mathrm{c}}-1} M^{\s}_{l,i} \left[ \text{transport equation of component } i \right] &= 0"""
     else:
-        return r"""\sum_{i=0}^{N^{\mathrm{c}}-1} M^{\s}_{j,l,i} \left[ \text{transport equation of component } i \right] = 0"""
+        return r"""\sum_{i=0}^{N^{\mathrm{c}}-1} M^{\s}_{j,l,i} \left[ \text{transport equation of component } i \right] &= 0"""
 
 
 # Boundary conditions of the interstitial volume equations
@@ -832,14 +833,7 @@ def int_vol_BC(resolution: str, hasAxialDispersion: bool, column_type: str = "Ax
     if without_pores:
         boundary_conditions = homogenized_notation(boundary_conditions)
 
-    return (
-        r"""
-\begin{alignat}{2}
-"""
-        + boundary_conditions
-        + r""".
-\end{alignat}"""
-    )
+    return display_equation(boundary_conditions + ".", "alignat", columns=2)
 
 
 def int_vol_initial(resolution: str, includeParLiquid: bool, without_pores: bool = False):
@@ -859,28 +853,9 @@ def int_vol_initial(resolution: str, includeParLiquid: bool, without_pores: bool
         par_liquid_eq = r"\left. c^{\p}_{j,i} \right|_{t = 0, r = (0, R^{\mathrm{p}}_{j})} &= c^{\p,\mathrm{init}}_{j,i} & & \qquad\text{in } (0, P^{\mathrm{c}}) \times (0, L^{\mathrm{b}})\times [0,2\pi)"
 
     if includeParLiquid:
-        equation = (
-            r"""
-          \begin{align}
-          """
-            + bulk_liquid_eq
-            + r""",
-          \\"""
-            + par_liquid_eq
-            + r""".
-          \end{align}
-          """
-        )
+        equation = display_rows([bulk_liquid_eq, par_liquid_eq])
     else:
-        equation = (
-            r"""
-          \begin{align}
-          """
-            + bulk_liquid_eq
-            + r""".
-          \end{align}
-          """
-        )
+        equation = display_rows([bulk_liquid_eq])
 
     return homogenized_notation(equation) if without_pores else equation
 
@@ -1095,16 +1070,7 @@ def particle_transport_side_cavities(
         req_m = side_cavity_req_binding[idx - 1] if idx - 1 < len(side_cavity_req_binding) else False
         lines.extend(side_cavity_equations(str(idx), model, req_m, has_mult_bnd_states, has_binding=has_binding))
 
-    return (
-        r"""
-\begin{align}
-"""
-        + r""", \\
-""".join(lines)
-        + r""".
-\end{align}
-"""
-    )
+    return display_rows(lines)
 
 
 # Particle transport terms
@@ -1145,9 +1111,8 @@ def particle_transport(
 
     if particle.resolution == "0D":
         if nonlimiting_filmDiff and has_binding:
-            ret_term = (
-                r"""\begin{align}"""
-                + re.sub(
+            ret_term = display_equation(
+                re.sub(
                     r"{\\p}",
                     r"{\\l}",
                     particle_transport_homogeneous_solid(
@@ -1157,19 +1122,18 @@ def particle_transport(
                         binding_model=binding_model,
                     ),
                 )
-                + r""", \end{align}"""
+                + ","
             )
         elif not has_binding:
-            ret_term = (
-                r"""\begin{align}"""
-                + particle_transport_homogeneous_liquid(
+            ret_term = display_equation(
+                particle_transport_homogeneous_liquid(
                     has_binding,
                     req_binding,
                     has_mult_bnd_states,
                     has_reaction_liquid=has_reaction_liquid,
                     binding_model=binding_model,
                 )
-                + r""". \end{align}"""
+                + "."
             )
         else:
             ret_term = particle_transport_homogeneous(
@@ -1286,25 +1250,19 @@ def particle_transport_homogeneous(
     binding_model: str = "Arbitrary",
 ):
 
-    return (
-        r"""
-\begin{align}
-"""
-        + particle_transport_homogeneous_liquid(
-            has_binding,
-            req_binding,
-            has_mult_bnd_states,
-            has_reaction_liquid=has_reaction_liquid,
-            binding_model=binding_model,
-        )
-        + r""",\\
-"""
-        + particle_transport_homogeneous_solid(
-            req_binding, has_mult_bnd_states, has_reaction_solid=has_reaction_solid, binding_model=binding_model
-        )
-        + r""".
-\end{align}
-"""
+    return display_rows(
+        [
+            particle_transport_homogeneous_liquid(
+                has_binding,
+                req_binding,
+                has_mult_bnd_states,
+                has_reaction_liquid=has_reaction_liquid,
+                binding_model=binding_model,
+            ),
+            particle_transport_homogeneous_solid(
+                req_binding, has_mult_bnd_states, has_reaction_solid=has_reaction_solid, binding_model=binding_model
+            ),
+        ]
     )
 
 
@@ -1381,29 +1339,8 @@ def particle_transport_radial(
             liquid_eq = re.sub(r"D\^\{\\s\}_\{j,i\}", r"D^{\\s}_{j,i,k}", liquid_eq)
             liquid_eq = re.sub(r"f\^\{\\mathrm\{bind\}\}_\{j,i\}", r"f^{\\mathrm{bind}}_{j,i,k}", liquid_eq)
 
-        if has_binding:
-            return (
-                r"""
-\begin{align}
-"""
-                + liquid_eq
-                + r""", \\
-"""
-                + solid_eq
-                + r""",
-\end{align}
-"""
-            )
-        else:
-            return (
-                r"""
-\begin{align}
-"""
-                + liquid_eq
-                + r""",
-\end{align}
-"""
-            )
+        rows = [liquid_eq, solid_eq] if has_binding else [liquid_eq]
+        return display_rows(rows, terminator=",")
 
     if geometry == "Cylinder":
         if has_surfDiff:
@@ -1412,26 +1349,18 @@ def particle_transport_radial(
         react_liq = r" + " + particle_liquid_reaction_term(False) if has_reaction_liquid else ""
         react_sol = r" + " + particle_solid_reaction_term(False) if has_reaction_solid else ""
 
-        return (
-            r"""
-\begin{align}
-\varepsilon^{\mathrm{p}}_{j} \frac{\partial c^{\p}_{j,i}}{\partial t}
-&=
-\varepsilon^{\mathrm{p}}_{j} \frac{1}{r} \frac{\partial }{\partial r} \left( r D^{\p}_{j,i} \frac{\partial c^{\p}_{j,i}}{\partial r} \right) - \left( 1 - \varepsilon^{\mathrm{p}}_{j} \right) """
-            + binding_term
-            + react_liq
-            + r""", \\
-     \left( 1 - \varepsilon^{\mathrm{p}}_{j} \right) \frac{\partial c^{\s}_{j,i}}{\partial t}
-&=
-"""
-            + surfDiffTerm
-            + r"""\left( 1 - \varepsilon^{\mathrm{p}}_{j} \right) """
-            + binding_term
-            + react_sol
-            + r""".
-\end{align}
-"""
+        liquid_eq = (
+            r"\varepsilon^{\mathrm{p}}_{j} \frac{\partial c^{\p}_{j,i}}{\partial t} "
+            r"&= \varepsilon^{\mathrm{p}}_{j} \frac{1}{r} \frac{\partial }{\partial r} "
+            r"\left( r D^{\p}_{j,i} \frac{\partial c^{\p}_{j,i}}{\partial r} \right) "
+            r"- \left( 1 - \varepsilon^{\mathrm{p}}_{j} \right) " + binding_term + react_liq
         )
+        solid_eq = (
+            r"\left( 1 - \varepsilon^{\mathrm{p}}_{j} \right) \frac{\partial c^{\s}_{j,i}}{\partial t} "
+            r"&= " + surfDiffTerm + r"\left( 1 - \varepsilon^{\mathrm{p}}_{j} \right) " + binding_term + react_sol
+        )
+        return display_rows([liquid_eq, solid_eq])
+
     if geometry == "Slab":
         if has_surfDiff:
             surfDiffTerm = r"\left( 1 - \varepsilon^{\mathrm{p}}_{j} \right) \frac{\partial }{\partial r} \left( D^{\s}_{j,i} \frac{\partial c^{\s}_{j,i}}{\partial r} \right) + "
@@ -1439,26 +1368,17 @@ def particle_transport_radial(
         react_liq = r" + " + particle_liquid_reaction_term(False) if has_reaction_liquid else ""
         react_sol = r" + " + particle_solid_reaction_term(False) if has_reaction_solid else ""
 
-        return (
-            r"""
-\begin{align}
-\varepsilon^{\mathrm{p}}_{j} \frac{\partial c^{\p}_{j,i}}{\partial t}
-&=
-\varepsilon^{\mathrm{p}}_{j} \frac{\partial }{\partial r} \left( D^{\p}_{j,i} \frac{\partial c^{\p}_{j,i}}{\partial r} \right) - \left( 1 - \varepsilon^{\mathrm{p}}_{j} \right) """
-            + binding_term
-            + react_liq
-            + r""", \\
-     \left( 1 - \varepsilon^{\mathrm{p}}_{j} \right) \frac{\partial c^{\s}_{j,i}}{\partial t}
-&=
-"""
-            + surfDiffTerm
-            + r"""\left( 1 - \varepsilon^{\mathrm{p}}_{j} \right) """
-            + binding_term
-            + react_sol
-            + r""".
-\end{align}
-"""
+        liquid_eq = (
+            r"\varepsilon^{\mathrm{p}}_{j} \frac{\partial c^{\p}_{j,i}}{\partial t} "
+            r"&= \varepsilon^{\mathrm{p}}_{j} \frac{\partial }{\partial r} "
+            r"\left( D^{\p}_{j,i} \frac{\partial c^{\p}_{j,i}}{\partial r} \right) "
+            r"- \left( 1 - \varepsilon^{\mathrm{p}}_{j} \right) " + binding_term + react_liq
         )
+        solid_eq = (
+            r"\left( 1 - \varepsilon^{\mathrm{p}}_{j} \right) \frac{\partial c^{\s}_{j,i}}{\partial t} "
+            r"&= " + surfDiffTerm + r"\left( 1 - \varepsilon^{\mathrm{p}}_{j} \right) " + binding_term + react_sol
+        )
+        return display_rows([liquid_eq, solid_eq])
 
 
 def particle_boundary(
@@ -1512,16 +1432,7 @@ def particle_boundary(
                 + solid_c
                 + r"}{\partial r} \right) \right|_{r = R^{\mathrm{p}}_{j}} &= 0",
             ]
-        ret = (
-            r"""
-\begin{align}
-"""
-            + r""", \\
-""".join(bcs)
-            + r""".
-\end{align}
-"""
-        )
+        ret = display_rows(bcs)
         if singleParticle:
             ret = re.sub(",j", "", ret)
             ret = re.sub("j,", "", ret)
@@ -1532,11 +1443,20 @@ def particle_boundary(
         outerLiquidBC = r"\left. c^{\p}_{j,i} \right|_{r = R^{\mathrm{p}}_{j}} &= c^{\b}_{i}"
     else:
         if not (req_binding and has_surfDiff):
-            outerLiquidBC = r"""\varepsilon^{\mathrm{p}} \left. \left( D^{\p}_{j,i} \frac{\partial c^{\p}_{j,i}}{\partial r} \right)\right|_{r = R^{\mathrm{p}}_{j}}
-               &= k^{\mathrm{f}}_{j,i} \left. \left( c^{\b}_{i} - c^{\p}_{j,i} \right|_{r = R^{\mathrm{p}}_{j}} \right)"""
+            outerLiquidBC = (
+                r"\varepsilon^{\mathrm{p}} \left. \left( D^{\p}_{j,i} \frac{\partial c^{\p}_{j,i}}{\partial r} "
+                r"\right)\right|_{r = R^{\mathrm{p}}_{j}} "
+                r"&= k^{\mathrm{f}}_{j,i} \left. \left( c^{\b}_{i} - c^{\p}_{j,i} "
+                r"\right|_{r = R^{\mathrm{p}}_{j}} \right)"
+            )
         else:
-            outerLiquidBC = r"""\left. \left( \varepsilon^{\mathrm{p}} D^{\p}_{j,i} \frac{\partial c^{\p}_{j,i}}{\partial r} + (1 - \varepsilon^{\mathrm{p}} ) D^{\s}_{j,i} \frac{\partial c^{\s}_{j,i}}{\partial r} \right)\right|_{r = R^{\mathrm{p}}_{j}}
-               &= k^{\mathrm{f}}_{j,i} \left. \left( c^{\b}_{i} - c^{\p}_{j,i} \right|_{r = R^{\mathrm{p}}_{j}} \right)"""
+            outerLiquidBC = (
+                r"\left. \left( \varepsilon^{\mathrm{p}} D^{\p}_{j,i} \frac{\partial c^{\p}_{j,i}}{\partial r} "
+                r"+ (1 - \varepsilon^{\mathrm{p}} ) D^{\s}_{j,i} \frac{\partial c^{\s}_{j,i}}{\partial r} "
+                r"\right)\right|_{r = R^{\mathrm{p}}_{j}} "
+                r"&= k^{\mathrm{f}}_{j,i} \left. \left( c^{\b}_{i} - c^{\p}_{j,i} "
+                r"\right|_{r = R^{\mathrm{p}}_{j}} \right)"
+            )
 
     inner_boundary = r"R^{\mathrm{c}}_{j}" if particle.has_core else r"0"
 
@@ -1552,35 +1472,22 @@ def particle_boundary(
             + inner_boundary
             + r"}"
         )
-    particleLiquidBC = (
-        r"""
-"""
-        + innerLiquidBC
-        + r"""
-&= 0, \\
-"""
-        + outerLiquidBC
-    )
+    boundary_conditions = [innerLiquidBC + r" &= 0", outerLiquidBC]
 
     if has_surfDiff and has_binding and not req_binding:
-        particleSolidBC = (
-            r""",\\
--\left( \left. D^{\s}_{j,i} \frac{\partial c^{\s}_{j,i}}{\partial r} \right) \right|_{r="""
+        solid_boundary_conditions = [
+            r"-\left( \left. D^{\s}_{j,i} \frac{\partial c^{\s}_{j,i}}{\partial r} \right) \right|_{r="
             + inner_boundary
-            + r"""}
-&= 0, \\
-\left( \left. D^{\s}_{j,i} \frac{\partial c^{\s}_{j,i}}{\partial r} \right) \right|_{r = R^{\mathrm{p}}_{j}}
-&= 0.
-"""
-        )
+            + r"} &= 0",
+            r"\left( \left. D^{\s}_{j,i} \frac{\partial c^{\s}_{j,i}}{\partial r} \right) "
+            r"\right|_{r = R^{\mathrm{p}}_{j}} &= 0",
+        ]
         if has_mult_bnd_states:
-            particleSolidBC = re.sub("j,i", "j,i,k", particleSolidBC)
+            solid_boundary_conditions = [re.sub("j,i", "j,i,k", bc) for bc in solid_boundary_conditions]
 
-        boundary_condition = particleLiquidBC + particleSolidBC
-    else:
-        boundary_condition = particleLiquidBC + "."
+        boundary_conditions += solid_boundary_conditions
 
-    boundary_condition = r"\begin{align}" + boundary_condition + r"\end{align}"
+    boundary_condition = display_rows(boundary_conditions)
 
     if singleParticle:
         boundary_condition = re.sub("j,", "", boundary_condition)
@@ -1591,29 +1498,16 @@ def particle_boundary(
 
 def particle_initial(domain: str, singleParticle: bool, includeParLiquid: bool):
 
-    if includeParLiquid:
-        initial_condition = (
-            r"""
-\begin{alignat}{2}
-\left. c^{\p}_{j,i} \right|_{t = 0} &= c^{\p, \mathrm{init}}_{j,i} & & \qquad\text{in }"""
-            + re.sub("\\$", "", domain)
-            + r""",\\
-\left. c^{\s}_{j,i} \right|_{t = 0} &= c^{\s, \mathrm{init}}_{j,i} & & \qquad\text{in }"""
-            + re.sub("\\$", "", domain)
-            + r""".
-\end{alignat}
-"""
-        )
-    else:
-        initial_condition = (
-            r"""
-\begin{alignat}{2}
-\left. c^{\s}_{j,i} \right|_{t = 0} &= c^{\s, \mathrm{init}}_{j,i} & & \qquad\text{in }"""
-            + re.sub("\\$", "", domain)
-            + r""".
-\end{alignat}
-"""
-        )
+    domain_ = re.sub("\\$", "", domain)
+    particle_liquid_ic = (
+        r"\left. c^{\p}_{j,i} \right|_{t = 0} &= c^{\p, \mathrm{init}}_{j,i} & & \qquad\text{in }" + domain_
+    )
+    particle_solid_ic = (
+        r"\left. c^{\s}_{j,i} \right|_{t = 0} &= c^{\s, \mathrm{init}}_{j,i} & & \qquad\text{in }" + domain_
+    )
+
+    rows = [particle_liquid_ic, particle_solid_ic] if includeParLiquid else [particle_solid_ic]
+    initial_condition = display_rows(rows, "alignat", columns=2)
 
     if singleParticle:
         initial_condition = re.sub(",j", "", initial_condition)
@@ -1676,30 +1570,30 @@ AGGREGATION_KERNELS = {
 
 
 def cry_supersaturation():
-    return r"s = \frac{c - c_{\mathrm{eq}}}{c_{\mathrm{eq}}}"
+    return r"s &= \frac{c - c_{\mathrm{eq}}}{c_{\mathrm{eq}}}"
 
 
 def cry_growth_rate(size_dependent: bool):
     if size_dependent:
-        return r"v_{G} = k_{g} s^{g} (a + \gamma x^{p})"
+        return r"v_{G} &= k_{g} s^{g} (a + \gamma x^{p})"
     else:
-        return r"v_{G} = k_{g} s^{g} a"
+        return r"v_{G} &= k_{g} s^{g} a"
 
 
 def cry_primary_nucleation():
-    return r"B_{p} = k_{p} s^{u}"
+    return r"B_{p} &= k_{p} s^{u}"
 
 
 def cry_secondary_nucleation():
-    return r"B_{s} = k_{b} s^{b} M^{k}"
+    return r"B_{s} &= k_{b} s^{b} M^{k}"
 
 
 def cry_total_nucleation():
-    return r"B_{0} = B_{p} + B_{s}"
+    return r"B_{0} &= B_{p} + B_{s}"
 
 
 def cry_suspension_density():
-    return r"M = k_{v} \rho \int_{0}^{\infty} n \, x^{3} \, \mathrm{d}x"
+    return r"M &= k_{v} \rho \int_{0}^{\infty} n \, x^{3} \, \mathrm{d}x"
 
 
 def cry_pbe_cstr(has_primary: bool, has_growth_dispersion: bool, has_aggregation: bool, has_fragmentation: bool):
@@ -1719,7 +1613,7 @@ def cry_pbe_cstr(has_primary: bool, has_growth_dispersion: bool, has_aggregation
     if has_fragmentation:
         rhs += r" + V \left( B_{\mathrm{frag}} - D_{\mathrm{frag}} \right)"
 
-    return r"\begin{align}" + lhs + r" &= " + rhs + r". \end{align}"
+    return display_equation(lhs + r" &= " + rhs + ".")
 
 
 def cry_pbe_dpfr(
@@ -1745,19 +1639,13 @@ def cry_pbe_dpfr(
     if has_fragmentation:
         rhs += r" + B_{\mathrm{frag}} - D_{\mathrm{frag}}"
 
-    return r"\begin{align}" + lhs + r" &= " + rhs + r". \end{align}"
+    return display_equation(lhs + r" &= " + rhs + ".")
 
 
 def cry_volume_cstr():
     vol_eq = r"\frac{\mathrm{d} V}{\mathrm{d} t} &= Q^{\mathrm{in}} - Q^{\mathrm{out}}"
 
-    return (
-        r"""\begin{align}
-"""
-        + vol_eq
-        + r""".
-\end{align}"""
-    )
+    return display_equation(vol_eq + ".")
 
 
 def cry_mass_balance_cstr(has_primary: bool):
@@ -1770,15 +1658,7 @@ def cry_mass_balance_cstr(has_primary: bool):
             r" - \rho k_{v} V \left( B_{0} x_{c}^{3} + 3 \int_{x_{c}}^{\infty} v_{G} n \, x^{2} \, \mathrm{d}x \right)"
         )
 
-    return (
-        r"""\begin{align}
-"""
-        + conc_lhs
-        + r" &= "
-        + conc_rhs
-        + r""".
-\end{align}"""
-    )
+    return display_equation(conc_lhs + r" &= " + conc_rhs + ".")
 
 
 def cry_mass_balance_dpfr(has_primary: bool, has_axial_dispersion: bool):
@@ -1791,7 +1671,7 @@ def cry_mass_balance_dpfr(has_primary: bool, has_axial_dispersion: bool):
     if has_primary:
         rhs += r" - \rho k_{v} \left( B_{0} x_{c}^{3} + 3 \int_{x_{c}}^{\infty} v_{G} n \, x^{2} \, \mathrm{d}x \right)"
 
-    return r"\begin{align}" + lhs + r" &= " + rhs + r". \end{align}"
+    return display_equation(lhs + r" &= " + rhs + ".")
 
 
 def cry_pbe_bc_internal(has_primary: bool, has_growth_dispersion: bool):
@@ -1807,16 +1687,7 @@ def cry_pbe_bc_internal(has_primary: bool, has_growth_dispersion: bool):
         else:
             bcs.append(r"\left. n \right|_{x = x_{c}} &= \frac{B_{0}}{v_{G}(x_{c})}")
             bcs.append(r"\left. n \right|_{x \to \infty} &= 0")
-    return (
-        r"""\begin{align}
-"""
-        + r""", \\
-""".join(bcs)
-        + r""".
-\end{align}"""
-        if bcs
-        else ""
-    )
+    return display_rows(bcs) if bcs else ""
 
 
 def cry_pbe_bc_external_dpfr(has_axial_dispersion: bool):
@@ -1828,14 +1699,7 @@ def cry_pbe_bc_external_dpfr(has_axial_dispersion: bool):
         bcs.append(r"\left. \frac{\partial n}{\partial z} \right|_{z=L^{\mathrm{b}}} &= 0")
     else:
         bcs.append(r"\left. n \right|_{z=0} &= n^{\mathrm{in}}")
-    return (
-        r"""\begin{align}
-"""
-        + r""", \\
-""".join(bcs)
-        + r""".
-\end{align}"""
-    )
+    return display_rows(bcs)
 
 
 def cry_solute_bc_dpfr(has_axial_dispersion: bool):
@@ -1847,75 +1711,51 @@ def cry_solute_bc_dpfr(has_axial_dispersion: bool):
         bcs.append(r"\left. \frac{\partial c}{\partial z} \right|_{z=L^{\mathrm{b}}} &= 0")
     else:
         bcs.append(r"\left. c \right|_{z=0} &= c^{\mathrm{in}}")
-    return (
-        r"""\begin{align}
-"""
-        + r""", \\
-""".join(bcs)
-        + r""".
-\end{align}"""
-    )
+    return display_rows(bcs)
 
 
 def cry_aggregation_birth_death():
     birth = (
-        r"B_{\mathrm{agg}}(x) = \frac{x^{2}}{2} \int_{x_{c}}^{x} "
+        r"B_{\mathrm{agg}}(x) &= \frac{x^{2}}{2} \int_{x_{c}}^{x} "
         r"\frac{\beta\!\left((x^{3} - \lambda^{3})^{1/3}, \lambda\right)}"
         r"{(x^{3} - \lambda^{3})^{2/3}} "
         r"n\!\left((x^{3} - \lambda^{3})^{1/3}\right) n(\lambda) \, \mathrm{d}\lambda"
     )
     death = (
-        r"D_{\mathrm{agg}}(x) = n(x) \int_{0}^{x_{\mathrm{end}}} "
+        r"D_{\mathrm{agg}}(x) &= n(x) \int_{0}^{x_{\mathrm{end}}} "
         r"\beta(x, \lambda) \, n(\lambda) \, \mathrm{d}\lambda"
     )
-    return (
-        r"""\begin{align}
-"""
-        + birth
-        + r""", \\
-"""
-        + death
-        + r""".
-\end{align}"""
-    )
+    return display_rows([birth, death])
 
 
 def cry_aggregation_kernel(kernel_index: int):
     kernels = {
-        0: r"\beta(x, \lambda) = \beta_{0}",
-        1: r"\beta(x, \lambda) = \beta_{0} \frac{(x + \lambda)^{2}}{x \lambda}",
-        2: r"\beta(x, \lambda) = \beta_{0} (x + \lambda)^{3}",
-        3: r"\beta(x, \lambda) = \beta_{0} (x^{3} + \lambda^{3})",
-        4: r"\beta(x, \lambda) = \beta_{0} (x + \lambda)^{2} (x^{2} - \lambda^{2})",
+        0: r"\beta(x, \lambda) &= \beta_{0}",
+        1: r"\beta(x, \lambda) &= \beta_{0} \frac{(x + \lambda)^{2}}{x \lambda}",
+        2: r"\beta(x, \lambda) &= \beta_{0} (x + \lambda)^{3}",
+        3: r"\beta(x, \lambda) &= \beta_{0} (x^{3} + \lambda^{3})",
+        4: r"\beta(x, \lambda) &= \beta_{0} (x + \lambda)^{2} (x^{2} - \lambda^{2})",
     }
-    return r"\begin{align}" + kernels.get(kernel_index, kernels[0]) + r". \end{align}"
+    return display_equation(kernels.get(kernel_index, kernels[0]) + ".")
 
 
 def cry_fragmentation_birth_death():
     birth = (
-        r"B_{\mathrm{frag}}(x) = \int_{x}^{x_{\mathrm{max}}} "
+        r"B_{\mathrm{frag}}(x) &= \int_{x}^{x_{\mathrm{max}}} "
         r"S(\lambda) \, b(x \mid \lambda) \, n(\lambda) \, \mathrm{d}\lambda"
     )
-    death = r"D_{\mathrm{frag}}(x) = S(x) \, n(x)"
-    return (
-        r"""\begin{align}
-"""
-        + birth
-        + r""", \\
-"""
-        + death
-        + r""".
-\end{align}"""
-    )
+    death = r"D_{\mathrm{frag}}(x) &= S(x) \, n(x)"
+    return display_rows([birth, death])
 
 
 def cry_selection_function():
-    return r"S(x) = S_{0} \, x^{3\alpha}"
+    return r"S(x) &= S_{0} \, x^{3\alpha}"
 
 
 def cry_breakage_function():
     return (
-        r"b(x \mid \lambda) = 3 x^{2} \frac{\gamma}{\lambda^{3}} \left( \frac{x^{3}}{\lambda^{3}} \right)^{\gamma - 2}"
+        r"b(x \mid \lambda) &= 3 x^{2} \frac{\gamma}{\lambda^{3}} "
+        r"\left( \frac{x^{3}}{\lambda^{3}} \right)^{\gamma - 2}"
     )
 
 
