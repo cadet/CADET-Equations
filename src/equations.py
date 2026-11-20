@@ -1359,7 +1359,7 @@ def particle_transport_radial(
             r"\left( 1 - \varepsilon^{\mathrm{p}}_{j} \right) \frac{\partial c^{\s}_{j,i}}{\partial t} "
             r"&= " + surfDiffTerm + r"\left( 1 - \varepsilon^{\mathrm{p}}_{j} \right) " + binding_term + react_sol
         )
-        return display_rows([liquid_eq, solid_eq])
+        return display_rows([liquid_eq, solid_eq], terminator=",")
 
     if geometry == "Slab":
         if has_surfDiff:
@@ -1378,7 +1378,7 @@ def particle_transport_radial(
             r"\left( 1 - \varepsilon^{\mathrm{p}}_{j} \right) \frac{\partial c^{\s}_{j,i}}{\partial t} "
             r"&= " + surfDiffTerm + r"\left( 1 - \varepsilon^{\mathrm{p}}_{j} \right) " + binding_term + react_sol
         )
-        return display_rows([liquid_eq, solid_eq])
+        return display_rows([liquid_eq, solid_eq], terminator=",")
 
 
 def particle_boundary(
