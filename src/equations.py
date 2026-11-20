@@ -1596,7 +1596,13 @@ def cry_suspension_density():
     return r"M &= k_{v} \rho \int_{0}^{\infty} n \, x^{3} \, \mathrm{d}x"
 
 
-def cry_pbe_cstr(has_primary: bool, has_growth_dispersion: bool, has_aggregation: bool, has_fragmentation: bool):
+def cry_pbe_cstr(
+    has_primary: bool,
+    has_growth_dispersion: bool,
+    has_aggregation: bool,
+    has_fragmentation: bool,
+    terminator: str = ".",
+):
     lhs = r"\frac{\partial (n V)}{\partial t}"
     rhs = r"Q^{\mathrm{in}} n^{\mathrm{in}} - Q^{\mathrm{out}} n"
 
@@ -1613,7 +1619,7 @@ def cry_pbe_cstr(has_primary: bool, has_growth_dispersion: bool, has_aggregation
     if has_fragmentation:
         rhs += r" + V \left( B_{\mathrm{frag}} - D_{\mathrm{frag}} \right)"
 
-    return display_equation(lhs + r" &= " + rhs + ".")
+    return display_equation(lhs + r" &= " + rhs + terminator)
 
 
 def cry_pbe_dpfr(
@@ -1622,6 +1628,7 @@ def cry_pbe_dpfr(
     has_growth_dispersion: bool,
     has_aggregation: bool,
     has_fragmentation: bool,
+    terminator: str = ".",
 ):
     lhs = r"\frac{\partial n}{\partial t}"
     rhs = r"- v_{\mathrm{ax}} \frac{\partial n}{\partial z}"
@@ -1639,7 +1646,7 @@ def cry_pbe_dpfr(
     if has_fragmentation:
         rhs += r" + B_{\mathrm{frag}} - D_{\mathrm{frag}}"
 
-    return display_equation(lhs + r" &= " + rhs + ".")
+    return display_equation(lhs + r" &= " + rhs + terminator)
 
 
 def cry_volume_cstr():
@@ -1661,7 +1668,7 @@ def cry_mass_balance_cstr(has_primary: bool):
     return display_equation(conc_lhs + r" &= " + conc_rhs + ".")
 
 
-def cry_mass_balance_dpfr(has_primary: bool, has_axial_dispersion: bool):
+def cry_mass_balance_dpfr(has_primary: bool, has_axial_dispersion: bool, terminator: str = "."):
     lhs = r"\frac{\partial c}{\partial t}"
     rhs = r"- v_{\mathrm{ax}} \frac{\partial c}{\partial z}"
 
@@ -1671,7 +1678,7 @@ def cry_mass_balance_dpfr(has_primary: bool, has_axial_dispersion: bool):
     if has_primary:
         rhs += r" - \rho k_{v} \left( B_{0} x_{c}^{3} + 3 \int_{x_{c}}^{\infty} v_{G} n \, x^{2} \, \mathrm{d}x \right)"
 
-    return display_equation(lhs + r" &= " + rhs + ".")
+    return display_equation(lhs + r" &= " + rhs + terminator)
 
 
 def cry_pbe_bc_internal(has_primary: bool, has_growth_dispersion: bool):

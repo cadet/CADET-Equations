@@ -337,24 +337,33 @@ if model_type_ == "Crystallization":
             r"over the internal coordinate (particle size) $x\in(x_{0}, \infty)$ and axial position $z$."
         )
 
-    # PBE
+    # PBE. The equation is closed with a comma when the sentence continues below it.
+    bc_internal = eq.cry_pbe_bc_internal(has_primary, cry_model.has_growth_dispersion) if has_primary else ""
+    pbe_terminator = "," if bc_internal else "."
+
     write_and_save(r"The evolution of the number density is governed by the population balance equation")
     if cry_model.column_type == "CSTR":
-        write_and_save(eq.cry_pbe_cstr(has_primary, cry_model.has_growth_dispersion, has_agg, has_frag), as_latex=True)
+        write_and_save(
+            eq.cry_pbe_cstr(has_primary, cry_model.has_growth_dispersion, has_agg, has_frag, pbe_terminator),
+            as_latex=True,
+        )
     else:
         write_and_save(
             eq.cry_pbe_dpfr(
-                has_primary, cry_model.has_axial_dispersion, cry_model.has_growth_dispersion, has_agg, has_frag
+                has_primary,
+                cry_model.has_axial_dispersion,
+                cry_model.has_growth_dispersion,
+                has_agg,
+                has_frag,
+                pbe_terminator,
             ),
             as_latex=True,
         )
 
     # Boundary conditions for PBE (internal coordinate)
-    if has_primary:
-        bc_internal = eq.cry_pbe_bc_internal(has_primary, cry_model.has_growth_dispersion)
-        if bc_internal:
-            write_and_save("with nucleation kinetics and regularity boundary conditions in the internal coordinate")
-            write_and_save(bc_internal, as_latex=True)
+    if bc_internal:
+        write_and_save("with nucleation kinetics and regularity boundary conditions in the internal coordinate")
+        write_and_save(bc_internal, as_latex=True)
 
     # Boundary conditions for PBE (external coordinate, DPFR only)
     if cry_model.column_type == "DPFR":
@@ -368,7 +377,7 @@ if model_type_ == "Crystallization":
         write_and_save(r"Evolution of the reactor’s volume is governed by")
         write_and_save(eq.cry_volume_cstr(), as_latex=True)
     else:
-        write_and_save(eq.cry_mass_balance_dpfr(has_primary, cry_model.has_axial_dispersion), as_latex=True)
+        write_and_save(eq.cry_mass_balance_dpfr(has_primary, cry_model.has_axial_dispersion, ","), as_latex=True)
         write_and_save("with Danckwerts boundary conditions")
         write_and_save(eq.cry_solute_bc_dpfr(cry_model.has_axial_dispersion), as_latex=True)
 
@@ -388,7 +397,7 @@ if model_type_ == "Crystallization":
 
         if cry_model.has_secondary_nucleation:
             write_and_save("The secondary nucleation rate is")
-            write_and_save(display_equation(eq.cry_secondary_nucleation() + "."), as_latex=True)
+            write_and_save(display_equation(eq.cry_secondary_nucleation() + ","), as_latex=True)
             write_and_save("where the suspension density is")
             write_and_save(display_equation(eq.cry_suspension_density() + "."), as_latex=True)
 
