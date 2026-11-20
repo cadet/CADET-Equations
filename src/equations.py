@@ -1162,16 +1162,12 @@ def particle_transport(
         elif not has_binding:
             ret_term = (
                 r"""\begin{align}"""
-                + re.sub(
-                    r"{\\p}",
-                    r"{\\l}",
-                    particle_transport_homogeneous_liquid(
-                        has_binding,
-                        req_binding,
-                        has_mult_bnd_states,
-                        has_reaction_liquid=has_reaction_liquid,
-                        binding_model=binding_model,
-                    ),
+                + particle_transport_homogeneous_liquid(
+                    has_binding,
+                    req_binding,
+                    has_mult_bnd_states,
+                    has_reaction_liquid=has_reaction_liquid,
+                    binding_model=binding_model,
                 )
                 + r""". \end{align}"""
             )
