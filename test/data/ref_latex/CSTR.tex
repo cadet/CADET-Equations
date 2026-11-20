@@ -6,32 +6,35 @@
 
 General model assumptions:
 \begin{itemize}
-\item the fluid density and viscosity are constant in time and space (implies incompressibility);
-\item the fluid flow is laminar;
-\item the tank is operated under constant conditions (e.g., temperature, flow rate);
-\item the process is isothermal (i.e., there are no thermal effects);
-\item there is no solid phase in the tank (and thus no adsorption);
+    \item the fluid density and viscosity are constant in time and space (implies incompressibility);
+    \item the fluid flow is laminar;
+    \item the tank is operated under constant conditions (e.g., temperature, flow rate);
+    \item the process is isothermal (i.e., there are no thermal effects);
+    \item there is no solid phase in the tank (and thus no adsorption);
 \end{itemize}
-
 
 Specific model assumptions:
 \begin{itemize}
-\item the tank is spatially homogeneous (i.e., the spatial position inside the tank does not matter);
+    \item the tank is spatially homogeneous (i.e., the spatial position inside the tank does not matter);
 \end{itemize}
-
 
 \section*{Continuous Stirred Tank}
 Consider a continuous stirred tank filled with a liquid phase, and observed over a time interval $(0, T^{\mathrm{end}})$.
 The evolution of the bulk volume $V^{\mathrm{b}}\colon (0, T^{\mathrm{end}}) \to \mathbb{R}$ and the concentrations $c^{\mathrm{b}}_{i}\colon (0, T^{\mathrm{end}}) \to \mathbb{R}$ of the components in the tank is governed by
 \begin{align}
-\frac{\mathrm{d}V^{\mathrm{b}}}{\mathrm{d}t} &= Q^{\mathrm{in}} - Q^{\mathrm{out}},
+    \frac{\mathrm{d}V^{\mathrm{b}}}{\mathrm{d}t}
+    &= Q^{\mathrm{in}}
+        - Q^{\mathrm{out}},
     \\
-    \frac{\mathrm{d}}{\mathrm{d} t} \left( V^{\mathrm{b}} c^{\mathrm{b}}_{i} \right)&= Q^{\mathrm{in}} c^{\mathrm{in}}_{i} - Q^{\mathrm{out}} c^{\mathrm{b}}_{i},
+    \frac{\mathrm{d}}{\mathrm{d} t} \left( V^{\mathrm{b}} c^{\mathrm{b}}_{i} \right)
+    &= Q^{\mathrm{in}} c^{\mathrm{in}}_{i}
+        - Q^{\mathrm{out}} c^{\mathrm{b}}_{i},
 \end{align}
 Here, $t\in (0, T^{\mathrm{end}})$ is the time coordinate, $c^{\mathrm{b}}_{i}\colon (0, T^{\mathrm{end}}) \mapsto \mathbb{R}$ is the bulk liquid concentration, $Q^{\mathrm{in}}\geq 0$ is the volumetric flow rate into the tank, and $Q^{\mathrm{out}}\geq 0$ is the volumetric flow rate out of the tank.
 Consistent initial values for all solution variables (concentrations) are defined at $t = 0$.
 This model is a particular instance of the unified mathematical framework introduced in Breuer et al. (2026), which provides a rigorous justification of its assumptions and a systematic derivation of its governing equations.
 \begin{thebibliography}{99}
-\bibitem{breuer2026unified} Jan Michael Breuer and Samuel Leweke and Johannes Schmölder and Antonia Berger and Gregor J. Gassner and Eric von Lieres (2026). A unified and composable framework for modeling packed-bed liquid chromatography. arXiv preprint arXiv:2610.33269. DOI: https://doi.org/10.48550/arXiv.2610.33269.
+    \bibitem{breuer2026unified} Jan Michael Breuer and Samuel Leweke and Johannes Schmölder and Antonia Berger and Gregor J. Gassner and Eric von Lieres (2026). A unified and composable framework for modeling packed-bed liquid chromatography. arXiv preprint arXiv:2610.33269. DOI: https://doi.org/10.48550/arXiv.2610.33269.
 \end{thebibliography}
+
 \end{document}
