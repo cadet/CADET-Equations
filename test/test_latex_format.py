@@ -124,6 +124,20 @@ def test_operators_that_are_not_top_level_terms_are_left_alone(body):
 
 @pytest.mark.ci
 @pytest.mark.unit_test
+@pytest.mark.parametrize(
+    "row, expected",
+    [
+        (r"a &=b.", "    &= b."),  # after an alignment marker
+        (r"a &= -b.", "    &= -b."),  # a sign keeps its operand
+        (r"a &= b -c.", "        - c."),  # a term that opens a line
+    ],
+)
+def test_a_line_opening_with_an_operator_keeps_one_space_after_it(row, expected):
+    assert expected in normalize(r"\begin{align} " + row + r" \end{align}").split("\n")
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
 def test_second_alignment_column_keeps_its_markers():
     formatted = normalize(r"\begin{alignat}{2} a &= b & &\qquad\text{on }(0, T). \end{alignat}")
     assert formatted.split("\n") == [

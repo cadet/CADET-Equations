@@ -45,7 +45,12 @@ _COMMAND_RE = re.compile(r"\\(?:[A-Za-z]+|.)")
 
 # A segment body starting with one of these is glued to its alignment marker,
 # so that the marker and the operator read as one token (``&=``, ``&+``).
-_OPERATOR_RE = re.compile(r"^(?:[=+\-<>]|\\(?:leq|geq|le|ge|neq|approx|equiv|sim|propto)\b)")
+_OPERATORS = r"(?:[=+\-<>]|\\(?:leq|geq|le|ge|neq|approx|equiv|sim|propto)\b)"
+_OPERATOR_RE = re.compile(r"^" + _OPERATORS)
+
+# The operator a line opens with, together with any alignment markers in front
+# of it, so that every line starts ``&= x`` / ``+ x`` and never ``&=x`` / ``+x``.
+_LEADING_OPERATOR_RE = re.compile(r"^((?:&[ \t]*)*" + _OPERATORS + r")[ \t]*(?=\S)")
 
 # Words ending in a period that do not end a sentence.
 _ABBREVIATIONS = frozenset(
@@ -111,7 +116,8 @@ def _split_at_top_level(text: str, token: str) -> list[str]:
 # math environments
 # --------------------------------------------------------------------------- #
 def _tidy_math_line(line: str) -> str:
-    """Drop the space in front of trailing punctuation."""
+    """Put one space after the operator a line opens with, none before punctuation."""
+    line = _LEADING_OPERATOR_RE.sub(lambda match: match.group(1) + " ", line)
     return re.sub(r"\s+([,.;])", r"\1", line)
 
 
