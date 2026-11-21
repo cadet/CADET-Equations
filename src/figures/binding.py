@@ -70,7 +70,7 @@ def _langmuir(scene: Scene) -> None:
     """A Langmuir isotherm: the bound phase saturates at the capacity."""
     x, y = _ORIGIN
     plateau = _HEIGHT * 0.78
-    steepness = 5.5  # fixes how quickly the curve approaches the plateau
+    steepness = 11.0  # fixes how quickly the curve approaches the plateau
 
     curve = tuple(
         (
@@ -135,18 +135,20 @@ def _sma(scene: Scene) -> None:
     _bracket(scene, _SHIELDED_SITES[1], _SHIELDED_SITES[1], 0.85, r"\sigma_{i}")
     _bracket(scene, 0, _SITES - 1, 1.65, r"\Lambda")
 
-    # The protein arrives from the liquid; nu counter-ions are released.
+    # The protein arrives from the pore liquid and displaces nu counter-ions
+    # into it, so both arrows are drawn where the exchange happens.
+    top = bottom + 1.25
     scene.add(
-        Arrow((2.1, 4.9), (2.1, bottom + 1.45), Style.FLOW),
-        Label((2.25, 4.6), r"c^{\p}_{i}", Anchor.LEFT, size=0.95),
-        Arrow((_site_x(_SITES - 1) - 0.3, bottom + 0.4), (_site_x(_SITES - 1) - 0.3, 4.9), Style.FLOW),
-        Label((_site_x(_SITES - 1) - 0.15, 4.6), r"c^{\s}_{0}", Anchor.LEFT, size=0.95),
+        Arrow((left - 0.75, top + 1.3), (left - 0.75, top + 0.15), Style.FLOW),
+        Label((left - 0.9, top + 0.72), r"c^{\p}_{i}", Anchor.RIGHT, size=0.95),
+        Arrow((right + 0.75, top + 0.15), (right + 0.75, top + 1.3), Style.FLOW),
+        Label((right + 0.9, top + 0.72), r"c^{\p}_{0}", Anchor.LEFT, size=0.95),
     )
 
     # Named above the surface, so the swatch is not taken for a bound ion.
     scene.add(
-        Ellipse((4.4, 4.55), 0.19, 0.19, Style.SOLID),
-        Label((4.75, 4.55), "counter-ion", Anchor.LEFT, size=0.8, italic=False),
+        Ellipse((1.1, 4.95), 0.19, 0.19, Style.SOLID),
+        Label((1.45, 4.95), "counter-ion", Anchor.LEFT, size=0.8, italic=False),
     )
 
 

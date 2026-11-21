@@ -418,7 +418,8 @@ def test_non_limiting_film_diffusion_draws_an_equality_instead_of_a_flux():
     """Without a film resistance there is no film, and no transport step."""
     scene = build_particle_scene(FakeParticle(nonlimiting_filmDiff=True))
     labels = _labels(scene)
-    assert r"c^{\b} = c^{\p}" in labels
+    assert "no film resistance" in labels
+    assert "film diffusion" not in labels
     assert r"k^{\mathrm{f}}" not in labels
     assert not [item for item in scene.items if getattr(item, "style", None) is Style.FILM]
 
@@ -504,8 +505,10 @@ def test_only_langmuir_shows_a_capacity():
 def test_sma_names_the_quantities_of_its_binding_term():
     """The cartoon must use the same symbols as equations.binding_term_sma."""
     labels = _labels(build_binding_scene("SMA"))
-    for symbol in (r"\Lambda", r"\nu_{i}", r"\sigma_{i}", r"c^{\s}_{0}", r"c^{\p}_{i}"):
+    for symbol in (r"\Lambda", r"\nu_{i}", r"\sigma_{i}", r"c^{\s}_{i}", r"c^{\p}_{i}"):
         assert symbol in labels, symbol
+    # The displaced counter-ions go into the pore liquid, not onto the resin.
+    assert r"c^{\p}_{0}" in labels
 
 
 @pytest.mark.ci

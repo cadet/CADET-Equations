@@ -16,6 +16,8 @@ does not get the surface diffusion arrow.
 
 from __future__ import annotations
 
+import math
+
 from src.figures.scene import (
     Anchor,
     Arrow,
@@ -31,7 +33,9 @@ from src.figures.scene import (
 # %% Layout, in scene units
 
 _CENTRE = (3.3, 4.5)  # centre of the particle
-_RADIUS = 2.05  # its outer radius (half-thickness for a slab)
+_RADIUS = 2.05  # how far the particle reaches from its centre
+_SLAB = 0.68  # half-thickness of a slab, relative to _RADIUS
+_CAP = 0.3  # how far a cylinder's end face bulges, relative to _RADIUS
 _FILM = 0.42  # thickness of the liquid film around it
 _CORE = 0.42  # core radius, as a fraction of the particle radius
 
@@ -41,37 +45,39 @@ _BOX_HALF = 0.46  # half-height of a phase box
 _ROWS = (7.0, 4.5, 2.0)  # bulk, pore liquid, bound phase
 
 
-def _shape(scene: Scene, geometry: str, grow: float, style: Style, silhouette_only: bool = False) -> None:
+def _shape(scene: Scene, geometry: str, grow: float, style: Style) -> None:
     """Add the particle's outline, grown by ``grow``, in ``style``.
 
     One function for all three geometries keeps the film, the body and the core
-    in step: each is the same shape at a different size.  ``silhouette_only``
-    suppresses the interior edges, which is what the film layer wants: its far
-    cap would otherwise show through the particle drawn on top of it.
+    in step: each is the same shape at a different size.  All three reach the
+    same distance up and down, so that the figure keeps its proportions
+    whichever geometry the model uses, and all three are drawn with the
+    particle's radial coordinate running to the right.
     """
     x, y = _CENTRE
     radius = _RADIUS + grow
 
     if geometry == "Slab":
-        # Seen edge-on: resolved across its thickness, which is the half-width
-        # the radial coordinate runs along, and extended in the other direction.
-        half_height = radius * 1.3
-        scene.add(Rect((x - radius, y - half_height), 2 * radius, 2 * half_height, style))
+        # Seen edge-on: resolved across its thickness, which is what the radial
+        # coordinate runs along, and extended in the other direction.
+        half_width = _SLAB * _RADIUS + grow
+        scene.add(Rect((x - half_width, y - radius), 2 * half_width, 2 * radius, style))
     elif geometry == "Cylinder":
-        # Drawn with a short extrusion, so it is not taken for a sphere.
-        depth, cap_rx = 0.42 * radius, 0.34 * radius
+        # A squat cylinder standing on end, so that its radius -- the direction
+        # the model resolves -- is the horizontal one, as for the other two.
+        cap_ry = _CAP * radius
+        half_length = radius - cap_ry
         scene.add(
-            Rect((x - depth, y - radius), 2 * depth, 2 * radius, style, stroked=False),
-            Ellipse((x - depth, y), cap_rx, radius, style, stroked=not silhouette_only),
-            Ellipse((x + depth, y), cap_rx, radius, style, stroked=not silhouette_only),
-            Polyline(((x - depth, y + radius), (x + depth, y + radius)), style),
-            Polyline(((x - depth, y - radius), (x + depth, y - radius)), style),
+            Rect((x - radius, y - half_length), 2 * radius, 2 * half_length, style, stroked=False),
+            Ellipse((x, y - half_length), radius, cap_ry, style, stroked=False),
+            Ellipse((x, y + half_length), radius, cap_ry, style, stroked=False),
+            # Only the silhouette is stroked: the hidden half of the base would
+            # otherwise show through whatever is drawn on top of this shape.
+            EllipseArc((x, y - half_length), radius, cap_ry, 180, 360, style),
+            Polyline(((x - radius, y - half_length), (x - radius, y + half_length)), style),
+            Polyline(((x + radius, y - half_length), (x + radius, y + half_length)), style),
+            Ellipse((x, y + half_length), radius, cap_ry, style, filled=False),
         )
-        if silhouette_only:
-            scene.add(
-                EllipseArc((x - depth, y), cap_rx, radius, 90, 270, style),
-                EllipseArc((x + depth, y), cap_rx, radius, -90, 90, style),
-            )
     else:  # Sphere
         scene.add(Ellipse((x, y), radius, radius, style))
 
@@ -80,21 +86,73 @@ def _surface_point(geometry: str) -> tuple[float, float]:
     """Return a point on the particle surface for the boundary label's leader."""
     x, y = _CENTRE
     if geometry == "Slab":
-        return x + 0.5 * _RADIUS, y + 1.3 * _RADIUS
+        return x + _SLAB * _RADIUS, y + 0.72 * _RADIUS
     if geometry == "Cylinder":
-        return x + 0.3 * _RADIUS, y + _RADIUS
+        return x + _RADIUS, y + 0.3 * _RADIUS
     return x + 0.73 * _RADIUS, y + 0.68 * _RADIUS
 
 
 def _surface_x(geometry: str, grow: float = 0.0) -> float:
     """Return the x where the radial coordinate leaves the particle."""
     x = _CENTRE[0]
-    radius = _RADIUS + grow
     if geometry == "Slab":
-        return x + radius
+        return x + _SLAB * _RADIUS + grow
+    return x + _RADIUS + grow
+
+
+def _edge_x(geometry: str, offset: float, grow: float = 0.0) -> float:
+    """Return the x of the outline ``offset`` above or below the centre.
+
+    Arrows drawn inside the particle end here rather than at its widest point,
+    so that none of them pokes through a curved outline.
+    """
+    x = _CENTRE[0]
+    radius = _RADIUS + grow
+    height = abs(offset)
+
+    if geometry == "Slab":
+        return x + _SLAB * _RADIUS + grow
     if geometry == "Cylinder":
-        return x + 0.42 * radius + 0.34 * radius
-    return x + radius
+        cap_ry, half_length = _CAP * radius, radius - _CAP * radius
+        if height <= half_length:
+            return x + radius
+        rise = min((height - half_length) / cap_ry, 1.0)
+        return x + radius * math.sqrt(max(1.0 - rise * rise, 0.0))
+    return x + math.sqrt(max(radius * radius - height * height, 0.0))
+
+
+def _core_x(geometry: str) -> float:
+    """Return the x where the impermeable core ends."""
+    x = _CENTRE[0]
+    if geometry == "Slab":
+        return x + _CORE * _SLAB * _RADIUS
+    return x + _CORE * _RADIUS
+
+
+def _core_shape(scene: Scene, geometry: str) -> None:
+    """Draw the impermeable core, which is the particle thinned radially.
+
+    Only the resolved direction shrinks: a slab keeps its extent and a cylinder
+    its length, because the core of either is a thinner body of the same kind.
+    """
+    x, y = _CENTRE
+    radius = _CORE * _RADIUS
+
+    if geometry == "Slab":
+        half_width = _CORE * _SLAB * _RADIUS
+        scene.add(Rect((x - half_width, y - _RADIUS), 2 * half_width, 2 * _RADIUS, Style.CORE))
+    elif geometry == "Cylinder":
+        cap_ry, half_length = _CAP * radius, _RADIUS - _CAP * _RADIUS
+        scene.add(
+            Rect((x - radius, y - half_length), 2 * radius, 2 * half_length, Style.CORE, stroked=False),
+            Ellipse((x, y - half_length), radius, cap_ry, Style.CORE, stroked=False),
+            EllipseArc((x, y - half_length), radius, cap_ry, 180, 360, Style.CORE),
+            Polyline(((x - radius, y - half_length), (x - radius, y + half_length)), Style.CORE),
+            Polyline(((x + radius, y - half_length), (x + radius, y + half_length)), Style.CORE),
+            Ellipse((x, y + half_length), radius, cap_ry, Style.CORE),
+        )
+    else:  # Sphere
+        scene.add(Ellipse((x, y), radius, radius, Style.CORE))
 
 
 def _particle_body(scene: Scene, particle) -> None:
@@ -103,10 +161,10 @@ def _particle_body(scene: Scene, particle) -> None:
     limiting = not getattr(particle, "nonlimiting_filmDiff", False)
 
     if limiting:
-        _shape(scene, geometry, _FILM, Style.FILM, silhouette_only=True)
+        _shape(scene, geometry, _FILM, Style.FILM)
     _shape(scene, geometry, 0.0, Style.PORE)
     if getattr(particle, "has_core", False):
-        _shape(scene, geometry, -(1.0 - _CORE) * _RADIUS, Style.CORE)
+        _core_shape(scene, geometry)
 
     x, y = _CENTRE
     grown = _surface_x(geometry, _FILM if limiting else 0.0)
@@ -126,27 +184,30 @@ def _transport(scene: Scene, particle) -> None:
     x, y = _CENTRE
 
     if not getattr(particle, "nonlimiting_filmDiff", False):
-        # Film diffusion: the flux crosses the film into the particle. The
-        # label rides above the arrow so that wide geometries stay clear of
-        # the phase chain to the right.
+        # Film diffusion: the flux crosses the film and stops at the surface.
+        # The label rides above the arrow so that wide geometries stay clear
+        # of the phase chain to the right.
         outside = _surface_x(geometry, _FILM) + 0.75
+        lands = _edge_x(geometry, 0.95) + 0.04
         scene.add(
-            Arrow((outside, y + 0.95), (surface - 0.15, y + 0.95), Style.FLOW),
+            Arrow((outside, y + 0.95), (lands, y + 0.95), Style.FLOW),
             Label((0.5 * (outside + surface), y + 1.05), r"k^{\mathrm{f}}", Anchor.ABOVE, size=0.95),
         )
 
     if resolved:
         # Pore diffusion runs inwards along r; surface diffusion runs beside it
         # in the bound phase, which is why the two arrows are drawn in parallel.
-        inner = x + _CORE * _RADIUS + 0.1 if getattr(particle, "has_core", False) else x + 0.15
-        scene.add(
-            Arrow((surface - 0.25, y - 0.15), (inner, y - 0.15), Style.ANNOTATION, double=True),
-            Label(((surface + inner) / 2, y - 0.05), r"D^{\p}", Anchor.ABOVE, size=0.9),
-        )
-        if getattr(particle, "has_surfDiff", False):
+        inner = _core_x(geometry) + 0.1 if getattr(particle, "has_core", False) else x + 0.15
+        for offset, symbol, shown in (
+            (-0.15, r"D^{\p}", True),
+            (-1.0, r"D^{\s}", getattr(particle, "has_surfDiff", False)),
+        ):
+            if not shown:
+                continue
+            edge = _edge_x(geometry, offset) - 0.18
             scene.add(
-                Arrow((surface - 0.25, y - 1.0), (inner, y - 1.0), Style.ANNOTATION, double=True),
-                Label(((surface + inner) / 2, y - 0.9), r"D^{\s}", Anchor.ABOVE, size=0.9),
+                Arrow((edge, y + offset), (inner, y + offset), Style.ANNOTATION, double=True),
+                Label((0.5 * (edge + inner), y + offset + 0.1), symbol, Anchor.ABOVE, size=0.9),
             )
 
 
@@ -169,10 +230,12 @@ def _radial_coordinate(scene: Scene, particle) -> None:
         Label((surface + 0.7, baseline + 0.1), "r", Anchor.ABOVE_RIGHT),
     )
     if getattr(particle, "has_core", False):
-        core_x = x + _CORE * _RADIUS
+        # Written above the axis: on a slab the two ticks sit close together,
+        # and two labels below would run into each other.
+        core_x = _core_x(geometry)
         scene.add(
             Polyline(((core_x, baseline - tick), (core_x, baseline + tick)), Style.AXIS),
-            Label((core_x, baseline - tick - 0.05), r"P^{\mathrm{core}}", Anchor.BELOW, size=0.9),
+            Label((core_x, baseline + tick + 0.02), r"P^{\mathrm{core}}", Anchor.ABOVE, size=0.9),
         )
     else:
         scene.add(Label((x, baseline - tick - 0.05), "0", Anchor.BELOW, size=0.9, italic=False))
@@ -203,14 +266,14 @@ def _phase_chain(scene: Scene, particle) -> None:
         # No film resistance: the two concentrations are in equilibrium, which
         # is drawn as an identity rather than as a transport step.
         middle = 0.5 * (bulk + pore)
-        for offset in (-0.07, 0.07):
+        for offset in (-0.09, 0.09):
             scene.add(
                 Polyline(
-                    ((_CHAIN_X - 0.3, middle + offset), (_CHAIN_X + 0.3, middle + offset)),
+                    ((_CHAIN_X - 0.22, middle + offset), (_CHAIN_X + 0.22, middle + offset)),
                     Style.ANNOTATION,
                 )
             )
-        scene.add(Label((_CHAIN_X + 0.5, middle), r"c^{\b} = c^{\p}", Anchor.LEFT, size=0.85))
+        scene.add(Label((_CHAIN_X - 0.4, middle), "no film resistance", Anchor.RIGHT, size=0.78, italic=False))
     else:
         scene.add(
             Arrow((_CHAIN_X, bulk - _BOX_HALF - 0.1), (_CHAIN_X, pore + _BOX_HALF + 0.1), Style.FLOW, double=True),
