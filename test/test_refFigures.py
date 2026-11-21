@@ -35,6 +35,10 @@ FIGURE_MODELS = [
     "LRMP_noBnd",
     "GRM",
     "GRM_reqBnd",
+    # Binding models with a figure of their own
+    "GRM_dynLin",
+    "GRM_Langmuir",
+    "GRM_SMA",
     "GRMsd",
     "GRMsd_PSD",
     "GRMsd_parCore",

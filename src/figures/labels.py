@@ -38,6 +38,7 @@ _SYMBOLS = {
     r"\phi": "φ",
     r"\varphi": "φ",
     r"\Gamma": "Γ",
+    r"\Lambda": "Λ",
     r"\Omega": "Ω",
     r"\ell": "ℓ",
     r"\partial": "∂",
@@ -60,6 +61,7 @@ _SYMBOLS = {
 _UPRIGHT_SYMBOLS = {
     r"\Delta",
     r"\Gamma",
+    r"\Lambda",
     r"\Omega",
     r"\nabla",
     r"\infty",

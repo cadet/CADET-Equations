@@ -14,7 +14,9 @@ from types import SimpleNamespace
 
 import pytest
 
-from src.figures import column_figure, particle_figures
+from src.equations import BINDING_MODELS
+from src.figures import binding_figures, column_figure, particle_figures
+from src.figures.binding import DRAWABLE, build_binding_scene
 from src.figures.column import _BODIES, build_column_scene
 from src.figures.labels import NORMAL, SUBSCRIPT, SUPERSCRIPT, Run, label_runs, label_text
 from src.figures.particle import build_particle_scene
@@ -40,6 +42,7 @@ class FakeParticle:
     req_binding: bool = False
     has_surfDiff: bool = False
     nonlimiting_filmDiff: bool = False
+    binding_model: str = "Arbitrary"
 
 
 def _make_column(**overrides):
@@ -395,6 +398,77 @@ def test_one_particle_figure_is_produced_per_distinct_type():
     # Distinct scene names keep the arrow-head ids of the two figures apart.
     assert 'id="particle-1-head-flow"' in figures[0]
     assert 'id="particle-2-head-flow"' in figures[1]
+
+
+# %% Binding models
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+@pytest.mark.parametrize("binding_model", ["Linear", "Langmuir", "SMA"])
+def test_every_drawable_binding_model_builds_a_scene(binding_model):
+    assert build_binding_scene(binding_model).items
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_an_arbitrary_isotherm_has_no_figure():
+    """There is nothing characteristic to draw for an unspecified isotherm."""
+    assert build_binding_scene("Arbitrary") is None
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_the_drawable_models_are_a_subset_of_the_models_on_offer():
+    assert set(DRAWABLE) <= set(BINDING_MODELS)
+    assert all(build_binding_scene(model) is not None for model in DRAWABLE)
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_the_isotherms_are_plotted_against_the_two_concentrations():
+    for binding_model in ("Linear", "Langmuir"):
+        labels = _labels(build_binding_scene(binding_model))
+        assert r"c^{\p}" in labels, binding_model
+        assert r"c^{\s}" in labels, binding_model
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_only_langmuir_shows_a_capacity():
+    assert r"q^{\mathrm{max}}" in _labels(build_binding_scene("Langmuir"))
+    assert r"q^{\mathrm{max}}" not in _labels(build_binding_scene("Linear"))
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_sma_names_the_quantities_of_its_binding_term():
+    """The cartoon must use the same symbols as equations.binding_term_sma."""
+    labels = _labels(build_binding_scene("SMA"))
+    for symbol in (r"\Lambda", r"\nu_{i}", r"\sigma_{i}", r"c^{\s}_{0}", r"c^{\p}_{i}"):
+        assert symbol in labels, symbol
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_a_binding_figure_is_produced_only_for_a_particle_that_binds():
+    binding = binding_figures(_make_column(particles=[FakeParticle(has_binding=False)]))
+    assert binding == [None]
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_binding_figures_run_parallel_to_the_particle_figures():
+    column = _make_column(
+        particles=[
+            FakeParticle(binding_model="Langmuir"),
+            FakeParticle(binding_model="Arbitrary", has_core=True),
+        ]
+    )
+    figures = binding_figures(column)
+    assert len(figures) == len(particle_figures(column)) == 2
+    assert figures[0] is not None and 'id="binding-1-' in figures[0]
+    assert figures[1] is None  # Arbitrary has no figure
 
 
 # %% SVG rendering

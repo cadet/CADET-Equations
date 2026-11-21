@@ -458,6 +458,8 @@ _BEAD_SPOTS = tuple((0.06 + 0.127 * spot, (0.76, 0.26, 0.51)[spot % 3]) for spot
 
 def _particle_types(model) -> list:
     """Return the distinct particle types of ``model``, in display order."""
+    # Defined here rather than imported from the package root, which imports
+    # this module.
     counts = getattr(model, "par_type_counts", None)
     if counts:
         return list(counts)

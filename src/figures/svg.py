@@ -246,8 +246,16 @@ def _label_placement(anchor: Anchor) -> tuple[str, str, float, float]:
     return horizontal[0], vertical[0], horizontal[1], vertical[1]
 
 
-def render_svg(scene: Scene, var_format: str = "CADET", max_width: str = "46rem") -> str:
+#: A scene this many units wide is displayed at _REFERENCE_MAX. Narrower
+#: scenes are displayed proportionally smaller so that text is the same size
+#: in every figure on the page, rather than growing as the drawing shrinks.
+_REFERENCE_WIDTH, _REFERENCE_MAX = 13.0, 46.0
+
+
+def render_svg(scene: Scene, var_format: str = "CADET", max_width: str | None = None) -> str:
     """Return ``scene`` as a standalone, responsive SVG element."""
+    if max_width is None:
+        max_width = _number(_REFERENCE_MAX * scene.width / _REFERENCE_WIDTH) + "rem"
     renderer = _Renderer(scene, var_format)
 
     body = []

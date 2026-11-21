@@ -7,10 +7,17 @@ built in two steps -- a builder assembles a backend-independent
 that a TikZ renderer can be added later without rewriting the figures.
 """
 
+from src.figures.binding import build_binding_scene
 from src.figures.column import build_column_scene
 from src.figures.particle import build_particle_scene
 from src.figures.scene import Scene
 from src.figures.svg import render_svg
+
+
+def particle_types(column_model) -> list:
+    """Return the distinct particle types of ``column_model``, in order."""
+    counts = getattr(column_model, "par_type_counts", None)
+    return list(counts) if counts else list(getattr(column_model, "particle_models", []) or [])
 
 
 def column_figure(column_model, var_format: str = "CADET") -> str:
@@ -24,18 +31,38 @@ def particle_figures(column_model, var_format: str = "CADET") -> list[str]:
     Each figure gets its own scene name because the renderer derives its arrow
     head ids from it and several figures share one page.
     """
-    types = list(getattr(column_model, "par_type_counts", None) or getattr(column_model, "particle_models", []) or [])
     return [
         render_svg(build_particle_scene(particle, f"particle-{index + 1}"), var_format)
-        for index, particle in enumerate(types)
+        for index, particle in enumerate(particle_types(column_model))
     ]
+
+
+def binding_figures(column_model, var_format: str = "CADET") -> list[str | None]:
+    """Return the binding figure of each particle type, or ``None`` for one
+    whose binding model has no characteristic picture.
+
+    The list runs parallel to :func:`particle_figures`, so a caller can show
+    each particle together with the binding it carries.
+    """
+    figures: list[str | None] = []
+    for index, particle in enumerate(particle_types(column_model)):
+        scene = (
+            build_binding_scene(getattr(particle, "binding_model", "Arbitrary"), f"binding-{index + 1}")
+            if getattr(particle, "has_binding", False)
+            else None
+        )
+        figures.append(None if scene is None else render_svg(scene, var_format))
+    return figures
 
 
 __all__ = [
     "Scene",
+    "binding_figures",
+    "build_binding_scene",
     "build_column_scene",
     "build_particle_scene",
     "column_figure",
     "particle_figures",
+    "particle_types",
     "render_svg",
 ]
