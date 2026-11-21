@@ -7,8 +7,8 @@ different part of the model:
 layer                  driven by
 =====================  ====================================================
 body                   ``column_type`` and, for the tank, ``resolution``
+flow path              ``has_axial_dispersion``
 coordinate arrows      which coordinates the resolution resolves
-dispersion inset       ``has_axial_dispersion`` (1D only)
 particle beads         ``par_type_counts`` and each type's film diffusion
 =====================  ====================================================
 
@@ -23,7 +23,8 @@ so a figure in the app and a figure in a paper show the same object.
 from __future__ import annotations
 
 import math
-from dataclasses import dataclass
+from collections.abc import Callable
+from dataclasses import dataclass, field
 
 from src.figures.scene import (
     Anchor,
@@ -31,6 +32,7 @@ from src.figures.scene import (
     Ellipse,
     EllipseArc,
     Label,
+    Point,
     Polyline,
     Rect,
     Scene,
@@ -41,18 +43,25 @@ from src.figures.scene import (
 
 _LEFT, _RIGHT = 2.2, 10.2  # the straight part of a horizontal body
 _AXIS_Y = 4.5  # height of the body's axis of symmetry
-_BODY_RY = 1.75  # half-height of a cylindrical body
+_BODY_RY = 1.95  # half-height of a cylindrical body
 _PERSPECTIVE = 0.355  # how far an end cap bulges out, relative to its height
-_SAMPLES = 48  # points used to approximate a smooth wall
+_SAMPLES = 48  # points used to approximate a smooth wall or a flow path
+
+_CORRIDOR = 0.62  # half-height of the bead-free lane the flow path runs in
+_WAVE = 0.46  # amplitude of a dispersed (meandering) flow path
+_WAVELENGTH = 2.3  # distance it takes to complete one meander
+_LEAD = 1.5  # how far a flow path reaches beyond the body
 
 
 @dataclass
 class _Body:
     """Where the annotation layers may attach to a drawn body.
 
-    ``inlet_x`` and ``outlet_x`` are where flow arrows meet the silhouette,
-    ``beds`` are the rectangles (x0, y0, x1, y1) that beads may occupy -- a
-    radial column's bed is an annulus and so contributes two of them --
+    ``inlet_x`` and ``outlet_x`` are where the flow path meets the silhouette
+    and ``wave`` is the stretch of it that runs through the packing, so that a
+    dispersed path meanders there and nowhere else.  ``bed_spans`` are the
+    x-ranges the packing occupies and ``bed_profile`` gives its half-height
+    about ``bed_axis``, which together keep beads inside a body of any shape.
     ``flow_symbol`` and ``flow_ticks`` name the coordinate that runs along the
     flow, and ``dispersion`` is the symbol of the flow-directional dispersion
     coefficient.
@@ -60,23 +69,36 @@ class _Body:
 
     top: float
     bottom: float
-    beds: tuple[tuple[float, float, float, float], ...]
+    bed_spans: tuple[tuple[float, float], ...] = ()
+    bed_profile: Callable[[float], float] = field(default=lambda x: 0.0)
+    bed_axis: float = _AXIS_Y
+    corridor: float = _CORRIDOR
     inlet_x: float = _LEFT
     outlet_x: float = _RIGHT
+    wave: tuple[float, float] = (_LEFT, _RIGHT)
     flow_symbol: str = "z"
     flow_ticks: tuple[str, str] = ("0", r"L^{\b}")
     dispersion: str = r"D^{\mathrm{ax}}"
-    draws_own_flow_arrows: bool = False
+    draws_own_flow: bool = False
     has_wall: bool = True
-    wall_x: float = _LEFT + 0.78 * (_RIGHT - _LEFT)
+    wall_at: Point = (_LEFT + 0.78 * (_RIGHT - _LEFT), _AXIS_Y + _BODY_RY)
+    wall_side: float = 1.0  # -1 points the wall label at the body from below
+    headroom: float = 1.65  # space above the body, for what is drawn there
+    footroom: float = 0.95  # space below it, before the coordinate axis
     bead_scale: float = 1.0  # shrinks the beads where the bed is cramped
-    xmin: float = 0.0  # left edge of the frame, for annotations beside the body
-    domain_at: tuple[float, float] | None = None  # where to write the bulk domain
+    xmin: float = 0.0  # left edge of the frame
+    xmax: float = 13.0  # right edge of the frame
+    domain_at: Point = (_LEFT + 1.25, _AXIS_Y - 1.2)
 
 
 def _cap_rx(ry: float) -> float:
     """Horizontal bulge of an end cap of half-height ``ry``."""
     return _PERSPECTIVE * ry
+
+
+def _constant(value: float) -> Callable[[float], float]:
+    """Return a bed profile of constant half-height."""
+    return lambda x: value
 
 
 # %% Bodies
@@ -102,19 +124,27 @@ def _axial_cylinder(scene: Scene, model) -> _Body:
     return _Body(
         top=top,
         bottom=bottom,
-        beds=((_LEFT + 1.5, bottom + 0.3, _RIGHT - 0.3, top - 0.3),),
+        bed_spans=((_LEFT + 1.8, _RIGHT - 0.85),),
+        bed_profile=_constant(_BODY_RY - 0.22),
         inlet_x=_LEFT - rx,
         outlet_x=_RIGHT + rx,
+        wave=(_LEFT + 0.3, _RIGHT - rx - 0.15),
+        wall_at=(_LEFT + 0.78 * (_RIGHT - _LEFT), top),
+        domain_at=(_LEFT + 1.2, _AXIS_Y - 1.3),
     )
 
 
 def _frustum(scene: Scene, model) -> _Body:
-    """A conical frustum: the cross section grows along the flow."""
+    """A conical frustum: the cross section narrows along the flow."""
     del model
-    inlet_ry, outlet_ry = 1.15, 1.95
+    inlet_ry, outlet_ry = 2.3, 1.45
     inlet_rx, outlet_rx = _cap_rx(inlet_ry), _cap_rx(outlet_ry)
-    top, bottom = _AXIS_Y + outlet_ry, _AXIS_Y - outlet_ry
+    top, bottom = _AXIS_Y + inlet_ry, _AXIS_Y - inlet_ry
     left_centre, right_centre = (_LEFT, _AXIS_Y), (_RIGHT, _AXIS_Y)
+    length = _RIGHT - _LEFT
+
+    def radius_at(x: float) -> float:
+        return inlet_ry + (outlet_ry - inlet_ry) * (x - _LEFT) / length
 
     silhouette = (
         (_LEFT, _AXIS_Y + inlet_ry),
@@ -133,27 +163,33 @@ def _frustum(scene: Scene, model) -> _Body:
         Ellipse(right_centre, outlet_rx, outlet_ry, Style.WALL, filled=False),
     )
 
-    # The two radii are what distinguishes a frustum from a cylinder.
+    # The two radii are what distinguishes a frustum from a cylinder. Each is
+    # labelled above its end cap, where nothing else competes for the space.
     scene.add(
-        # The inlet radius points down, clear of the inlet boundary label.
-        Arrow(left_centre, (_LEFT, _AXIS_Y - inlet_ry), Style.ANNOTATION),
-        Label((_LEFT - 0.1, _AXIS_Y - 0.55 * inlet_ry), r"P^{0}", Anchor.RIGHT, size=0.9),
+        Arrow(left_centre, (_LEFT, _AXIS_Y + inlet_ry), Style.ANNOTATION),
+        Label((_LEFT, _AXIS_Y + inlet_ry + 0.12), r"P^{0}", Anchor.ABOVE, size=0.9),
         Arrow(right_centre, (_RIGHT, _AXIS_Y + outlet_ry), Style.ANNOTATION),
-        Label((_RIGHT + 0.12, _AXIS_Y + 0.55 * outlet_ry), r"P^{L^{\b}}", Anchor.LEFT, size=0.9),
+        Label((_RIGHT, _AXIS_Y + outlet_ry + 0.12), r"P^{L^{\b}}", Anchor.ABOVE, size=0.9),
     )
     return _Body(
         top=top,
         bottom=bottom,
-        beds=((_LEFT + 1.4, _AXIS_Y - inlet_ry + 0.25, _RIGHT - 0.45, _AXIS_Y + inlet_ry - 0.25),),
+        bed_spans=((_LEFT + 1.75, _RIGHT - 0.55),),
+        bed_profile=lambda x: radius_at(x) - 0.22,
+        corridor=0.58,
+        bead_scale=0.86,
         inlet_x=_LEFT - inlet_rx,
         outlet_x=_RIGHT + outlet_rx,
+        wave=(_LEFT + 0.35, _RIGHT - outlet_rx - 0.15),
+        wall_at=(_LEFT + 0.55 * length, _AXIS_Y + radius_at(_LEFT + 0.55 * length)),
+        domain_at=(_LEFT + 1.15, _AXIS_Y - 1.55),
     )
 
 
 def _generalized_radius(fraction: float) -> float:
     """Half-height of the generalized body at ``fraction`` along the flow."""
     # A venturi-like waist makes "the cross section varies smoothly" obvious.
-    return 1.85 - 0.8 * math.exp(-(((fraction - 0.45) / 0.23) ** 2))
+    return 2.05 - 0.75 * math.exp(-(((fraction - 0.45) / 0.23) ** 2))
 
 
 def _generalized(scene: Scene, model) -> _Body:
@@ -186,80 +222,126 @@ def _generalized(scene: Scene, model) -> _Body:
     scene.add(
         EllipseArc((waist_x, _AXIS_Y), _cap_rx(waist_ry), waist_ry, -90, 90, Style.HIDDEN),
         EllipseArc((waist_x, _AXIS_Y), _cap_rx(waist_ry), waist_ry, 90, 270, Style.HIDDEN),
-        Label((waist_x, _AXIS_Y - waist_ry - 0.1), "A(x)", Anchor.BELOW, size=0.9),
+        Label((waist_x, _AXIS_Y - waist_ry - 0.12), "A(x)", Anchor.BELOW, size=0.9),
     )
     top = _AXIS_Y + max(radius for _, radius in wall)
     return _Body(
         top=top,
         bottom=2 * _AXIS_Y - top,
-        beds=((_LEFT + 1.4, _AXIS_Y - 0.6, _RIGHT - 0.45, _AXIS_Y + 0.6),),
-        bead_scale=0.85,
+        bed_spans=((_LEFT + 1.75, _RIGHT - 0.6),),
+        bed_profile=lambda x: _generalized_radius((x - _LEFT) / length) - 0.24,
+        corridor=0.58,
+        bead_scale=0.84,
         inlet_x=_LEFT - inlet_rx,
         outlet_x=_RIGHT + outlet_rx,
+        wave=(_LEFT + 0.35, _RIGHT - outlet_rx - 0.15),
         flow_symbol="x",
         flow_ticks=(r"x^{\mathrm{in}}", r"x^{\mathrm{out}}"),
         dispersion=r"D^{\mathrm{x}}",
+        wall_at=(_LEFT + 0.82 * length, _AXIS_Y + _generalized_radius(0.82)),
+        domain_at=(_LEFT + 1.1, _AXIS_Y - 1.5),
     )
+
+
+# %% Radial flow column
+
+
+#: Layout of the upright annular body, in scene units.
+_RADIAL_OUTER, _RADIAL_INNER, _RADIAL_HALF_HEIGHT = 2.45, 0.5, 2.5
 
 
 def _radial_cylinder(scene: Scene, model) -> _Body:
-    """A hollow cylinder: the flow runs radially inwards into the channel."""
+    """An annular column standing upright, as in ``cylinder-annular.tex``.
+
+    The feed enters the central channel -- the model's inflow boundary sits at
+    the inner radius -- and spreads radially outwards through the packing, so
+    the two halves of the drawing are mirror images of one flow path.
+    """
     del model
-    rx, channel_ry = _cap_rx(_BODY_RY), 0.62
-    channel_rx = _cap_rx(channel_ry)
-    top, bottom = _AXIS_Y + _BODY_RY, _AXIS_Y - _BODY_RY
-    left_centre, right_centre = (_LEFT, _AXIS_Y), (_RIGHT, _AXIS_Y)
+    centre_x = 0.5 * (_LEFT + _RIGHT)
+    outer, inner, half_height = _RADIAL_OUTER, _RADIAL_INNER, _RADIAL_HALF_HEIGHT
+    top, bottom = _AXIS_Y + half_height, _AXIS_Y - half_height
+    cap_ry = _PERSPECTIVE * outer
+    inner_cap_ry = cap_ry * inner / outer
 
     scene.add(
-        Ellipse(left_centre, rx, _BODY_RY, Style.BULK, stroked=False),
-        Rect((_LEFT, bottom), _RIGHT - _LEFT, 2 * _BODY_RY, Style.BULK, stroked=False),
-        Ellipse(right_centre, rx, _BODY_RY, Style.BULK_FACE, stroked=False),
-        # The collecting channel is empty and open at the near face.
-        Ellipse(right_centre, channel_rx, channel_ry, Style.VOID, stroked=False),
-        EllipseArc(left_centre, rx, _BODY_RY, 90, 270, Style.WALL),
-        EllipseArc(left_centre, rx, _BODY_RY, -90, 90, Style.HIDDEN),
-        Polyline(((_LEFT, top), (_RIGHT, top)), Style.WALL),
-        Polyline(((_LEFT, bottom), (_RIGHT, bottom)), Style.WALL),
-        # The channel wall runs the length of the column, hidden by the bed.
-        Polyline(((_LEFT, _AXIS_Y + channel_ry), (_RIGHT, _AXIS_Y + channel_ry)), Style.HIDDEN),
-        Polyline(((_LEFT, _AXIS_Y - channel_ry), (_RIGHT, _AXIS_Y - channel_ry)), Style.HIDDEN),
-        Ellipse(right_centre, rx, _BODY_RY, Style.WALL, filled=False),
-        Ellipse(right_centre, channel_rx, channel_ry, Style.WALL, filled=False),
+        Rect((centre_x - outer, bottom), 2 * outer, 2 * half_height, Style.BULK, stroked=False),
+        Ellipse((centre_x, bottom), outer, cap_ry, Style.BULK, stroked=False),
+        Ellipse((centre_x, top), outer, cap_ry, Style.BULK_FACE, stroked=False),
+        # The channel is empty and opens at the top face.
+        Ellipse((centre_x, top), inner, inner_cap_ry, Style.VOID, stroked=False),
+        # Base: the near half of the rim is drawn solid, the far half dashed.
+        EllipseArc((centre_x, bottom), outer, cap_ry, 180, 360, Style.WALL),
+        EllipseArc((centre_x, bottom), outer, cap_ry, 0, 180, Style.HIDDEN),
+        EllipseArc((centre_x, bottom), inner, inner_cap_ry, 0, 360, Style.HIDDEN),
+        Polyline(((centre_x - outer, bottom), (centre_x - outer, top)), Style.WALL),
+        Polyline(((centre_x + outer, bottom), (centre_x + outer, top)), Style.WALL),
+        # The channel wall runs the full height, hidden by the packing.
+        Polyline(((centre_x - inner, bottom), (centre_x - inner, top)), Style.HIDDEN),
+        Polyline(((centre_x + inner, bottom), (centre_x + inner, top)), Style.HIDDEN),
+        Ellipse((centre_x, top), outer, cap_ry, Style.WALL, filled=False),
+        Ellipse((centre_x, top), inner, inner_cap_ry, Style.WALL, filled=False),
     )
-
-    # Feed enters over the whole outer surface and leaves through the channel.
-    for fraction in (0.3, 0.52, 0.74):
-        x = _LEFT + fraction * (_RIGHT - _LEFT)
-        scene.add(
-            Arrow((x, top + 1.0), (x, top + 0.12), Style.FLOW),
-            Arrow((x, bottom - 1.0), (x, bottom - 0.12), Style.FLOW),
-        )
-    scene.add(
-        Arrow((_RIGHT + rx + 0.15, _AXIS_Y), (_RIGHT + rx + 1.35, _AXIS_Y), Style.FLOW),
-        Label((_LEFT + 0.3 * (_RIGHT - _LEFT) - 0.25, top + 0.55), r"\Gamma^{\mathrm{in}}", Anchor.RIGHT),
-        Label((_RIGHT + rx + 1.45, _AXIS_Y + 0.22), r"\Gamma^{\mathrm{out}}", Anchor.ABOVE),
-    )
-
-    # The bed is the annulus, so beads go in the two bands around the channel.
-    margin = 0.24
     return _Body(
-        top=top + 1.0,
-        bottom=bottom - 1.0,
-        beds=(
-            (_LEFT + 1.5, _AXIS_Y + channel_ry + margin, _RIGHT - 0.4, top - margin),
-            (_LEFT + 1.5, bottom + margin, _RIGHT - 0.4, _AXIS_Y - channel_ry - margin),
+        top=top + cap_ry,
+        bottom=bottom - cap_ry,
+        bed_spans=(
+            (centre_x - outer + 0.18, centre_x - inner - 0.18),
+            (centre_x + inner + 0.18, centre_x + outer - 0.18),
         ),
-        inlet_x=_LEFT - rx,
-        outlet_x=_RIGHT + rx,
+        bed_profile=_constant(half_height - 0.75),
+        corridor=0.6,
+        bead_scale=0.74,
+        inlet_x=centre_x - outer,
+        outlet_x=centre_x + outer,
         flow_symbol=r"\rho",
         flow_ticks=(r"P^{\mathrm{inner}}", r"P^{\mathrm{outer}}"),
         dispersion=r"D^{\mathrm{rad}}",
-        draws_own_flow_arrows=True,
-        bead_scale=0.74,
-        xmin=-1.6,
-        # the channel is not part of the bed, so the label goes in the annulus
-        domain_at=(_LEFT + 1.15, _AXIS_Y - channel_ry - 0.56),
+        draws_own_flow=True,
+        # Both end faces are impermeable; the wall is pointed out on the base
+        # so that it is not confused with the domain on the open top face.
+        wall_at=(centre_x - 0.55 * outer, bottom - 0.835 * cap_ry),
+        wall_side=-1.0,
+        headroom=1.35,  # the feed arrives from above the open channel
+        footroom=1.45,  # and the wall is named below the base
+        xmin=1.8,
+        xmax=10.7,
+        domain_at=(centre_x - 0.6 * outer, top + 0.02),
     )
+
+
+def _radial_flow(scene: Scene, body: _Body, dispersed: bool) -> None:
+    """Draw the feed into the channel and the two outward flow paths."""
+    centre_x = 0.5 * (body.inlet_x + body.outlet_x)
+    outer, inner = _RADIAL_OUTER, _RADIAL_INNER
+    cap_ry = _PERSPECTIVE * outer
+    top = body.top - cap_ry
+    mouth = top + cap_ry * inner / outer
+
+    scene.add(
+        Arrow((centre_x, mouth + 1.5), (centre_x, mouth + 0.08), Style.FLOW),
+        Label((centre_x - 0.18, mouth + 1.0), r"\Gamma^{\mathrm{in}}", Anchor.RIGHT),
+        Label((centre_x + 0.18, mouth + 1.0), "Flow", Anchor.LEFT, size=0.85, italic=False),
+    )
+    for side in (-1.0, 1.0):
+        scene.add(
+            Polyline(
+                _flow_points(
+                    (centre_x + side * inner, _AXIS_Y),
+                    (centre_x + side * (outer + _LEAD), _AXIS_Y),
+                    (centre_x + side * (inner + 0.2), centre_x + side * (outer - 0.1)),
+                    dispersed,
+                ),
+                Style.FLOW,
+                arrow=True,
+            )
+        )
+    scene.add(Label((centre_x + outer + 0.78, _AXIS_Y + 0.24), r"\Gamma^{\mathrm{out}}", Anchor.ABOVE))
+    if dispersed:
+        scene.add(Label((centre_x + outer + 0.78, _AXIS_Y - 0.3), body.dispersion, Anchor.BELOW, size=0.85))
+
+
+# %% Tank
 
 
 def _tank(scene: Scene, model) -> _Body:
@@ -281,12 +363,12 @@ def _tank(scene: Scene, model) -> _Body:
 
     # Stirrer: the well-mixed assumption is what the tank model is about. It
     # sits low in the vessel so that the beads above it stay legible.
-    blade_y, blade_half = bottom + 0.7, 0.7
+    blade_y, blade_half = bottom + 0.6, 0.7
     scene.add(
         Polyline(((centre_x, top + 0.95), (centre_x, blade_y)), Style.WALL),
         Polyline(((centre_x - blade_half, blade_y + 0.2), (centre_x + blade_half, blade_y - 0.2)), Style.WALL),
         Polyline(((centre_x - blade_half, blade_y - 0.2), (centre_x + blade_half, blade_y + 0.2)), Style.WALL),
-        EllipseArc((centre_x, blade_y + 0.8), 1.3, 0.4, 15, 300, Style.ANNOTATION, arrow=True),
+        EllipseArc((centre_x, blade_y + 0.75), 1.3, 0.4, 15, 300, Style.ANNOTATION, arrow=True),
     )
 
     # Both nozzles sit on the front wall, below the rim and above the base.
@@ -305,13 +387,23 @@ def _tank(scene: Scene, model) -> _Body:
             scene.add(Polyline(((screen_x + offset, outlet_y - 0.4), (screen_x + offset, outlet_y + 0.4)), Style.WALL))
         scene.add(Label((screen_x, outlet_y - 0.5), "filter", Anchor.BELOW, size=0.8, italic=False))
 
+    bed_low, bed_high = blade_y + 1.25, top - rim_ry - 0.4
     return _Body(
         top=top + 0.95,
         bottom=bottom - rim_ry,
-        beds=((centre_x - half_width + 0.4, blade_y + 1.35, centre_x + half_width - 0.4, top - rim_ry - 0.5),),
-        draws_own_flow_arrows=True,
+        bed_spans=((centre_x - half_width + 0.5, centre_x + half_width - 0.5),),
+        bed_profile=_constant(0.5 * (bed_high - bed_low)),
+        bed_axis=0.5 * (bed_low + bed_high),
+        # A suspension has no flow path to keep clear, so the beads may sit
+        # anywhere in the bed, across its middle included.
+        corridor=-0.45,
+        draws_own_flow=True,
         has_wall=False,  # a homogeneous tank has no wall boundary condition
-        bead_scale=0.78,
+        headroom=0.4,
+        footroom=0.45,
+        bead_scale=0.72,
+        xmin=2.0,
+        xmax=11.0,
     )
 
 
@@ -327,22 +419,66 @@ _BODIES = {
 # %% Annotation layers
 
 
-def _flow_arrows(scene: Scene, body: _Body) -> None:
-    """Draw the inlet and outlet arrows of a body with through-flow."""
+def _flow_points(
+    start: Point,
+    end: Point,
+    wave: tuple[float, float],
+    dispersed: bool,
+) -> tuple[Point, ...]:
+    """Return the points of a flow path from ``start`` to ``end``.
+
+    Pure convection carries a sharp front straight through the column; with
+    dispersion the path meanders around the packing instead, which is the one
+    difference between the two transport equations a drawing can show.
+    """
+    y = start[1]
+    if not dispersed:
+        return (start, end)
+
+    wave_from, wave_to = wave
+    span = wave_to - wave_from
+    # A whole number of meanders, each about one wavelength long, so that the
+    # path rejoins the straight stretch at the far end of the packing.
+    meanders = max(1.0, round(abs(span) / _WAVELENGTH))
+    amplitude = min(_WAVE, 0.22 * abs(span) / meanders)
+
+    points = [start, (wave_from, y)]
+    for index in range(1, _SAMPLES + 1):
+        fraction = index / _SAMPLES
+        # Tapered at both ends so the meander grows out of the straight path.
+        envelope = min(1.0, 4.0 * min(fraction, 1.0 - fraction))
+        points.append(
+            (
+                wave_from + fraction * span,
+                y + amplitude * envelope * math.sin(2.0 * math.pi * meanders * fraction),
+            )
+        )
+    points.append(end)
+    return tuple(points)
+
+
+def _flow_path(scene: Scene, body: _Body, dispersed: bool) -> None:
+    """Draw the flow through a body with through-flow, inlet to outlet."""
+    start = (body.inlet_x - _LEAD, _AXIS_Y)
+    end = (body.outlet_x + _LEAD, _AXIS_Y)
     scene.add(
-        Arrow((body.inlet_x - 1.45, _AXIS_Y), (body.inlet_x - 0.2, _AXIS_Y), Style.FLOW),
-        Arrow((body.outlet_x + 0.2, _AXIS_Y), (body.outlet_x + 1.45, _AXIS_Y), Style.FLOW),
-        Label((body.inlet_x - 0.8, _AXIS_Y + 0.22), r"\Gamma^{\mathrm{in}}", Anchor.ABOVE),
-        Label((body.outlet_x + 0.8, _AXIS_Y + 0.22), r"\Gamma^{\mathrm{out}}", Anchor.ABOVE),
-        Label((body.inlet_x - 0.8, _AXIS_Y - 0.28), "Flow", Anchor.BELOW, size=0.85, italic=False),
+        Polyline(_flow_points(start, end, body.wave, dispersed), Style.FLOW, arrow=True),
+        Label((body.inlet_x - 0.75, _AXIS_Y + 0.24), r"\Gamma^{\mathrm{in}}", Anchor.ABOVE),
+        Label((body.outlet_x + 0.75, _AXIS_Y + 0.24), r"\Gamma^{\mathrm{out}}", Anchor.ABOVE),
+        Label((body.inlet_x - 0.75, _AXIS_Y - 0.3), "Flow", Anchor.BELOW, size=0.85, italic=False),
     )
+    if dispersed:
+        scene.add(Label((body.outlet_x + 0.75, _AXIS_Y - 0.3), body.dispersion, Anchor.BELOW, size=0.85))
 
 
 def _wall_label(scene: Scene, body: _Body) -> None:
-    """Point out the column wall from above the body."""
+    """Point out the column wall from outside the body."""
+    x, y = body.wall_at
+    side = body.wall_side
+    anchor = Anchor.ABOVE if side > 0 else Anchor.BELOW
     scene.add(
-        Arrow((body.wall_x, body.top + 0.8), (body.wall_x, body.top + 0.1), Style.ANNOTATION),
-        Label((body.wall_x, body.top + 0.87), r"\Gamma^{\mathrm{wall}}", Anchor.ABOVE),
+        Arrow((x, y + side * 0.8), (x, y + side * 0.1), Style.ANNOTATION),
+        Label((x, y + side * 0.87), r"\Gamma^{\mathrm{wall}}", anchor),
     )
 
 
@@ -360,25 +496,26 @@ def _flow_coordinate(scene: Scene, body: _Body, baseline: float) -> None:
     )
 
 
-def _radial_flow_coordinate(scene: Scene, body: _Body) -> None:
-    """Draw the radial coordinate of a radial flow column.
+def _radial_flow_coordinate(scene: Scene, body: _Body, baseline: float) -> None:
+    """Draw the radial coordinate of a radial flow column, below the body.
 
-    The flow runs inwards, so unlike the axial geometries the coordinate is
-    perpendicular to the body and is drawn on the body itself.
+    It is measured from the axis of the column, so it starts under the centre
+    of the body and its two ticks line up with the channel and the outer wall.
     """
-    # Drawn beside the body rather than on it: the bed is full of beads, and
-    # the two ticks line up with the channel wall and the column wall anyway.
-    x = _LEFT - 1.15
+    centre_x = 0.5 * (body.inlet_x + body.outlet_x)
+    inner_tick, outer_tick = centre_x + _RADIAL_INNER, centre_x + _RADIAL_OUTER
     inner, outer = body.flow_ticks
-    channel_y, wall_y = body.beds[0][1] - 0.24, body.beds[0][3] + 0.24
     tick = 0.13
+    # Dashed guides tie the two ticks to the channel and to the outer shell.
+    for guide in (inner_tick, outer_tick):
+        scene.add(Polyline(((guide, body.bottom - 0.12), (guide, baseline + 0.28)), Style.HIDDEN))
     scene.add(
-        Arrow((x, channel_y), (x, wall_y + 0.6), Style.AXIS),
-        Polyline(((x - tick, channel_y), (x + tick, channel_y)), Style.AXIS),
-        Polyline(((x - tick, wall_y), (x + tick, wall_y)), Style.AXIS),
-        Label((x - tick - 0.08, channel_y), inner, Anchor.RIGHT, size=0.9),
-        Label((x - tick - 0.08, wall_y), outer, Anchor.RIGHT, size=0.9),
-        Label((x + 0.12, wall_y + 0.6), r"\rho", Anchor.ABOVE_RIGHT),
+        Arrow((centre_x, baseline), (outer_tick + 1.0, baseline), Style.AXIS),
+        Polyline(((inner_tick, baseline - tick), (inner_tick, baseline + tick)), Style.AXIS),
+        Polyline(((outer_tick, baseline - tick), (outer_tick, baseline + tick)), Style.AXIS),
+        Label((inner_tick, baseline - tick - 0.05), inner, Anchor.BELOW, size=0.9),
+        Label((outer_tick, baseline - tick - 0.05), outer, Anchor.BELOW, size=0.9),
+        Label((outer_tick + 1.0, baseline + 0.1), body.flow_symbol, Anchor.ABOVE_RIGHT),
     )
 
 
@@ -407,53 +544,15 @@ def _angular_coordinate(scene: Scene, body: _Body) -> None:
     )
 
 
-def _dispersion_inset(scene: Scene, body: _Body, dispersed: bool) -> None:
-    """Sketch the concentration profile a 1D model transports.
-
-    Pure convection moves a sharp front; dispersion smears it, which is the
-    one feature of the transport that a drawing can show directly.
-    """
-    left, width = _LEFT + 0.6, 3.4
-    base = body.top + 1.45
-    height, front = 0.95, 0.45
-
-    # The front travels to the right: high concentration behind it, zero ahead.
-    if dispersed:
-        profile = tuple(
-            (
-                left + fraction * width,
-                base + height / (1.0 + math.exp((fraction - front) * 13.0)),
-            )
-            for fraction in (index / _SAMPLES for index in range(_SAMPLES + 1))
-        )
-    else:
-        step = left + front * width
-        profile = ((left, base + height), (step, base + height), (step, base), (left + width, base))
-
-    scene.add(
-        Arrow((left - 0.3, base), (left + width + 0.5, base), Style.AXIS),
-        Arrow((left - 0.3, base - 0.12), (left - 0.3, base + height + 0.45), Style.AXIS),
-        Label((left - 0.42, base + height * 0.6), r"c^{\b}", Anchor.RIGHT, size=0.85),
-        Polyline(profile, Style.FLOW),
-    )
-    if dispersed:
-        # The double arrow straddles the front, sitting clear above the curve.
-        spread, middle = 0.6, left + front * width
-        arrow_y = base + height + 0.3
-        scene.add(
-            Arrow((middle - spread, arrow_y), (middle + spread, arrow_y), Style.ANNOTATION, double=True),
-            Label((middle, arrow_y + 0.14), body.dispersion, Anchor.ABOVE, size=0.85),
-        )
-
-
 # %% Particle types
 
 
-#: Deterministic bead positions in the unit square, so that the rendered
-#: figure stays byte-stable for the reference tests.
-#: The heights run in a three-step cycle rather than alternating, so that with
-#: two particle types the types do not end up sorted into rows.
-_BEAD_SPOTS = tuple((0.06 + 0.127 * spot, (0.76, 0.26, 0.51)[spot % 3]) for spot in range(8))
+#: How many beads a bed holds, and how deep in it they sit -- the depths run
+#: through a cycle rather than alternating so that the packing does not read as
+#: a grid. Both are fixed rather than sampled so that the rendered figure stays
+#: byte-stable for the reference tests.
+_BEAD_COUNT = 8
+_ACROSS = (0.82, 0.2, 0.58, 0.34, 0.92, 0.46)
 
 
 def _particle_types(model) -> list:
@@ -476,27 +575,56 @@ def _bead_radius(index: int, count: int) -> float:
 def _beads(scene: Scene, body: _Body, model) -> None:
     """Fill the bed with beads, one visual class per particle type."""
     types = _particle_types(model)
-    if not types:
+    if not types or not body.bed_spans:
         return
 
-    for spot, (fraction_x, fraction_y) in enumerate(_BEAD_SPOTS):
-        index = spot % len(types)
-        particle = types[index]
-        radius = _bead_radius(index, len(types)) * body.bead_scale
-        # Dividing by the type count keeps the band from tracking the type,
-        # so an annular bed shows every particle type in both of its bands.
-        x0, y0, x1, y1 = body.beds[(spot // len(types)) % len(body.beds)]
-        # Clamped so that a thin band -- a radial column's annulus -- still
-        # holds whole beads instead of letting them cross the wall.
+    count = len(types)
+    spans = len(body.bed_spans)
+
+    # Plan the beads before placing any, because where a bead goes along its
+    # stretch of packing depends on how many others share that stretch. Beads
+    # alternate between the two sides of the flow path and only then move on
+    # to the next stretch, so a column with two separate beds -- an annulus --
+    # shows every particle type on both sides of both of them.
+    plan = [
+        (spot % count, (spot // (2 * count)) % spans, 1.0 if (spot // count) % 2 == 0 else -1.0)
+        for spot in range(_BEAD_COUNT)
+    ]
+    sizes: dict[tuple[int, float], int] = {}
+    for _, span_index, side in plan:
+        sizes[(span_index, side)] = sizes.get((span_index, side), 0) + 1
+
+    placed: dict[tuple[int, float], int] = {}
+    for particle_index, span_index, side in plan:
+        order = placed.get((span_index, side), 0)
+        placed[(span_index, side)] = order + 1
+        total = sizes[(span_index, side)]
+
+        particle = types[particle_index]
+        radius = _bead_radius(particle_index, count) * body.bead_scale
+        # A film resistance is drawn as the liquid film it stands for, so the
+        # bead needs room for it; with non-limiting film diffusion it does not.
         reach = radius * 1.34
-        centre = (
-            min(max(x0 + fraction_x * (x1 - x0), x0 + reach), x1 - reach),
-            min(max(y0 + fraction_y * (y1 - y0), y0 + reach), y1 - reach),
-        )
-        # A film resistance is drawn as the liquid film it stands for; with
-        # non-limiting film diffusion the bead sits directly in the bulk.
+
+        start, stop = body.bed_spans[span_index]
+        usable = max(stop - start - 2.0 * reach, 0.0)
+        if total < 3:
+            # Too few to stagger without crowding: spread them to the edges.
+            along = order / (total - 1) if total > 1 else 0.5
+        else:
+            # The two sides are offset by half a step so the packing does not
+            # read as a grid of columns.
+            along = order / (total - 1) if side > 0 else (order + 0.5) / total
+        x = start + reach + along * usable
+
+        near, far = body.corridor + reach, body.bed_profile(x) - reach
+        if far <= near:  # the bed is too shallow here to hold a whole bead
+            continue
+        across = _ACROSS[(order + (0 if side > 0 else 3)) % len(_ACROSS)]
+        centre = (x, body.bed_axis + side * (near + across * (far - near)))
+
         if not getattr(particle, "nonlimiting_filmDiff", False):
-            scene.add(Ellipse(centre, radius * 1.34, radius * 1.34, Style.FILM))
+            scene.add(Ellipse(centre, reach, reach, Style.FILM))
         scene.add(Ellipse(centre, radius, radius, Style.PARTICLE))
 
 
@@ -504,7 +632,7 @@ def _beads(scene: Scene, body: _Body, model) -> None:
 _LEGEND_COLUMNS, _LEGEND_PITCH, _LEGEND_ROW = 2, 5.6, 0.85
 
 
-def _particle_legend(scene: Scene, model, baseline: float) -> float:
+def _particle_legend(scene: Scene, model, baseline: float, left: float) -> float:
     """Explain the bead classes below the body; return the height used.
 
     The legend is what answers "which particle types are film-diffusion
@@ -517,7 +645,7 @@ def _particle_legend(scene: Scene, model, baseline: float) -> float:
     multiple = len(types) > 1
     for index, particle in enumerate(types):
         row, column = divmod(index, _LEGEND_COLUMNS)
-        centre = (_LEFT + column * _LEGEND_PITCH, baseline - row * _LEGEND_ROW)
+        centre = (left + column * _LEGEND_PITCH, baseline - row * _LEGEND_ROW)
         radius = _bead_radius(index, len(types))
         limiting = not getattr(particle, "nonlimiting_filmDiff", False)
         if limiting:
@@ -544,42 +672,39 @@ def build_column_scene(column_model) -> Scene:
     scene = Scene(name="column", xmin=0.0, ymin=0.0, xmax=13.0, ymax=0.0)
 
     is_tank = column_model.resolution == "0D"
+    is_radial = column_model.column_type == "Radial" and not is_tank
     build_body = _tank if is_tank else _BODIES[column_model.column_type]
     body = build_body(scene, column_model)
+    dispersed = bool(getattr(column_model, "has_axial_dispersion", False))
 
-    if not body.draws_own_flow_arrows:
-        _flow_arrows(scene, body)
+    _beads(scene, body, column_model)
+    if is_radial:
+        _radial_flow(scene, body, dispersed)
+    elif not body.draws_own_flow:
+        _flow_path(scene, body, dispersed)
     if body.has_wall:
         _wall_label(scene, body)
-    _beads(scene, body, column_model)
     if not is_tank:
-        domain_at = body.domain_at or (body.beds[0][0] - 0.35, _AXIS_Y)
-        scene.add(Label(domain_at, r"\Omega^{\b}", Anchor.CENTER, size=1.1))
+        scene.add(Label(body.domain_at, r"\Omega^{\b}", Anchor.CENTER, size=1.1))
 
-    # Headroom for the wall label, whose superscript rises above its baseline.
-    top = body.top + (1.65 if body.has_wall else 0.4)
-    # The smearing of a front is a one-dimensional picture, so the inset is
-    # drawn for the 1D models, where it is the whole of the transport story.
-    if column_model.resolution == "1D":
-        _dispersion_inset(scene, body, column_model.has_axial_dispersion)
-        top = body.top + 4.3
+    top = body.top + body.headroom
 
     if getattr(column_model, "has_radial_coordinate", False):
         _radial_coordinate(scene, body)
     if getattr(column_model, "has_angular_coordinate", False):
         _angular_coordinate(scene, body)
 
-    bottom = body.bottom - 0.5
-    if column_model.column_type == "Radial":
-        _radial_flow_coordinate(scene, body)
-    elif not is_tank:
-        bottom = body.bottom - 1.1
-        _flow_coordinate(scene, body, bottom)
-        bottom -= 0.8
+    bottom = body.bottom - body.footroom
+    if not is_tank:
+        if is_radial:
+            _radial_flow_coordinate(scene, body, bottom)
+        else:
+            _flow_coordinate(scene, body, bottom)
+        bottom -= 0.75
 
-    bottom -= _particle_legend(scene, column_model, bottom - 0.8)
+    bottom -= _particle_legend(scene, column_model, bottom - 0.6, body.xmin + 2.2)
 
-    scene.xmin = body.xmin
+    scene.xmin, scene.xmax = body.xmin, body.xmax
     scene.ymin, scene.ymax = bottom - 0.3, top
     scene.title = "Interstitial volume of the " + column_model.model_name()
     return scene

@@ -153,7 +153,11 @@ class _Renderer:
         commands += ["L " + self.coordinates(point) for point in item.points[1:]]
         if item.closed:
             commands.append("Z")
-        return f'<path d="{" ".join(commands)}" {_style_attributes(item.style, item.filled, item.stroked)}/>'
+        head = ""
+        if item.arrow:
+            self.arrow_styles.add(item.style)
+            head = f' marker-end="url(#{self.scene.name}-head-{item.style.value})"'
+        return f'<path d="{" ".join(commands)}" {_style_attributes(item.style, item.filled, item.stroked)}{head}/>'
 
     def arrow(self, item: Arrow) -> str:
         """Draw an arrow; ``double`` adds a second head at the start."""

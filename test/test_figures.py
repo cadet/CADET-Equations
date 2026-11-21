@@ -7,6 +7,7 @@ a model's figure shows. Only the tests that are explicitly about the renderer
 look at the SVG itself.
 """
 
+import math
 import re
 import xml.etree.ElementTree as ET
 from dataclasses import dataclass
@@ -17,10 +18,10 @@ import pytest
 from src.equations import BINDING_MODELS
 from src.figures import binding_figures, column_figure, particle_figures
 from src.figures.binding import DRAWABLE, build_binding_scene
-from src.figures.column import _BODIES, build_column_scene
+from src.figures.column import _AXIS_Y, _BODIES, build_column_scene
 from src.figures.labels import NORMAL, SUBSCRIPT, SUPERSCRIPT, Run, label_runs, label_text
 from src.figures.particle import build_particle_scene
-from src.figures.scene import Arrow, Ellipse, EllipseArc, Label, Rect, Scene, Style
+from src.figures.scene import Arrow, Ellipse, EllipseArc, Label, Polyline, Rect, Scene, Style
 from src.figures.svg import render_svg
 
 # %% Helpers
@@ -75,6 +76,11 @@ def _arrows(scene, style):
 
 def _of_style(scene, style, kind=Ellipse):
     return [item for item in scene.items if isinstance(item, kind) and item.style is style]
+
+
+def _flow_paths(scene):
+    """Return the flow paths of a column figure, in drawing order."""
+    return [item for item in scene.items if isinstance(item, Polyline) and item.style is Style.FLOW and item.arrow]
 
 
 # %% Label parsing
@@ -254,20 +260,41 @@ def test_dispersion_is_named_after_the_geometry(column_type, symbol):
 
 @pytest.mark.ci
 @pytest.mark.unit_test
-def test_pure_convection_draws_no_dispersion_arrow():
-    """Without dispersion the inset shows a sharp front and nothing else."""
+def test_pure_convection_draws_a_straight_flow_path():
+    """Without dispersion the flow runs straight along the axis of the body."""
     scene = build_column_scene(_make_column(has_axial_dispersion=False))
     assert r"D^{\mathrm{ax}}" not in _labels(scene)
-    assert not any(item.double for item in _arrows(scene, Style.ANNOTATION))
+
+    path = _flow_paths(scene)[0]
+    assert len(path.points) == 2
+    assert {point[1] for point in path.points} == {_AXIS_Y}
 
 
 @pytest.mark.ci
 @pytest.mark.unit_test
-def test_the_dispersion_inset_is_a_one_dimensional_picture():
-    """It is drawn for 1D models only; 2D and 3D would only be cluttered."""
-    assert r"c^{\b}" in _labels(build_column_scene(_make_column(resolution="1D")))
-    scene = build_column_scene(_make_column(resolution="2D", has_radial_coordinate=True))
-    assert r"c^{\b}" not in _labels(scene)
+def test_dispersion_bends_the_flow_path_around_the_packing():
+    """Dispersion is drawn as a meander, not as a plot beside the column."""
+    scene = build_column_scene(_make_column(has_axial_dispersion=True))
+
+    path = _flow_paths(scene)[0]
+    offsets = [point[1] - _AXIS_Y for point in path.points]
+    assert max(offsets) > 0.2 and min(offsets) < -0.2, "the path should leave the axis both ways"
+    # It starts and ends on the axis, so it joins the straight inlet and outlet.
+    assert offsets[0] == offsets[-1] == 0.0
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_the_flow_path_never_runs_through_a_bead():
+    """The meander shares the body with the packing, so it needs its own lane."""
+    for column_type in ("Axial", "Frustum", "Generalized", "Radial"):
+        scene = build_column_scene(_make_column(column_type=column_type))
+        beads = _of_style(scene, Style.PARTICLE)[:-1]  # the last one is the legend
+        for path in _flow_paths(scene):
+            for x, y in path.points:
+                for bead in beads:
+                    distance = math.hypot(x - bead.center[0], y - bead.center[1])
+                    assert distance > bead.rx, (column_type, bead.center)
 
 
 # %% Particle types in the bed
@@ -306,16 +333,48 @@ def test_a_single_particle_type_needs_no_index_in_the_legend():
 
 @pytest.mark.ci
 @pytest.mark.unit_test
-def test_beads_stay_inside_an_annular_bed():
-    """A radial column's bands are thin, so bead centres must be clamped."""
-    column = _make_column(column_type="Radial")
+@pytest.mark.parametrize("column_type", ["Axial", "Frustum", "Generalized", "Radial"])
+def test_beads_stay_inside_the_bed_of_every_geometry(column_type):
+    """A tapered or annular bed is cramped, so bead centres must be clamped."""
+    column = _make_column(column_type=column_type)
     probe = Scene(name="probe", xmin=0, ymin=0, xmax=1, ymax=1)
-    bands = _BODIES["Radial"](probe, column).beds
+    body = _BODIES[column_type](probe, column)
 
     scene = build_column_scene(column)
     # The last bead is the legend swatch, which sits outside the body.
     for bead in _of_style(scene, Style.PARTICLE)[:-1]:
-        assert any(band[1] <= bead.center[1] - bead.ry and bead.center[1] + bead.ry <= band[3] for band in bands), bead
+        x, y = bead.center
+        assert any(start <= x <= stop for start, stop in body.bed_spans), bead
+        depth = abs(y - body.bed_axis)
+        assert depth + bead.rx <= body.bed_profile(x) + 1e-9, bead
+        assert depth - bead.rx >= body.corridor - 1e-9, bead
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_the_frustum_narrows_along_the_flow():
+    """Its inlet is the wide end, as in the TikZ source the figure follows."""
+    probe = Scene(name="probe", xmin=0, ymin=0, xmax=1, ymax=1)
+    body = _BODIES["Frustum"](probe, _make_column(column_type="Frustum"))
+    start, stop = body.bed_spans[0]
+    assert body.bed_profile(start) > body.bed_profile(stop)
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_a_radial_column_stands_upright_and_feeds_from_its_channel():
+    """The inflow boundary of the radial model sits at the inner radius."""
+    probe = Scene(name="probe", xmin=0, ymin=0, xmax=1, ymax=1)
+    body = _BODIES["Radial"](probe, _make_column(column_type="Radial"))
+    assert body.top - body.bottom > body.outlet_x - body.inlet_x, "the body is taller than it is wide"
+
+    scene = build_column_scene(_make_column(column_type="Radial"))
+    # Two mirrored paths leave the channel, so the feed spreads outwards.
+    centre_x = 0.5 * (body.inlet_x + body.outlet_x)
+    paths = _flow_paths(scene)
+    assert len(paths) == 2
+    for path in paths:
+        assert abs(path.points[0][0] - centre_x) < abs(path.points[-1][0] - centre_x)
 
 
 # %% Particle figure

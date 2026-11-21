@@ -101,13 +101,18 @@ class EllipseArc:
 
 @dataclass(frozen=True)
 class Polyline:
-    """Straight-line path through ``points``; closed paths may be filled."""
+    """Straight-line path through ``points``; closed paths may be filled.
+
+    ``arrow`` puts a head on the last point, which is how a flow path that
+    meanders through the packing is drawn.
+    """
 
     points: tuple[Point, ...]
     style: Style
     closed: bool = False
     filled: bool = False
     stroked: bool = True
+    arrow: bool = False
 
 
 @dataclass(frozen=True)
