@@ -19,6 +19,7 @@ untested_variables = [
     "var_format",
     "sym_table",
     "show_eq_description",
+    "show_figures",
     "PSD",
     "PTD",
     "has_filter",

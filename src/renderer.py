@@ -7,6 +7,7 @@ kept concise and focused on public behaviour.
 
 import streamlit as st
 
+from src.figures import column_figure
 from src.latex_format import normalize
 from src.utils import format_variables
 
@@ -102,6 +103,18 @@ def render_availability_badges(model) -> None:
     st.markdown(html, unsafe_allow_html=True)
 
 
+def render_model_figures(model, var_format: str) -> None:
+    """Render the figures of ``model`` into the app.
+
+    The figures are written inline with ``st.markdown`` rather than through
+    ``st.image`` because an ``<img>`` element cannot inherit the page's CSS
+    custom properties, which is how a figure follows the light/dark appearance.
+    They are display only and are deliberately not collected into the exported
+    LaTeX document.
+    """
+    st.markdown(column_figure(model, var_format), unsafe_allow_html=True)
+
+
 def write_and_save(output: str, var_format: str, file_content: list[str], as_latex: bool = False):
     """Format and render `output` while collecting it for export.
 
@@ -125,5 +138,6 @@ def write_and_save(output: str, var_format: str, file_content: list[str], as_lat
 __all__ = [
     "availability_badge_html",
     "render_availability_badges",
+    "render_model_figures",
     "write_and_save",
 ]

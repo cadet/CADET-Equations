@@ -21,7 +21,7 @@ from src.handler_cite import cite, cite_html, load_bibliography, render_referenc
 from src.latex_format import display_equation, normalize_document
 from src.model_column import Column
 from src.model_crystallization import Crystallization
-from src.renderer import render_availability_badges
+from src.renderer import render_availability_badges, render_model_figures
 from src.renderer import write_and_save as renderer_write_and_save
 from src.theme import apply_theme_css
 from src.units import AVAILABLE_SYSTEMS, UNIT_SYSTEMS, format_conversion_factor, get_conversion_factor
@@ -446,6 +446,9 @@ else:  # Chromatography model family
 
     show_eq_description = st.toggle("Show equation description", key=r"show_eq_description", value=True)
 
+    # The figures are drawn further down, next to the model name they illustrate.
+    show_figures = st.toggle("Show model figures", key=r"show_figures", value=True)
+
     if st.toggle("Show Model Assumptions", key=r"model_assumptions"):
         write_assumptions_and_save(column_model.model_assumptions())
 
@@ -491,6 +494,11 @@ else:  # Chromatography model family
     # %% CADET model availability badge
 
     render_availability_badges(column_model)
+
+    # %% Model figures
+
+    if show_figures:
+        render_model_figures(column_model, var_format_)
 
     # %% Continue with model
 
