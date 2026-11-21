@@ -22,7 +22,7 @@ from __future__ import annotations
 import math
 from xml.sax.saxutils import escape
 
-from src.figures.labels import SUBSCRIPT, SUPERSCRIPT, label_runs, label_text
+from src.figures.labels import label_runs, label_text
 from src.figures.scene import (
     Anchor,
     Arrow,
@@ -41,6 +41,7 @@ from src.figures.scene import (
 _PAINT: dict[Style, tuple[str | None, str | None, float]] = {
     Style.BULK: ("var(--cadet-fig-bulk)", None, 0.0),
     Style.BULK_FACE: ("var(--cadet-fig-bulk-face)", None, 0.0),
+    Style.VOID: ("var(--cadet-fig-void)", None, 0.0),
     Style.WALL: (None, "var(--cadet-fig-wall)", 0.055),
     Style.HIDDEN: (None, "var(--cadet-fig-wall)", 0.04),
     Style.PARTICLE: ("var(--cadet-fig-particle)", "var(--cadet-fig-wall)", 0.04),
@@ -129,10 +130,14 @@ class _Renderer:
         large_arc = 1 if abs(sweep) > 180 else 0
         # Scene angles run counter-clockwise; the y-flip reverses that in SVG.
         sweep_flag = 0 if sweep > 0 else 1
+        head = ""
+        if item.arrow:
+            self.arrow_styles.add(item.style)
+            head = f' marker-end="url(#{self.scene.name}-head-{item.style.value})"'
         return (
             f'<path d="M {self.coordinates(start)} A {_number(item.rx)} {_number(item.ry)} '
             f'0 {large_arc} {sweep_flag} {self.coordinates(end)}" '
-            f"{_style_attributes(item.style, False, True)}/>"
+            f"{_style_attributes(item.style, False, True)}{head}/>"
         )
 
     @staticmethod
@@ -174,14 +179,12 @@ class _Renderer:
 
         spans, shift = [], 0.0
         for run in label_runs(item.text, self.var_format):
-            target = (
-                -_SUPERSCRIPT_RISE * size
-                if run.shift == SUPERSCRIPT
-                else _SUBSCRIPT_DROP * size
-                if run.shift == SUBSCRIPT
-                else 0.0
-            )
-            run_size = size * (_SCRIPT_SCALE if run.shift else 1.0)
+            # A nested script, as in P^{L^{b}}, rides one step further out.
+            level = abs(run.shift)
+            step = _SUPERSCRIPT_RISE if run.shift > 0 else _SUBSCRIPT_DROP
+            direction = -1.0 if run.shift > 0 else 1.0
+            target = direction * size * step * (1.0 + 0.7 * (level - 1)) if level else 0.0
+            run_size = size * _SCRIPT_SCALE**level
             attributes = f' font-size="{_number(run_size)}"'
             if not run.italic:
                 attributes += ' font-style="normal"'

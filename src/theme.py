@@ -41,6 +41,7 @@ _THEME_CSS = """
        Figures are rendered inline so that they pick these up directly. */
     --cadet-fig-bulk: light-dark(#dce7f0, #16324a);
     --cadet-fig-bulk-face: light-dark(#eef4f9, #1e3f5c);
+    --cadet-fig-void: light-dark(#ffffff, #0e1117);
     --cadet-fig-wall: light-dark(#0f172a, #d7dee8);
     --cadet-fig-particle: light-dark(#ffffff, #2b3545);
     --cadet-fig-pore: light-dark(#f6f9fc, #243044);

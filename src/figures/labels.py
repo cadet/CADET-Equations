@@ -155,7 +155,10 @@ def _convert(source: str, shift: int, italic: bool, runs: list[Run]) -> None:
 
         elif char in "^_":
             argument, index = _argument(source, index + 1)
-            _convert(argument, SUPERSCRIPT if char == "^" else SUBSCRIPT, italic, runs)
+            # A script inside a script, as in P^{L^{b}}, nests one level
+            # further out rather than sitting at the same height.
+            step = SUPERSCRIPT if char == "^" else SUBSCRIPT
+            _convert(argument, shift + step if shift * step > 0 else step, italic, runs)
 
         elif char == "{":
             group, index = _balanced_group(source, index)

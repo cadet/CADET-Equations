@@ -2,40 +2,76 @@
 Unit tests for src/figures.
 
 The tests assert on the *scene* wherever possible rather than on the rendered
-SVG text, so that moving a drawing around does not break a test about which
-features a model's figure shows.  Only the tests that are explicitly about the
-renderer look at the SVG itself.
+SVG, so that moving a drawing around does not break a test about which features
+a model's figure shows. Only the tests that are explicitly about the renderer
+look at the SVG itself.
 """
 
 import re
 import xml.etree.ElementTree as ET
+from dataclasses import dataclass
 from types import SimpleNamespace
 
 import pytest
 
-from src.figures import column_figure
-from src.figures.column import build_column_scene
+from src.figures import column_figure, particle_figures
+from src.figures.column import _BODIES, build_column_scene
 from src.figures.labels import NORMAL, SUBSCRIPT, SUPERSCRIPT, Run, label_runs, label_text
-from src.figures.scene import Arrow, Ellipse, EllipseArc, Label, Scene, Style
+from src.figures.particle import build_particle_scene
+from src.figures.scene import Arrow, Ellipse, EllipseArc, Label, Rect, Scene, Style
 from src.figures.svg import render_svg
 
 # %% Helpers
 
 
-def _make_column(**overrides):
-    """Create a minimal Column-like mock object.
+@dataclass(frozen=True)
+class FakeParticle:
+    """Hashable stand-in for src.model_particle.Particle.
 
-    Mirrors the approach of test_equations.py: the figure builders take only a
-    few attributes, so the Streamlit-dependent dataclass is not needed.
+    Mirrors the approach of test_equations.py: the figure builders read only a
+    few attributes, so the Streamlit-dependent dataclass is not needed. It must
+    be hashable because Column counts particle types with a Counter.
     """
-    defaults = dict(has_axial_coordinate=True, model_name=lambda: "General Rate Model")
+
+    geometry: str = "Sphere"
+    resolution: str = "1D"
+    has_core: bool = False
+    has_binding: bool = True
+    req_binding: bool = False
+    has_surfDiff: bool = False
+    nonlimiting_filmDiff: bool = False
+
+
+def _make_column(**overrides):
+    """Create a minimal Column-like mock object."""
+    particles = overrides.pop("particles", [FakeParticle()])
+    defaults = dict(
+        column_type="Axial",
+        resolution="1D",
+        has_axial_coordinate=True,
+        has_radial_coordinate=False,
+        has_angular_coordinate=False,
+        has_axial_dispersion=True,
+        has_filter=False,
+        N_p=len(particles),
+        particle_models=list(particles),
+        par_type_counts={particle: 1 for particle in particles},
+        model_name=lambda: "General Rate Model",
+    )
     defaults.update(overrides)
     return SimpleNamespace(**defaults)
 
 
 def _labels(scene):
-    """Return the raw label texts of a scene."""
     return [item.text for item in scene.items if isinstance(item, Label)]
+
+
+def _arrows(scene, style):
+    return [item for item in scene.items if isinstance(item, Arrow) and item.style is style]
+
+
+def _of_style(scene, style, kind=Ellipse):
+    return [item for item in scene.items if isinstance(item, kind) and item.style is style]
 
 
 # %% Label parsing
@@ -54,6 +90,7 @@ def _labels(scene):
         (r"\Gamma^{\mathrm{wall}}", "CADET", "Γwall"),
         (r"\rho", "CADET", "ρ"),
         (r"L^{\b}", "CADET", "Lb"),
+        (r"P^{L^{\b}}", "CADET", "PLb"),
     ],
 )
 def test_label_text_expands_shorthands(text, var_format, expected):
@@ -73,6 +110,14 @@ def test_label_runs_carry_shift_and_style():
 
 @pytest.mark.ci
 @pytest.mark.unit_test
+def test_nested_scripts_ride_one_level_further_out():
+    """P^{L^{b}} must not flatten both scripts onto one height."""
+    runs = label_runs(r"P^{L^{\b}}")
+    assert [run.shift for run in runs] == [NORMAL, SUPERSCRIPT, 2 * SUPERSCRIPT]
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
 def test_capital_greek_is_upright_and_lowercase_is_italic():
     (capital,) = label_runs(r"\Omega")
     (lowercase,) = label_runs(r"\rho")
@@ -86,26 +131,49 @@ def test_digits_are_upright():
     assert label_runs("0") == [Run("0", NORMAL, False)]
 
 
-# %% Column scene
+# %% Column bodies
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+@pytest.mark.parametrize(
+    "column_type, resolution",
+    [
+        ("Axial", "1D"),
+        ("Axial", "2D"),
+        ("Axial", "3D"),
+        ("Axial", "0D"),  # the mixed tank is an axial unit of zero dimensions
+        ("Radial", "1D"),
+        ("Frustum", "1D"),
+        ("Generalized", "1D"),
+    ],
+)
+def test_every_geometry_builds_a_scene(column_type, resolution):
+    scene = build_column_scene(
+        _make_column(
+            column_type=column_type,
+            resolution=resolution,
+            has_axial_coordinate=resolution != "0D",
+            has_radial_coordinate=resolution in ("2D", "3D"),
+            has_angular_coordinate=resolution == "3D",
+        )
+    )
+    assert scene.items
+    assert scene.height > 0
 
 
 @pytest.mark.ci
 @pytest.mark.unit_test
 def test_column_scene_draws_a_cylinder_with_a_hidden_far_cap():
     scene = build_column_scene(_make_column())
-
-    # One cap is drawn as two arcs so that its far half can be dashed.
-    hidden = [item for item in scene.items if isinstance(item, EllipseArc) and item.style is Style.HIDDEN]
-    assert len(hidden) == 1
-    # The near cap is a full ellipse.
-    assert any(isinstance(item, Ellipse) and item.style is Style.WALL for item in scene.items)
+    assert len(_of_style(scene, Style.HIDDEN, EllipseArc)) == 1
+    assert _of_style(scene, Style.WALL)
 
 
 @pytest.mark.ci
 @pytest.mark.unit_test
 def test_column_scene_labels_the_boundaries():
-    scene = build_column_scene(_make_column())
-    labels = _labels(scene)
+    labels = _labels(build_column_scene(_make_column()))
     assert r"\Gamma^{\mathrm{in}}" in labels
     assert r"\Gamma^{\mathrm{out}}" in labels
     assert r"\Gamma^{\mathrm{wall}}" in labels
@@ -114,21 +182,219 @@ def test_column_scene_labels_the_boundaries():
 
 @pytest.mark.ci
 @pytest.mark.unit_test
-def test_column_scene_has_two_flow_arrows():
-    scene = build_column_scene(_make_column())
-    flow = [item for item in scene.items if isinstance(item, Arrow) and item.style is Style.FLOW]
-    assert len(flow) == 2
+def test_a_tank_has_no_wall_boundary_and_no_coordinate():
+    """A homogeneous tank resolves nothing, so it carries no axis or wall."""
+    scene = build_column_scene(_make_column(resolution="0D", has_axial_coordinate=False))
+    assert r"\Gamma^{\mathrm{wall}}" not in _labels(scene)
+    assert _arrows(scene, Style.AXIS) == []
 
 
 @pytest.mark.ci
 @pytest.mark.unit_test
-@pytest.mark.parametrize("has_axial_coordinate, expected", [(True, 1), (False, 0)])
-def test_axial_coordinate_is_drawn_only_when_resolved(has_axial_coordinate, expected):
+def test_a_tank_draws_a_filter_only_when_one_is_configured():
+    without = build_column_scene(_make_column(resolution="0D", has_axial_coordinate=False))
+    with_filter = build_column_scene(_make_column(resolution="0D", has_axial_coordinate=False, has_filter=True))
+    assert "filter" not in _labels(without)
+    assert "filter" in _labels(with_filter)
+
+
+# %% Resolution: the coordinate arrows
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+@pytest.mark.parametrize("resolution", ["1D", "2D", "3D"])
+def test_the_resolution_decides_which_coordinates_are_drawn(resolution):
     """The resolution is shown by which coordinate axes the figure draws."""
-    scene = build_column_scene(_make_column(has_axial_coordinate=has_axial_coordinate))
-    axes = [item for item in scene.items if isinstance(item, Arrow) and item.style is Style.AXIS]
-    assert len(axes) == expected
-    assert ("z" in _labels(scene)) is has_axial_coordinate
+    labels = _labels(
+        build_column_scene(
+            _make_column(
+                resolution=resolution,
+                has_radial_coordinate=resolution in ("2D", "3D"),
+                has_angular_coordinate=resolution == "3D",
+            )
+        )
+    )
+    assert "z" in labels
+    assert (r"\rho" in labels) is (resolution in ("2D", "3D"))
+    assert (r"\varphi" in labels) is (resolution == "3D")
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+@pytest.mark.parametrize(
+    "column_type, symbol",
+    [("Axial", "z"), ("Frustum", "z"), ("Generalized", "x"), ("Radial", r"\rho")],
+)
+def test_the_flow_coordinate_matches_the_geometry(column_type, symbol):
+    assert symbol in _labels(build_column_scene(_make_column(column_type=column_type)))
+
+
+# %% Convection and dispersion
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+@pytest.mark.parametrize(
+    "column_type, symbol",
+    [
+        ("Axial", r"D^{\mathrm{ax}}"),
+        ("Frustum", r"D^{\mathrm{ax}}"),
+        ("Radial", r"D^{\mathrm{rad}}"),
+        ("Generalized", r"D^{\mathrm{x}}"),
+    ],
+)
+def test_dispersion_is_named_after_the_geometry(column_type, symbol):
+    scene = build_column_scene(_make_column(column_type=column_type, has_axial_dispersion=True))
+    assert symbol in _labels(scene)
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_pure_convection_draws_no_dispersion_arrow():
+    """Without dispersion the inset shows a sharp front and nothing else."""
+    scene = build_column_scene(_make_column(has_axial_dispersion=False))
+    assert r"D^{\mathrm{ax}}" not in _labels(scene)
+    assert not any(item.double for item in _arrows(scene, Style.ANNOTATION))
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_the_dispersion_inset_is_a_one_dimensional_picture():
+    """It is drawn for 1D models only; 2D and 3D would only be cluttered."""
+    assert r"c^{\b}" in _labels(build_column_scene(_make_column(resolution="1D")))
+    scene = build_column_scene(_make_column(resolution="2D", has_radial_coordinate=True))
+    assert r"c^{\b}" not in _labels(scene)
+
+
+# %% Particle types in the bed
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_a_column_without_particles_draws_no_beads():
+    scene = build_column_scene(_make_column(particles=[], N_p=0))
+    assert not _of_style(scene, Style.PARTICLE)
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+@pytest.mark.parametrize("nonlimiting, films", [(False, 9), (True, 0)])
+def test_a_film_ring_marks_film_diffusion_limited_particles(nonlimiting, films):
+    """Eight beads in the bed plus the one in the legend carry the ring."""
+    scene = build_column_scene(_make_column(particles=[FakeParticle(nonlimiting_filmDiff=nonlimiting)]))
+    assert len(_of_style(scene, Style.FILM)) == films
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_the_legend_names_the_film_diffusion_regime_of_each_type():
+    scene = build_column_scene(_make_column(particles=[FakeParticle(), FakeParticle(nonlimiting_filmDiff=True)]))
+    labels = _labels(scene)
+    assert any(label.startswith("j = 1: film diffusion") for label in labels)
+    assert any(label.startswith(r"j = 2: c^{\b} = c^{\p}") for label in labels)
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_a_single_particle_type_needs_no_index_in_the_legend():
+    assert r"film diffusion k^{\mathrm{f}}" in _labels(build_column_scene(_make_column()))
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_beads_stay_inside_an_annular_bed():
+    """A radial column's bands are thin, so bead centres must be clamped."""
+    column = _make_column(column_type="Radial")
+    probe = Scene(name="probe", xmin=0, ymin=0, xmax=1, ymax=1)
+    bands = _BODIES["Radial"](probe, column).beds
+
+    scene = build_column_scene(column)
+    # The last bead is the legend swatch, which sits outside the body.
+    for bead in _of_style(scene, Style.PARTICLE)[:-1]:
+        assert any(band[1] <= bead.center[1] - bead.ry and bead.center[1] + bead.ry <= band[3] for band in bands), bead
+
+
+# %% Particle figure
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+@pytest.mark.parametrize("geometry", ["Sphere", "Cylinder", "Slab"])
+def test_every_particle_geometry_builds_a_scene(geometry):
+    assert build_particle_scene(FakeParticle(geometry=geometry)).items
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_the_particle_figure_shows_the_phases_of_the_model():
+    labels = _labels(build_particle_scene(FakeParticle()))
+    assert r"c^{\b}" in labels
+    assert r"c^{\p}" in labels
+    assert r"c^{\s}" in labels
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_a_particle_without_binding_has_no_bound_phase():
+    labels = _labels(build_particle_scene(FakeParticle(has_binding=False)))
+    assert r"c^{\s}" not in labels
+    assert r"f^{\mathrm{bind}}" not in labels
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_rapid_equilibrium_binding_is_named_as_such():
+    labels = _labels(build_particle_scene(FakeParticle(req_binding=True)))
+    assert "rapid equilibrium" in labels
+    assert r"f^{\mathrm{bind}} = 0" in labels
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_non_limiting_film_diffusion_draws_an_equality_instead_of_a_flux():
+    """Without a film resistance there is no film, and no transport step."""
+    scene = build_particle_scene(FakeParticle(nonlimiting_filmDiff=True))
+    labels = _labels(scene)
+    assert r"c^{\b} = c^{\p}" in labels
+    assert r"k^{\mathrm{f}}" not in labels
+    assert not [item for item in scene.items if getattr(item, "style", None) is Style.FILM]
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+@pytest.mark.parametrize("has_surfDiff", [True, False])
+def test_surface_diffusion_is_drawn_only_when_configured(has_surfDiff):
+    labels = _labels(build_particle_scene(FakeParticle(has_surfDiff=has_surfDiff)))
+    assert (r"D^{\s}" in labels) is has_surfDiff
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_a_homogeneous_particle_resolves_no_interior_coordinate():
+    labels = _labels(build_particle_scene(FakeParticle(resolution="0D")))
+    assert "r" not in labels
+    assert r"D^{\p}" not in labels
+    assert "homogeneous particle" in labels
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_a_particle_core_adds_an_inner_boundary_and_a_tick():
+    scene = build_particle_scene(FakeParticle(has_core=True))
+    assert [item for item in scene.items if getattr(item, "style", None) is Style.CORE]
+    assert r"P^{\mathrm{core}}" in _labels(scene)
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_one_particle_figure_is_produced_per_distinct_type():
+    column = _make_column(particles=[FakeParticle(), FakeParticle(has_core=True)])
+    figures = particle_figures(column)
+    assert len(figures) == 2
+    # Distinct scene names keep the arrow-head ids of the two figures apart.
+    assert 'id="particle-1-head-flow"' in figures[0]
+    assert 'id="particle-2-head-flow"' in figures[1]
 
 
 # %% SVG rendering
@@ -138,6 +404,8 @@ def test_axial_coordinate_is_drawn_only_when_resolved(has_axial_coordinate, expe
 @pytest.mark.unit_test
 def test_rendered_figure_is_well_formed_xml():
     ET.fromstring(column_figure(_make_column()))
+    for figure in particle_figures(_make_column()):
+        ET.fromstring(figure)
 
 
 @pytest.mark.ci
@@ -192,8 +460,25 @@ def test_double_arrows_get_a_head_at_both_ends():
 
 @pytest.mark.ci
 @pytest.mark.unit_test
+def test_an_arc_can_carry_an_arrow_head():
+    scene = Scene(name="test", xmin=0, ymin=0, xmax=2, ymax=2)
+    scene.add(EllipseArc((1, 1), 0.5, 0.5, 0, 180, Style.AXIS, arrow=True))
+    assert "marker-end=" in render_svg(scene)
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
 def test_scene_y_axis_points_up():
     """Scene coordinates are maths-like; the renderer flips them for SVG."""
     scene = Scene(name="test", xmin=0, ymin=0, xmax=4, ymax=4)
     scene.add(Ellipse((1, 3), 1, 1, Style.BULK))  # near the top of the scene
     assert 'cy="1"' in render_svg(scene)  # which is a small y in SVG
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_a_rectangle_is_placed_by_its_lower_left_corner():
+    scene = Scene(name="test", xmin=0, ymin=0, xmax=4, ymax=4)
+    scene.add(Rect((1, 1), 2, 1, Style.BULK))
+    # Lower-left (1, 1) with height 1 means an SVG top edge at y = 4 - 2 = 2.
+    assert 'x="1" y="2" width="2" height="1"' in render_svg(scene)

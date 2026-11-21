@@ -7,7 +7,7 @@ kept concise and focused on public behaviour.
 
 import streamlit as st
 
-from src.figures import column_figure
+from src.figures import column_figure, particle_figures
 from src.latex_format import normalize
 from src.utils import format_variables
 
@@ -113,6 +113,12 @@ def render_model_figures(model, var_format: str) -> None:
     LaTeX document.
     """
     st.markdown(column_figure(model, var_format), unsafe_allow_html=True)
+
+    figures = particle_figures(model, var_format)
+    for index, figure in enumerate(figures):
+        if len(figures) > 1:
+            st.caption(f"Particle type $j = {index + 1}$")
+        st.markdown(figure, unsafe_allow_html=True)
 
 
 def write_and_save(output: str, var_format: str, file_content: list[str], as_latex: bool = False):

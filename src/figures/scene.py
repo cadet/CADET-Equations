@@ -28,6 +28,7 @@ class Style(str, Enum):
 
     BULK = "bulk"  # interstitial (bulk) liquid volume
     BULK_FACE = "bulk-face"  # the lit end cap of a body, a shade lighter
+    VOID = "void"  # space outside the bed, e.g. a radial column's channel
     WALL = "wall"  # column wall and other hard outlines
     HIDDEN = "hidden"  # edges behind the body, drawn dashed
     PARTICLE = "particle"  # particle (bead) body
@@ -85,7 +86,8 @@ class EllipseArc:
 
     Angles are measured counter-clockwise from the positive x-axis, as in TikZ's
     ``arc[start angle=..., end angle=...]``, so the same numbers serve both
-    backends.  Arcs are never filled.
+    backends.  Arcs are never filled.  ``arrow`` puts a head at the end angle,
+    which is how the angular coordinate of a 3D model is drawn.
     """
 
     center: Point
@@ -94,6 +96,7 @@ class EllipseArc:
     start_angle: float
     end_angle: float
     style: Style
+    arrow: bool = False
 
 
 @dataclass(frozen=True)
