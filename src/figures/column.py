@@ -174,9 +174,10 @@ def _frustum(scene: Scene, model) -> _Body:
     # labelled above its end cap, where nothing else competes for the space.
     scene.add(
         Arrow(left_centre, (_LEFT, _AXIS_Y + inlet_ry), Style.ANNOTATION),
-        Label((_LEFT, _AXIS_Y + inlet_ry + 0.12), r"P^{0}", Anchor.ABOVE, size=0.9),
+        # Spelled as the symbol table spells them, upright script and all.
+        Label((_LEFT, _AXIS_Y + inlet_ry + 0.12), r"P^{\mathrm{0}}", Anchor.ABOVE, size=0.9),
         Arrow(right_centre, (_RIGHT, _AXIS_Y + outlet_ry), Style.ANNOTATION),
-        Label((_RIGHT, _AXIS_Y + outlet_ry + 0.12), r"P^{L^{\b}}", Anchor.ABOVE, size=0.9),
+        Label((_RIGHT, _AXIS_Y + outlet_ry + 0.12), r"P^{\mathrm{L^{\b}}}", Anchor.ABOVE, size=0.9),
     )
     return _Body(
         top=top,
