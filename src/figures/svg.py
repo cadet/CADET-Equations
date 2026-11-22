@@ -45,6 +45,7 @@ _PAINT: dict[Style, tuple[str | None, str | None, float]] = {
     Style.WALL: (None, "var(--cadet-fig-wall)", 0.055),
     Style.HIDDEN: (None, "var(--cadet-fig-wall)", 0.04),
     Style.PARTICLE: ("var(--cadet-fig-particle)", "var(--cadet-fig-wall)", 0.04),
+    Style.MATRIX: ("var(--cadet-fig-matrix)", "var(--cadet-fig-wall)", 0.04),
     Style.PORE: ("var(--cadet-fig-pore)", "var(--cadet-fig-wall)", 0.04),
     Style.SOLID: ("var(--cadet-fig-solid)", "var(--cadet-fig-wall)", 0.04),
     Style.CORE: ("var(--cadet-fig-core)", "var(--cadet-fig-wall)", 0.04),
@@ -125,6 +126,18 @@ class _Renderer:
     def ellipse_arc(self, item: EllipseArc) -> str:
         """Draw an elliptical arc given by its start and end angle."""
         sweep = item.end_angle - item.start_angle
+        # A full turn would start and end on the same point, where SVG's arc
+        # command draws nothing at all; it is split so that it draws a circle.
+        if abs(sweep) >= 360.0:
+            sweep = 180.0 if sweep > 0 else -180.0
+            halves = (
+                EllipseArc(item.center, item.rx, item.ry, item.start_angle, item.start_angle + sweep, item.style),
+                EllipseArc(
+                    item.center, item.rx, item.ry, item.start_angle + sweep, item.start_angle + 2 * sweep, item.style
+                ),
+            )
+            return "".join(self.ellipse_arc(half) for half in halves)
+
         start = self._on_ellipse(item, item.start_angle)
         end = self._on_ellipse(item, item.end_angle)
         large_arc = 1 if abs(sweep) > 180 else 0

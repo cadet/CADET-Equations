@@ -32,6 +32,7 @@ class Style(str, Enum):
     WALL = "wall"  # column wall and other hard outlines
     HIDDEN = "hidden"  # edges behind the body, drawn dashed
     PARTICLE = "particle"  # particle (bead) body
+    MATRIX = "matrix"  # the solid skeleton a porous particle is made of
     PORE = "pore"  # pore liquid inside a particle
     SOLID = "solid"  # bound (solid) phase
     CORE = "core"  # impermeable particle core

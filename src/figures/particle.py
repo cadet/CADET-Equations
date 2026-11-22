@@ -24,6 +24,7 @@ from src.figures.scene import (
     Ellipse,
     EllipseArc,
     Label,
+    Point,
     Polyline,
     Rect,
     Scene,
@@ -38,6 +39,15 @@ _SLAB = 0.68  # half-thickness of a slab, relative to _RADIUS
 _CAP = 0.3  # how far a cylinder's end face bulges, relative to _RADIUS
 _FILM = 0.42  # thickness of the liquid film around it
 _CORE = 0.42  # core radius, as a fraction of the particle radius
+
+_PORE_STEP = 0.58  # pitch of the pores drawn through the solid matrix
+_PORE_SIZE = 0.15  # their radius, before the small variation below
+_CHANNEL_HALF = 0.68  # half-height of the one pore the transport is drawn in
+_CHANNEL_RISE = 0.3  # how far above the centre that pore runs
+_BOUND = 0.13  # radius of a bound molecule on a pore wall
+#: Fixed offsets and size steps, so the matrix does not read as a lattice and
+#: the rendered figure still stays byte-stable for the reference tests.
+_JITTER = (0.0, 0.05, -0.04, 0.03, -0.054, 0.042, -0.02)
 
 _CHAIN_X = 9.9  # centre of the phase chain
 _CHAIN_HALF = 1.95  # half-width of a phase box
@@ -155,20 +165,87 @@ def _core_shape(scene: Scene, geometry: str) -> None:
         scene.add(Ellipse((x, y), radius, radius, Style.CORE))
 
 
+#: Where the domain label sits, as an offset from the centre in scene units.
+_DOMAIN_AT = (-0.52 * _RADIUS, -0.62 * _RADIUS)
+
+
+def _channel(geometry: str, has_core: bool) -> tuple[float, float, float]:
+    """Return (inner x, lower y, upper y) of the pore the transport runs in."""
+    x, y = _CENTRE
+    inner = _core_x(geometry) if has_core else x
+    return inner, y + _CHANNEL_RISE - _CHANNEL_HALF, y + _CHANNEL_RISE + _CHANNEL_HALF
+
+
+def _pores(scene: Scene, geometry: str, has_core: bool, reserved: tuple) -> None:
+    """Fill the solid matrix with pores, around whatever else is drawn in it.
+
+    The pore space is what ``c^{\\p}`` lives in and what ``D^{\\p}`` runs
+    through, so the particle has to show it; without it a bound phase on the
+    pore wall, and surface diffusion along that wall, have nowhere to be.
+    """
+    x, y = _CENTRE
+    core = _CORE * _RADIUS if has_core else 0.0
+    reach = 6
+
+    for row in range(-reach, reach + 1):
+        for column in range(-reach, reach + 1):
+            radius = _PORE_SIZE + 0.035 * ((row * 2 + column) % 3)
+            centre = (
+                x + (column + 0.5 * (row % 2)) * _PORE_STEP + _JITTER[(row * 5 + column) % 7],
+                y + row * _PORE_STEP + _JITTER[(row * 3 + column * 2) % 7],
+            )
+            if not _inside(geometry, centre, radius + 0.12):
+                continue
+            if math.hypot(centre[0] - x, centre[1] - y) < core + radius + 0.1:
+                continue
+            if any(_overlaps(centre, radius + 0.08, box) for box in reserved):
+                continue
+            scene.add(Ellipse(centre, radius, radius, Style.PORE))
+
+
+def _inside(geometry: str, point: Point, margin: float) -> bool:
+    """Is a disc of radius ``margin`` around ``point`` within the particle?"""
+    offset = point[1] - _CENTRE[1]
+    if abs(offset) + margin > _RADIUS:
+        return False
+    return abs(point[0] - _CENTRE[0]) + margin <= _edge_x(geometry, offset) - _CENTRE[0]
+
+
+def _overlaps(centre: Point, radius: float, box: tuple[float, float, float, float]) -> bool:
+    """Does a disc meet an axis-aligned box given as (x0, y0, x1, y1)?"""
+    x0, y0, x1, y1 = box
+    return x0 - radius < centre[0] < x1 + radius and y0 - radius < centre[1] < y1 + radius
+
+
 def _particle_body(scene: Scene, particle) -> None:
-    """Draw the particle, its film and its core."""
+    """Draw the particle, its porous matrix, its film and its core."""
     geometry = getattr(particle, "geometry", "Sphere")
     limiting = not getattr(particle, "nonlimiting_filmDiff", False)
+    has_core = getattr(particle, "has_core", False)
 
     if limiting:
         _shape(scene, geometry, _FILM, Style.FILM)
-    _shape(scene, geometry, 0.0, Style.PORE)
-    if getattr(particle, "has_core", False):
+    _shape(scene, geometry, 0.0, Style.MATRIX)
+    if has_core:
         _core_shape(scene, geometry)
 
     x, y = _CENTRE
+    inner, low, high = _channel(geometry, has_core)
+    domain = (x + _DOMAIN_AT[0], y + _DOMAIN_AT[1])
+    _pores(
+        scene,
+        geometry,
+        has_core,
+        reserved=(
+            # The drawn pore, the domain label, and the caption under the pore.
+            (inner - _CHANNEL_HALF - 0.1, low - 0.1, _edge_x(geometry, 0.0), high + 0.1),
+            (domain[0] - 0.5, domain[1] - 0.32, domain[0] + 0.5, domain[1] + 0.32),
+            (inner + 0.3, low - 0.62, inner + 1.5, low),
+        ),
+    )
+
     grown = _surface_x(geometry, _FILM if limiting else 0.0)
-    scene.add(Label((x - 0.52 * _RADIUS, y - 0.58 * _RADIUS), r"\Omega^{\p}", Anchor.CENTER, size=1.05))
+    scene.add(Label(domain, r"\Omega^{\p}", Anchor.CENTER, size=1.05))
     # A leader makes clear that the label names the surface, not the film.
     scene.add(
         Polyline((_surface_point(geometry), (grown + 0.45, y + 1.25 * _RADIUS)), Style.ANNOTATION),
@@ -177,38 +254,77 @@ def _particle_body(scene: Scene, particle) -> None:
 
 
 def _transport(scene: Scene, particle) -> None:
-    """Draw the transport that runs along the particle's radial coordinate."""
+    """Draw one pore enlarged, and the transport that runs along it.
+
+    Everything the particle model resolves happens here: the flux arrives
+    through the film at the pore mouth, moves along the pore in the liquid,
+    binds to the pore wall, and -- where the model allows it -- moves along
+    that wall in the bound phase.  Drawing it in a pore rather than across a
+    blank disc is what keeps ``D^{\\p}`` and ``D^{\\s}`` apart.
+    """
     geometry = getattr(particle, "geometry", "Sphere")
     resolved = getattr(particle, "resolution", "1D") == "1D"
-    surface = _surface_x(geometry)
-    x, y = _CENTRE
+    y = _CENTRE[1]
+    inner, low, high = _channel(geometry, getattr(particle, "has_core", False))
+
+    # The pore opens at the surface, so its outer end follows the outline; its
+    # inner end is rounded, because it carries on into the rest of the matrix.
+    steps = 12
+    mouth = tuple(
+        (_edge_x(geometry, high - y - (high - low) * step / steps), high - (high - low) * step / steps)
+        for step in range(steps + 1)
+    )
+    if getattr(particle, "has_core", False):
+        # An impermeable core closes the pore off with a flat wall.
+        blind = ((inner, low), (inner, high))
+    else:
+        blind = tuple(
+            (
+                inner - _CHANNEL_HALF * math.sin(math.pi * step / steps),
+                y + _CHANNEL_RISE - _CHANNEL_HALF * math.cos(math.pi * step / steps),
+            )
+            for step in range(steps + 1)
+        )
+    scene.add(
+        Polyline(mouth + blind, Style.PORE, closed=True, filled=True, stroked=False),
+        Polyline(blind + mouth[:1], Style.WALL),
+        Polyline((blind[0], mouth[-1]), Style.WALL),
+    )
 
     if not getattr(particle, "nonlimiting_filmDiff", False):
-        # Film diffusion: the flux crosses the film and stops at the surface.
-        # The label rides above the arrow so that wide geometries stay clear
-        # of the phase chain to the right.
-        outside = _surface_x(geometry, _FILM) + 0.75
-        lands = _edge_x(geometry, 0.95) + 0.04
+        # Film diffusion: the flux crosses the film into the mouth of the pore.
+        offset = _CHANNEL_RISE
+        outside = _surface_x(geometry, _FILM) + 0.8
+        lands = _edge_x(geometry, offset) + 0.04
         scene.add(
-            Arrow((outside, y + 0.95), (lands, y + 0.95), Style.FLOW),
-            Label((0.5 * (outside + surface), y + 1.05), r"k^{\mathrm{f}}", Anchor.ABOVE, size=0.95),
+            Arrow((outside, y + offset), (lands, y + offset), Style.FLOW),
+            Label((0.5 * (outside + lands), y + offset + 0.12), r"k^{\mathrm{f}}", Anchor.ABOVE, size=0.95),
         )
 
+    wall_y = low + _BOUND
     if resolved:
-        # Pore diffusion runs inwards along r; surface diffusion runs beside it
-        # in the bound phase, which is why the two arrows are drawn in parallel.
-        inner = _core_x(geometry) + 0.1 if getattr(particle, "has_core", False) else x + 0.15
-        for offset, symbol, shown in (
-            (-0.15, r"D^{\p}", True),
-            (-1.0, r"D^{\s}", getattr(particle, "has_surfDiff", False)),
-        ):
-            if not shown:
-                continue
-            edge = _edge_x(geometry, offset) - 0.18
+        # Pore diffusion runs along the liquid in the pore; surface diffusion
+        # runs along the wall, through the bound molecules sitting on it.
+        pore_y = y + _CHANNEL_RISE + 0.06
+        outer = _edge_x(geometry, pore_y - y) - 0.22
+        scene.add(
+            Arrow((outer, pore_y), (inner + 0.2, pore_y), Style.ANNOTATION, double=True),
+            Label((0.5 * (inner + outer), pore_y + 0.1), r"D^{\p}", Anchor.ABOVE, size=0.9),
+        )
+        if getattr(particle, "has_surfDiff", False):
+            outer = _edge_x(geometry, low - y) - 0.26
             scene.add(
-                Arrow((edge, y + offset), (inner, y + offset), Style.ANNOTATION, double=True),
-                Label((0.5 * (edge + inner), y + offset + 0.1), symbol, Anchor.ABOVE, size=0.9),
+                Arrow((outer, wall_y), (inner + 0.2, wall_y), Style.ANNOTATION, double=True),
+                Label((0.5 * (inner + outer), low - 0.12), r"D^{\s}", Anchor.BELOW, size=0.9),
             )
+
+    if getattr(particle, "has_binding", False):
+        # The bound phase sits on the pore wall, which is the only place it
+        # can be; drawn last so the molecules ride on the arrow along it.
+        place = inner + 0.42
+        while place < _edge_x(geometry, low - y) - 0.3:
+            scene.add(Ellipse((place, wall_y), _BOUND, _BOUND, Style.SOLID))
+            place += 0.44
 
 
 def _radial_coordinate(scene: Scene, particle) -> None:
@@ -226,7 +342,7 @@ def _radial_coordinate(scene: Scene, particle) -> None:
         Arrow((x, baseline), (surface + 0.7, baseline), Style.AXIS),
         Polyline(((x, baseline - tick), (x, baseline + tick)), Style.AXIS),
         Polyline(((surface, baseline - tick), (surface, baseline + tick)), Style.AXIS),
-        Label((surface, baseline - tick - 0.05), r"P^{\p}", Anchor.BELOW, size=0.9),
+        Label((surface, baseline - tick - 0.05), r"R^{\mathrm{p}}", Anchor.BELOW, size=0.9),
         Label((surface + 0.7, baseline + 0.1), "r", Anchor.ABOVE_RIGHT),
     )
     if getattr(particle, "has_core", False):
@@ -235,7 +351,7 @@ def _radial_coordinate(scene: Scene, particle) -> None:
         core_x = _core_x(geometry)
         scene.add(
             Polyline(((core_x, baseline - tick), (core_x, baseline + tick)), Style.AXIS),
-            Label((core_x, baseline + tick + 0.02), r"P^{\mathrm{core}}", Anchor.ABOVE, size=0.9),
+            Label((core_x, baseline + tick + 0.02), r"R^{\mathrm{c}}", Anchor.ABOVE, size=0.9),
         )
     else:
         scene.add(Label((x, baseline - tick - 0.05), "0", Anchor.BELOW, size=0.9, italic=False))

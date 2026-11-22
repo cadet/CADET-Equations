@@ -44,9 +44,10 @@ _THEME_CSS = """
     --cadet-fig-void: light-dark(#ffffff, #0e1117);
     --cadet-fig-wall: light-dark(#0f172a, #d7dee8);
     --cadet-fig-particle: light-dark(#ffffff, #2b3545);
-    --cadet-fig-pore: light-dark(#f6f9fc, #243044);
-    --cadet-fig-solid: light-dark(#c3d6e6, #3c5a76);
-    --cadet-fig-core: light-dark(#cbd5e1, #47536a);
+    --cadet-fig-matrix: light-dark(#d4e0ea, #2b3545);
+    --cadet-fig-pore: light-dark(#f7fafd, #19212e);
+    --cadet-fig-solid: light-dark(#93b9d8, #44688f);
+    --cadet-fig-core: light-dark(#9fb0c2, #5c6b80);
     --cadet-fig-film: light-dark(#fff4e5, #2e2718);
     --cadet-fig-film-edge: light-dark(#b26a00, #f0c070);
     --cadet-fig-flow: light-dark(#023d6b, #6fb3e0);

@@ -289,7 +289,7 @@ def test_the_flow_path_never_runs_through_a_bead():
     """The meander shares the body with the packing, so it needs its own lane."""
     for column_type in ("Axial", "Frustum", "Generalized", "Radial"):
         scene = build_column_scene(_make_column(column_type=column_type))
-        beads = _of_style(scene, Style.PARTICLE)[:-1]  # the last one is the legend
+        beads = _of_style(scene, Style.PARTICLE)
         for path in _flow_paths(scene):
             for x, y in path.points:
                 for bead in beads:
@@ -309,26 +309,36 @@ def test_a_column_without_particles_draws_no_beads():
 
 @pytest.mark.ci
 @pytest.mark.unit_test
-@pytest.mark.parametrize("nonlimiting, films", [(False, 9), (True, 0)])
+@pytest.mark.parametrize("nonlimiting, films", [(False, 8), (True, 0)])
 def test_a_film_ring_marks_film_diffusion_limited_particles(nonlimiting, films):
-    """Eight beads in the bed plus the one in the legend carry the ring."""
+    """Every bead of a film-limited type carries the ring, and no other does."""
     scene = build_column_scene(_make_column(particles=[FakeParticle(nonlimiting_filmDiff=nonlimiting)]))
     assert len(_of_style(scene, Style.FILM)) == films
 
 
 @pytest.mark.ci
 @pytest.mark.unit_test
-def test_the_legend_names_the_film_diffusion_regime_of_each_type():
-    scene = build_column_scene(_make_column(particles=[FakeParticle(), FakeParticle(nonlimiting_filmDiff=True)]))
-    labels = _labels(scene)
-    assert any(label.startswith("j = 1: film diffusion") for label in labels)
-    assert any(label.startswith(r"j = 2: c^{\b} = c^{\p}") for label in labels)
+@pytest.mark.parametrize("nonlimiting, arrows", [(False, 8), (True, 0)])
+def test_film_diffusion_is_drawn_as_a_flux_into_every_limited_bead(nonlimiting, arrows):
+    """It is shown on the beads themselves, not explained in a key."""
+    scene = build_column_scene(_make_column(particles=[FakeParticle(nonlimiting_filmDiff=nonlimiting)]))
+    # The flow through the column is a path, so every flow arrow is a flux.
+    assert len(_arrows(scene, Style.FLOW)) == arrows
 
 
 @pytest.mark.ci
 @pytest.mark.unit_test
-def test_a_single_particle_type_needs_no_index_in_the_legend():
-    assert r"film diffusion k^{\mathrm{f}}" in _labels(build_column_scene(_make_column()))
+def test_one_bead_of_each_type_is_named_after_its_film_regime():
+    scene = build_column_scene(_make_column(particles=[FakeParticle(), FakeParticle(nonlimiting_filmDiff=True)]))
+    labels = _labels(scene)
+    assert r"j = 1: k^{\mathrm{f}}" in labels
+    assert r"j = 2: c^{\b} = c^{\p}" in labels
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_a_single_particle_type_needs_no_index_on_its_bead():
+    assert r"k^{\mathrm{f}}" in _labels(build_column_scene(_make_column()))
 
 
 @pytest.mark.ci
@@ -341,8 +351,7 @@ def test_beads_stay_inside_the_bed_of_every_geometry(column_type):
     body = _BODIES[column_type](probe, column)
 
     scene = build_column_scene(column)
-    # The last bead is the legend swatch, which sits outside the body.
-    for bead in _of_style(scene, Style.PARTICLE)[:-1]:
+    for bead in _of_style(scene, Style.PARTICLE):
         x, y = bead.center
         assert any(start <= x <= stop for start, stop in body.bed_spans), bead
         depth = abs(y - body.bed_axis)
@@ -375,6 +384,17 @@ def test_a_radial_column_stands_upright_and_feeds_from_its_channel():
     assert len(paths) == 2
     for path in paths:
         assert abs(path.points[0][0] - centre_x) < abs(path.points[-1][0] - centre_x)
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_the_radial_channel_is_closed_at_the_base():
+    """Both ends of the channel are drawn, the hidden one dashed."""
+    scene = build_column_scene(_make_column(column_type="Radial"))
+    hidden = _of_style(scene, Style.HIDDEN)
+    assert len(hidden) == 1, "the base of the channel is the one hidden ellipse"
+    # It is drawn as a whole ellipse: an arc of a full turn would be empty.
+    assert "<ellipse" in render_svg(scene)
 
 
 # %% Particle figure
@@ -446,7 +466,35 @@ def test_a_homogeneous_particle_resolves_no_interior_coordinate():
 def test_a_particle_core_adds_an_inner_boundary_and_a_tick():
     scene = build_particle_scene(FakeParticle(has_core=True))
     assert [item for item in scene.items if getattr(item, "style", None) is Style.CORE]
-    assert r"P^{\mathrm{core}}" in _labels(scene)
+    assert r"R^{\mathrm{c}}" in _labels(scene)
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+@pytest.mark.parametrize("geometry", ["Sphere", "Cylinder", "Slab"])
+def test_the_particle_radius_is_named_as_the_equations_name_it(geometry):
+    """The symbol table writes r in (0, R^p), so the figure must not say P."""
+    labels = _labels(build_particle_scene(FakeParticle(geometry=geometry)))
+    assert r"R^{\mathrm{p}}" in labels
+    assert not [label for label in labels if label.startswith("P^")]
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+@pytest.mark.parametrize("geometry", ["Sphere", "Cylinder", "Slab"])
+def test_the_particle_is_drawn_as_a_porous_matrix(geometry):
+    """Pore diffusion and surface diffusion need a pore to happen in."""
+    scene = build_particle_scene(FakeParticle(geometry=geometry))
+    assert any(getattr(item, "style", None) is Style.MATRIX for item in scene.items), "the solid skeleton"
+    assert len(_of_style(scene, Style.PORE)) >= 6, "the pores through it"
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+@pytest.mark.parametrize("has_binding, bound", [(True, True), (False, False)])
+def test_the_bound_phase_sits_on_the_pore_wall(has_binding, bound):
+    scene = build_particle_scene(FakeParticle(has_binding=has_binding, has_surfDiff=has_binding))
+    assert bool(_of_style(scene, Style.SOLID)) is bound
 
 
 @pytest.mark.ci
@@ -600,6 +648,15 @@ def test_an_arc_can_carry_an_arrow_head():
     scene = Scene(name="test", xmin=0, ymin=0, xmax=2, ymax=2)
     scene.add(EllipseArc((1, 1), 0.5, 0.5, 0, 180, Style.AXIS, arrow=True))
     assert "marker-end=" in render_svg(scene)
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_an_arc_of_a_full_turn_is_drawn_rather_than_dropped():
+    """Its start and end coincide, where a single SVG arc draws nothing."""
+    scene = Scene(name="test", xmin=0, ymin=0, xmax=2, ymax=2)
+    scene.add(EllipseArc((1, 1), 0.5, 0.25, 0, 360, Style.HIDDEN))
+    assert render_svg(scene).count("<path") == 2
 
 
 @pytest.mark.ci

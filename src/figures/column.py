@@ -85,6 +85,13 @@ class _Body:
     wall_side: float = 1.0  # -1 points the wall label at the body from below
     headroom: float = 1.65  # space above the body, for what is drawn there
     footroom: float = 0.95  # space below it, before the coordinate axis
+    #: Where a bead's annotation sits, above and below the packing.
+    label_y: tuple[float, float] | None = None
+
+    def __post_init__(self) -> None:
+        if self.label_y is None:
+            self.label_y = (self.top + 0.45, self.bottom - 0.4)
+
     bead_scale: float = 1.0  # shrinks the beads where the bed is cramped
     xmin: float = 0.0  # left edge of the frame
     xmax: float = 13.0  # right edge of the frame
@@ -273,7 +280,7 @@ def _radial_cylinder(scene: Scene, model) -> _Body:
         # Base: the near half of the rim is drawn solid, the far half dashed.
         EllipseArc((centre_x, bottom), outer, cap_ry, 180, 360, Style.WALL),
         EllipseArc((centre_x, bottom), outer, cap_ry, 0, 180, Style.HIDDEN),
-        EllipseArc((centre_x, bottom), inner, inner_cap_ry, 0, 360, Style.HIDDEN),
+        Ellipse((centre_x, bottom), inner, inner_cap_ry, Style.HIDDEN, filled=False),
         Polyline(((centre_x - outer, bottom), (centre_x - outer, top)), Style.WALL),
         Polyline(((centre_x + outer, bottom), (centre_x + outer, top)), Style.WALL),
         # The channel wall runs the full height, hidden by the packing.
@@ -304,6 +311,9 @@ def _radial_cylinder(scene: Scene, model) -> _Body:
         wall_side=-1.0,
         headroom=1.35,  # the feed arrives from above the open channel
         footroom=1.45,  # and the wall is named below the base
+        # The body is tall, so a bead's annotation leaves it sideways rather
+        # than reaching all the way past the end faces.
+        label_y=(_AXIS_Y + 2.1, _AXIS_Y - 2.1),
         xmin=1.8,
         xmax=10.7,
         domain_at=(centre_x - 0.6 * outer, top + 0.02),
@@ -402,6 +412,9 @@ def _tank(scene: Scene, model) -> _Body:
         headroom=0.4,
         footroom=0.45,
         bead_scale=0.72,
+        # The suspension sits in the middle of a tall vessel, so a bead's
+        # annotation leaves past its side rather than past the rim.
+        label_y=(bed_high + 1.35, bed_low - 0.45),
         xmin=2.0,
         xmax=11.0,
     )
@@ -595,6 +608,7 @@ def _beads(scene: Scene, body: _Body, model) -> None:
         sizes[(span_index, side)] = sizes.get((span_index, side), 0) + 1
 
     placed: dict[tuple[int, float], int] = {}
+    labelled: set[int] = set()
     for particle_index, span_index, side in plan:
         order = placed.get((span_index, side), 0)
         placed[(span_index, side)] = order + 1
@@ -623,41 +637,60 @@ def _beads(scene: Scene, body: _Body, model) -> None:
         across = _ACROSS[(order + (0 if side > 0 else 3)) % len(_ACROSS)]
         centre = (x, body.bed_axis + side * (near + across * (far - near)))
 
-        if not getattr(particle, "nonlimiting_filmDiff", False):
-            scene.add(Ellipse(centre, reach, reach, Style.FILM))
-        scene.add(Ellipse(centre, radius, radius, Style.PARTICLE))
-
-
-#: Legend entries laid out per row, and the horizontal pitch between them.
-_LEGEND_COLUMNS, _LEGEND_PITCH, _LEGEND_ROW = 2, 5.6, 0.85
-
-
-def _particle_legend(scene: Scene, model, baseline: float, left: float) -> float:
-    """Explain the bead classes below the body; return the height used.
-
-    The legend is what answers "which particle types are film-diffusion
-    limited and which are in rapid equilibrium with the bulk".
-    """
-    types = _particle_types(model)
-    if not types:
-        return 0.0
-
-    multiple = len(types) > 1
-    for index, particle in enumerate(types):
-        row, column = divmod(index, _LEGEND_COLUMNS)
-        centre = (left + column * _LEGEND_PITCH, baseline - row * _LEGEND_ROW)
-        radius = _bead_radius(index, len(types))
         limiting = not getattr(particle, "nonlimiting_filmDiff", False)
+        leader_from = _along_flux(centre, side, reach + _FLUX_GAP)
         if limiting:
-            scene.add(Ellipse(centre, radius * 1.34, radius * 1.34, Style.FILM))
+            scene.add(Ellipse(centre, reach, reach, Style.FILM))
+            # Short arrows on small beads, so a cramped bed does not fill up.
+            leader_from = _film_flux(scene, centre, reach, side, _FLUX_LENGTH * radius / 0.28)
         scene.add(Ellipse(centre, radius, radius, Style.PARTICLE))
 
-        prefix = f"j = {index + 1}: " if multiple else ""
-        text = r"film diffusion k^{\mathrm{f}}" if limiting else r"c^{\b} = c^{\p}"
-        scene.add(Label((centre[0] + 0.5, centre[1]), prefix + text, Anchor.LEFT, size=0.82))
+        # One bead of each type carries the annotation for that type: what the
+        # arrows mean and, with more than one type, which bead is which. The
+        # types take turns between the two sides so the labels do not meet.
+        wanted_side = 1.0 if particle_index % 2 == 0 else -1.0
+        if particle_index not in labelled and span_index == 0 and side == wanted_side:
+            labelled.add(particle_index)
+            _bead_label(scene, body, leader_from, side, particle_index, count, limiting)
 
-    rows = -(-len(types) // _LEGEND_COLUMNS)
-    return 0.35 + rows * _LEGEND_ROW
+
+#: Where a film flux arrow comes from, how long it is, and how far its tip
+#: stays clear of the film, in scene units.
+_FLUX_DIRECTION, _FLUX_LENGTH, _FLUX_GAP = (-0.72, 0.69), 0.34, 0.05
+
+
+def _along_flux(point: Point, side: float, distance: float) -> Point:
+    """Return the point ``distance`` out from ``point`` along the flux arrow."""
+    return (point[0] + _FLUX_DIRECTION[0] * distance, point[1] + _FLUX_DIRECTION[1] * side * distance)
+
+
+def _film_flux(scene: Scene, centre: Point, reach: float, side: float, length: float) -> Point:
+    """Draw the flux through the film of one bead and return where it starts.
+
+    Film diffusion is what the ring around a bead stands for, so it is drawn
+    on the bead itself rather than explained in a key beside the figure.
+    """
+    tip = _along_flux(centre, side, reach + _FLUX_GAP)
+    tail = _along_flux(tip, side, length)
+    scene.add(Arrow(tail, tip, Style.FLOW))
+    return tail
+
+
+def _bead_label(scene: Scene, body: _Body, start: Point, side: float, index: int, count: int, limiting: bool) -> None:
+    """Name the film resistance, and the particle type when there are several.
+
+    The label sits clear of the packing and is joined to the bead by a leader
+    that continues the flux arrow, so the two read as one annotation.
+    """
+    edge = body.label_y[0] if side > 0 else body.label_y[1]
+    run = (edge - start[1]) / (_FLUX_DIRECTION[1] * side)
+    anchor_point = (start[0] + _FLUX_DIRECTION[0] * run, edge)
+    scene.add(Polyline((start, anchor_point), Style.ANNOTATION))
+
+    text = r"k^{\mathrm{f}}" if limiting else r"c^{\b} = c^{\p}"
+    if count > 1:
+        text = f"j = {index + 1}: " + text
+    scene.add(Label(anchor_point, text, Anchor.ABOVE if side > 0 else Anchor.BELOW, size=0.85))
 
 
 # %% Assembly
@@ -701,8 +734,6 @@ def build_column_scene(column_model) -> Scene:
         else:
             _flow_coordinate(scene, body, bottom)
         bottom -= 0.75
-
-    bottom -= _particle_legend(scene, column_model, bottom - 0.6, body.xmin + 2.2)
 
     scene.xmin, scene.xmax = body.xmin, body.xmax
     scene.ymin, scene.ymax = bottom - 0.3, top
