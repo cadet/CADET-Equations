@@ -26,6 +26,7 @@ import math
 from collections.abc import Callable
 from dataclasses import dataclass, field
 
+from src.figures.annotate import TICK, boundary, dimension
 from src.figures.scene import (
     Anchor,
     Arrow,
@@ -47,10 +48,10 @@ _BODY_RY = 1.95  # half-height of a cylindrical body
 _PERSPECTIVE = 0.355  # how far an end cap bulges out, relative to its height
 _SAMPLES = 48  # points used to approximate a smooth wall or a flow path
 
-_CORRIDOR = 0.62  # half-height of the bead-free lane the flow path runs in
 _WAVE = 0.46  # amplitude of a dispersed (meandering) flow path
 _WAVELENGTH = 2.3  # distance it takes to complete one meander
 _LEAD = 1.5  # how far a flow path reaches beyond the body
+_DIAGONAL = 0.707  # cosine of 45 degrees, where a cap is named
 
 
 @dataclass
@@ -61,7 +62,8 @@ class _Body:
     and ``wave`` is the stretch of it that runs through the packing, so that a
     dispersed path meanders there and nowhere else.  ``bed_spans`` are the
     x-ranges the packing occupies and ``bed_profile`` gives its half-height
-    about ``bed_axis``, which together keep beads inside a body of any shape.
+    about ``bed_axis``, which together keep the beads of the scatter inside a
+    body of any shape.
     ``flow_symbol`` and ``flow_ticks`` name the coordinate that runs along the
     flow, and ``dispersion`` is the symbol of the flow-directional dispersion
     coefficient.
@@ -72,11 +74,12 @@ class _Body:
     bed_spans: tuple[tuple[float, float], ...] = ()
     bed_profile: Callable[[float], float] = field(default=lambda x: 0.0)
     bed_axis: float = _AXIS_Y
-    corridor: float = _CORRIDOR
     inlet_x: float = _LEFT
     outlet_x: float = _RIGHT
     wave: tuple[float, float] = (_LEFT, _RIGHT)
     flow_symbol: str = "z"
+    inlet_ry: float = _BODY_RY  # half-height of the cap the flow enters over
+    outlet_ry: float = _BODY_RY  # and of the one it leaves over
     flow_ticks: tuple[str, str] = ("0", r"L^{\b}")
     dispersion: str = r"D^{\mathrm{ax}}"
     draws_own_flow: bool = False
@@ -84,7 +87,7 @@ class _Body:
     wall_at: Point = (_LEFT + 0.78 * (_RIGHT - _LEFT), _AXIS_Y + _BODY_RY)
     wall_side: float = 1.0  # -1 points the wall label at the body from below
     headroom: float = 1.65  # space above the body, for what is drawn there
-    footroom: float = 0.95  # space below it, before the coordinate axis
+    footroom: float = 1.35  # space below it, before the coordinate axis
     #: Where a bead's annotation sits, above and below the packing.
     label_y: tuple[float, float] | None = None
 
@@ -172,11 +175,15 @@ def _frustum(scene: Scene, model) -> _Body:
 
     # The two radii are what distinguishes a frustum from a cylinder. Each is
     # labelled above its end cap, where nothing else competes for the space.
+    # A radius is an extent, so it is drawn without a head; the tick at the
+    # axis is what says where it is measured from.
     scene.add(
-        Arrow(left_centre, (_LEFT, _AXIS_Y + inlet_ry), Style.ANNOTATION),
+        Polyline((left_centre, (_LEFT, _AXIS_Y + inlet_ry)), Style.ANNOTATION),
+        Polyline(((_LEFT - TICK, _AXIS_Y), (_LEFT + TICK, _AXIS_Y)), Style.ANNOTATION),
         # Spelled as the symbol table spells them, upright script and all.
         Label((_LEFT, _AXIS_Y + inlet_ry + 0.12), r"P^{\mathrm{0}}", Anchor.ABOVE, size=0.9),
-        Arrow(right_centre, (_RIGHT, _AXIS_Y + outlet_ry), Style.ANNOTATION),
+        Polyline((right_centre, (_RIGHT, _AXIS_Y + outlet_ry)), Style.ANNOTATION),
+        Polyline(((_RIGHT - TICK, _AXIS_Y), (_RIGHT + TICK, _AXIS_Y)), Style.ANNOTATION),
         Label((_RIGHT, _AXIS_Y + outlet_ry + 0.12), r"P^{\mathrm{L^{\b}}}", Anchor.ABOVE, size=0.9),
     )
     return _Body(
@@ -184,10 +191,11 @@ def _frustum(scene: Scene, model) -> _Body:
         bottom=bottom,
         bed_spans=((_LEFT + 1.75, _RIGHT - 0.55),),
         bed_profile=lambda x: radius_at(x) - 0.22,
-        corridor=0.58,
         bead_scale=0.86,
         inlet_x=_LEFT - inlet_rx,
         outlet_x=_RIGHT + outlet_rx,
+        inlet_ry=inlet_ry,
+        outlet_ry=outlet_ry,
         wave=(_LEFT + 0.35, _RIGHT - outlet_rx - 0.15),
         wall_at=(_LEFT + 0.55 * length, _AXIS_Y + radius_at(_LEFT + 0.55 * length)),
         domain_at=(_LEFT + 1.15, _AXIS_Y - 1.55),
@@ -238,10 +246,11 @@ def _generalized(scene: Scene, model) -> _Body:
         bottom=2 * _AXIS_Y - top,
         bed_spans=((_LEFT + 1.75, _RIGHT - 0.6),),
         bed_profile=lambda x: _generalized_radius((x - _LEFT) / length) - 0.24,
-        corridor=0.58,
         bead_scale=0.84,
         inlet_x=_LEFT - inlet_rx,
         outlet_x=_RIGHT + outlet_rx,
+        inlet_ry=inlet_ry,
+        outlet_ry=outlet_ry,
         wave=(_LEFT + 0.35, _RIGHT - outlet_rx - 0.15),
         flow_symbol="x",
         flow_ticks=(r"x^{\mathrm{in}}", r"x^{\mathrm{out}}"),
@@ -298,7 +307,6 @@ def _radial_cylinder(scene: Scene, model) -> _Body:
             (centre_x + inner + 0.18, centre_x + outer - 0.18),
         ),
         bed_profile=_constant(half_height - 0.75),
-        corridor=0.6,
         bead_scale=0.74,
         inlet_x=centre_x - outer,
         outlet_x=centre_x + outer,
@@ -411,7 +419,6 @@ def _tank(scene: Scene, model) -> _Body:
         bed_axis=0.5 * (bed_low + bed_high),
         # A suspension has no flow path to keep clear, so the beads may sit
         # anywhere in the bed, across its middle included.
-        corridor=-0.45,
         draws_own_flow=True,
         has_wall=False,  # a homogeneous tank has no wall boundary condition
         headroom=0.4,
@@ -481,10 +488,18 @@ def _flow_path(scene: Scene, body: _Body, dispersed: bool) -> None:
     end = (body.outlet_x + _LEAD, _AXIS_Y)
     scene.add(
         Polyline(_flow_points(start, end, body.wave, dispersed), Style.FLOW, arrow=True),
-        Label((body.inlet_x - 0.75, _AXIS_Y + 0.24), r"\Gamma^{\mathrm{in}}", Anchor.ABOVE),
-        Label((body.outlet_x + 0.75, _AXIS_Y + 0.24), r"\Gamma^{\mathrm{out}}", Anchor.ABOVE),
         Label((body.inlet_x - 0.75, _AXIS_Y - 0.3), "Flow", Anchor.BELOW, size=0.85, italic=False),
     )
+    # The two faces are named on the cap itself, rather than beside the flow
+    # path: a label floating at the end of the path could as easily be naming
+    # the stream as the face it crosses. The arrow lands where the cap is
+    # widest and nothing else is written -- the far side of its upper quarter.
+    for sign, x, ry, name in (
+        (-1.0, _LEFT, body.inlet_ry, r"\Gamma^{\mathrm{in}}"),
+        (1.0, _RIGHT, body.outlet_ry, r"\Gamma^{\mathrm{out}}"),
+    ):
+        corner = (x + sign * _cap_rx(ry) * _DIAGONAL, _AXIS_Y + ry * _DIAGONAL)
+        boundary(scene, corner, (sign * 0.5, 0.87), name, reach=0.75)
     if dispersed:
         scene.add(Label((body.outlet_x + 0.75, _AXIS_Y - 0.3), body.dispersion, Anchor.BELOW, size=0.85))
 
@@ -492,26 +507,13 @@ def _flow_path(scene: Scene, body: _Body, dispersed: bool) -> None:
 def _wall_label(scene: Scene, body: _Body) -> None:
     """Point out the column wall from outside the body."""
     x, y = body.wall_at
-    side = body.wall_side
-    anchor = Anchor.ABOVE if side > 0 else Anchor.BELOW
-    scene.add(
-        Arrow((x, y + side * 0.8), (x, y + side * 0.1), Style.ANNOTATION),
-        Label((x, y + side * 0.87), r"\Gamma^{\mathrm{wall}}", anchor),
-    )
+    boundary(scene, (x, y), (0.0, body.wall_side), r"\Gamma^{\mathrm{wall}}", reach=0.8)
 
 
 def _flow_coordinate(scene: Scene, body: _Body, baseline: float) -> None:
     """Draw the coordinate that runs along the flow direction."""
-    tick = 0.13
     start, end = body.flow_ticks
-    scene.add(
-        Arrow((_LEFT, baseline), (body.outlet_x + 0.8, baseline), Style.AXIS),
-        Polyline(((_LEFT, baseline - tick), (_LEFT, baseline + tick)), Style.AXIS),
-        Polyline(((body.outlet_x, baseline - tick), (body.outlet_x, baseline + tick)), Style.AXIS),
-        Label((_LEFT, baseline - tick - 0.05), start, Anchor.BELOW, size=0.9),
-        Label((body.outlet_x, baseline - tick - 0.05), end, Anchor.BELOW, size=0.9),
-        Label((body.outlet_x + 0.8, baseline + 0.1), body.flow_symbol, Anchor.ABOVE_RIGHT),
-    )
+    dimension(scene, (_LEFT, baseline), (body.outlet_x, baseline), body.flow_symbol, start, end)
 
 
 def _radial_flow_coordinate(scene: Scene, body: _Body, baseline: float) -> None:
@@ -523,18 +525,10 @@ def _radial_flow_coordinate(scene: Scene, body: _Body, baseline: float) -> None:
     centre_x = 0.5 * (body.inlet_x + body.outlet_x)
     inner_tick, outer_tick = centre_x + _RADIAL_INNER, centre_x + _RADIAL_OUTER
     inner, outer = body.flow_ticks
-    tick = 0.13
     # Dashed guides tie the two ticks to the channel and to the outer shell.
     for guide in (inner_tick, outer_tick):
-        scene.add(Polyline(((guide, body.bottom - 0.12), (guide, baseline + 0.28)), Style.HIDDEN))
-    scene.add(
-        Arrow((centre_x, baseline), (outer_tick + 1.0, baseline), Style.AXIS),
-        Polyline(((inner_tick, baseline - tick), (inner_tick, baseline + tick)), Style.AXIS),
-        Polyline(((outer_tick, baseline - tick), (outer_tick, baseline + tick)), Style.AXIS),
-        Label((inner_tick, baseline - tick - 0.05), inner, Anchor.BELOW, size=0.9),
-        Label((outer_tick, baseline - tick - 0.05), outer, Anchor.BELOW, size=0.9),
-        Label((outer_tick + 1.0, baseline + 0.1), body.flow_symbol, Anchor.ABOVE_RIGHT),
-    )
+        scene.add(Polyline(((guide, body.bottom - 0.12), (guide, baseline + 0.52)), Style.HIDDEN))
+    dimension(scene, (inner_tick, baseline), (outer_tick, baseline), body.flow_symbol, inner, outer)
 
 
 def _radial_coordinate(scene: Scene, body: _Body) -> None:
@@ -545,10 +539,14 @@ def _radial_coordinate(scene: Scene, body: _Body) -> None:
     they do not run through the bed.
     """
     ry = body.top - _AXIS_Y
-    scene.add(
-        Arrow((_RIGHT, _AXIS_Y), (_RIGHT, _AXIS_Y + ry - 0.04), Style.AXIS),
-        Label((_RIGHT - 0.1, _AXIS_Y + 0.55 * ry), r"\rho", Anchor.RIGHT),
-        Label((_RIGHT, body.top + 0.12), r"P^{\mathrm{c}}", Anchor.ABOVE, size=0.9),
+    dimension(
+        scene,
+        (_RIGHT, _AXIS_Y),
+        (_RIGHT, _AXIS_Y + ry - 0.04),
+        r"\rho",
+        "0",
+        r"P^{\mathrm{c}}",
+        flip=True,
     )
 
 
@@ -565,12 +563,16 @@ def _angular_coordinate(scene: Scene, body: _Body) -> None:
 # %% Particle types
 
 
-#: How many beads a bed holds, and how deep in it they sit -- the depths run
-#: through a cycle rather than alternating so that the packing does not read as
-#: a grid. Both are fixed rather than sampled so that the rendered figure stays
-#: byte-stable for the reference tests.
-_BEAD_COUNT = 8
-_ACROSS = (0.82, 0.2, 0.58, 0.34, 0.92, 0.46)
+#: How many beads a bed holds at most, and the clearance between two of them.
+#: A bed is a bed: the beads are scattered over the whole cross section rather
+#: than lined up in rows, which is what a packing looks like and what keeps the
+#: eye from reading the rows as a structure the model has.
+_BEAD_COUNT = 11
+_BEAD_GAP = 0.12
+
+#: How many candidate positions the scatter may try before it gives up, so a
+#: bed too small for ``_BEAD_COUNT`` beads ends the search rather than looping.
+_BEAD_TRIES = 240
 
 
 def _particle_types(model) -> list:
@@ -597,66 +599,93 @@ def _beads(scene: Scene, body: _Body, model) -> None:
         return
 
     count = len(types)
-    spans = len(body.bed_spans)
+    # Place every bead before drawing any, because the annotation goes on the
+    # bead of each type that sits closest to the edge of the bed, where its
+    # leader reaches the label without crossing the packing.
+    beads = _scatter(body, count)
 
-    # Plan the beads before placing any, because where a bead goes along its
-    # stretch of packing depends on how many others share that stretch. Beads
-    # alternate between the two sides of the flow path and only then move on
-    # to the next stretch, so a column with two separate beds -- an annulus --
-    # shows every particle type on both sides of both of them.
-    plan = [
-        (spot % count, (spot // (2 * count)) % spans, 1.0 if (spot // count) % 2 == 0 else -1.0)
-        for spot in range(_BEAD_COUNT)
-    ]
-    sizes: dict[tuple[int, float], int] = {}
-    for _, span_index, side in plan:
-        sizes[(span_index, side)] = sizes.get((span_index, side), 0) + 1
-
-    placed: dict[tuple[int, float], int] = {}
-    labelled: set[int] = set()
-    for particle_index, span_index, side in plan:
-        order = placed.get((span_index, side), 0)
-        placed[(span_index, side)] = order + 1
-        total = sizes[(span_index, side)]
-
+    for span_index, particle_index, centre, radius, reach in beads:
+        del span_index
         particle = types[particle_index]
+        side = 1.0 if centre[1] >= body.bed_axis else -1.0
+        limiting = not getattr(particle, "nonlimiting_filmDiff", False)
+        if limiting:
+            scene.add(Ellipse(centre, reach, reach, Style.FILM))
+            # Short arrows on small beads, so a cramped bed does not fill up.
+            _film_flux(scene, centre, reach, side, _FLUX_LENGTH * radius / 0.28)
+        scene.add(Ellipse(centre, radius, radius, Style.PARTICLE))
+
+    # One bead of each type carries the annotation for that type: what the
+    # arrows mean and, with more than one type, which bead is which. The types
+    # take turns between the two sides of the bed so the labels do not meet.
+    for particle_index in range(count):
+        wanted = 1.0 if particle_index % 2 == 0 else -1.0
+        mine = [bead for bead in beads if bead[1] == particle_index]
+        if not mine:
+            continue
+        # On the type's own side of the bed and, where there is a choice, in
+        # its upstream half: the far end of the bed is where the wall and the
+        # outlet are named, and a leader across those would be unreadable.
+        start, stop = body.bed_spans[0]
+        wanted_side = [bead for bead in mine if (bead[2][1] - body.bed_axis) * wanted > 0]
+        upstream = [bead for bead in wanted_side if bead[2][0] < start + 0.45 * (stop - start)]
+        bead = max(upstream or wanted_side or mine, key=lambda bead: (bead[2][1] - body.bed_axis) * wanted)
+        _, _, centre, radius, reach = bead
+        side = 1.0 if centre[1] >= body.bed_axis else -1.0
+        limiting = not getattr(types[particle_index], "nonlimiting_filmDiff", False)
+        start = _along_flux(centre, side, reach + _FLUX_GAP + (_FLUX_LENGTH * radius / 0.28 if limiting else 0.0))
+        _bead_label(scene, body, start, side, particle_index, count, limiting)
+
+
+def _halton(index: int, base: int) -> float:
+    """Return the ``index``-th point of the Halton sequence over ``base``.
+
+    A scatter has to look unplanned and stay byte-identical from one run to
+    the next, which rules out a random generator; this fills the bed evenly
+    without ever repeating a pattern the eye can pick up.
+    """
+    fraction, result = 1.0, 0.0
+    while index:
+        fraction /= base
+        result += fraction * (index % base)
+        index //= base
+    return result
+
+
+def _scatter(body: _Body, count: int) -> list[tuple[int, int, Point, float, float]]:
+    """Return where the beads of a bed go, as (span, type, centre, r, reach).
+
+    Candidate positions are tried in turn and kept when the whole bead, film
+    and all, fits inside the bed profile and clears every bead already placed.
+    A bed too small for ``_BEAD_COUNT`` of them simply holds fewer.
+    """
+    placed: list[tuple[int, int, Point, float, float]] = []
+    spans = body.bed_spans
+
+    for try_index in range(1, _BEAD_TRIES + 1):
+        if len(placed) == _BEAD_COUNT:
+            break
+        # The types take turns, so every one of them is in the bed; a bed with
+        # several spans gets a bead in each in turn, an annulus on both sides.
+        particle_index = len(placed) % count
+        start, stop = spans[try_index % len(spans)]
         radius = _bead_radius(particle_index, count) * body.bead_scale
         # A film resistance is drawn as the liquid film it stands for, so the
         # bead needs room for it; with non-limiting film diffusion it does not.
         reach = radius * 1.34
 
-        start, stop = body.bed_spans[span_index]
-        usable = max(stop - start - 2.0 * reach, 0.0)
-        if total < 3:
-            # Too few to stagger without crowding: spread them to the edges.
-            along = order / (total - 1) if total > 1 else 0.5
-        else:
-            # The two sides are offset by half a step so the packing does not
-            # read as a grid of columns.
-            along = order / (total - 1) if side > 0 else (order + 0.5) / total
-        x = start + reach + along * usable
-
-        near, far = body.corridor + reach, body.bed_profile(x) - reach
-        if far <= near:  # the bed is too shallow here to hold a whole bead
+        x = start + _halton(try_index, 2) * (stop - start)
+        depth = body.bed_profile(x) - reach
+        if depth <= 0.0:  # the bed is too shallow here to hold a whole bead
             continue
-        across = _ACROSS[(order + (0 if side > 0 else 3)) % len(_ACROSS)]
-        centre = (x, body.bed_axis + side * (near + across * (far - near)))
-
-        limiting = not getattr(particle, "nonlimiting_filmDiff", False)
-        leader_from = _along_flux(centre, side, reach + _FLUX_GAP)
-        if limiting:
-            scene.add(Ellipse(centre, reach, reach, Style.FILM))
-            # Short arrows on small beads, so a cramped bed does not fill up.
-            leader_from = _film_flux(scene, centre, reach, side, _FLUX_LENGTH * radius / 0.28)
-        scene.add(Ellipse(centre, radius, radius, Style.PARTICLE))
-
-        # One bead of each type carries the annotation for that type: what the
-        # arrows mean and, with more than one type, which bead is which. The
-        # types take turns between the two sides so the labels do not meet.
-        wanted_side = 1.0 if particle_index % 2 == 0 else -1.0
-        if particle_index not in labelled and span_index == 0 and side == wanted_side:
-            labelled.add(particle_index)
-            _bead_label(scene, body, leader_from, side, particle_index, count, limiting)
+        centre = (x, body.bed_axis + (2.0 * _halton(try_index, 3) - 1.0) * depth)
+        if any(
+            math.hypot(centre[0] - other[0], centre[1] - other[1]) < reach + other_reach + _BEAD_GAP
+            for _, _, other, _, other_reach in placed
+        ):
+            continue
+        placed.append((try_index % len(spans), particle_index, centre, radius, reach))
+    return placed
 
 
 #: Where a film flux arrow comes from, how long it is, and how far its tip
@@ -677,7 +706,10 @@ def _film_flux(scene: Scene, centre: Point, reach: float, side: float, length: f
     """
     tip = _along_flux(centre, side, reach + _FLUX_GAP)
     tail = _along_flux(tip, side, length)
-    scene.add(Arrow(tail, tip, Style.FLOW))
+    # Double-headed: the film is crossed in whichever direction the gradient
+    # points, and a single head would claim the bead only ever takes up. Drawn
+    # as a flux rather than a flow, so the heads suit an arrow this short.
+    scene.add(Arrow(tail, tip, Style.FLUX, double=True))
     return tail
 
 
@@ -692,10 +724,13 @@ def _bead_label(scene: Scene, body: _Body, start: Point, side: float, index: int
     anchor_point = (start[0] + _FLUX_DIRECTION[0] * run, edge)
     scene.add(Polyline((start, anchor_point), Style.ANNOTATION))
 
-    text = r"k^{\mathrm{f}}" if limiting else r"c^{\b} = c^{\p}"
+    # Named rather than lettered: the arrows are the mechanism, and "film
+    # diffusion" says what they are without the reader looking up k^f first.
+    text = "film diffusion" if limiting else r"c^{\b} = c^{\p}"
     if count > 1:
         text = f"j = {index + 1}: " + text
-    scene.add(Label(anchor_point, text, Anchor.ABOVE if side > 0 else Anchor.BELOW, size=0.85))
+    # Written away from the inlet, which is named on the cap just left of it.
+    scene.add(Label(anchor_point, text, Anchor.ABOVE_RIGHT if side > 0 else Anchor.BELOW_RIGHT, size=0.85))
 
 
 # %% Assembly
@@ -715,11 +750,13 @@ def build_column_scene(column_model) -> Scene:
     body = build_body(scene, column_model)
     dispersed = bool(getattr(column_model, "has_axial_dispersion", False))
 
-    _beads(scene, body, column_model)
     if is_radial:
         _radial_flow(scene, body, dispersed)
     elif not body.draws_own_flow:
         _flow_path(scene, body, dispersed)
+    # After the flow path: where the two cross, the bead is in front, so the
+    # stream reads as passing between the beads rather than through one.
+    _beads(scene, body, column_model)
     if body.has_wall:
         _wall_label(scene, body)
     if not is_tank:

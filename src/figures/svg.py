@@ -55,6 +55,7 @@ _PAINT: dict[Style, tuple[str | None, str | None, float]] = {
     Style.CORE: ("core", "wall", 0.04),
     Style.FILM: ("film", "film-edge", 0.035),
     Style.FLOW: (None, "flow", 0.075),
+    Style.FLUX: (None, "flow", 0.045),
     Style.AXIS: (None, "axis", 0.05),
     Style.ANNOTATION: (None, "annotation", 0.03),
 }
@@ -72,6 +73,12 @@ _FONT_STACK = "'Source Sans 3', 'Source Sans Pro', 'Segoe UI', Helvetica, Arial,
 
 #: Styles drawn with a dashed stroke.
 _DASHED = {Style.HIDDEN: "0.18 0.14"}
+
+#: Size of a style's arrow head, relative to the default. A head is measured in
+#: stroke widths, so a short arrow needs a smaller one: at full size two heads
+#: are longer than the arrow between two touching phases and all that is left
+#: of it is a blot.
+_HEAD_SCALE = {Style.FLUX: 0.4}
 
 #: Vertical offset of a super- or subscript, as a multiple of the font size.
 _SUPERSCRIPT_RISE = 0.36
@@ -255,13 +262,17 @@ class _Renderer:
         definitions = []
         for style in sorted(self.arrow_styles, key=lambda item: item.value):
             ink = _PAINT[style][1] or "annotation"
-            for suffix, orientation, path in (
-                ("", "auto", "M 0 0 L 6 2.4 L 0 4.8 L 1.2 2.4 Z"),
-                ("-start", "auto-start-reverse", "M 0 0 L 6 2.4 L 0 4.8 L 1.2 2.4 Z"),
-            ):
+            scale = _HEAD_SCALE.get(style, 1.0)
+            length, width = 6 * scale, 4.8 * scale
+            path = (
+                f"M 0 0 L {_number(length)} {_number(0.5 * width)} "
+                f"L 0 {_number(width)} L {_number(0.2 * length)} {_number(0.5 * width)} Z"
+            )
+            for suffix, orientation in (("", "auto"), ("-start", "auto-start-reverse")):
                 definitions.append(
-                    f'<marker id="{self.scene.name}-head-{style.value}{suffix}" markerWidth="6"'
-                    f' markerHeight="4.8" refX="5.4" refY="2.4" orient="{orientation}"'
+                    f'<marker id="{self.scene.name}-head-{style.value}{suffix}"'
+                    f' markerWidth="{_number(length)}" markerHeight="{_number(width)}"'
+                    f' refX="{_number(0.9 * length)}" refY="{_number(0.5 * width)}" orient="{orientation}"'
                     f' markerUnits="strokeWidth"><path d="{path}" fill="{colour(ink)}"'
                     f' class="cadet-fill-{ink}"/></marker>'
                 )

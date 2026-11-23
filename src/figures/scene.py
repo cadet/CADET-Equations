@@ -38,6 +38,7 @@ class Style(str, Enum):
     CORE = "core"  # impermeable particle core
     FILM = "film"  # liquid film around a particle
     FLOW = "flow"  # convective flow arrows
+    FLUX = "flux"  # a short exchange between two phases, drawn where it happens
     AXIS = "axis"  # resolved coordinate axes
     ANNOTATION = "annotation"  # labels, leader lines, brackets
 

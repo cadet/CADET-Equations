@@ -7,6 +7,7 @@ a model's figure shows. Only the tests that are explicitly about the renderer
 look at the SVG itself.
 """
 
+import itertools
 import math
 import re
 import xml.etree.ElementTree as ET
@@ -18,7 +19,7 @@ import pytest
 from src.equations import BINDING_MODELS
 from src.figures import binding_figures, column_figure, particle_figures
 from src.figures.binding import DRAWABLE, build_binding_scene
-from src.figures.column import _AXIS_Y, _BODIES, build_column_scene
+from src.figures.column import _AXIS_Y, _BEAD_COUNT, _BODIES, build_column_scene
 from src.figures.labels import NORMAL, SUBSCRIPT, SUPERSCRIPT, Run, label_runs, label_text
 from src.figures.palette import css_rules
 from src.figures.particle import build_particle_scene
@@ -69,6 +70,10 @@ def _make_column(**overrides):
 
 def _labels(scene):
     return [item.text for item in scene.items if isinstance(item, Label)]
+
+
+def _label_items(scene):
+    return [item for item in scene.items if isinstance(item, Label)]
 
 
 def _arrows(scene, style):
@@ -286,16 +291,16 @@ def test_dispersion_bends_the_flow_path_around_the_packing():
 
 @pytest.mark.ci
 @pytest.mark.unit_test
-def test_the_flow_path_never_runs_through_a_bead():
-    """The meander shares the body with the packing, so it needs its own lane."""
+def test_the_packing_is_drawn_in_front_of_the_flow_path():
+    """The stream runs between the beads, so where the two cross on paper the
+    bead has to be the one in front; a path over a bead would read as going
+    through it."""
     for column_type in ("Axial", "Frustum", "Generalized", "Radial"):
         scene = build_column_scene(_make_column(column_type=column_type))
-        beads = _of_style(scene, Style.PARTICLE)
-        for path in _flow_paths(scene):
-            for x, y in path.points:
-                for bead in beads:
-                    distance = math.hypot(x - bead.center[0], y - bead.center[1])
-                    assert distance > bead.rx, (column_type, bead.center)
+        beads = [index for index, item in enumerate(scene.items) if getattr(item, "style", None) is Style.PARTICLE]
+        paths = [scene.items.index(path) for path in _flow_paths(scene)]
+        assert beads and paths, column_type
+        assert min(beads) > max(paths), column_type
 
 
 # %% Particle types in the bed
@@ -310,7 +315,7 @@ def test_a_column_without_particles_draws_no_beads():
 
 @pytest.mark.ci
 @pytest.mark.unit_test
-@pytest.mark.parametrize("nonlimiting, films", [(False, 8), (True, 0)])
+@pytest.mark.parametrize("nonlimiting, films", [(False, _BEAD_COUNT), (True, 0)])
 def test_a_film_ring_marks_film_diffusion_limited_particles(nonlimiting, films):
     """Every bead of a film-limited type carries the ring, and no other does."""
     scene = build_column_scene(_make_column(particles=[FakeParticle(nonlimiting_filmDiff=nonlimiting)]))
@@ -319,12 +324,13 @@ def test_a_film_ring_marks_film_diffusion_limited_particles(nonlimiting, films):
 
 @pytest.mark.ci
 @pytest.mark.unit_test
-@pytest.mark.parametrize("nonlimiting, arrows", [(False, 8), (True, 0)])
+@pytest.mark.parametrize("nonlimiting, arrows", [(False, _BEAD_COUNT), (True, 0)])
 def test_film_diffusion_is_drawn_as_a_flux_into_every_limited_bead(nonlimiting, arrows):
     """It is shown on the beads themselves, not explained in a key."""
     scene = build_column_scene(_make_column(particles=[FakeParticle(nonlimiting_filmDiff=nonlimiting)]))
-    # The flow through the column is a path, so every flow arrow is a flux.
-    assert len(_arrows(scene, Style.FLOW)) == arrows
+    # The flow through the column is a path, so every flux is the one on a bead.
+    assert len(_arrows(scene, Style.FLUX)) == arrows
+    assert all(arrow.double for arrow in _arrows(scene, Style.FLUX))
 
 
 @pytest.mark.ci
@@ -332,32 +338,79 @@ def test_film_diffusion_is_drawn_as_a_flux_into_every_limited_bead(nonlimiting, 
 def test_one_bead_of_each_type_is_named_after_its_film_regime():
     scene = build_column_scene(_make_column(particles=[FakeParticle(), FakeParticle(nonlimiting_filmDiff=True)]))
     labels = _labels(scene)
-    assert r"j = 1: k^{\mathrm{f}}" in labels
+    assert "j = 1: film diffusion" in labels
     assert r"j = 2: c^{\b} = c^{\p}" in labels
 
 
 @pytest.mark.ci
 @pytest.mark.unit_test
 def test_a_single_particle_type_needs_no_index_on_its_bead():
-    assert r"k^{\mathrm{f}}" in _labels(build_column_scene(_make_column()))
+    assert "film diffusion" in _labels(build_column_scene(_make_column()))
 
 
 @pytest.mark.ci
 @pytest.mark.unit_test
 @pytest.mark.parametrize("column_type", ["Axial", "Frustum", "Generalized", "Radial"])
 def test_beads_stay_inside_the_bed_of_every_geometry(column_type):
-    """A tapered or annular bed is cramped, so bead centres must be clamped."""
+    """A tapered or annular bed is cramped, so the scatter has to fit itself."""
     column = _make_column(column_type=column_type)
     probe = Scene(name="probe", xmin=0, ymin=0, xmax=1, ymax=1)
     body = _BODIES[column_type](probe, column)
 
     scene = build_column_scene(column)
-    for bead in _of_style(scene, Style.PARTICLE):
+    # The film ring is the widest part of a bead, so it is what has to fit.
+    for bead in _of_style(scene, Style.PARTICLE) + _of_style(scene, Style.FILM):
         x, y = bead.center
         assert any(start <= x <= stop for start, stop in body.bed_spans), bead
-        depth = abs(y - body.bed_axis)
-        assert depth + bead.rx <= body.bed_profile(x) + 1e-9, bead
-        assert depth - bead.rx >= body.corridor - 1e-9, bead
+        assert abs(y - body.bed_axis) + bead.rx <= body.bed_profile(x) + 1e-9, bead
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+@pytest.mark.parametrize("column_type", ["Axial", "Frustum", "Generalized"])
+def test_the_bed_is_a_scatter_rather_than_rows_of_beads(column_type):
+    """A packing is a packing: rows would read as a structure of the model."""
+    scene = build_column_scene(_make_column(column_type=column_type))
+    beads = _of_style(scene, Style.PARTICLE)
+    assert len(beads) >= 8, "a bed that reads as full"
+    # No two beads at the same depth, and none of them touching.
+    assert len({round(bead.center[1], 2) for bead in beads}) == len(beads)
+    for one, other in itertools.combinations(beads, 2):
+        gap = math.hypot(one.center[0] - other.center[0], one.center[1] - other.center[1])
+        assert gap > one.rx + other.rx, (one, other)
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+@pytest.mark.parametrize("column_type", ["Axial", "Frustum", "Generalized", "Radial"])
+def test_a_coordinate_is_drawn_as_an_extent_and_not_as_an_arrow(column_type):
+    """An arrowhead reads as a direction; a coordinate is an extent, so it is
+    a plain line between two ticks with its symbol in the middle."""
+    scene = build_column_scene(_make_column(column_type=column_type, resolution="2D"))
+    assert not _arrows(scene, Style.AXIS), "an axis drawn as an arrow"
+    assert _of_style(scene, Style.AXIS, Polyline), "the dimension line"
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_a_coordinate_is_written_between_the_bounds_it_runs_between():
+    scene = build_column_scene(_make_column())
+    coordinate = next(label for label in _label_items(scene) if label.text == "z")
+    bounds = [label for label in _label_items(scene) if label.text in ("0", r"L^{\b}")]
+    assert len(bounds) == 2
+    assert min(bound.position[0] for bound in bounds) < coordinate.position[0]
+    assert max(bound.position[0] for bound in bounds) > coordinate.position[0]
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+@pytest.mark.parametrize("name", [r"\Gamma^{\mathrm{in}}", r"\Gamma^{\mathrm{out}}", r"\Gamma^{\mathrm{wall}}"])
+def test_a_boundary_is_named_from_outside_with_an_arrow_onto_it(name):
+    """A name floating beside the body could as easily be naming the volume."""
+    scene = build_column_scene(_make_column())
+    label = next(item for item in _label_items(scene) if item.text == name)
+    arrows = _arrows(scene, Style.ANNOTATION)
+    assert any(math.dist(arrow.start, label.position) < 0.3 for arrow in arrows), name
 
 
 @pytest.mark.ci
@@ -427,9 +480,11 @@ def test_a_particle_without_binding_has_no_bound_phase():
 
 @pytest.mark.ci
 @pytest.mark.unit_test
-def test_rapid_equilibrium_binding_is_named_as_such():
+def test_rapid_equilibrium_binding_is_told_apart_by_its_symbol():
+    """Both regimes are called binding: it is the same step either way, and the
+    symbol beside the arrow is what says the rate is not resolved."""
     labels = _labels(build_particle_scene(FakeParticle(req_binding=True)))
-    assert "rapid equilibrium" in labels
+    assert "binding" in labels
     assert r"f^{\mathrm{bind}} = 0" in labels
 
 
@@ -487,7 +542,36 @@ def test_the_particle_is_drawn_as_a_porous_matrix(geometry):
     """Pore diffusion and surface diffusion need a pore to happen in."""
     scene = build_particle_scene(FakeParticle(geometry=geometry))
     assert any(getattr(item, "style", None) is Style.MATRIX for item in scene.items), "the solid skeleton"
-    assert len(_of_style(scene, Style.PORE)) >= 6, "the pores through it"
+    assert _of_style(scene, Style.PORE, Polyline), "the pore through it"
+    # A disc is a molecule wherever a figure draws one, so the matrix carries
+    # no stipple of small pores for a reader to mistake for one.
+    assert not _of_style(scene, Style.PORE), "a pore drawn as a disc"
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+@pytest.mark.parametrize("has_binding, drawn", [(True, True), (False, False)])
+def test_binding_is_drawn_in_the_pore_as_an_exchange(has_binding, drawn):
+    """Binding happens between the pore liquid and the wall, so it is drawn
+    there: a molecule in the liquid, the ones on the wall, and an arrow that
+    runs both ways between them."""
+    scene = build_particle_scene(FakeParticle(has_binding=has_binding))
+    exchanges = _arrows(scene, Style.FLUX)
+    assert bool(exchanges) is drawn
+    assert all(arrow.double for arrow in exchanges)
+    if drawn:
+        molecules = _of_style(scene, Style.SOLID)
+        wall = min(molecule.center[1] for molecule in molecules)
+        assert any(molecule.center[1] > wall + 0.2 for molecule in molecules), "one of them in the liquid"
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_film_diffusion_runs_both_ways_through_the_film():
+    """A bead loads and unloads through the same film."""
+    scene = build_particle_scene(FakeParticle())
+    crossing = _arrows(scene, Style.FLOW)
+    assert crossing and all(arrow.double for arrow in crossing)
 
 
 @pytest.mark.ci
