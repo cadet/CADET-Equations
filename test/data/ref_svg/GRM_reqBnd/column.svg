@@ -1,1 +1,1296 @@
-<svg xmlns="http://www.w3.org/2000/svg" role="img" class="cadet-figure" data-figure="column" font-family="'Source Sans 3', 'Source Sans Pro', 'Segoe UI', Helvetica, Arial, sans-serif" viewBox="0 0.55 13 7.55" style="width:100%;max-width:46rem;height:auto;display:block;margin:0.5em auto;"><title>Interstitial volume of the General Rate Model</title><defs><marker id="column-head-annotation" markerWidth="6" markerHeight="4.8" refX="5.4" refY="2.4" orient="auto" markerUnits="strokeWidth"><path d="M 0 0 L 6 2.4 L 0 4.8 L 1.2 2.4 Z" fill="#0f172a" class="cadet-fill-annotation"/></marker><marker id="column-head-annotation-start" markerWidth="6" markerHeight="4.8" refX="5.4" refY="2.4" orient="auto-start-reverse" markerUnits="strokeWidth"><path d="M 0 0 L 6 2.4 L 0 4.8 L 1.2 2.4 Z" fill="#0f172a" class="cadet-fill-annotation"/></marker><marker id="column-head-axis" markerWidth="6" markerHeight="4.8" refX="5.4" refY="2.4" orient="auto" markerUnits="strokeWidth"><path d="M 0 0 L 6 2.4 L 0 4.8 L 1.2 2.4 Z" fill="#475569" class="cadet-fill-axis"/></marker><marker id="column-head-axis-start" markerWidth="6" markerHeight="4.8" refX="5.4" refY="2.4" orient="auto-start-reverse" markerUnits="strokeWidth"><path d="M 0 0 L 6 2.4 L 0 4.8 L 1.2 2.4 Z" fill="#475569" class="cadet-fill-axis"/></marker><marker id="column-head-flow" markerWidth="6" markerHeight="4.8" refX="5.4" refY="2.4" orient="auto" markerUnits="strokeWidth"><path d="M 0 0 L 6 2.4 L 0 4.8 L 1.2 2.4 Z" fill="#023d6b" class="cadet-fill-flow"/></marker><marker id="column-head-flow-start" markerWidth="6" markerHeight="4.8" refX="5.4" refY="2.4" orient="auto-start-reverse" markerUnits="strokeWidth"><path d="M 0 0 L 6 2.4 L 0 4.8 L 1.2 2.4 Z" fill="#023d6b" class="cadet-fill-flow"/></marker></defs><ellipse cx="2.2" cy="4.15" rx="0.69" ry="1.95" fill="#dce7f0" class="cadet-fill-bulk"/><rect x="2.2" y="2.2" width="8" height="3.9" fill="#dce7f0" class="cadet-fill-bulk"/><ellipse cx="10.2" cy="4.15" rx="0.69" ry="1.95" fill="#eef4f9" class="cadet-fill-bulk-face"/><path d="M 2.2,2.2 A 0.69 1.95 0 0 0 2.2,6.1" fill="none" stroke="#0f172a" stroke-width="0.06" stroke-linecap="round" stroke-linejoin="round" class="cadet-stroke-wall"/><path d="M 2.2,6.1 A 0.69 1.95 0 0 0 2.2,2.2" fill="none" stroke="#0f172a" stroke-width="0.04" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="0.18 0.14" class="cadet-stroke-wall"/><path d="M 2.2,2.2 L 10.2,2.2" fill="none" stroke="#0f172a" stroke-width="0.06" stroke-linecap="round" stroke-linejoin="round" class="cadet-stroke-wall"/><path d="M 2.2,6.1 L 10.2,6.1" fill="none" stroke="#0f172a" stroke-width="0.06" stroke-linecap="round" stroke-linejoin="round" class="cadet-stroke-wall"/><ellipse cx="10.2" cy="4.15" rx="0.69" ry="1.95" fill="none" stroke="#0f172a" stroke-width="0.06" stroke-linecap="round" stroke-linejoin="round" class="cadet-stroke-wall"/><ellipse cx="4.38" cy="2.86" rx="0.38" ry="0.38" fill="#fff4e5" stroke="#b26a00" stroke-width="0.04" stroke-linecap="round" stroke-linejoin="round" class="cadet-fill-film cadet-stroke-film-edge"/><line x1="3.82" y1="2.33" x2="4.07" y2="2.57" fill="none" stroke="#023d6b" stroke-width="0.07" stroke-linecap="round" stroke-linejoin="round" class="cadet-stroke-flow" marker-end="url(#column-head-flow)"/><ellipse cx="4.38" cy="2.86" rx="0.28" ry="0.28" fill="#ffffff" stroke="#0f172a" stroke-width="0.04" stroke-linecap="round" stroke-linejoin="round" class="cadet-fill-particle cadet-stroke-wall"/><path d="M 3.82,2.33 L 3.22,1.75" fill="none" stroke="#0f172a" stroke-width="0.03" stroke-linecap="round" stroke-linejoin="round" class="cadet-stroke-annotation"/><text xml:space="preserve" x="3.22" y="1.57" font-size="0.44" fill="#0f172a" class="cadet-fill-annotation" text-anchor="middle" dominant-baseline="baseline" font-style="italic"><tspan font-size="0.44">k</tspan><tspan font-size="0.32" font-style="normal" dy="-0.16">f</tspan></text><ellipse cx="4.95" cy="5.27" rx="0.38" ry="0.38" fill="#fff4e5" stroke="#b26a00" stroke-width="0.04" stroke-linecap="round" stroke-linejoin="round" class="cadet-fill-film cadet-stroke-film-edge"/><line x1="4.4" y1="5.8" x2="4.64" y2="5.56" fill="none" stroke="#023d6b" stroke-width="0.07" stroke-linecap="round" stroke-linejoin="round" class="cadet-stroke-flow" marker-end="url(#column-head-flow)"/><ellipse cx="4.95" cy="5.27" rx="0.28" ry="0.28" fill="#ffffff" stroke="#0f172a" stroke-width="0.04" stroke-linecap="round" stroke-linejoin="round" class="cadet-fill-particle cadet-stroke-wall"/><ellipse cx="5.91" cy="3.08" rx="0.38" ry="0.38" fill="#fff4e5" stroke="#b26a00" stroke-width="0.04" stroke-linecap="round" stroke-linejoin="round" class="cadet-fill-film cadet-stroke-film-edge"/><line x1="5.36" y1="2.55" x2="5.6" y2="2.79" fill="none" stroke="#023d6b" stroke-width="0.07" stroke-linecap="round" stroke-linejoin="round" class="cadet-stroke-flow" marker-end="url(#column-head-flow)"/><ellipse cx="5.91" cy="3.08" rx="0.28" ry="0.28" fill="#ffffff" stroke="#0f172a" stroke-width="0.04" stroke-linecap="round" stroke-linejoin="round" class="cadet-fill-particle cadet-stroke-wall"/><ellipse cx="6.1" cy="5.48" rx="0.38" ry="0.38" fill="#fff4e5" stroke="#b26a00" stroke-width="0.04" stroke-linecap="round" stroke-linejoin="round" class="cadet-fill-film cadet-stroke-film-edge"/><line x1="5.55" y1="6" x2="5.79" y2="5.77" fill="none" stroke="#023d6b" stroke-width="0.07" stroke-linecap="round" stroke-linejoin="round" class="cadet-stroke-flow" marker-end="url(#column-head-flow)"/><ellipse cx="6.1" cy="5.48" rx="0.28" ry="0.28" fill="#ffffff" stroke="#0f172a" stroke-width="0.04" stroke-linecap="round" stroke-linejoin="round" class="cadet-fill-particle cadet-stroke-wall"/><ellipse cx="7.44" cy="2.95" rx="0.38" ry="0.38" fill="#fff4e5" stroke="#b26a00" stroke-width="0.04" stroke-linecap="round" stroke-linejoin="round" class="cadet-fill-film cadet-stroke-film-edge"/><line x1="6.89" y1="2.42" x2="7.14" y2="2.65" fill="none" stroke="#023d6b" stroke-width="0.07" stroke-linecap="round" stroke-linejoin="round" class="cadet-stroke-flow" marker-end="url(#column-head-flow)"/><ellipse cx="7.44" cy="2.95" rx="0.28" ry="0.28" fill="#ffffff" stroke="#0f172a" stroke-width="0.04" stroke-linecap="round" stroke-linejoin="round" class="cadet-fill-particle cadet-stroke-wall"/><ellipse cx="7.25" cy="5.31" rx="0.38" ry="0.38" fill="#fff4e5" stroke="#b26a00" stroke-width="0.04" stroke-linecap="round" stroke-linejoin="round" class="cadet-fill-film cadet-stroke-film-edge"/><line x1="6.7" y1="5.84" x2="6.94" y2="5.6" fill="none" stroke="#023d6b" stroke-width="0.07" stroke-linecap="round" stroke-linejoin="round" class="cadet-stroke-flow" marker-end="url(#column-head-flow)"/><ellipse cx="7.25" cy="5.31" rx="0.28" ry="0.28" fill="#ffffff" stroke="#0f172a" stroke-width="0.04" stroke-linecap="round" stroke-linejoin="round" class="cadet-fill-particle cadet-stroke-wall"/><ellipse cx="8.97" cy="3.03" rx="0.38" ry="0.38" fill="#fff4e5" stroke="#b26a00" stroke-width="0.04" stroke-linecap="round" stroke-linejoin="round" class="cadet-fill-film cadet-stroke-film-edge"/><line x1="8.42" y1="2.5" x2="8.67" y2="2.74" fill="none" stroke="#023d6b" stroke-width="0.07" stroke-linecap="round" stroke-linejoin="round" class="cadet-stroke-flow" marker-end="url(#column-head-flow)"/><ellipse cx="8.97" cy="3.03" rx="0.28" ry="0.28" fill="#ffffff" stroke="#0f172a" stroke-width="0.04" stroke-linecap="round" stroke-linejoin="round" class="cadet-fill-particle cadet-stroke-wall"/><ellipse cx="8.4" cy="5.44" rx="0.38" ry="0.38" fill="#fff4e5" stroke="#b26a00" stroke-width="0.04" stroke-linecap="round" stroke-linejoin="round" class="cadet-fill-film cadet-stroke-film-edge"/><line x1="7.85" y1="5.97" x2="8.09" y2="5.73" fill="none" stroke="#023d6b" stroke-width="0.07" stroke-linecap="round" stroke-linejoin="round" class="cadet-stroke-flow" marker-end="url(#column-head-flow)"/><ellipse cx="8.4" cy="5.44" rx="0.28" ry="0.28" fill="#ffffff" stroke="#0f172a" stroke-width="0.04" stroke-linecap="round" stroke-linejoin="round" class="cadet-fill-particle cadet-stroke-wall"/><path d="M 0.01,4.15 L 2.5,4.15 L 2.64,4.14 L 2.79,4.1 L 2.93,4.04 L 3.07,4 L 3.21,3.97 L 3.36,3.99 L 3.5,4.05 L 3.64,4.15 L 3.79,4.28 L 3.93,4.42 L 4.07,4.54 L 4.21,4.61 L 4.36,4.57 L 4.5,4.48 L 4.64,4.33 L 4.79,4.15 L 4.93,3.97 L 5.07,3.82 L 5.21,3.73 L 5.36,3.69 L 5.5,3.73 L 5.64,3.82 L 5.79,3.97 L 5.93,4.15 L 6.07,4.33 L 6.21,4.48 L 6.36,4.57 L 6.5,4.61 L 6.64,4.57 L 6.79,4.48 L 6.93,4.33 L 7.07,4.15 L 7.21,3.97 L 7.36,3.82 L 7.5,3.73 L 7.64,3.69 L 7.79,3.76 L 7.93,3.88 L 8.07,4.02 L 8.21,4.15 L 8.36,4.25 L 8.5,4.31 L 8.64,4.33 L 8.79,4.3 L 8.93,4.26 L 9.07,4.2 L 9.21,4.16 L 9.36,4.15 L 12.39,4.15" fill="none" stroke="#023d6b" stroke-width="0.07" stroke-linecap="round" stroke-linejoin="round" class="cadet-stroke-flow" marker-end="url(#column-head-flow)"/><text xml:space="preserve" x="0.76" y="3.73" font-size="0.52" fill="#0f172a" class="cadet-fill-annotation" text-anchor="middle" dominant-baseline="baseline" font-style="italic"><tspan font-size="0.52" font-style="normal">Γ</tspan><tspan font-size="0.37" font-style="normal" dy="-0.19">in</tspan></text><text xml:space="preserve" x="11.64" y="3.73" font-size="0.52" fill="#0f172a" class="cadet-fill-annotation" text-anchor="middle" dominant-baseline="baseline" font-style="italic"><tspan font-size="0.52" font-style="normal">Γ</tspan><tspan font-size="0.37" font-style="normal" dy="-0.19">out</tspan></text><text xml:space="preserve" x="0.76" y="4.63" font-size="0.44" fill="#0f172a" class="cadet-fill-annotation" text-anchor="middle" dominant-baseline="hanging"><tspan font-size="0.44">Flow</tspan></text><text xml:space="preserve" x="11.64" y="4.63" font-size="0.44" fill="#0f172a" class="cadet-fill-annotation" text-anchor="middle" dominant-baseline="hanging" font-style="italic"><tspan font-size="0.44">D</tspan><tspan font-size="0.32" font-style="normal" dy="-0.16">ax</tspan></text><line x1="8.44" y1="1.4" x2="8.44" y2="2.1" fill="none" stroke="#0f172a" stroke-width="0.03" stroke-linecap="round" stroke-linejoin="round" class="cadet-stroke-annotation" marker-end="url(#column-head-annotation)"/><text xml:space="preserve" x="8.44" y="1.15" font-size="0.52" fill="#0f172a" class="cadet-fill-annotation" text-anchor="middle" dominant-baseline="baseline" font-style="italic"><tspan font-size="0.52" font-style="normal">Γ</tspan><tspan font-size="0.37" font-style="normal" dy="-0.19">wall</tspan></text><text xml:space="preserve" x="3.4" y="5.45" font-size="0.57" fill="#0f172a" class="cadet-fill-annotation" text-anchor="middle" dominant-baseline="middle" font-style="italic"><tspan font-size="0.57" font-style="normal">Ω</tspan><tspan font-size="0.41" font-style="normal" dy="-0.21">b</tspan></text><line x1="2.2" y1="7.05" x2="11.69" y2="7.05" fill="none" stroke="#475569" stroke-width="0.05" stroke-linecap="round" stroke-linejoin="round" class="cadet-stroke-axis" marker-end="url(#column-head-axis)"/><path d="M 2.2,7.18 L 2.2,6.92" fill="none" stroke="#475569" stroke-width="0.05" stroke-linecap="round" stroke-linejoin="round" class="cadet-stroke-axis"/><path d="M 10.89,7.18 L 10.89,6.92" fill="none" stroke="#475569" stroke-width="0.05" stroke-linecap="round" stroke-linejoin="round" class="cadet-stroke-axis"/><text xml:space="preserve" x="2.2" y="7.41" font-size="0.47" fill="#0f172a" class="cadet-fill-annotation" text-anchor="middle" dominant-baseline="hanging" font-style="italic"><tspan font-size="0.47" font-style="normal">0</tspan></text><text xml:space="preserve" x="10.89" y="7.41" font-size="0.47" fill="#0f172a" class="cadet-fill-annotation" text-anchor="middle" dominant-baseline="hanging" font-style="italic"><tspan font-size="0.47">L</tspan><tspan font-size="0.34" font-style="normal" dy="-0.17">b</tspan></text><text xml:space="preserve" x="11.87" y="6.77" font-size="0.52" fill="#0f172a" class="cadet-fill-annotation" text-anchor="start" dominant-baseline="baseline" font-style="italic"><tspan font-size="0.52">z</tspan></text></svg>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   role="img"
+   class="cadet-figure"
+   data-figure="column"
+   font-family="'Source Sans 3', 'Source Sans Pro', 'Segoe UI', Helvetica, Arial, sans-serif"
+   viewBox="0 0.55 13 7.55"
+   style="width:100%;max-width:46rem;height:auto;display:block;margin:0.5em auto;"
+   version="1.1"
+   id="svg40"
+   sodipodi:docname="column.svg"
+   inkscape:version="1.4.2 (f4327f4, 2025-05-13)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview40"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="181.01934"
+     inkscape:cx="5.510461"
+     inkscape:cy="2.601932"
+     inkscape:window-width="3840"
+     inkscape:window-height="2036"
+     inkscape:window-x="-12"
+     inkscape:window-y="-12"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg40" />
+  <title
+     id="title1">Interstitial volume of the General Rate Model</title>
+  <defs
+     id="defs6">
+    <marker
+       style="overflow:visible"
+       id="marker54"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="Stop"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         style="fill:none;stroke:context-stroke;stroke-width:1"
+         d="M 0,4 V -4"
+         id="path54" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="Stop"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="Stop"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         style="fill:none;stroke:context-stroke;stroke-width:1"
+         d="M 0,4 V -4"
+         id="path23" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker44"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Triangle arrow"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.5)"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+         d="M 5.77,0 -2.88,5 V -5 Z"
+         id="path44" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker43"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Concave triangle arrow"
+       markerWidth="0.5"
+       markerHeight="0.5"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.7)"
+         d="M -2,-4 9,0 -2,4 c 2,-2.33 2,-5.66 0,-8 z"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+         id="path43" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="ConcaveTriangle"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Concave triangle arrow"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.7)"
+         d="M -2,-4 9,0 -2,4 c 2,-2.33 2,-5.66 0,-8 z"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+         id="path40" />
+    </marker>
+    <marker
+       id="column-head-annotation"
+       markerWidth="6"
+       markerHeight="4.8"
+       refX="5.4"
+       refY="2.4"
+       orient="auto"
+       markerUnits="strokeWidth">
+      <path
+         d="M 0 0 L 6 2.4 L 0 4.8 L 1.2 2.4 Z"
+         fill="#0f172a"
+         class="cadet-fill-annotation"
+         id="path1" />
+    </marker>
+    <marker
+       id="column-head-annotation-start"
+       markerWidth="6"
+       markerHeight="4.8"
+       refX="5.4"
+       refY="2.4"
+       orient="auto-start-reverse"
+       markerUnits="strokeWidth">
+      <path
+         d="M 0 0 L 6 2.4 L 0 4.8 L 1.2 2.4 Z"
+         fill="#0f172a"
+         class="cadet-fill-annotation"
+         id="path2" />
+    </marker>
+    <marker
+       id="column-head-axis"
+       markerWidth="6"
+       markerHeight="4.8"
+       refX="5.4"
+       refY="2.4"
+       orient="auto"
+       markerUnits="strokeWidth"
+       viewBox="0 0 6 4.8"
+       preserveAspectRatio="xMidYMid">
+      <path
+         d="M 0 0 L 6 2.4 L 0 4.8 L 1.2 2.4 Z"
+         fill="#475569"
+         class="cadet-fill-axis"
+         id="path3" />
+    </marker>
+    <marker
+       id="column-head-axis-start"
+       markerWidth="6"
+       markerHeight="4.8"
+       refX="5.4"
+       refY="2.4"
+       orient="auto-start-reverse"
+       markerUnits="strokeWidth"
+       viewBox="0 0 6 4.8"
+       preserveAspectRatio="xMidYMid">
+      <path
+         d="M 0 0 L 6 2.4 L 0 4.8 L 1.2 2.4 Z"
+         fill="#475569"
+         class="cadet-fill-axis"
+         id="path4" />
+    </marker>
+    <marker
+       id="column-head-flow"
+       markerWidth="6"
+       markerHeight="4.8"
+       refX="5.4"
+       refY="2.4"
+       orient="auto"
+       markerUnits="strokeWidth"
+       viewBox="0 0 6 4.8"
+       preserveAspectRatio="xMidYMid">
+      <path
+         d="M 0 0 L 6 2.4 L 0 4.8 L 1.2 2.4 Z"
+         fill="#023d6b"
+         class="cadet-fill-flow"
+         id="path5" />
+    </marker>
+    <marker
+       id="column-head-flow-start"
+       markerWidth="6"
+       markerHeight="4.8"
+       refX="5.4"
+       refY="2.4"
+       orient="auto-start-reverse"
+       markerUnits="strokeWidth"
+       viewBox="0 0 6 4.8"
+       preserveAspectRatio="xMidYMid">
+      <path
+         d="M 0 0 L 6 2.4 L 0 4.8 L 1.2 2.4 Z"
+         fill="#023d6b"
+         class="cadet-fill-flow"
+         id="path6" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker43-0"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Concave triangle arrow"
+       markerWidth="0.5"
+       markerHeight="0.5"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.7)"
+         d="M -2,-4 9,0 -2,4 c 2,-2.33 2,-5.66 0,-8 z"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+         id="path43-9" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker44-2"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Triangle arrow"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.5)"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+         d="M 5.77,0 -2.88,5 V -5 Z"
+         id="path44-4" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker44-2-1"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Triangle arrow"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.5)"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:context-stroke;stroke-width:1pt"
+         d="M 5.77,0 -2.88,5 V -5 Z"
+         id="path44-4-1" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker43-7"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Concave triangle arrow"
+       markerWidth="0.5"
+       markerHeight="0.5"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.7)"
+         d="M -2,-4 9,0 -2,4 c 2,-2.33 2,-5.66 0,-8 z"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+         id="path43-6" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker43-7-2"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Concave triangle arrow"
+       markerWidth="0.5"
+       markerHeight="0.5"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.7)"
+         d="M -2,-4 9,0 -2,4 c 2,-2.33 2,-5.66 0,-8 z"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+         id="path43-6-7" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker43-7-3"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Concave triangle arrow"
+       markerWidth="0.5"
+       markerHeight="0.5"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.7)"
+         d="M -2,-4 9,0 -2,4 c 2,-2.33 2,-5.66 0,-8 z"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+         id="path43-6-1" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker43-7-4"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Concave triangle arrow"
+       markerWidth="0.5"
+       markerHeight="0.5"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.7)"
+         d="M -2,-4 9,0 -2,4 c 2,-2.33 2,-5.66 0,-8 z"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+         id="path43-6-11" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker43-7-42"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Concave triangle arrow"
+       markerWidth="0.5"
+       markerHeight="0.5"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.7)"
+         d="M -2,-4 9,0 -2,4 c 2,-2.33 2,-5.66 0,-8 z"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+         id="path43-6-77" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker43-7-9"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Concave triangle arrow"
+       markerWidth="0.5"
+       markerHeight="0.5"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.7)"
+         d="M -2,-4 9,0 -2,4 c 2,-2.33 2,-5.66 0,-8 z"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+         id="path43-6-8" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker43-7-28"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Concave triangle arrow"
+       markerWidth="0.5"
+       markerHeight="0.5"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.7)"
+         d="M -2,-4 9,0 -2,4 c 2,-2.33 2,-5.66 0,-8 z"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+         id="path43-6-6" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker43-7-6"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Concave triangle arrow"
+       markerWidth="0.5"
+       markerHeight="0.5"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.7)"
+         d="M -2,-4 9,0 -2,4 c 2,-2.33 2,-5.66 0,-8 z"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+         id="path43-6-5" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker43-7-61"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Concave triangle arrow"
+       markerWidth="0.5"
+       markerHeight="0.5"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.7)"
+         d="M -2,-4 9,0 -2,4 c 2,-2.33 2,-5.66 0,-8 z"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+         id="path43-6-3" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker43-0-4"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Concave triangle arrow"
+       markerWidth="0.5"
+       markerHeight="0.5"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.7)"
+         d="M -2,-4 9,0 -2,4 c 2,-2.33 2,-5.66 0,-8 z"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+         id="path43-9-9" />
+    </marker>
+    <marker
+       id="column-head-axis-2"
+       markerWidth="6"
+       markerHeight="4.8000002"
+       refX="5.4000001"
+       refY="2.4000001"
+       orient="auto"
+       markerUnits="strokeWidth">
+      <path
+         d="M 0,0 6,2.4 0,4.8 1.2,2.4 Z"
+         fill="#475569"
+         class="cadet-fill-axis"
+         id="path3-9" />
+    </marker>
+  </defs>
+  <ellipse
+     cx="2.2"
+     cy="4.15"
+     rx="0.69"
+     ry="1.95"
+     fill="#dce7f0"
+     class="cadet-fill-bulk"
+     id="ellipse6" />
+  <rect
+     x="2.2"
+     y="2.2"
+     width="8"
+     height="3.9"
+     fill="#dce7f0"
+     class="cadet-fill-bulk"
+     id="rect6" />
+  <ellipse
+     cx="10.2"
+     cy="4.15"
+     rx="0.69"
+     ry="1.95"
+     fill="#eef4f9"
+     class="cadet-fill-bulk-face"
+     id="ellipse7" />
+  <path
+     d="M 2.2,2.2 A 0.69 1.95 0 0 0 2.2,6.1"
+     fill="none"
+     stroke="#0f172a"
+     stroke-width="0.06"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-stroke-wall"
+     id="path7" />
+  <path
+     d="M 2.2,6.1 A 0.69 1.95 0 0 0 2.2,2.2"
+     fill="none"
+     stroke="#0f172a"
+     stroke-width="0.04"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     stroke-dasharray="0.18 0.14"
+     class="cadet-stroke-wall"
+     id="path8" />
+  <path
+     d="M 2.2,2.2 L 10.2,2.2"
+     fill="none"
+     stroke="#0f172a"
+     stroke-width="0.06"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-stroke-wall"
+     id="path9" />
+  <path
+     d="M 2.2,6.1 L 10.2,6.1"
+     fill="none"
+     stroke="#0f172a"
+     stroke-width="0.06"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-stroke-wall"
+     id="path10" />
+  <ellipse
+     cx="10.2"
+     cy="4.15"
+     rx="0.69"
+     ry="1.95"
+     fill="none"
+     stroke="#0f172a"
+     stroke-width="0.06"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-stroke-wall"
+     id="ellipse10" />
+  <ellipse
+     cx="4.38"
+     cy="2.86"
+     rx="0.38"
+     ry="0.38"
+     fill="#fff4e5"
+     stroke="#b26a00"
+     stroke-width="0.04"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-fill-film cadet-stroke-film-edge"
+     id="ellipse11" />
+  <ellipse
+     cx="4.38"
+     cy="2.86"
+     rx="0.28"
+     ry="0.28"
+     fill="#ffffff"
+     stroke="#0f172a"
+     stroke-width="0.04"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-fill-particle cadet-stroke-wall"
+     id="ellipse12" />
+  <path
+     d="m 4.1637101,2.4905984 0.58,-0.6"
+     fill="none"
+     stroke="#0f172a"
+     stroke-width="0.03"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-stroke-annotation"
+     id="path12" />
+  <path
+     d="M 6.9852192,2.9221513 5.9065186,1.97347"
+     fill="none"
+     stroke="#0f172a"
+     stroke-width="0.051445"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-stroke-annotation"
+     id="path12-8"
+     style="display:block;stroke-width:0.03;stroke-dasharray:none" />
+  <text
+     xml:space="preserve"
+     x="5.2329988"
+     y="1.8209974"
+     font-size="0.44px"
+     fill="#0f172a"
+     class="cadet-fill-annotation"
+     text-anchor="middle"
+     dominant-baseline="baseline"
+     font-style="italic"
+     id="text13">film diffusion<tspan
+   font-size="0.32px"
+   font-style="normal"
+   id="tspan13" /></text>
+  <circle
+     cx="3.4087279"
+     cy="4.6789031"
+     fill="#fff4e5"
+     stroke="#b26a00"
+     stroke-width="0.04"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-fill-film cadet-stroke-film-edge"
+     id="ellipse13"
+     r="0.38" />
+  <circle
+     cx="3.4087279"
+     cy="4.6789031"
+     fill="#ffffff"
+     stroke="#0f172a"
+     stroke-width="0.04"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-fill-particle cadet-stroke-wall"
+     id="ellipse14"
+     r="0.28" />
+  <circle
+     cx="6.3740387"
+     cy="3.4998446"
+     fill="#fff4e5"
+     stroke="#b26a00"
+     stroke-width="0.04"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-fill-film cadet-stroke-film-edge"
+     id="ellipse15"
+     r="0.38" />
+  <circle
+     cx="6.3740387"
+     cy="3.4998446"
+     fill="#ffffff"
+     stroke="#0f172a"
+     stroke-width="0.04"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-fill-particle cadet-stroke-wall"
+     id="ellipse16"
+     r="0.28" />
+  <circle
+     cx="5.3818445"
+     cy="5.1485438"
+     fill="#fff4e5"
+     stroke="#b26a00"
+     stroke-width="0.04"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-fill-film cadet-stroke-film-edge"
+     id="ellipse17"
+     r="0.38" />
+  <circle
+     cx="5.3818445"
+     cy="5.1485438"
+     fill="#ffffff"
+     stroke="#0f172a"
+     stroke-width="0.04"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-fill-particle cadet-stroke-wall"
+     id="ellipse18"
+     r="0.28" />
+  <circle
+     cx="5.4000001"
+     cy="2.95"
+     fill="#fff4e5"
+     stroke="#b26a00"
+     stroke-width="0.04"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-fill-film cadet-stroke-film-edge"
+     id="ellipse17-2"
+     r="0.38"
+     style="display:block" />
+  <circle
+     cx="5.4000001"
+     cy="2.95"
+     fill="#ffffff"
+     stroke="#0f172a"
+     stroke-width="0.04"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-fill-particle cadet-stroke-wall"
+     id="ellipse18-1"
+     r="0.28"
+     style="display:block" />
+  <circle
+     cx="7.3958058"
+     cy="2.7124565"
+     fill="#fff4e5"
+     stroke="#b26a00"
+     stroke-width="0.04"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-fill-film cadet-stroke-film-edge"
+     id="ellipse19"
+     r="0.38" />
+  <circle
+     cx="7.3958058"
+     cy="2.7124565"
+     fill="#ffffff"
+     stroke="#0f172a"
+     stroke-width="0.04"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-fill-particle cadet-stroke-wall"
+     id="ellipse20"
+     r="0.28" />
+  <circle
+     cx="7.6256504"
+     cy="4.4205923"
+     fill="#fff4e5"
+     stroke="#b26a00"
+     stroke-width="0.04"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-fill-film cadet-stroke-film-edge"
+     id="ellipse21"
+     r="0.38" />
+  <circle
+     cx="7.6256504"
+     cy="4.4205923"
+     fill="#ffffff"
+     stroke="#0f172a"
+     stroke-width="0.04"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-fill-particle cadet-stroke-wall"
+     id="ellipse22"
+     r="0.28" />
+  <circle
+     cx="8.6827383"
+     cy="3.4719417"
+     fill="#fff4e5"
+     stroke="#b26a00"
+     stroke-width="0.04"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-fill-film cadet-stroke-film-edge"
+     id="ellipse23"
+     r="0.38" />
+  <circle
+     cx="8.6827383"
+     cy="3.4719417"
+     fill="#ffffff"
+     stroke="#0f172a"
+     stroke-width="0.04"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-fill-particle cadet-stroke-wall"
+     id="ellipse24"
+     r="0.28" />
+  <circle
+     cx="8.7701254"
+     cy="5.40133"
+     fill="#fff4e5"
+     stroke="#b26a00"
+     stroke-width="0.04"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-fill-film cadet-stroke-film-edge"
+     id="ellipse25"
+     r="0.38" />
+  <circle
+     cx="8.7701254"
+     cy="5.40133"
+     fill="#ffffff"
+     stroke="#0f172a"
+     stroke-width="0.04"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-fill-particle cadet-stroke-wall"
+     id="ellipse26"
+     r="0.28" />
+  <circle
+     cx="6.5933495"
+     cy="5.5412035"
+     fill="#fff4e5"
+     stroke="#b26a00"
+     stroke-width="0.04"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-fill-film cadet-stroke-film-edge"
+     id="ellipse25-6"
+     r="0.38"
+     style="display:block" />
+  <circle
+     cx="6.5933495"
+     cy="5.5412035"
+     fill="#ffffff"
+     stroke="#0f172a"
+     stroke-width="0.04"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-fill-particle cadet-stroke-wall"
+     id="ellipse26-1"
+     r="0.28"
+     style="display:block" />
+  <circle
+     cx="3.3226602"
+     cy="3.336699"
+     fill="#fff4e5"
+     stroke="#b26a00"
+     stroke-width="0.04"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-fill-film cadet-stroke-film-edge"
+     id="ellipse25-2"
+     r="0.38"
+     style="display:block" />
+  <circle
+     cx="3.3226602"
+     cy="3.336699"
+     fill="#ffffff"
+     stroke="#0f172a"
+     stroke-width="0.04"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-fill-particle cadet-stroke-wall"
+     id="ellipse26-3"
+     r="0.28"
+     style="display:block" />
+  <path
+     d="M 0.3420587,4.1550199 H 2.7056585 L 2.8385516,4.1449675 2.9809372,4.1047581 3.1138303,4.0444439 3.2467235,4.0042344 3.3796166,3.9740773 3.5220022,3.994182 3.6548953,4.0544962 3.7877885,4.1550199 3.930174,4.2857007 4.0630672,4.4264338 4.1959603,4.5470622 4.3288535,4.6174287 4.471239,4.5772193 4.6041322,4.486748 4.7370253,4.3359625 4.8794109,4.1550199 5.012304,3.9740773 5.1451972,3.8232918 5.2780904,3.7328205 5.4204759,3.6926111 5.553369,3.7328205 5.6862622,3.8232918 5.8286477,3.9740773 5.9615409,4.1550199 6.094434,4.3359625 6.2273272,4.486748 6.3697127,4.5772193 6.5026059,4.6174287 6.6354991,4.5772193 6.7778846,4.486748 6.9107777,4.3359625 7.0436709,4.1550199 7.1765641,3.9740773 7.3189496,3.8232918 l 0.1328932,-0.090471 0.1328931,-0.040209 0.1423855,0.070366 0.1328932,0.1206284 0.1328932,0.1407331 0.1328931,0.1306808 0.1423856,0.1005237 0.132893,0.060314 0.132893,0.020105 0.142386,-0.030157 0.132893,-0.040209 0.132893,-0.060314 0.132893,-0.040209 0.142386,-0.010054 H 12.09361"
+     fill="none"
+     stroke="#023d6b"
+     stroke-width="0.0683785"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-stroke-flow"
+     marker-end="url(#column-head-flow)"
+     id="path26"
+     style="marker-end:url(#ConcaveTriangle)" />
+  <text
+     xml:space="preserve"
+     x="2.1686893"
+     y="1.7412622"
+     font-size="0.52px"
+     fill="#0f172a"
+     class="cadet-fill-annotation"
+     text-anchor="middle"
+     dominant-baseline="baseline"
+     font-style="italic"
+     id="text27"><tspan
+       font-size="0.52px"
+       font-style="normal"
+       id="tspan26">Γ</tspan><tspan
+       font-size="0.37px"
+       font-style="normal"
+       dy="-0.19"
+       id="tspan27">in</tspan></text>
+  <text
+     xml:space="preserve"
+     x="10.41469"
+     y="1.7932543"
+     font-size="0.52px"
+     fill="#0f172a"
+     class="cadet-fill-annotation"
+     text-anchor="middle"
+     dominant-baseline="baseline"
+     font-style="italic"
+     id="text29"><tspan
+       font-size="0.52px"
+       font-style="normal"
+       id="tspan28">Γ</tspan><tspan
+       font-size="0.37px"
+       font-style="normal"
+       dy="-0.19"
+       id="tspan29">out</tspan></text>
+  <text
+     xml:space="preserve"
+     x="0.76552427"
+     y="4.4200778"
+     font-size="0.44px"
+     fill="#0f172a"
+     class="cadet-fill-annotation"
+     text-anchor="middle"
+     dominant-baseline="hanging"
+     id="text30"><tspan
+       font-size="0.44px"
+       id="tspan30">Flow</tspan></text>
+  <line
+     x1="8.4399996"
+     y1="1.3498005"
+     x2="8.4399996"
+     y2="2.0498004"
+     fill="none"
+     stroke="#0f172a"
+     stroke-width="0.03"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-stroke-annotation"
+     marker-end="url(#column-head-annotation)"
+     id="line32"
+     style="marker-end:url(#marker44)" />
+  <line
+     x1="10.407413"
+     y1="1.8578"
+     x2="10.407413"
+     y2="2.5577998"
+     fill="none"
+     stroke="#0f172a"
+     stroke-width="0.03"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-stroke-annotation"
+     marker-end="url(#column-head-annotation)"
+     id="line32-5"
+     style="display:block;marker-end:url(#marker44-2)" />
+  <line
+     x1="2.1695635"
+     y1="1.7859709"
+     x2="2.1695635"
+     y2="2.4859707"
+     fill="none"
+     stroke="#0f172a"
+     stroke-width="0.03"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-stroke-annotation"
+     marker-end="url(#column-head-annotation)"
+     id="line32-5-2"
+     style="display:block;marker-end:url(#marker44-2-1)" />
+  <text
+     xml:space="preserve"
+     x="8.4952183"
+     y="1.330718"
+     font-size="0.52px"
+     fill="#0f172a"
+     class="cadet-fill-annotation"
+     text-anchor="middle"
+     dominant-baseline="baseline"
+     font-style="italic"
+     id="text34"><tspan
+       font-size="0.52px"
+       font-style="normal"
+       id="tspan33">Γ</tspan><tspan
+       font-size="0.37px"
+       font-style="normal"
+       dy="-0.19"
+       id="tspan34">wall</tspan></text>
+  <text
+     xml:space="preserve"
+     x="4.2065439"
+     y="5.6267767"
+     font-size="0.57px"
+     fill="#0f172a"
+     class="cadet-fill-annotation"
+     text-anchor="middle"
+     dominant-baseline="middle"
+     font-style="italic"
+     id="text36"><tspan
+       font-size="0.57px"
+       font-style="normal"
+       id="tspan35">Ω</tspan><tspan
+       font-size="0.41px"
+       font-style="normal"
+       dy="-0.20999999"
+       id="tspan36">b</tspan></text>
+  <line
+     x1="2.2094016"
+     y1="6.251895"
+     x2="10.19417"
+     y2="6.251895"
+     fill="none"
+     stroke="#475569"
+     stroke-width="0.0458635"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-stroke-axis"
+     marker-end="url(#column-head-axis)"
+     id="line36"
+     style="marker-start:url(#marker54);marker-end:url(#Stop)" />
+  <text
+     xml:space="preserve"
+     x="2.2195313"
+     y="6.5154686"
+     font-size="0.47px"
+     fill="#0f172a"
+     class="cadet-fill-annotation"
+     text-anchor="middle"
+     dominant-baseline="hanging"
+     font-style="italic"
+     id="text37"><tspan
+       font-size="0.47px"
+       font-style="normal"
+       id="tspan37">0</tspan></text>
+  <text
+     xml:space="preserve"
+     x="10.20093"
+     y="3.7463002"
+     font-size="0.47px"
+     fill="#0f172a"
+     class="cadet-fill-annotation"
+     text-anchor="middle"
+     dominant-baseline="hanging"
+     font-style="italic"
+     id="text37-6"
+     style="display:block"><tspan
+       font-size="0.47px"
+       font-style="normal"
+       id="tspan37-3">0</tspan></text>
+  <text
+     xml:space="preserve"
+     x="10.300157"
+     y="6.5467186"
+     font-size="0.47px"
+     fill="#0f172a"
+     class="cadet-fill-annotation"
+     text-anchor="middle"
+     dominant-baseline="hanging"
+     font-style="italic"
+     id="text39"><tspan
+       font-size="0.47px"
+       id="tspan38">L</tspan><tspan
+       font-size="0.34px"
+       font-style="normal"
+       dy="-0.17"
+       id="tspan39">b</tspan></text>
+  <line
+     x1="5.5265331"
+     y1="3.2509627"
+     x2="5.6129341"
+     y2="3.3474612"
+     fill="none"
+     stroke="#023d6b"
+     stroke-width="0.07"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-stroke-flow"
+     marker-end="url(#column-head-flow)"
+     id="line17-8-7"
+     style="display:block;stroke-width:0.035;stroke-dasharray:none;marker-start:url(#marker43-0-4);marker-end:url(#marker43-0-4)"
+     inkscape:transform-center-x="-0.070279257"
+     inkscape:transform-center-y="0.030119682" />
+  <line
+     x1="6.2314658"
+     y1="5.8247213"
+     x2="6.3376842"
+     y2="5.7505951"
+     fill="none"
+     stroke="#023d6b"
+     stroke-width="0.07"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-stroke-flow"
+     marker-end="url(#column-head-flow)"
+     id="line17"
+     style="display:block;stroke-width:0.035;stroke-dasharray:none;marker-start:url(#marker43);marker-end:url(#marker43)" />
+  <line
+     x1="8.3280611"
+     y1="3.7590365"
+     x2="8.4342794"
+     y2="3.6849103"
+     fill="none"
+     stroke="#023d6b"
+     stroke-width="0.07"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-stroke-flow"
+     marker-end="url(#column-head-flow)"
+     id="line17-9-1"
+     style="display:block;stroke-width:0.035;stroke-dasharray:none;marker-start:url(#marker43-7-42);marker-end:url(#marker43-7-42)" />
+  <line
+     x1="5.6538863"
+     y1="4.9690657"
+     x2="5.7601047"
+     y2="4.8949394"
+     fill="none"
+     stroke="#023d6b"
+     stroke-width="0.07"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-stroke-flow"
+     marker-end="url(#column-head-flow)"
+     id="line17-9"
+     style="display:block;stroke-width:0.035;stroke-dasharray:none;marker-start:url(#marker43-7);marker-end:url(#marker43-7)" />
+  <line
+     x1="7.1953721"
+     y1="4.6043568"
+     x2="7.3015904"
+     y2="4.5302305"
+     fill="none"
+     stroke="#023d6b"
+     stroke-width="0.07"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-stroke-flow"
+     marker-end="url(#column-head-flow)"
+     id="line17-9-4"
+     style="display:block;stroke-width:0.035;stroke-dasharray:none;marker-start:url(#marker43-7-2);marker-end:url(#marker43-7-2)" />
+  <line
+     x1="7.0627894"
+     y1="3.0297258"
+     x2="7.1690078"
+     y2="2.9555995"
+     fill="none"
+     stroke="#023d6b"
+     stroke-width="0.07"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-stroke-flow"
+     marker-end="url(#column-head-flow)"
+     id="line17-9-3"
+     style="display:block;stroke-width:0.035;stroke-dasharray:none;marker-start:url(#marker43-7-3);marker-end:url(#marker43-7-3)" />
+  <line
+     x1="6.0738378"
+     y1="3.8363764"
+     x2="6.1800561"
+     y2="3.7622502"
+     fill="none"
+     stroke="#023d6b"
+     stroke-width="0.07"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-stroke-flow"
+     marker-end="url(#column-head-flow)"
+     id="line17-9-7"
+     style="display:block;stroke-width:0.035;stroke-dasharray:none;marker-start:url(#marker43-7-4);marker-end:url(#marker43-7-4)" />
+  <line
+     x1="4.0651798"
+     y1="2.5316293"
+     x2="4.1515808"
+     y2="2.6281278"
+     fill="none"
+     stroke="#023d6b"
+     stroke-width="0.07"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-stroke-flow"
+     marker-end="url(#column-head-flow)"
+     id="line17-8"
+     style="display:block;stroke-width:0.035;stroke-dasharray:none;marker-start:url(#marker43-0);marker-end:url(#marker43-0)"
+     inkscape:transform-center-x="-0.070279257"
+     inkscape:transform-center-y="0.030119682" />
+  <text
+     xml:space="preserve"
+     x="5.9862084"
+     y="6.656671"
+     font-size="0.52px"
+     fill="#0f172a"
+     class="cadet-fill-annotation"
+     text-anchor="start"
+     dominant-baseline="baseline"
+     font-style="italic"
+     id="text40"
+     style="font-size:0.466667px"><tspan
+       font-size="0.52px"
+       id="tspan40"
+       style="font-size:0.466667px">z</tspan></text>
+  <circle
+     cx="4.4000001"
+     cy="3.95"
+     fill="#fff4e5"
+     stroke="#b26a00"
+     stroke-width="0.04"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-fill-film cadet-stroke-film-edge"
+     id="ellipse17-8"
+     r="0.38"
+     style="display:block" />
+  <circle
+     cx="4.4000001"
+     cy="3.95"
+     fill="#ffffff"
+     stroke="#0f172a"
+     stroke-width="0.04"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-fill-particle cadet-stroke-wall"
+     id="ellipse18-5"
+     r="0.28"
+     style="display:block" />
+  <line
+     x1="8.9633532"
+     y1="5.1181145"
+     x2="9.0695715"
+     y2="5.0439882"
+     fill="none"
+     stroke="#023d6b"
+     stroke-width="0.07"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-stroke-flow"
+     marker-end="url(#column-head-flow)"
+     id="line17-9-0"
+     style="display:block;stroke-width:0.035;stroke-dasharray:none;marker-start:url(#marker43-7-9);marker-end:url(#marker43-7-9)" />
+  <line
+     x1="3.9909737"
+     y1="4.1457353"
+     x2="4.0971923"
+     y2="4.0716095"
+     fill="none"
+     stroke="#023d6b"
+     stroke-width="0.07"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-stroke-flow"
+     marker-end="url(#column-head-flow)"
+     id="line17-9-48"
+     style="display:block;stroke-width:0.035;stroke-dasharray:none;marker-start:url(#marker43-7-28);marker-end:url(#marker43-7-28)" />
+  <line
+     x1="3.7202845"
+     y1="4.560163"
+     x2="3.8265028"
+     y2="4.4860368"
+     fill="none"
+     stroke="#023d6b"
+     stroke-width="0.07"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-stroke-flow"
+     marker-end="url(#column-head-flow)"
+     id="line17-9-00"
+     style="display:block;stroke-width:0.035;stroke-dasharray:none;marker-start:url(#marker43-7-6);marker-end:url(#marker43-7-6)" />
+  <line
+     x1="3.0683136"
+     y1="3.6651239"
+     x2="3.1745319"
+     y2="3.5909977"
+     fill="none"
+     stroke="#023d6b"
+     stroke-width="0.07"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-stroke-flow"
+     marker-end="url(#column-head-flow)"
+     id="line17-9-34"
+     style="display:block;stroke-width:0.035;stroke-dasharray:none;marker-start:url(#marker43-7-61);marker-end:url(#marker43-7-61)" />
+  <line
+     x1="10.195672"
+     y1="6.0874453"
+     x2="10.195672"
+     y2="4.1559114"
+     fill="none"
+     stroke="#475569"
+     stroke-width="0.0502811"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-stroke-axis"
+     marker-end="url(#column-head-axis-2)"
+     id="line21-3"
+     style="display:block;marker-start:url(#marker54);marker-end:url(#marker54)" />
+  <text
+     xml:space="preserve"
+     x="10.639352"
+     y="4.9624844"
+     font-size="0.52px"
+     fill="#0f172a"
+     class="cadet-fill-annotation"
+     text-anchor="end"
+     dominant-baseline="middle"
+     font-style="italic"
+     id="text22-5"
+     style="display:block"><tspan
+       font-size="0.52px"
+       id="tspan22-9">ρ</tspan></text>
+  <text
+     xml:space="preserve"
+     x="10.825439"
+     y="6.2684064"
+     font-size="0.47px"
+     fill="#0f172a"
+     class="cadet-fill-annotation"
+     text-anchor="middle"
+     dominant-baseline="baseline"
+     font-style="italic"
+     id="text24-8"
+     style="display:block"><tspan
+       font-size="0.47px"
+       id="tspan23-4">P</tspan><tspan
+       font-size="0.34px"
+       font-style="normal"
+       dy="-0.17"
+       id="tspan24-0">c</tspan></text>
+</svg>

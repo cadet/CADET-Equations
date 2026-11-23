@@ -1,1 +1,862 @@
-<svg xmlns="http://www.w3.org/2000/svg" role="img" class="cadet-figure" data-figure="particle-1" font-family="'Source Sans 3', 'Source Sans Pro', 'Segoe UI', Helvetica, Arial, sans-serif" viewBox="0 0.25 13 7.55" style="width:100%;max-width:46rem;height:auto;display:block;margin:0.5em auto;"><title>Particle model</title><defs><marker id="particle-1-head-annotation" markerWidth="6" markerHeight="4.8" refX="5.4" refY="2.4" orient="auto" markerUnits="strokeWidth"><path d="M 0 0 L 6 2.4 L 0 4.8 L 1.2 2.4 Z" fill="#0f172a" class="cadet-fill-annotation"/></marker><marker id="particle-1-head-annotation-start" markerWidth="6" markerHeight="4.8" refX="5.4" refY="2.4" orient="auto-start-reverse" markerUnits="strokeWidth"><path d="M 0 0 L 6 2.4 L 0 4.8 L 1.2 2.4 Z" fill="#0f172a" class="cadet-fill-annotation"/></marker><marker id="particle-1-head-axis" markerWidth="6" markerHeight="4.8" refX="5.4" refY="2.4" orient="auto" markerUnits="strokeWidth"><path d="M 0 0 L 6 2.4 L 0 4.8 L 1.2 2.4 Z" fill="#475569" class="cadet-fill-axis"/></marker><marker id="particle-1-head-axis-start" markerWidth="6" markerHeight="4.8" refX="5.4" refY="2.4" orient="auto-start-reverse" markerUnits="strokeWidth"><path d="M 0 0 L 6 2.4 L 0 4.8 L 1.2 2.4 Z" fill="#475569" class="cadet-fill-axis"/></marker><marker id="particle-1-head-flow" markerWidth="6" markerHeight="4.8" refX="5.4" refY="2.4" orient="auto" markerUnits="strokeWidth"><path d="M 0 0 L 6 2.4 L 0 4.8 L 1.2 2.4 Z" fill="#023d6b" class="cadet-fill-flow"/></marker><marker id="particle-1-head-flow-start" markerWidth="6" markerHeight="4.8" refX="5.4" refY="2.4" orient="auto-start-reverse" markerUnits="strokeWidth"><path d="M 0 0 L 6 2.4 L 0 4.8 L 1.2 2.4 Z" fill="#023d6b" class="cadet-fill-flow"/></marker></defs><ellipse cx="3.3" cy="3.55" rx="2.47" ry="2.47" fill="#fff4e5" stroke="#b26a00" stroke-width="0.04" stroke-linecap="round" stroke-linejoin="round" class="cadet-fill-film cadet-stroke-film-edge"/><ellipse cx="3.3" cy="3.55" rx="2.05" ry="2.05" fill="#d4e0ea" stroke="#0f172a" stroke-width="0.04" stroke-linecap="round" stroke-linejoin="round" class="cadet-fill-matrix cadet-stroke-wall"/><ellipse cx="3.05" cy="5.26" rx="0.22" ry="0.22" fill="#f7fafd" stroke="#0f172a" stroke-width="0.04" stroke-linecap="round" stroke-linejoin="round" class="cadet-fill-pore cadet-stroke-wall"/><ellipse cx="3.57" cy="5.25" rx="0.15" ry="0.15" fill="#f7fafd" stroke="#0f172a" stroke-width="0.04" stroke-linecap="round" stroke-linejoin="round" class="cadet-fill-pore cadet-stroke-wall"/><ellipse cx="3.25" cy="4.66" rx="0.22" ry="0.22" fill="#f7fafd" stroke="#0f172a" stroke-width="0.04" stroke-linecap="round" stroke-linejoin="round" class="cadet-fill-pore cadet-stroke-wall"/><ellipse cx="1.83" cy="4.09" rx="0.18" ry="0.18" fill="#f7fafd" stroke="#0f172a" stroke-width="0.04" stroke-linecap="round" stroke-linejoin="round" class="cadet-fill-pore cadet-stroke-wall"/><ellipse cx="2.18" cy="3.52" rx="0.18" ry="0.18" fill="#f7fafd" stroke="#0f172a" stroke-width="0.04" stroke-linecap="round" stroke-linejoin="round" class="cadet-fill-pore cadet-stroke-wall"/><ellipse cx="1.81" cy="3.02" rx="0.22" ry="0.22" fill="#f7fafd" stroke="#0f172a" stroke-width="0.04" stroke-linecap="round" stroke-linejoin="round" class="cadet-fill-pore cadet-stroke-wall"/><ellipse cx="2.19" cy="2.43" rx="0.22" ry="0.22" fill="#f7fafd" stroke="#0f172a" stroke-width="0.04" stroke-linecap="round" stroke-linejoin="round" class="cadet-fill-pore cadet-stroke-wall"/><ellipse cx="3.64" cy="1.85" rx="0.15" ry="0.15" fill="#f7fafd" stroke="#0f172a" stroke-width="0.04" stroke-linecap="round" stroke-linejoin="round" class="cadet-fill-pore cadet-stroke-wall"/><ellipse cx="4.13" cy="1.86" rx="0.18" ry="0.18" fill="#f7fafd" stroke="#0f172a" stroke-width="0.04" stroke-linecap="round" stroke-linejoin="round" class="cadet-fill-pore cadet-stroke-wall"/><text xml:space="preserve" x="2.23" y="4.82" font-size="0.55" fill="#0f172a" class="cadet-fill-annotation" text-anchor="middle" dominant-baseline="middle" font-style="italic"><tspan font-size="0.55" font-style="normal">Ω</tspan><tspan font-size="0.39" font-style="normal" dy="-0.2">p</tspan></text><path d="M 4.8,2.16 L 6.22,0.99" fill="none" stroke="#0f172a" stroke-width="0.03" stroke-linecap="round" stroke-linejoin="round" class="cadet-stroke-annotation"/><text xml:space="preserve" x="6.45" y="0.99" font-size="0.49" fill="#0f172a" class="cadet-fill-annotation" text-anchor="start" dominant-baseline="middle" font-style="italic"><tspan font-size="0.49" font-style="normal">Γ</tspan><tspan font-size="0.36" font-style="normal" dy="-0.18">p</tspan></text><path d="M 5.1,2.57 L 5.16,2.68 L 5.21,2.8 L 5.25,2.91 L 5.28,3.02 L 5.31,3.14 L 5.33,3.25 L 5.34,3.36 L 5.35,3.48 L 5.35,3.59 L 5.34,3.7 L 5.33,3.82 L 5.31,3.93 L 3.3,3.93 L 3.12,3.91 L 2.96,3.84 L 2.82,3.73 L 2.71,3.59 L 2.64,3.43 L 2.62,3.25 L 2.64,3.07 L 2.71,2.91 L 2.82,2.77 L 2.96,2.66 L 3.12,2.59 L 3.3,2.57 Z" fill="#f7fafd" class="cadet-fill-pore"/><path d="M 3.3,3.93 L 3.12,3.91 L 2.96,3.84 L 2.82,3.73 L 2.71,3.59 L 2.64,3.43 L 2.62,3.25 L 2.64,3.07 L 2.71,2.91 L 2.82,2.77 L 2.96,2.66 L 3.12,2.59 L 3.3,2.57 L 5.1,2.57" fill="none" stroke="#0f172a" stroke-width="0.06" stroke-linecap="round" stroke-linejoin="round" class="cadet-stroke-wall"/><path d="M 3.3,3.93 L 5.31,3.93" fill="none" stroke="#0f172a" stroke-width="0.06" stroke-linecap="round" stroke-linejoin="round" class="cadet-stroke-wall"/><line x1="6.57" y1="3.25" x2="5.37" y2="3.25" fill="none" stroke="#023d6b" stroke-width="0.07" stroke-linecap="round" stroke-linejoin="round" class="cadet-stroke-flow" marker-end="url(#particle-1-head-flow)"/><text xml:space="preserve" x="5.97" y="2.95" font-size="0.49" fill="#0f172a" class="cadet-fill-annotation" text-anchor="middle" dominant-baseline="baseline" font-style="italic"><tspan font-size="0.49">k</tspan><tspan font-size="0.36" font-style="normal" dy="-0.18">f</tspan></text><line x1="5.1" y1="3.19" x2="3.5" y2="3.19" fill="none" stroke="#0f172a" stroke-width="0.03" stroke-linecap="round" stroke-linejoin="round" class="cadet-stroke-annotation" marker-end="url(#particle-1-head-annotation)" marker-start="url(#particle-1-head-annotation-start)"/><text xml:space="preserve" x="4.2" y="2.91" font-size="0.47" fill="#0f172a" class="cadet-fill-annotation" text-anchor="middle" dominant-baseline="baseline" font-style="italic"><tspan font-size="0.47">D</tspan><tspan font-size="0.34" font-style="normal" dy="-0.17">p</tspan></text><ellipse cx="3.72" cy="3.8" rx="0.13" ry="0.13" fill="#93b9d8" stroke="#0f172a" stroke-width="0.04" stroke-linecap="round" stroke-linejoin="round" class="cadet-fill-solid cadet-stroke-wall"/><ellipse cx="4.16" cy="3.8" rx="0.13" ry="0.13" fill="#93b9d8" stroke="#0f172a" stroke-width="0.04" stroke-linecap="round" stroke-linejoin="round" class="cadet-fill-solid cadet-stroke-wall"/><ellipse cx="4.6" cy="3.8" rx="0.13" ry="0.13" fill="#93b9d8" stroke="#0f172a" stroke-width="0.04" stroke-linecap="round" stroke-linejoin="round" class="cadet-fill-solid cadet-stroke-wall"/><line x1="3.3" y1="6.87" x2="6.05" y2="6.87" fill="none" stroke="#475569" stroke-width="0.05" stroke-linecap="round" stroke-linejoin="round" class="cadet-stroke-axis" marker-end="url(#particle-1-head-axis)"/><path d="M 3.3,7 L 3.3,6.74" fill="none" stroke="#475569" stroke-width="0.05" stroke-linecap="round" stroke-linejoin="round" class="cadet-stroke-axis"/><path d="M 5.35,7 L 5.35,6.74" fill="none" stroke="#475569" stroke-width="0.05" stroke-linecap="round" stroke-linejoin="round" class="cadet-stroke-axis"/><text xml:space="preserve" x="5.35" y="7.23" font-size="0.47" fill="#0f172a" class="cadet-fill-annotation" text-anchor="middle" dominant-baseline="hanging" font-style="italic"><tspan font-size="0.47">R</tspan><tspan font-size="0.34" font-style="normal" dy="-0.17">p</tspan></text><text xml:space="preserve" x="6.23" y="6.59" font-size="0.52" fill="#0f172a" class="cadet-fill-annotation" text-anchor="start" dominant-baseline="baseline" font-style="italic"><tspan font-size="0.52">r</tspan></text><text xml:space="preserve" x="3.3" y="7.23" font-size="0.47" fill="#0f172a" class="cadet-fill-annotation" text-anchor="middle" dominant-baseline="hanging"><tspan font-size="0.47" font-style="normal">0</tspan></text><rect x="7.95" y="0.59" width="3.9" height="0.92" rx="0.16" fill="#dce7f0" class="cadet-fill-bulk"/><rect x="7.95" y="0.59" width="3.9" height="0.92" rx="0.16" fill="none" stroke="#0f172a" stroke-width="0.06" stroke-linecap="round" stroke-linejoin="round" class="cadet-stroke-wall"/><text xml:space="preserve" x="8.43" y="1.05" font-size="0.52" fill="#0f172a" class="cadet-fill-annotation" text-anchor="start" dominant-baseline="middle" font-style="italic"><tspan font-size="0.52">c</tspan><tspan font-size="0.37" font-style="normal" dy="-0.19">b</tspan></text><text xml:space="preserve" x="11.37" y="1.05" font-size="0.41" fill="#0f172a" class="cadet-fill-annotation" text-anchor="end" dominant-baseline="middle"><tspan font-size="0.41">bulk</tspan><tspan font-size="0.41" font-style="normal"> </tspan><tspan font-size="0.41">liquid</tspan></text><rect x="7.95" y="3.09" width="3.9" height="0.92" rx="0.16" fill="#f7fafd" class="cadet-fill-pore"/><rect x="7.95" y="3.09" width="3.9" height="0.92" rx="0.16" fill="none" stroke="#0f172a" stroke-width="0.06" stroke-linecap="round" stroke-linejoin="round" class="cadet-stroke-wall"/><text xml:space="preserve" x="8.43" y="3.55" font-size="0.52" fill="#0f172a" class="cadet-fill-annotation" text-anchor="start" dominant-baseline="middle" font-style="italic"><tspan font-size="0.52">c</tspan><tspan font-size="0.37" font-style="normal" dy="-0.19">p</tspan></text><text xml:space="preserve" x="11.37" y="3.55" font-size="0.41" fill="#0f172a" class="cadet-fill-annotation" text-anchor="end" dominant-baseline="middle"><tspan font-size="0.41">pore</tspan><tspan font-size="0.41" font-style="normal"> </tspan><tspan font-size="0.41">liquid</tspan></text><rect x="7.95" y="5.59" width="3.9" height="0.92" rx="0.16" fill="#93b9d8" class="cadet-fill-solid"/><rect x="7.95" y="5.59" width="3.9" height="0.92" rx="0.16" fill="none" stroke="#0f172a" stroke-width="0.06" stroke-linecap="round" stroke-linejoin="round" class="cadet-stroke-wall"/><text xml:space="preserve" x="8.43" y="6.05" font-size="0.52" fill="#0f172a" class="cadet-fill-annotation" text-anchor="start" dominant-baseline="middle" font-style="italic"><tspan font-size="0.52">c</tspan><tspan font-size="0.37" font-style="normal" dy="-0.19">s</tspan></text><text xml:space="preserve" x="11.37" y="6.05" font-size="0.41" fill="#0f172a" class="cadet-fill-annotation" text-anchor="end" dominant-baseline="middle"><tspan font-size="0.41">bound</tspan><tspan font-size="0.41" font-style="normal"> </tspan><tspan font-size="0.41">phase</tspan></text><line x1="9.9" y1="1.61" x2="9.9" y2="2.99" fill="none" stroke="#023d6b" stroke-width="0.07" stroke-linecap="round" stroke-linejoin="round" class="cadet-stroke-flow" marker-end="url(#particle-1-head-flow)" marker-start="url(#particle-1-head-flow-start)"/><text xml:space="preserve" x="10.33" y="2.3" font-size="0.47" fill="#0f172a" class="cadet-fill-annotation" text-anchor="start" dominant-baseline="middle" font-style="italic"><tspan font-size="0.47">k</tspan><tspan font-size="0.34" font-style="normal" dy="-0.17">f</tspan></text><text xml:space="preserve" x="9.47" y="2.3" font-size="0.41" fill="#0f172a" class="cadet-fill-annotation" text-anchor="end" dominant-baseline="middle"><tspan font-size="0.41">film</tspan><tspan font-size="0.41" font-style="normal"> </tspan><tspan font-size="0.41">diffusion</tspan></text><line x1="9.9" y1="4.11" x2="9.9" y2="5.49" fill="none" stroke="#023d6b" stroke-width="0.07" stroke-linecap="round" stroke-linejoin="round" class="cadet-stroke-flow" marker-end="url(#particle-1-head-flow)" marker-start="url(#particle-1-head-flow-start)"/><text xml:space="preserve" x="10.33" y="4.8" font-size="0.47" fill="#0f172a" class="cadet-fill-annotation" text-anchor="start" dominant-baseline="middle" font-style="italic"><tspan font-size="0.47">f</tspan><tspan font-size="0.34" font-style="normal" dy="-0.17">bind</tspan><tspan font-size="0.47" font-style="normal" dy="0.17"> = 0</tspan></text><text xml:space="preserve" x="9.47" y="4.8" font-size="0.41" fill="#0f172a" class="cadet-fill-annotation" text-anchor="end" dominant-baseline="middle"><tspan font-size="0.41">rapid</tspan><tspan font-size="0.41" font-style="normal"> </tspan><tspan font-size="0.41">equilibrium</tspan></text></svg>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   role="img"
+   class="cadet-figure"
+   data-figure="particle-1"
+   font-family="'Source Sans 3', 'Source Sans Pro', 'Segoe UI', Helvetica, Arial, sans-serif"
+   viewBox="0 0.25 13 7.55"
+   style="width:100%;max-width:46rem;height:auto;display:block;margin:0.5em auto;"
+   version="1.1"
+   id="svg56"
+   sodipodi:docname="particle-1.svg"
+   inkscape:version="1.4.2 (f4327f4, 2025-05-13)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview56"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     inkscape:zoom="199.20529"
+     inkscape:cx="6.4983213"
+     inkscape:cy="3.4135639"
+     inkscape:window-width="3840"
+     inkscape:window-height="2036"
+     inkscape:window-x="-12"
+     inkscape:window-y="-12"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg56" />
+  <title
+     id="title1">Particle model</title>
+  <defs
+     id="defs6">
+    <marker
+       style="overflow:visible"
+       id="marker57"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="Stop"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         style="fill:none;stroke:context-stroke;stroke-width:1"
+         d="M 0,4 V -4"
+         id="path57" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="Stop"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="Stop"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         style="fill:none;stroke:context-stroke;stroke-width:1"
+         d="M 0,4 V -4"
+         id="path23" />
+    </marker>
+    <rect
+       x="2.8061503"
+       y="5.9034576"
+       width="3.9456783"
+       height="1.8875"
+       id="rect57" />
+    <marker
+       style="overflow:visible"
+       id="ConcaveTriangle"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Concave triangle arrow"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.7)"
+         d="M -2,-4 9,0 -2,4 c 2,-2.33 2,-5.66 0,-8 z"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+         id="path7" />
+    </marker>
+    <marker
+       id="particle-1-head-annotation"
+       markerWidth="6"
+       markerHeight="4.8"
+       refX="5.4"
+       refY="2.4"
+       orient="auto"
+       markerUnits="strokeWidth">
+      <path
+         d="M 0 0 L 6 2.4 L 0 4.8 L 1.2 2.4 Z"
+         fill="#0f172a"
+         class="cadet-fill-annotation"
+         id="path1" />
+    </marker>
+    <marker
+       id="particle-1-head-annotation-start"
+       markerWidth="6"
+       markerHeight="4.8"
+       refX="5.4"
+       refY="2.4"
+       orient="auto-start-reverse"
+       markerUnits="strokeWidth">
+      <path
+         d="M 0 0 L 6 2.4 L 0 4.8 L 1.2 2.4 Z"
+         fill="#0f172a"
+         class="cadet-fill-annotation"
+         id="path2" />
+    </marker>
+    <marker
+       id="particle-1-head-axis"
+       markerWidth="6"
+       markerHeight="4.8"
+       refX="5.4"
+       refY="2.4"
+       orient="auto"
+       markerUnits="strokeWidth">
+      <path
+         d="M 0 0 L 6 2.4 L 0 4.8 L 1.2 2.4 Z"
+         fill="#475569"
+         class="cadet-fill-axis"
+         id="path3" />
+    </marker>
+    <marker
+       id="particle-1-head-axis-start"
+       markerWidth="6"
+       markerHeight="4.8"
+       refX="5.4"
+       refY="2.4"
+       orient="auto-start-reverse"
+       markerUnits="strokeWidth">
+      <path
+         d="M 0 0 L 6 2.4 L 0 4.8 L 1.2 2.4 Z"
+         fill="#475569"
+         class="cadet-fill-axis"
+         id="path4" />
+    </marker>
+    <marker
+       id="particle-1-head-flow"
+       markerWidth="6"
+       markerHeight="4.8"
+       refX="5.4"
+       refY="2.4"
+       orient="auto"
+       markerUnits="strokeWidth">
+      <path
+         d="M 0 0 L 6 2.4 L 0 4.8 L 1.2 2.4 Z"
+         fill="#023d6b"
+         class="cadet-fill-flow"
+         id="path5" />
+    </marker>
+    <marker
+       id="particle-1-head-flow-start"
+       markerWidth="6"
+       markerHeight="4.8"
+       refX="5.4"
+       refY="2.4"
+       orient="auto-start-reverse"
+       markerUnits="strokeWidth">
+      <path
+         d="M 0 0 L 6 2.4 L 0 4.8 L 1.2 2.4 Z"
+         fill="#023d6b"
+         class="cadet-fill-flow"
+         id="path6" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker58-7"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Concave triangle arrow"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.7)"
+         d="M -2,-4 9,0 -2,4 c 2,-2.33 2,-5.66 0,-8 z"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+         id="path58-3" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker59-7"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Concave triangle arrow"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.7)"
+         d="M -2,-4 9,0 -2,4 c 2,-2.33 2,-5.66 0,-8 z"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+         id="path59-2" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker58-7-1"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Concave triangle arrow"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.7)"
+         d="M -2,-4 9,0 -2,4 c 2,-2.33 2,-5.66 0,-8 z"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+         id="path58-3-6" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker59-7-5"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Concave triangle arrow"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.7)"
+         d="M -2,-4 9,0 -2,4 c 2,-2.33 2,-5.66 0,-8 z"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+         id="path59-2-7" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="marker59-7-5-1"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Concave triangle arrow"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.7)"
+         d="M -2,-4 9,0 -2,4 c 2,-2.33 2,-5.66 0,-8 z"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+         id="path59-2-7-2" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="ConcaveTriangle-0"
+       refX="0"
+       refY="0"
+       orient="auto-start-reverse"
+       inkscape:stockid="Concave triangle arrow"
+       markerWidth="1"
+       markerHeight="1"
+       viewBox="0 0 1 1"
+       inkscape:isstock="true"
+       inkscape:collect="always"
+       preserveAspectRatio="xMidYMid">
+      <path
+         transform="scale(0.7)"
+         d="M -2,-4 9,0 -2,4 c 2,-2.33 2,-5.66 0,-8 z"
+         style="fill:context-stroke;fill-rule:evenodd;stroke:none"
+         id="path7-0" />
+    </marker>
+  </defs>
+  <ellipse
+     cx="3.3"
+     cy="3.55"
+     rx="2.47"
+     ry="2.47"
+     fill="#fff4e5"
+     stroke="#b26a00"
+     stroke-width="0.04"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-fill-film cadet-stroke-film-edge"
+     id="ellipse6" />
+  <ellipse
+     cx="3.3"
+     cy="3.55"
+     rx="2.05"
+     ry="2.05"
+     fill="#d4e0ea"
+     stroke="#0f172a"
+     stroke-width="0.04"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-fill-matrix cadet-stroke-wall"
+     id="ellipse7" />
+  <text
+     xml:space="preserve"
+     x="2.5462568"
+     y="4.6543417"
+     font-size="0.55px"
+     fill="#0f172a"
+     class="cadet-fill-annotation"
+     text-anchor="middle"
+     dominant-baseline="middle"
+     font-style="italic"
+     id="text17"><tspan
+       font-size="0.55px"
+       font-style="normal"
+       id="tspan16">Ω</tspan><tspan
+       font-size="0.39px"
+       font-style="normal"
+       dy="-0.2"
+       id="tspan17">p</tspan></text>
+  <text
+     xml:space="preserve"
+     x="6.45"
+     y="0.99"
+     font-size="0.49"
+     fill="#0f172a"
+     class="cadet-fill-annotation"
+     text-anchor="start"
+     dominant-baseline="middle"
+     font-style="italic"
+     id="text19"><tspan
+       font-size="0.49"
+       font-style="normal"
+       id="tspan18">Γ</tspan><tspan
+       font-size="0.36"
+       font-style="normal"
+       dy="-0.18"
+       id="tspan19">p</tspan></text>
+  <path
+     d="M 4.8,2.16 L 6.22,0.99"
+     fill="none"
+     stroke="#0f172a"
+     stroke-width="0.03"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-stroke-annotation"
+     id="path17" />
+  <path
+     d="m 5.1617796,2.5686708 0.053295,0.110215 0.044413,0.1202346 0.03553,0.110215 0.026647,0.110215 0.026648,0.1202346 0.017765,0.110215 0.00888,0.110215 0.00888,0.1202346 v 0.110215 l -0.00888,0.110215 -0.00888,0.1202346 -0.017765,0.110215 H 3.5629263 L 3.4030409,3.9112901 3.2609207,3.8411533 3.1365653,3.7309383 3.0388577,3.5906646 2.97668,3.4303518 2.958915,3.25 2.97668,3.0696482 3.0388577,2.9093354 3.1365653,2.7690617 3.2609207,2.6588467 3.4030409,2.5887099 3.5629263,2.5686708 Z"
+     fill="#f7fafd"
+     class="cadet-fill-pore"
+     id="path19"
+     style="stroke-width:0.943391" />
+  <path
+     d="M 3.5541735,3.9313292 3.3966051,3.9112901 3.2565443,3.8411533 3.133991,3.7309383 3.0376992,3.5906646 2.9764226,3.4303518 2.958915,3.25 2.9764226,3.0696482 3.0376992,2.9093354 3.133991,2.7690617 3.2565443,2.6588467 3.3966051,2.5887099 3.5541735,2.5686708 h 1.5756843"
+     fill="none"
+     stroke="#0f172a"
+     stroke-width="0.0561919"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-stroke-wall"
+     id="path20" />
+  <path
+     d="M 3.5424125,3.93 H 5.3135649"
+     fill="none"
+     stroke="#0f172a"
+     stroke-width="0.0563224"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-stroke-wall"
+     id="path21" />
+  <line
+     x1="6.8101406"
+     y1="3.2198803"
+     x2="5.7171936"
+     y2="3.2198803"
+     fill="none"
+     stroke="#023d6b"
+     stroke-width="0.0668047"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-stroke-flow"
+     marker-end="url(#particle-1-head-flow)"
+     id="line21"
+     style="marker-start:url(#marker59-7-5);marker-end:url(#ConcaveTriangle)" />
+  <line
+     x1="4.9436698"
+     y1="3.5405393"
+     x2="4.9436698"
+     y2="3.7603767"
+     fill="none"
+     stroke="#023d6b"
+     stroke-width="0.0299611"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-stroke-flow"
+     marker-end="url(#particle-1-head-flow)"
+     id="line21-4"
+     style="display:block;marker-start:url(#marker59-7-5-1);marker-end:url(#ConcaveTriangle-0)" />
+  <text
+     xml:space="preserve"
+     x="6.3615556"
+     y="3.0554187"
+     font-size="0.49px"
+     fill="#0f172a"
+     class="cadet-fill-annotation"
+     text-anchor="middle"
+     dominant-baseline="baseline"
+     font-style="italic"
+     id="text22"><tspan
+       font-size="0.49px"
+       id="tspan21">k</tspan><tspan
+       font-size="0.36px"
+       font-style="normal"
+       dy="-0.18000001"
+       id="tspan22">f</tspan></text>
+  <text
+     xml:space="preserve"
+     x="6.4229198"
+     y="4.218339"
+     font-size="0.49px"
+     fill="#0f172a"
+     class="cadet-fill-annotation"
+     text-anchor="middle"
+     dominant-baseline="baseline"
+     font-style="italic"
+     id="text22-1"
+     style="display:block">f<tspan
+   style="font-size:65%;baseline-shift:super"
+   id="tspan61"> bind</tspan></text>
+  <line
+     x1="5.1"
+     y1="3.19"
+     x2="3.5"
+     y2="3.19"
+     fill="none"
+     stroke="#0f172a"
+     stroke-width="0.03"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-stroke-annotation"
+     marker-end="url(#particle-1-head-annotation)"
+     marker-start="url(#particle-1-head-annotation-start)"
+     id="line22" />
+  <text
+     xml:space="preserve"
+     x="4.2250996"
+     y="3.0957382"
+     font-size="0.47px"
+     fill="#0f172a"
+     class="cadet-fill-annotation"
+     text-anchor="middle"
+     dominant-baseline="baseline"
+     font-style="italic"
+     id="text24"><tspan
+       font-size="0.47px"
+       id="tspan23">D</tspan><tspan
+       font-size="0.34px"
+       font-style="normal"
+       dy="-0.17"
+       id="tspan24">p</tspan></text>
+  <circle
+     cx="3.5744216"
+     cy="3.7749002"
+     fill="#93b9d8"
+     stroke="#0f172a"
+     stroke-width="0.04"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-fill-solid cadet-stroke-wall"
+     id="ellipse24"
+     r="0.13" />
+  <circle
+     cx="4.7383642"
+     cy="3.3749001"
+     fill="#93b9d8"
+     stroke="#0f172a"
+     stroke-width="0.04"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-fill-solid cadet-stroke-wall"
+     id="ellipse24-0"
+     style="display:block"
+     r="0.13" />
+  <circle
+     cx="3.9742618"
+     cy="3.7648604"
+     fill="#93b9d8"
+     stroke="#0f172a"
+     stroke-width="0.04"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-fill-solid cadet-stroke-wall"
+     id="ellipse25"
+     r="0.13" />
+  <circle
+     cx="4.3891621"
+     cy="3.7698803"
+     fill="#93b9d8"
+     stroke="#0f172a"
+     stroke-width="0.04"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-fill-solid cadet-stroke-wall"
+     id="ellipse26"
+     r="0.13" />
+  <line
+     x1="3.2931073"
+     y1="6.2023468"
+     x2="5.3039012"
+     y2="6.2023468"
+     fill="none"
+     stroke="#475569"
+     stroke-width="0.042755"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-stroke-axis"
+     marker-end="url(#particle-1-head-axis)"
+     id="line26"
+     style="marker-start:url(#marker57);marker-end:url(#Stop)" />
+  <text
+     xml:space="preserve"
+     x="5.3499999"
+     y="6.5623469"
+     font-size="0.47px"
+     fill="#0f172a"
+     class="cadet-fill-annotation"
+     text-anchor="middle"
+     dominant-baseline="hanging"
+     font-style="italic"
+     id="text28"><tspan
+       font-size="0.47px"
+       id="tspan27">R</tspan><tspan
+       font-size="0.34px"
+       font-style="normal"
+       dy="-0.17"
+       id="tspan28">p</tspan></text>
+  <text
+     xml:space="preserve"
+     x="4.151742"
+     y="6.5900002"
+     font-size="0.52px"
+     fill="#0f172a"
+     class="cadet-fill-annotation"
+     text-anchor="start"
+     dominant-baseline="baseline"
+     font-style="italic"
+     id="text29"><tspan
+       font-size="0.52px"
+       id="tspan29">r</tspan></text>
+  <text
+     xml:space="preserve"
+     x="3.3"
+     y="6.5623469"
+     font-size="0.47px"
+     fill="#0f172a"
+     class="cadet-fill-annotation"
+     text-anchor="middle"
+     dominant-baseline="hanging"
+     id="text30"><tspan
+       font-size="0.47px"
+       font-style="normal"
+       id="tspan30">0</tspan></text>
+  <rect
+     x="7.95"
+     y="0.59"
+     width="3.9"
+     height="0.92"
+     rx="0.16"
+     fill="#dce7f0"
+     class="cadet-fill-bulk"
+     id="rect30" />
+  <rect
+     x="7.95"
+     y="0.59"
+     width="3.9"
+     height="0.92"
+     rx="0.16"
+     fill="none"
+     stroke="#0f172a"
+     stroke-width="0.06"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-stroke-wall"
+     id="rect31" />
+  <text
+     xml:space="preserve"
+     x="8.43"
+     y="1.05"
+     font-size="0.52"
+     fill="#0f172a"
+     class="cadet-fill-annotation"
+     text-anchor="start"
+     dominant-baseline="middle"
+     font-style="italic"
+     id="text32"><tspan
+       font-size="0.52"
+       id="tspan31">c</tspan><tspan
+       font-size="0.37"
+       font-style="normal"
+       dy="-0.19"
+       id="tspan32">b</tspan></text>
+  <text
+     xml:space="preserve"
+     x="11.37"
+     y="1.05"
+     font-size="0.41"
+     fill="#0f172a"
+     class="cadet-fill-annotation"
+     text-anchor="end"
+     dominant-baseline="middle"
+     id="text35"><tspan
+       font-size="0.41"
+       id="tspan33">bulk</tspan><tspan
+       font-size="0.41"
+       font-style="normal"
+       id="tspan34"> </tspan><tspan
+       font-size="0.41"
+       id="tspan35">liquid</tspan></text>
+  <rect
+     x="7.95"
+     y="3.09"
+     width="3.9"
+     height="0.92"
+     rx="0.16"
+     fill="#f7fafd"
+     class="cadet-fill-pore"
+     id="rect35" />
+  <rect
+     x="7.95"
+     y="3.09"
+     width="3.9"
+     height="0.92"
+     rx="0.16"
+     fill="none"
+     stroke="#0f172a"
+     stroke-width="0.06"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-stroke-wall"
+     id="rect36" />
+  <text
+     xml:space="preserve"
+     x="8.43"
+     y="3.55"
+     font-size="0.52"
+     fill="#0f172a"
+     class="cadet-fill-annotation"
+     text-anchor="start"
+     dominant-baseline="middle"
+     font-style="italic"
+     id="text37"><tspan
+       font-size="0.52"
+       id="tspan36">c</tspan><tspan
+       font-size="0.37"
+       font-style="normal"
+       dy="-0.19"
+       id="tspan37">p</tspan></text>
+  <text
+     xml:space="preserve"
+     x="11.37"
+     y="3.55"
+     font-size="0.41"
+     fill="#0f172a"
+     class="cadet-fill-annotation"
+     text-anchor="end"
+     dominant-baseline="middle"
+     id="text40"><tspan
+       font-size="0.41"
+       id="tspan38">pore</tspan><tspan
+       font-size="0.41"
+       font-style="normal"
+       id="tspan39"> </tspan><tspan
+       font-size="0.41"
+       id="tspan40">liquid</tspan></text>
+  <rect
+     x="7.95"
+     y="5.59"
+     width="3.9"
+     height="0.92"
+     rx="0.16"
+     fill="#93b9d8"
+     class="cadet-fill-solid"
+     id="rect40" />
+  <rect
+     x="7.95"
+     y="5.59"
+     width="3.9"
+     height="0.92"
+     rx="0.16"
+     fill="none"
+     stroke="#0f172a"
+     stroke-width="0.06"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-stroke-wall"
+     id="rect41" />
+  <text
+     xml:space="preserve"
+     x="8.43"
+     y="6.05"
+     font-size="0.52"
+     fill="#0f172a"
+     class="cadet-fill-annotation"
+     text-anchor="start"
+     dominant-baseline="middle"
+     font-style="italic"
+     id="text42"><tspan
+       font-size="0.52"
+       id="tspan41">c</tspan><tspan
+       font-size="0.37"
+       font-style="normal"
+       dy="-0.19"
+       id="tspan42">s</tspan></text>
+  <text
+     xml:space="preserve"
+     x="11.37"
+     y="6.05"
+     font-size="0.41"
+     fill="#0f172a"
+     class="cadet-fill-annotation"
+     text-anchor="end"
+     dominant-baseline="middle"
+     id="text45"><tspan
+       font-size="0.41"
+       id="tspan43">bound</tspan><tspan
+       font-size="0.41"
+       font-style="normal"
+       id="tspan44"> </tspan><tspan
+       font-size="0.41"
+       id="tspan45">phase</tspan></text>
+  <text
+     xml:space="preserve"
+     x="10.33"
+     y="2.3"
+     font-size="0.47"
+     fill="#0f172a"
+     class="cadet-fill-annotation"
+     text-anchor="start"
+     dominant-baseline="middle"
+     font-style="italic"
+     id="text47"><tspan
+       font-size="0.47"
+       id="tspan46">k</tspan><tspan
+       font-size="0.34"
+       font-style="normal"
+       dy="-0.17"
+       id="tspan47">f</tspan></text>
+  <text
+     xml:space="preserve"
+     x="9.47"
+     y="2.3"
+     font-size="0.41"
+     fill="#0f172a"
+     class="cadet-fill-annotation"
+     text-anchor="end"
+     dominant-baseline="middle"
+     id="text50"><tspan
+       font-size="0.41"
+       id="tspan48">film</tspan><tspan
+       font-size="0.41"
+       font-style="normal"
+       id="tspan49"> </tspan><tspan
+       font-size="0.41"
+       id="tspan50">diffusion</tspan></text>
+  <text
+     xml:space="preserve"
+     x="10.33"
+     y="4.8000002"
+     font-size="0.47px"
+     fill="#0f172a"
+     class="cadet-fill-annotation"
+     text-anchor="start"
+     dominant-baseline="middle"
+     font-style="italic"
+     id="text53"
+     style="baseline-shift:baseline">k<tspan
+   font-size="0.34px"
+   font-style="normal"
+   dy="0 0 0"
+   id="tspan52"
+   style="baseline-shift:baseline"><tspan
+     style="baseline-shift:baseline"
+     id="tspan59"><tspan
+   style="font-size:65%;baseline-shift:super"
+   id="tspan60">kin</tspan> = \infty</tspan></tspan></text>
+  <text
+     xml:space="preserve"
+     x="9.4700003"
+     y="4.8000002"
+     font-size="0.41px"
+     fill="#0f172a"
+     class="cadet-fill-annotation"
+     text-anchor="end"
+     dominant-baseline="middle"
+     id="text56">binding</text>
+  <path
+     d="M 5.0773135,3.6693687 5.9761108,4.0577922"
+     fill="none"
+     stroke="#0f172a"
+     stroke-width="0.0143046"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-stroke-annotation"
+     id="path17-7"
+     style="display:block;stroke-width:0.03;stroke-dasharray:none" />
+  <text
+     xml:space="preserve"
+     transform="translate(0,0.25)"
+     id="text57"
+     style="font-size:0.466667px;text-align:start;writing-mode:lr-tb;direction:ltr;white-space:pre;shape-inside:url(#rect57);display:inline;fill:none;fill-opacity:0;stroke:#585858;stroke-width:0.03;stroke-linecap:round" />
+  <line
+     x1="9.9444275"
+     y1="4.3638239"
+     x2="9.9444275"
+     y2="5.2331896"
+     fill="none"
+     stroke="#023d6b"
+     stroke-width="0.0555596"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-stroke-flow"
+     marker-end="url(#particle-1-head-flow)"
+     marker-start="url(#particle-1-head-flow-start)"
+     id="line45-0"
+     style="display:block;marker-start:url(#marker58-7);marker-end:url(#marker59-7)" />
+  <line
+     x1="9.949749"
+     y1="1.8711027"
+     x2="9.949749"
+     y2="2.7404683"
+     fill="none"
+     stroke="#023d6b"
+     stroke-width="0.0555596"
+     stroke-linecap="round"
+     stroke-linejoin="round"
+     class="cadet-stroke-flow"
+     marker-end="url(#particle-1-head-flow)"
+     marker-start="url(#particle-1-head-flow-start)"
+     id="line45-0-4"
+     style="display:block;marker-start:url(#marker58-7-1);marker-end:url(#marker59-7-5)" />
+</svg>
