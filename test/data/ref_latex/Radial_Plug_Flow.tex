@@ -27,12 +27,12 @@ Consider a hollow cylindrical column of axial bed height $H^{\mathrm{b}} > 0$ wi
 In the interstitial volume, mass transfer is governed by the following convection equations in $(0, T^{\mathrm{end}})\times (P^{\mathrm{inner}}, P^{\mathrm{outer}})$ and for all components $i\in\{1, \dots, N^{\mathrm{c}} \}$
 \begin{align}
     \frac{\partial c^{\mathrm{b}}_{i}}{\partial t}
-    &= - \frac{v}{\rho} \frac{\partial c^{\mathrm{b}}_{i}}{\partial \rho},
+    &= \frac{v}{\rho} \frac{\partial c^{\mathrm{b}}_{i}}{\partial \rho},
 \end{align}
 with boundary conditions
 \begin{alignat}{2}
     v c^{\mathrm{in}}_{i}
-    &= \left.\left( v c^{\mathrm{b}}_{i} \right)\right|_{\rho=P^{\mathrm{inner}}}
+    &= \left.\left( v c^{\mathrm{b}}_{i} \right)\right|_{\rho=P^{\mathrm{outer}}}
     & & \qquad\text{on }(0, T^{\mathrm{end}}).
 \end{alignat}
 Here, $t\in (0, T^{\mathrm{end}})$ is the time coordinate, $\rho\in (P^{\mathrm{inner}}, P^{\mathrm{outer}})$ is the radial coordinate, $c^{\mathrm{b}}_{i}\colon (0, T^{\mathrm{end}})\times (P^{\mathrm{inner}}, P^{\mathrm{outer}}) \mapsto \mathbb{R}$ is the bulk liquid concentration, $Q> 0$ is the volumetric flow rate, and $v:= \frac{Q}{2 \pi H^{\mathrm{b}}}$ is the velocity coefficient.

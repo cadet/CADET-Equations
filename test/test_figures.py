@@ -371,19 +371,19 @@ def test_the_frustum_narrows_along_the_flow():
 
 @pytest.mark.ci
 @pytest.mark.unit_test
-def test_a_radial_column_stands_upright_and_feeds_from_its_channel():
-    """The inflow boundary of the radial model sits at the inner radius."""
+def test_a_radial_column_stands_upright_and_feeds_over_its_shell():
+    """The inflow boundary of the radial model sits at the outer radius."""
     probe = Scene(name="probe", xmin=0, ymin=0, xmax=1, ymax=1)
     body = _BODIES["Radial"](probe, _make_column(column_type="Radial"))
     assert body.top - body.bottom > body.outlet_x - body.inlet_x, "the body is taller than it is wide"
 
     scene = build_column_scene(_make_column(column_type="Radial"))
-    # Two mirrored paths leave the channel, so the feed spreads outwards.
+    # Two mirrored paths run inwards, as int_vol_BC feeds the shell.
     centre_x = 0.5 * (body.inlet_x + body.outlet_x)
     paths = _flow_paths(scene)
     assert len(paths) == 2
     for path in paths:
-        assert abs(path.points[0][0] - centre_x) < abs(path.points[-1][0] - centre_x)
+        assert abs(path.points[0][0] - centre_x) > abs(path.points[-1][0] - centre_x)
 
 
 @pytest.mark.ci

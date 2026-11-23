@@ -358,10 +358,17 @@ def angular_dispersion(eps: str | None = None):
 
 # Radial flow column transport terms (primary transport in radial direction)
 def radial_flow_convection(eps: str | None = None):
+    """Return the convection term of a radial flow column.
+
+    The feed enters over the outer shell and is collected in the central
+    channel, so the flow runs towards smaller radii: with a positive velocity
+    coefficient the term therefore carries a plus sign, not the minus sign of
+    a column whose coordinate runs along the flow.
+    """
     if eps is None:
-        return r"- \frac{v}{\rho} \frac{\partial c^{\b}_{i}}{\partial \rho}"
+        return r"\frac{v}{\rho} \frac{\partial c^{\b}_{i}}{\partial \rho}"
     else:
-        return r"- \frac{v}{\rho} \frac{\partial \left( " + eps + r" c^{\b}_{i} \right)}{\partial \rho}"
+        return r"\frac{v}{\rho} \frac{\partial \left( " + eps + r" c^{\b}_{i} \right)}{\partial \rho}"
 
 
 def radial_flow_dispersion(eps: str | None = None):
@@ -707,17 +714,19 @@ def int_vol_BC(resolution: str, hasAxialDispersion: bool, column_type: str = "Ax
         ang_bc_domain = r"(0, T^{\mathrm{end}}) \times (0, L^{\mathrm{b}}) \times (0, P^{\mathrm{c}})"
 
     if column_type == "Radial":
-        # Radial flow: transport in rho direction, domain (R_in, R_out)
+        # Radial flow: the feed enters over the outer shell and leaves through
+        # the central channel, so the inlet sits at the larger radius and the
+        # dispersive flux there points the opposite way to the axial case.
         radflow_bc_domain = r"(0, T^{\mathrm{end}})"
-        diff_term = r"- D^{\mathrm{rad}}_{i} \frac{\partial c^{\b}_{i}}{\partial \rho}" if hasAxialDispersion else ""
+        diff_term = r"+ D^{\mathrm{rad}}_{i} \frac{\partial c^{\b}_{i}}{\partial \rho}" if hasAxialDispersion else ""
         inflow_bc = (
             r"v c^{\mathrm{in}}_{i} &= \left.\left( v c^{\b}_{i} "
             + diff_term
-            + r"\right)\right|_{\rho=P^{\mathrm{inner}}} & &\qquad\text{on }"
+            + r"\right)\right|_{\rho=P^{\mathrm{outer}}} & &\qquad\text{on }"
             + radflow_bc_domain
         )
         outflow_bc = (
-            r"0 &= - D^{\mathrm{rad}}_{i} \left. \frac{\partial c^{\b}_{i}}{\partial \rho} \right|_{\rho=P^{\mathrm{outer}}} & &\qquad\text{on }"
+            r"0 &= - D^{\mathrm{rad}}_{i} \left. \frac{\partial c^{\b}_{i}}{\partial \rho} \right|_{\rho=P^{\mathrm{inner}}} & &\qquad\text{on }"
             + radflow_bc_domain
         )
 

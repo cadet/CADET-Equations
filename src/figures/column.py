@@ -322,34 +322,38 @@ def _radial_cylinder(scene: Scene, model) -> _Body:
 
 
 def _radial_flow(scene: Scene, body: _Body, dispersed: bool) -> None:
-    """Draw the feed into the channel and the two outward flow paths."""
+    """Draw the feed over the shell and the stream collected in the channel.
+
+    The inflow boundary of the radial model sits at the outer radius, so the
+    two mirrored paths run inwards and leave through the top of the channel.
+    """
     centre_x = 0.5 * (body.inlet_x + body.outlet_x)
     outer, inner = _RADIAL_OUTER, _RADIAL_INNER
     cap_ry = _PERSPECTIVE * outer
     top = body.top - cap_ry
     mouth = top + cap_ry * inner / outer
 
-    scene.add(
-        Arrow((centre_x, mouth + 1.5), (centre_x, mouth + 0.08), Style.FLOW),
-        Label((centre_x - 0.18, mouth + 1.0), r"\Gamma^{\mathrm{in}}", Anchor.RIGHT),
-        Label((centre_x + 0.18, mouth + 1.0), "Flow", Anchor.LEFT, size=0.85, italic=False),
-    )
     for side in (-1.0, 1.0):
         scene.add(
             Polyline(
                 _flow_points(
-                    (centre_x + side * inner, _AXIS_Y),
                     (centre_x + side * (outer + _LEAD), _AXIS_Y),
-                    (centre_x + side * (inner + 0.2), centre_x + side * (outer - 0.1)),
+                    (centre_x + side * inner, _AXIS_Y),
+                    (centre_x + side * (outer - 0.1), centre_x + side * (inner + 0.2)),
                     dispersed,
                 ),
                 Style.FLOW,
                 arrow=True,
             )
         )
-    scene.add(Label((centre_x + outer + 0.78, _AXIS_Y + 0.24), r"\Gamma^{\mathrm{out}}", Anchor.ABOVE))
+    scene.add(
+        Arrow((centre_x, mouth + 0.08), (centre_x, mouth + 1.5), Style.FLOW),
+        Label((centre_x - 0.18, mouth + 1.0), r"\Gamma^{\mathrm{out}}", Anchor.RIGHT),
+        Label((centre_x + outer + 0.78, _AXIS_Y + 0.24), r"\Gamma^{\mathrm{in}}", Anchor.ABOVE),
+        Label((centre_x + outer + 0.78, _AXIS_Y - 0.3), "Flow", Anchor.BELOW, size=0.85, italic=False),
+    )
     if dispersed:
-        scene.add(Label((centre_x + outer + 0.78, _AXIS_Y - 0.3), body.dispersion, Anchor.BELOW, size=0.85))
+        scene.add(Label((centre_x - outer - 0.78, _AXIS_Y - 0.3), body.dispersion, Anchor.BELOW, size=0.85))
 
 
 # %% Tank
