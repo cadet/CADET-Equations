@@ -301,6 +301,7 @@ def render_svg(scene: Scene, var_format: str = "CADET", max_width: str | None = 
 
     return (
         f'<svg xmlns="http://www.w3.org/2000/svg" role="img" class="cadet-figure" '
+        f'data-figure="{escape(scene.name)}" '
         f'viewBox="{_number(scene.xmin)} {_number(scene.ymin)} '
         f'{_number(scene.width)} {_number(scene.height)}" '
         f'style="width:100%;max-width:{max_width};height:auto;display:block;margin:0.5em auto;">'

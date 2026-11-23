@@ -3,7 +3,9 @@ This script compares the generated model figures to reference data.
 
 It mirrors test_refLatex.py: every configuration under
 ``data/EquationGenerator_configs`` is applied to the app and the SVG of each
-figure it renders is compared byte for byte with ``data/ref_svg/<name>.svg``.
+figure it renders is compared byte for byte with
+``data/ref_svg/<model>/<figure>.svg``, one file per figure so that each
+reference is a valid document a viewer or an editor can open on its own.
 
 Because the figures are display only and never enter the exported document,
 this is the only test that pins their content. Regenerate the references with
@@ -13,6 +15,7 @@ status``: the files that change are exactly the models the edit affected.
 
 import json
 import os
+import re
 
 import pytest
 from streamlit.testing.v1 import AppTest
@@ -74,32 +77,49 @@ def figures_of(at) -> list[str]:
     return [str(block.value) for block in at.markdown if str(block.value).startswith("<svg")]
 
 
-def render_figures(model_name: str, test_dir: str) -> str:
-    """Apply a stored configuration and return its figures as one document."""
+def name_of(figure: str) -> str:
+    """Return the name a figure carries in its ``data-figure`` attribute."""
+    return re.search(r'data-figure="([^"]+)"', figure).group(1)
+
+
+def render_figures(model_name: str, test_dir: str) -> dict[str, str]:
+    """Apply a stored configuration and return its figures by name."""
     at = AppTest.from_file("../Equation-Generator.py")
-    at.run()
+    # The first run of a process imports the whole app; three seconds, the
+    # default, is not always enough for it on a cold cache.
+    at.run(timeout=30)
     assert not at.exception
 
     with open(test_dir + "/data/EquationGenerator_configs/" + model_name + ".json") as file:
         apply_model_from_config(at, json.load(file))
 
     assert not at.exception
-    return "\n".join(figures_of(at)) + "\n"
+    return {name_of(figure): figure + "\n" for figure in figures_of(at)}
+
+
+def reference_dir(model_name: str, test_dir: str) -> str:
+    """Return the directory holding one file per figure of ``model_name``."""
+    return os.path.join(test_dir, "data", "ref_svg", model_name)
 
 
 @pytest.mark.ci
 @pytest.mark.reference
 @pytest.mark.parametrize("model_name", FIGURE_MODELS)
 def test_figures_against_reference(model_name, test_dir):
-    reference_path = test_dir + "/data/ref_svg/" + model_name + ".svg"
-    assert os.path.exists(reference_path), (
-        f"No reference figure for {model_name}. Run test/regenerate_ref_svg.py to create it."
+    directory = reference_dir(model_name, test_dir)
+    assert os.path.isdir(directory), (
+        f"No reference figures for {model_name}. Run test/regenerate_ref_svg.py to create them."
     )
 
-    with open(reference_path, encoding="utf-8") as file:
-        reference = file.read()
+    figures = render_figures(model_name, test_dir)
+    stored = sorted(file[: -len(".svg")] for file in os.listdir(directory) if file.endswith(".svg"))
+    assert stored == sorted(figures), (
+        f"{model_name} now draws {sorted(figures)} but {stored} are on file. Run test/regenerate_ref_svg.py."
+    )
 
-    assert render_figures(model_name, test_dir) == reference
+    for name, figure in figures.items():
+        with open(os.path.join(directory, name + ".svg"), encoding="utf-8") as file:
+            assert figure == file.read(), f"{model_name}/{name}.svg"
 
 
 @pytest.mark.ci
