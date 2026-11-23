@@ -1,16 +1,21 @@
 """The colours a figure is drawn in, as light and dark appearance pairs.
 
 The palette lives here rather than in :mod:`src.theme` so that it has a single
-definition and no Streamlit import.  Two consumers read it: the theme turns it
-into the ``--cadet-fig-*`` custom properties of the page, and
-:mod:`src.figures.svg` writes the light appearance into every paint as the
-fallback of its ``var()``.
+definition and no Streamlit import.  Two consumers read it, and between them
+they let one figure serve both the app and a drawing program.
 
-That fallback is what makes a saved figure usable on its own.  A file opened
-outside the app has no page to inherit the custom properties from, and CSS
-treats a reference to an undefined one as invalid, so ``fill`` falls back to
-its initial value -- black.  Without the fallback every standalone figure is a
-silhouette.
+:mod:`src.figures.svg` paints every element with the *light* colour, written
+out as a literal in the ``fill`` and ``stroke`` presentation attributes, and
+adds a class naming the style it came from.  :mod:`src.theme` turns the palette
+into a rule per class, which the browser applies on top because a presentation
+attribute loses against any stylesheet, so the page gets the appearance it asks
+for while the file keeps a colour of its own.
+
+A figure may therefore not be painted through a CSS custom property.  Inkscape
+and most other SVG editors implement neither ``var()`` nor its fallback, and an
+unreadable paint leaves ``fill`` at its initial value -- black -- which is what
+a figure saved from a theme-only palette looks like once it is opened outside a
+browser.
 """
 
 from __future__ import annotations
@@ -34,13 +39,19 @@ PALETTE: dict[str, tuple[str, str]] = {
 }
 
 
-def paint(name: str) -> str:
-    """Return the paint for ``name``: its variable, light appearance as fallback."""
-    return f"var(--cadet-fig-{name}, {PALETTE[name][0]})"
+def colour(name: str) -> str:
+    """Return the literal colour an element of style ``name`` is painted with."""
+    return PALETTE[name][0]
 
 
-def css_variables(indent: str = "    ") -> str:
-    """Return one ``--cadet-fig-*`` declaration per line, for a CSS rule."""
-    return "\n".join(
-        f"{indent}--cadet-fig-{name}: light-dark({light}, {dark});" for name, (light, dark) in PALETTE.items()
-    )
+def css_rules(scope: str = "") -> str:
+    """Return one rule per painted style, for the page to repaint a figure.
+
+    Written as ``light-dark()`` so that the rules follow the appearance without
+    a rerun, and scoped by ``scope`` -- a selector the figures sit inside.
+    """
+    rules = []
+    for name, (light, dark) in PALETTE.items():
+        for property_name in ("fill", "stroke"):
+            rules.append(f"{scope}.cadet-{property_name}-{name} {{ {property_name}: light-dark({light}, {dark}); }}")
+    return "\n".join(rules)

@@ -10,7 +10,7 @@ without the app having to rerun.
 
 import streamlit as st
 
-from src.figures.palette import css_variables
+from src.figures.palette import css_rules
 
 _THEME_CSS = """
 <style>
@@ -38,13 +38,16 @@ _THEME_CSS = """
     --cadet-badge-approx-fg: light-dark(#b26a00, #f0c070);
     --cadet-badge-unsupported-bg: light-dark(#fdecea, #45201d);
     --cadet-badge-unsupported-fg: light-dark(#b71c1c, #f3a8a3);
-
-    /* Model figures: one variable per semantic style in src/figures/scene.py.
-       Figures are rendered inline so that they pick these up directly. */
-__CADET_FIGURE_VARIABLES__
 }
+
+/* Model figures: one rule per semantic style in src/figures/scene.py. A figure
+   paints itself in the light appearance, so that it keeps its colours when it
+   is opened outside the app, and carries the style as a class; these rules win
+   over that paint, because a presentation attribute loses against any
+   stylesheet, and give the page the appearance it asks for. */
+__CADET_FIGURE_RULES__
 </style>
-""".replace("__CADET_FIGURE_VARIABLES__", css_variables())
+""".replace("__CADET_FIGURE_RULES__", css_rules(".stApp "))
 
 
 def apply_theme_css() -> None:

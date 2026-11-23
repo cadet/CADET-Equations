@@ -363,8 +363,10 @@ def _phase_box(scene: Scene, row: float, symbol: str, caption: str, style: Style
     scene.add(
         Rect(corner, width, height, style, stroked=False, radius=0.16),
         Rect(corner, width, height, Style.WALL, filled=False, radius=0.16),
-        Label((_CHAIN_X - _CHAIN_HALF + 0.42, row), symbol, Anchor.LEFT, size=1.0),
-        Label((_CHAIN_X + _CHAIN_HALF - 0.42, row), caption, Anchor.RIGHT, size=0.78, italic=False),
+        # The two sit on opposite edges, so the padding is also what keeps them
+        # apart: the widest caption, "bound phase", all but touches the symbol.
+        Label((_CHAIN_X - _CHAIN_HALF + 0.3, row), symbol, Anchor.LEFT, size=1.0),
+        Label((_CHAIN_X + _CHAIN_HALF - 0.3, row), caption, Anchor.RIGHT, size=0.78, italic=False),
     )
 
 

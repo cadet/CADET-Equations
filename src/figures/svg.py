@@ -23,7 +23,7 @@ import math
 from xml.sax.saxutils import escape
 
 from src.figures.labels import label_runs, label_text
-from src.figures.palette import paint
+from src.figures.palette import colour
 from src.figures.scene import (
     Anchor,
     Arrow,
@@ -37,25 +37,38 @@ from src.figures.scene import (
     Style,
 )
 
-#: Stroke and fill for each semantic style, as (fill, stroke, stroke width).
-#: ``None`` means "no paint"; a paint is the page variable with the light
-#: appearance as its fallback, so a figure saved to a file still has colour.
+#: Palette entry to fill and to stroke each semantic style with, and the stroke
+#: width. ``None`` means "no paint". An element carries the literal colour in
+#: its presentation attribute and the palette name in its class, which is how
+#: the same figure can follow the page's appearance and still open with its
+#: colours in a drawing program -- see src/figures/palette.py.
 _PAINT: dict[Style, tuple[str | None, str | None, float]] = {
-    Style.BULK: (paint("bulk"), None, 0.0),
-    Style.BULK_FACE: (paint("bulk-face"), None, 0.0),
-    Style.VOID: (paint("void"), None, 0.0),
-    Style.WALL: (None, paint("wall"), 0.055),
-    Style.HIDDEN: (None, paint("wall"), 0.04),
-    Style.PARTICLE: (paint("particle"), paint("wall"), 0.04),
-    Style.MATRIX: (paint("matrix"), paint("wall"), 0.04),
-    Style.PORE: (paint("pore"), paint("wall"), 0.04),
-    Style.SOLID: (paint("solid"), paint("wall"), 0.04),
-    Style.CORE: (paint("core"), paint("wall"), 0.04),
-    Style.FILM: (paint("film"), paint("film-edge"), 0.035),
-    Style.FLOW: (None, paint("flow"), 0.075),
-    Style.AXIS: (None, paint("axis"), 0.05),
-    Style.ANNOTATION: (None, paint("annotation"), 0.03),
+    Style.BULK: ("bulk", None, 0.0),
+    Style.BULK_FACE: ("bulk-face", None, 0.0),
+    Style.VOID: ("void", None, 0.0),
+    Style.WALL: (None, "wall", 0.055),
+    Style.HIDDEN: (None, "wall", 0.04),
+    Style.PARTICLE: ("particle", "wall", 0.04),
+    Style.MATRIX: ("matrix", "wall", 0.04),
+    Style.PORE: ("pore", "wall", 0.04),
+    Style.SOLID: ("solid", "wall", 0.04),
+    Style.CORE: ("core", "wall", 0.04),
+    Style.FILM: ("film", "film-edge", 0.035),
+    Style.FLOW: (None, "flow", 0.075),
+    Style.AXIS: (None, "axis", 0.05),
+    Style.ANNOTATION: (None, "annotation", 0.03),
 }
+
+#: The typeface of every label, declared on the root element.
+#:
+#: A figure that names no font is set in whatever the renderer defaults to --
+#: Streamlit's own face in the app, a serif in a browser opening the file, a
+#: system sans in Inkscape -- and the labels are then a different width in each.
+#: That moves them: the name in a phase box is anchored on the right edge, so a
+#: wider face grows it towards the symbol anchored on the left until the two
+#: collide. The stack starts with Streamlit's face, so the app keeps the
+#: appearance it has, and falls back to faces of the same proportions.
+_FONT_STACK = "'Source Sans 3', 'Source Sans Pro', 'Segoe UI', Helvetica, Arial, sans-serif"
 
 #: Styles drawn with a dashed stroke.
 _DASHED = {Style.HIDDEN: "0.18 0.14"}
@@ -76,16 +89,27 @@ def _number(value: float) -> str:
 
 
 def _style_attributes(style: Style, filled: bool, stroked: bool) -> str:
-    """Return the fill/stroke attributes for ``style``."""
+    """Return the fill/stroke attributes and theme classes for ``style``."""
     fill, stroke, width = _PAINT[style]
-    parts = [f'fill="{fill}"' if filled and fill else 'fill="none"']
+    classes = []
+
+    if filled and fill:
+        parts = [f'fill="{colour(fill)}"']
+        classes.append(f"cadet-fill-{fill}")
+    else:
+        parts = ['fill="none"']
+
     if stroked and stroke:
-        parts.append(f'stroke="{stroke}"')
+        parts.append(f'stroke="{colour(stroke)}"')
+        classes.append(f"cadet-stroke-{stroke}")
         parts.append(f'stroke-width="{_number(width)}"')
         parts.append('stroke-linecap="round"')
         parts.append('stroke-linejoin="round"')
         if style in _DASHED:
             parts.append(f'stroke-dasharray="{_DASHED[style]}"')
+
+    if classes:
+        parts.append(f'class="{" ".join(classes)}"')
     return " ".join(parts)
 
 
@@ -193,7 +217,7 @@ class _Renderer:
         size = self.scene.font_size * item.size
         x, y = self.point(item.position)
         anchor, baseline, dx, dy = _label_placement(item.anchor)
-        fill = _PAINT[item.style][1] or paint("annotation")
+        ink = _PAINT[item.style][1] or "annotation"
         style = ' font-style="italic"' if item.italic else ""
 
         spans, shift = [], 0.0
@@ -213,8 +237,14 @@ class _Renderer:
             spans.append(f"<tspan{attributes}>{escape(run.text)}</tspan>")
 
         return (
-            f'<text x="{_number(x + dx)}" y="{_number(y + dy)}" font-size="{_number(size)}" '
-            f'fill="{fill}" text-anchor="{anchor}" dominant-baseline="{baseline}"{style}>'
+            # The space between two words is a run, and so a tspan, of its own.
+            # Without xml:space a renderer may trim it as insignificant
+            # whitespace, which is how "film diffusion" becomes "filmdiffusion"
+            # in Inkscape; no label starts or ends with a space, so preserving
+            # it changes nothing else.
+            f'<text xml:space="preserve" x="{_number(x + dx)}" y="{_number(y + dy)}" '
+            f'font-size="{_number(size)}" fill="{colour(ink)}" class="cadet-fill-{ink}" '
+            f'text-anchor="{anchor}" dominant-baseline="{baseline}"{style}>'
             f"{''.join(spans)}</text>"
         )
 
@@ -224,7 +254,7 @@ class _Renderer:
         """Return the arrow-head definitions used by this scene."""
         definitions = []
         for style in sorted(self.arrow_styles, key=lambda item: item.value):
-            colour = _PAINT[style][1] or paint("annotation")
+            ink = _PAINT[style][1] or "annotation"
             for suffix, orientation, path in (
                 ("", "auto", "M 0 0 L 6 2.4 L 0 4.8 L 1.2 2.4 Z"),
                 ("-start", "auto-start-reverse", "M 0 0 L 6 2.4 L 0 4.8 L 1.2 2.4 Z"),
@@ -232,7 +262,8 @@ class _Renderer:
                 definitions.append(
                     f'<marker id="{self.scene.name}-head-{style.value}{suffix}" markerWidth="6"'
                     f' markerHeight="4.8" refX="5.4" refY="2.4" orient="{orientation}"'
-                    f' markerUnits="strokeWidth"><path d="{path}" fill="{colour}"/></marker>'
+                    f' markerUnits="strokeWidth"><path d="{path}" fill="{colour(ink)}"'
+                    f' class="cadet-fill-{ink}"/></marker>'
                 )
         return "".join(definitions)
 
@@ -301,7 +332,7 @@ def render_svg(scene: Scene, var_format: str = "CADET", max_width: str | None = 
 
     return (
         f'<svg xmlns="http://www.w3.org/2000/svg" role="img" class="cadet-figure" '
-        f'data-figure="{escape(scene.name)}" '
+        f'data-figure="{escape(scene.name)}" font-family="{_FONT_STACK}" '
         f'viewBox="{_number(scene.xmin)} {_number(scene.ymin)} '
         f'{_number(scene.width)} {_number(scene.height)}" '
         f'style="width:100%;max-width:{max_width};height:auto;display:block;margin:0.5em auto;">'
