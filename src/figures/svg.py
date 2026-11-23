@@ -23,6 +23,7 @@ import math
 from xml.sax.saxutils import escape
 
 from src.figures.labels import label_runs, label_text
+from src.figures.palette import paint
 from src.figures.scene import (
     Anchor,
     Arrow,
@@ -37,22 +38,23 @@ from src.figures.scene import (
 )
 
 #: Stroke and fill for each semantic style, as (fill, stroke, stroke width).
-#: ``None`` means "no paint"; names resolve against the variables in src.theme.
+#: ``None`` means "no paint"; a paint is the page variable with the light
+#: appearance as its fallback, so a figure saved to a file still has colour.
 _PAINT: dict[Style, tuple[str | None, str | None, float]] = {
-    Style.BULK: ("var(--cadet-fig-bulk)", None, 0.0),
-    Style.BULK_FACE: ("var(--cadet-fig-bulk-face)", None, 0.0),
-    Style.VOID: ("var(--cadet-fig-void)", None, 0.0),
-    Style.WALL: (None, "var(--cadet-fig-wall)", 0.055),
-    Style.HIDDEN: (None, "var(--cadet-fig-wall)", 0.04),
-    Style.PARTICLE: ("var(--cadet-fig-particle)", "var(--cadet-fig-wall)", 0.04),
-    Style.MATRIX: ("var(--cadet-fig-matrix)", "var(--cadet-fig-wall)", 0.04),
-    Style.PORE: ("var(--cadet-fig-pore)", "var(--cadet-fig-wall)", 0.04),
-    Style.SOLID: ("var(--cadet-fig-solid)", "var(--cadet-fig-wall)", 0.04),
-    Style.CORE: ("var(--cadet-fig-core)", "var(--cadet-fig-wall)", 0.04),
-    Style.FILM: ("var(--cadet-fig-film)", "var(--cadet-fig-film-edge)", 0.035),
-    Style.FLOW: (None, "var(--cadet-fig-flow)", 0.075),
-    Style.AXIS: (None, "var(--cadet-fig-axis)", 0.05),
-    Style.ANNOTATION: (None, "var(--cadet-fig-annotation)", 0.03),
+    Style.BULK: (paint("bulk"), None, 0.0),
+    Style.BULK_FACE: (paint("bulk-face"), None, 0.0),
+    Style.VOID: (paint("void"), None, 0.0),
+    Style.WALL: (None, paint("wall"), 0.055),
+    Style.HIDDEN: (None, paint("wall"), 0.04),
+    Style.PARTICLE: (paint("particle"), paint("wall"), 0.04),
+    Style.MATRIX: (paint("matrix"), paint("wall"), 0.04),
+    Style.PORE: (paint("pore"), paint("wall"), 0.04),
+    Style.SOLID: (paint("solid"), paint("wall"), 0.04),
+    Style.CORE: (paint("core"), paint("wall"), 0.04),
+    Style.FILM: (paint("film"), paint("film-edge"), 0.035),
+    Style.FLOW: (None, paint("flow"), 0.075),
+    Style.AXIS: (None, paint("axis"), 0.05),
+    Style.ANNOTATION: (None, paint("annotation"), 0.03),
 }
 
 #: Styles drawn with a dashed stroke.
@@ -191,7 +193,7 @@ class _Renderer:
         size = self.scene.font_size * item.size
         x, y = self.point(item.position)
         anchor, baseline, dx, dy = _label_placement(item.anchor)
-        fill = _PAINT[item.style][1] or "var(--cadet-fig-annotation)"
+        fill = _PAINT[item.style][1] or paint("annotation")
         style = ' font-style="italic"' if item.italic else ""
 
         spans, shift = [], 0.0
@@ -222,7 +224,7 @@ class _Renderer:
         """Return the arrow-head definitions used by this scene."""
         definitions = []
         for style in sorted(self.arrow_styles, key=lambda item: item.value):
-            colour = _PAINT[style][1] or "var(--cadet-fig-annotation)"
+            colour = _PAINT[style][1] or paint("annotation")
             for suffix, orientation, path in (
                 ("", "auto", "M 0 0 L 6 2.4 L 0 4.8 L 1.2 2.4 Z"),
                 ("-start", "auto-start-reverse", "M 0 0 L 6 2.4 L 0 4.8 L 1.2 2.4 Z"),

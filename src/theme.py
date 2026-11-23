@@ -10,6 +10,8 @@ without the app having to rerun.
 
 import streamlit as st
 
+from src.figures.palette import css_variables
+
 _THEME_CSS = """
 <style>
 .stApp {
@@ -39,23 +41,10 @@ _THEME_CSS = """
 
     /* Model figures: one variable per semantic style in src/figures/scene.py.
        Figures are rendered inline so that they pick these up directly. */
-    --cadet-fig-bulk: light-dark(#dce7f0, #16324a);
-    --cadet-fig-bulk-face: light-dark(#eef4f9, #1e3f5c);
-    --cadet-fig-void: light-dark(#ffffff, #0e1117);
-    --cadet-fig-wall: light-dark(#0f172a, #d7dee8);
-    --cadet-fig-particle: light-dark(#ffffff, #2b3545);
-    --cadet-fig-matrix: light-dark(#d4e0ea, #2b3545);
-    --cadet-fig-pore: light-dark(#f7fafd, #19212e);
-    --cadet-fig-solid: light-dark(#93b9d8, #44688f);
-    --cadet-fig-core: light-dark(#9fb0c2, #5c6b80);
-    --cadet-fig-film: light-dark(#fff4e5, #2e2718);
-    --cadet-fig-film-edge: light-dark(#b26a00, #f0c070);
-    --cadet-fig-flow: light-dark(#023d6b, #6fb3e0);
-    --cadet-fig-axis: light-dark(#475569, #94a3b8);
-    --cadet-fig-annotation: light-dark(#0f172a, #d7dee8);
+__CADET_FIGURE_VARIABLES__
 }
 </style>
-"""
+""".replace("__CADET_FIGURE_VARIABLES__", css_variables())
 
 
 def apply_theme_css() -> None:

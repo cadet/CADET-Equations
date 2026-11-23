@@ -20,6 +20,7 @@ from src.figures import binding_figures, column_figure, particle_figures
 from src.figures.binding import DRAWABLE, build_binding_scene
 from src.figures.column import _AXIS_Y, _BODIES, build_column_scene
 from src.figures.labels import NORMAL, SUBSCRIPT, SUPERSCRIPT, Run, label_runs, label_text
+from src.figures.palette import PALETTE
 from src.figures.particle import build_particle_scene
 from src.figures.scene import Arrow, Ellipse, EllipseArc, Label, Polyline, Rect, Scene, Style
 from src.figures.svg import render_svg
@@ -607,9 +608,25 @@ def test_rendered_figure_follows_the_parameter_format():
 def test_colours_are_css_variables_so_the_figure_follows_the_theme():
     svg = column_figure(_make_column())
     assert "var(--cadet-fig-" in svg
-    # A literal colour would not follow the light/dark appearance. The only
-    # "#" a figure may contain is the one of a marker reference.
-    assert re.search(r"#[0-9a-fA-F]{3,8}\b", svg) is None
+    # A literal colour would not follow the light/dark appearance, so the only
+    # one a figure may carry is the fallback of a variable, which nothing but a
+    # figure opened outside the app ever uses.
+    without_fallbacks = re.sub(r"var\(--cadet-fig-[a-z-]+, #[0-9a-fA-F]{6}\)", "var()", svg)
+    assert re.search(r"#[0-9a-fA-F]{3,8}\b", without_fallbacks) is None
+
+
+@pytest.mark.ci
+@pytest.mark.unit_test
+def test_every_paint_falls_back_to_a_colour_so_a_saved_figure_is_not_black():
+    """Outside the app nothing defines the custom properties, and a reference to
+    an undefined one leaves ``fill`` at its initial value: black."""
+    column = _make_column()
+    drawn = [figure for figure in binding_figures(column) if figure]
+    for svg in [column_figure(column), *particle_figures(column), *drawn]:
+        for reference in re.finditer(r"var\(--cadet-fig-[a-z-]+[,)]", svg):
+            assert reference.group().endswith(","), reference.group()
+        for name in {match.group(1) for match in re.finditer(r"--cadet-fig-([a-z-]+),", svg)}:
+            assert f"var(--cadet-fig-{name}, {PALETTE[name][0]})" in svg
 
 
 @pytest.mark.ci
